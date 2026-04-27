@@ -1,0 +1,120 @@
+.page { display: flex; flex-direction: column; gap: 20px; max-width: 900px; }
+.notFound { padding: 40px; text-align: center; color: var(--text-secondary); }
+
+.headerCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.headerTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.headerLeft { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.categoryBadge { display: inline-block; font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: var(--radius-full); align-self: flex-start; }
+.projectName { font-size: 22px; font-weight: 700; color: var(--text); }
+.projectPurpose { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+.headerRight { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 180px; }
+.ddayBadge { font-size: 12px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: var(--radius-full); }
+.ddayExpired { background: #FCEBEB; color: #E24B4A; }
+.ddayToday   { background: var(--amber-light); color: var(--amber); }
+
+.progressWrap { width: 180px; }
+.progressInfo { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.progressLabel { font-size: 11px; color: var(--text-tertiary); }
+.progressValue { font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+.progressBar   { height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+.progressFill  { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+.headerMeta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-secondary); padding-top: 6px; border-top: 1px solid var(--border-light); }
+.metaDot { color: var(--border); }
+
+.expiredBar { background: #FCEBEB; border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: #A32D2D; font-weight: 500; }
+.expiredBtns { display: flex; gap: 8px; }
+.expiredArchive { padding: 6px 14px; background: #E24B4A; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.expiredExtend  { padding: 6px 14px; border: 1px solid #E24B4A; color: #E24B4A; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab { padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; white-space: nowrap; }
+.tab:hover { color: var(--text); }
+.tabActive { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionHint { font-size: 12px; color: var(--text-tertiary); }
+
+/* 채팅방 */
+.roomList { display: flex; flex-direction: column; gap: 6px; }
+.roomCard { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; cursor: pointer; transition: all 0.15s; user-select: none; }
+.roomCard:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.roomCardDragging { opacity: 0.5; border-style: dashed; }
+.dragHandle { font-size: 14px; color: var(--text-tertiary); cursor: grab; padding: 0 2px; }
+.roomIcon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.roomBody { flex: 1; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
+.roomTop { display: flex; align-items: center; justify-content: space-between; }
+.roomName { font-size: 14px; font-weight: 600; color: var(--text); }
+.roomLast { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unreadBadge { min-width: 20px; height: 20px; border-radius: 10px; background: #E24B4A; color: white; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.roomTime { font-size: 11px; color: var(--text-tertiary); }
+.addRoom { padding: 12px; border: 1px dashed var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--primary); width: 100%; transition: background 0.15s; }
+.addRoom:hover { background: var(--primary-light); }
+
+/* 공지 */
+.annInput { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.annTextarea { resize: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; color: var(--text); background: var(--bg-secondary); line-height: 1.6; transition: border-color 0.15s; }
+.annTextarea:focus { border-color: var(--primary); background: var(--bg); }
+.annBtn { align-self: flex-end; padding: 8px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.annBtn:hover { opacity: 0.9; }
+.annCard { background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--primary); border-radius: var(--radius-md); padding: 16px; }
+.annHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.annAuthorWrap { display: flex; align-items: center; gap: 8px; }
+.annAvatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.annAuthor { font-size: 13px; font-weight: 600; color: var(--text); }
+.annRight { display: flex; align-items: center; gap: 8px; }
+.annDate { font-size: 11px; color: var(--text-tertiary); }
+.annDelete { font-size: 12px; color: var(--text-tertiary); }
+.annDelete:hover { color: #E24B4A; }
+.annContent { font-size: 14px; color: var(--text); line-height: 1.6; }
+
+.emptyState { text-align: center; padding: 48px 20px; color: var(--text-tertiary); font-size: 13px; }
+.emptyIcon { font-size: 32px; margin-bottom: 8px; }
+
+/* 멤버 */
+.memberGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.memberCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: flex-start; gap: 12px; }
+.memberAvatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.memberInfo { flex: 1; }
+.memberName { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+.meTag { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 1px 6px; border-radius: var(--radius-full); font-weight: 600; }
+.memberRole { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.memberMemo { font-size: 11px; color: var(--text-tertiary); font-style: italic; line-height: 1.5; }
+.inviteBtn { padding: 10px 20px; border: 1px solid var(--primary); color: var(--primary); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; align-self: flex-start; transition: background 0.15s; }
+.inviteBtn:hover { background: var(--primary-light); }
+
+/* 권한 관리 */
+.manageList { display: flex; flex-direction: column; gap: 12px; }
+.manageCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.manageTop { display: flex; align-items: center; gap: 12px; }
+.manageActions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.roleSelect { height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 10px; font-size: 12px; color: var(--text); cursor: pointer; }
+.transferBtn { padding: 6px 12px; border: 1px solid var(--amber); color: var(--amber); border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; transition: background 0.15s; white-space: nowrap; }
+.transferBtn:hover { background: var(--amber-light); }
+.roomAssign { padding-top: 10px; border-top: 1px solid var(--border-light); }
+.roomAssignLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.roomAssignList { display: flex; flex-wrap: wrap; gap: 8px; }
+.roomAssignItem { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; padding: 5px 12px; border-radius: var(--radius-full); border: 1px solid var(--border); transition: all 0.15s; }
+.roomAssignItem input { accent-color: var(--primary); }
+
+@media (max-width: 640px) {
+  .headerTop { flex-direction: column; }
+  .headerRight { align-items: flex-start; width: 100%; }
+  .progressWrap { width: 100%; }
+  .memberGrid { grid-template-columns: 1fr; }
+}
+
+/* 연장 모달 */
+.modalBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+.modal { background: var(--bg); border-radius: var(--radius-xl); padding: 28px; width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-lg); }
+.modalTitle { font-size: 16px; font-weight: 700; color: var(--text); }
+.modalDesc  { font-size: 13px; color: var(--text-secondary); margin-top: -8px; }
+.modalDateInput { height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 14px; font-size: 14px; color: var(--text); width: 100%; transition: border-color 0.15s; }
+.modalDateInput:focus { border-color: var(--primary); background: var(--bg); }
+.modalBtns { display: flex; gap: 8px; margin-top: 4px; }
+.modalCancel  { flex: 1; height: 42px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--text-secondary); transition: all 0.15s; }
+.modalCancel:hover { border-color: var(--primary); color: var(--primary); }
+.modalConfirm { flex: 1; height: 42px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+.modalConfirm:hover { opacity: 0.9; }
+.modalConfirm:disabled { opacity: 0.4; cursor: not-allowed; }

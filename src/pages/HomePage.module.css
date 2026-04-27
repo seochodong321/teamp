@@ -1,0 +1,66 @@
+.page { display: flex; flex-direction: column; gap: 28px; max-width: 900px; }
+
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+.title { font-size: 22px; font-weight: 700; color: var(--text); }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+.createBtn { padding: 10px 18px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; transition: opacity 0.15s; }
+.createBtn:hover { opacity: 0.9; }
+
+.inviteBanner { background: var(--primary-light); border: 1px solid #AFA9EC; border-radius: var(--radius-lg); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.inviteInfo { display: flex; align-items: center; gap: 12px; }
+.inviteDot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+.inviteTitle { font-size: 13px; font-weight: 600; color: var(--primary-dark); margin-bottom: 2px; }
+.inviteSub { font-size: 12px; color: var(--primary); }
+.inviteBtns { display: flex; gap: 8px; }
+.btnAccept { padding: 8px 16px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: opacity 0.15s; }
+.btnAccept:hover { opacity: 0.9; }
+.btnDecline { padding: 8px 16px; border: 1px solid var(--primary); color: var(--primary); border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; transition: background 0.15s; }
+.btnDecline:hover { background: var(--primary-light); }
+
+.sectionTitle { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 12px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+.card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow 0.15s; }
+.card:hover { box-shadow: var(--shadow-md); }
+.cardArchived { opacity: 0.65; }
+.cardExpired { border-color: #F09595; }
+
+.expiredBanner { background: #FCEBEB; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: #A32D2D; font-weight: 500; }
+.expiredBtns { display: flex; gap: 8px; margin-top: 8px; }
+.expiredArchive { padding: 5px 12px; background: #E24B4A; color: white; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.expiredExtend { padding: 5px 12px; border: 1px solid #E24B4A; color: #E24B4A; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.cardCategory { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+.cardName { font-size: 16px; font-weight: 700; color: var(--text); }
+
+.dday { font-size: 12px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: var(--radius-full); white-space: nowrap; }
+.ddayUrgent { background: #FCEBEB; color: #E24B4A; }
+
+.archivedBadge { font-size: 11px; font-weight: 600; background: var(--bg-tertiary); color: var(--text-tertiary); padding: 4px 10px; border-radius: var(--radius-full); }
+
+.cardPurpose { font-size: 13px; color: var(--text-secondary); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cardDate { font-size: 12px; color: var(--text-tertiary); }
+
+.cardProgress { display: flex; flex-direction: column; gap: 6px; }
+.progressInfo { display: flex; justify-content: space-between; }
+.progressLabel { font-size: 11px; color: var(--text-tertiary); }
+.progressValue { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.progressBar { height: 5px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+.progressFill { height: 100%; border-radius: 3px; background: var(--primary); transition: width 0.5s ease; }
+
+.cardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.memberAvatars { display: flex; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); margin-left: -6px; }
+.avatar:first-child { margin-left: 0; }
+.avatarMore { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-tertiary); color: var(--text-tertiary); font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); margin-left: -6px; }
+.enterBtn { font-size: 13px; font-weight: 600; color: var(--primary); }
+.enterBtn:hover { text-decoration: underline; }
+
+.empty { text-align: center; padding: 60px 20px; }
+.emptyTitle { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.emptySub { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+.emptyBtn { padding: 10px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }

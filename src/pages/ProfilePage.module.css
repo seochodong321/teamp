@@ -1,0 +1,51 @@
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 700px; }
+
+.pageTitle { font-size: 22px; font-weight: 700; color: var(--text); }
+
+.profileCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.avatarArea { display: flex; align-items: center; gap: 16px; }
+.avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 24px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.name { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.username { font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
+.bio { font-size: 13px; color: var(--text-secondary); }
+.editBtn { padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); white-space: nowrap; transition: all 0.15s; }
+.editBtn:hover { border-color: var(--primary); color: var(--primary); }
+
+.section { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.sectionTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.sectionDesc { font-size: 12px; color: var(--text-tertiary); margin-top: -8px; }
+
+.chipRow { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: flex; align-items: center; gap: 8px; background: var(--primary-light); border-radius: var(--radius-full); padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--primary-dark); cursor: pointer; transition: opacity 0.15s; }
+.chip:hover { opacity: 0.8; }
+.chipStatus { font-size: 10px; font-weight: 600; background: var(--teal-light); color: var(--teal); padding: 2px 7px; border-radius: var(--radius-full); }
+.chipStatusDone { background: var(--bg-tertiary); color: var(--text-tertiary); }
+
+.emptyText { font-size: 13px; color: var(--text-tertiary); padding: 8px 0; }
+
+.toggleList { display: flex; flex-direction: column; }
+.toggleRow { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border-light); gap: 16px; }
+.toggleRow:last-child { border-bottom: none; }
+.toggleInfo { flex: 1; }
+.toggleName { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+.toggleSub { font-size: 12px; color: var(--text-secondary); }
+
+.switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.slider { position: absolute; inset: 0; background: var(--border); border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+.slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+.switch input:checked + .slider { background: var(--primary); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
+
+.planCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.planLeft { display: flex; flex-direction: column; gap: 4px; }
+.planBadge { display: inline-block; font-size: 10px; font-weight: 700; background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border); padding: 2px 8px; border-radius: var(--radius-full); align-self: flex-start; }
+.planTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.planDesc { font-size: 12px; color: var(--text-secondary); }
+.upgradeBtn { padding: 10px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; transition: opacity 0.15s; }
+.upgradeBtn:hover { opacity: 0.9; }
+
+@media (max-width: 600px) {
+  .profileCard { flex-direction: column; }
+  .avatarArea { flex-direction: column; align-items: flex-start; }
+}

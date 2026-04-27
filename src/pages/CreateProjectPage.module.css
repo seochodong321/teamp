@@ -1,0 +1,79 @@
+.page { display: flex; justify-content: center; padding: 8px 0; }
+
+.card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 36px; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 28px; box-shadow: var(--shadow-md); }
+
+.stepBar { display: flex; align-items: center; }
+.stepItem { display: flex; align-items: center; flex: 1; }
+.stepItem:last-child { flex: none; }
+
+.stepCircle { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg); color: var(--text-tertiary); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+.stepActive { border-color: var(--primary); background: var(--primary); color: white; }
+.stepDone { border-color: var(--teal); background: var(--teal); color: white; }
+
+.stepLabel { font-size: 11px; color: var(--text-tertiary); margin-left: 6px; white-space: nowrap; }
+.stepLabelActive { color: var(--primary); font-weight: 600; }
+
+.stepLine { flex: 1; height: 1px; background: var(--border); margin: 0 8px; }
+.stepLineDone { background: var(--teal); }
+
+.form { display: flex; flex-direction: column; gap: 18px; }
+.formTitle { font-size: 18px; font-weight: 700; color: var(--text); }
+.formDesc { font-size: 13px; color: var(--text-secondary); margin-top: -10px; line-height: 1.5; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+.input { height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 14px; font-size: 14px; color: var(--text); transition: border-color 0.15s, background 0.15s; width: 100%; }
+.input:focus { border-color: var(--primary); background: var(--bg); }
+
+.textarea { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 14px; font-size: 14px; color: var(--text); resize: none; line-height: 1.6; transition: border-color 0.15s; width: 100%; }
+.textarea:focus { border-color: var(--primary); background: var(--bg); }
+
+.chipRow { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 7px 16px; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); transition: all 0.15s; }
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+.chipActive { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+
+.dateRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.roomList { display: flex; flex-direction: column; gap: 6px; }
+.roomItem { display: flex; align-items: center; justify-content: space-between; background: var(--primary-light); border-radius: var(--radius-sm); padding: 10px 14px; }
+.roomItemText { font-size: 13px; font-weight: 600; color: var(--primary-dark); }
+.removeRoom { font-size: 13px; color: var(--text-tertiary); }
+.removeRoom:hover { color: #E24B4A; }
+
+.addRoomRow { display: flex; gap: 8px; }
+.addRoomBtn { padding: 0 18px; height: 44px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; transition: opacity 0.15s; }
+.addRoomBtn:hover { opacity: 0.9; }
+
+.linkBox { display: flex; align-items: center; justify-content: space-between; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 12px 16px; }
+.linkText { font-size: 13px; color: var(--text-secondary); }
+.linkCopy { font-size: 13px; font-weight: 600; color: var(--primary); }
+
+.inviteNote { display: flex; align-items: flex-start; gap: 10px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 14px; }
+.inviteNoteIcon { font-size: 16px; flex-shrink: 0; }
+.inviteNote p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+.done { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0; }
+.doneIcon { width: 64px; height: 64px; border-radius: 50%; background: var(--teal-light); color: var(--teal); font-size: 28px; display: flex; align-items: center; justify-content: center; }
+.doneTitle { font-size: 20px; font-weight: 700; color: var(--text); }
+.doneSub { font-size: 13px; color: var(--text-secondary); text-align: center; }
+
+.summary { width: 100%; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 0; }
+.summaryRow { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border-light); }
+.summaryRow:last-child { border-bottom: none; }
+.summaryKey { font-size: 13px; color: var(--text-secondary); }
+.summaryVal { font-size: 13px; font-weight: 600; color: var(--text); }
+
+.footer { display: flex; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); gap: 8px; }
+.prevBtn { padding: 10px 20px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--text-secondary); transition: all 0.15s; }
+.prevBtn:hover { border-color: var(--primary); color: var(--primary); }
+.nextBtn { padding: 10px 24px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+.nextBtn:hover { opacity: 0.9; }
+.doneButtons { display: flex; gap: 8px; }
+
+@media (max-width: 600px) {
+  .card { padding: 24px 20px; }
+  .dateRow { grid-template-columns: 1fr; }
+  .stepLabel { display: none; }
+}
