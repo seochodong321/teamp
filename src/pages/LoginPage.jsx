@@ -1,10 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-} from 'firebase/auth'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -14,25 +10,25 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { login, isLoggedIn } = useStore()
 
-  const [mode, setMode]           = useState('login')
-  const [name, setName]           = useState('')
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
-  const [affiliation, setAffiliation] = useState('') // 소속
-  const [phone, setPhone]         = useState('')      // 핸드폰
-  const [error, setError]         = useState('')
-  const [loading, setLoading]     = useState(false)
+  const [mode, setMode]               = useState('login')
+  const [name, setName]               = useState('')
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [affiliation, setAffiliation] = useState('')
+  const [phone, setPhone]             = useState('')
+  const [error, setError]             = useState('')
+  const [loading, setLoading]         = useState(false)
 
   if (isLoggedIn) return <Navigate to="/home" replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-
     if (!email.trim())       { setError('이메일을 입력해주세요.'); return }
     if (password.length < 6) { setError('비밀번호는 6자리 이상이어야 해요.'); return }
     if (mode === 'signup') {
-      if (!name.trim())  { setError('이름을 입력해주세요.'); return }
+      if (!name.trim())        { setError('이름을 입력해주세요.'); return }
+      if (!affiliation.trim()) { setError('소속을 입력해주세요. (학교, 회사, 단체 등)'); return }
     }
 
     setLoading(true)
@@ -40,7 +36,6 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
-
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid:         cred.user.uid,
           name:        name.trim(),
@@ -51,14 +46,13 @@ export default function LoginPage() {
           bio:         '',
           createdAt:   new Date().toISOString(),
         })
-
-        login(name.trim(), email.trim(), cred.user.uid)
+        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim() })
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
         const snap = await getDoc(doc(db, 'users', cred.user.uid))
         if (snap.exists()) {
           const d = snap.data()
-          login(d.name, d.email, cred.user.uid)
+          login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
         } else {
           login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
         }
@@ -81,8 +75,6 @@ export default function LoginPage() {
     }
   }
 
-  const switchMode = (m) => { setMode(m); setError('') }
-
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -93,65 +85,48 @@ export default function LoginPage() {
         </div>
 
         <div className={styles.tabs}>
-          <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`} onClick={() => switchMode('login')}>로그인</button>
-          <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`} onClick={() => switchMode('signup')}>회원가입</button>
+          <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`} onClick={() => { setMode('login');  setError('') }}>로그인</button>
+          <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`} onClick={() => { setMode('signup'); setError('') }}>회원가입</button>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
-
-          {/* ── 회원가입 전용 필드 ── */}
           {mode === 'signup' && (
             <>
               <div className={styles.field}>
                 <label className={styles.label}>이름 *</label>
-                <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="실명 또는 닉네임" disabled={loading} autoFocus />
+                <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
               </div>
-
               <div className={styles.field}>
-                <label className={styles.label}>소속</label>
-                <input className={styles.input} value={affiliation} onChange={(e) => setAffiliation(e.target.value)}
-                  placeholder="예) OO대학교, OO회사, 프리랜서" disabled={loading} />
+                <label className={styles.label}>소속 * <span className={styles.labelHint}>(학교, 회사, 단체 등)</span></label>
+                <input className={styles.input} value={affiliation} onChange={(e) => setAffiliation(e.target.value)} placeholder="예) OO대학교 컴퓨터공학과, OO회사" disabled={loading} />
               </div>
-
               <div className={styles.field}>
-                <label className={styles.label}>핸드폰 번호</label>
-                <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)}
-                  placeholder="예) 010-1234-5678" type="tel" disabled={loading} />
-                <p className={styles.fieldHint}>추후 본인 인증에 사용될 수 있어요</p>
+                <label className={styles.label}>핸드폰 번호 <span className={styles.labelHint}>(선택)</span></label>
+                <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="010-0000-0000" type="tel" disabled={loading} />
               </div>
-
               <div className={styles.divider}><span>계정 정보</span></div>
             </>
           )}
 
-          {/* ── 공통 필드 ── */}
           <div className={styles.field}>
             <label className={styles.label}>이메일 *</label>
-            <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@email.com" autoComplete="email" disabled={loading} />
+            <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@email.com" autoComplete="email" disabled={loading} />
           </div>
-
           <div className={styles.field}>
             <label className={styles.label}>비밀번호 *</label>
-            <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
+            <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
 
           <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading}>
-            {loading
-              ? (mode === 'login' ? '로그인 중...' : '가입 중...')
-              : (mode === 'login' ? '로그인' : '가입하기')
-            }
+            {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
           </button>
         </form>
 
         <p className={styles.switchText}>
           {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
-          <button className={styles.switchBtn} type="button"
-            onClick={() => switchMode(mode === 'login' ? 'signup' : 'login')}>
+          <button className={styles.switchBtn} type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}>
             {mode === 'login' ? '회원가입' : '로그인'}
           </button>
         </p>
