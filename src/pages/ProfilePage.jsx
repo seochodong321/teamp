@@ -1,17 +1,19 @@
 import React, { useState } from 'react'
-import { useStore } from '../store/useStore.js'
 import { useNavigate } from 'react-router-dom'
+import { signOut } from 'firebase/auth'
+import { auth } from '../firebase.js'
+import { useStore } from '../store/useStore.js'
 import styles from './ProfilePage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
 
 export default function ProfilePage() {
-  const { currentUser, projects, togglePublic, updateMemberMemo, logout } = useStore()
   const navigate = useNavigate()
-
+  const { currentUser, projects, togglePublic, updateMemberMemo, logout } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
-  const [editingMemo, setEditingMemo] = useState(null) // projectId
-  const [memoText, setMemoText] = useState('')
+
+  const [editingMemo, setEditingMemo] = useState(null)
+  const [memoText, setMemoText]       = useState('')
 
   const startEdit = (p) => {
     const me = p.members.find((m) => m.id === currentUser.id)
@@ -24,7 +26,8 @@ export default function ProfilePage() {
     setEditingMemo(null)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await signOut(auth) } catch {}
     logout()
     navigate('/login')
   }
@@ -33,14 +36,17 @@ export default function ProfilePage() {
     <div className={styles.page}>
       <h1 className={styles.pageTitle}>내 프로필</h1>
 
+      {/* 프로필 카드 */}
       <div className={styles.profileCard}>
-        <div className={styles.avatarArea}>
+        <div className={styles.avatarWrap}>
           <div className={styles.avatar}>{currentUser.name.charAt(0)}</div>
-          <div>
-            <h2 className={styles.name}>{currentUser.name}</h2>
-            <p className={styles.username}>{currentUser.username}</p>
-            <p className={styles.email}>{currentUser.email}</p>
-          </div>
+        </div>
+        <div className={styles.info}>
+          <h2 className={styles.name}>{currentUser.name}</h2>
+          <p className={styles.username}>{currentUser.username}</p>
+          {currentUser.affiliation && <p className={styles.detail}>🏢 {currentUser.affiliation}</p>}
+          {currentUser.email && <p className={styles.detail}>✉️ {currentUser.email}</p>}
+          {currentUser.phone && <p className={styles.detail}>📱 {currentUser.phone}</p>}
         </div>
         <div className={styles.profileActions}>
           <button className={styles.editBtn}>편집</button>
@@ -48,36 +54,40 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 공개된 프로젝트 */}
+      {/* 공개된 프로젝트 — 클릭 비활성, 보여주기만 */}
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>공개된 프로젝트</h3>
-        <p className={styles.sectionDesc}>다른 사람이 내 프로필에서 볼 수 있어요</p>
-        <div className={styles.chipRow}>
-          {myProjects.filter((p) => p.isPublic).map((p) => {
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>공개된 프로젝트</h3>
+          <p className={styles.sectionDesc}>다른 사람이 내 프로필에서 볼 수 있어요</p>
+        </div>
+        <div className={styles.publicChips}>
+          {myProjects.filter((p) => p.isPublic && !p.isTutorial).map((p) => {
             const me = p.members.find((m) => m.id === currentUser.id)
             return (
-              <div key={p.id} className={styles.chip} onClick={() => navigate(`/project/${p.id}`)}>
-                <span className={styles.chipName}>{p.name}</span>
-                <span className={styles.chipRole}>{ROLE_LABEL[me?.role] || ''}</span>
-                <span className={`${styles.chipStatus} ${p.status === 'archived' ? styles.chipStatusDone : ''}`}>
+              <div key={p.id} className={styles.publicChip}>
+                <span className={styles.publicChipName}>{p.name}</span>
+                <span className={styles.publicChipRole}>{ROLE_LABEL[me?.role]}</span>
+                <span className={`${styles.publicChipStatus} ${p.status === 'archived' ? styles.statusDone : styles.statusActive}`}>
                   {p.status === 'archived' ? '완료' : '진행 중'}
                 </span>
               </div>
             )
           })}
-          {myProjects.filter((p) => p.isPublic).length === 0 && (
+          {myProjects.filter((p) => p.isPublic && !p.isTutorial).length === 0 && (
             <p className={styles.emptyText}>공개된 프로젝트가 없어요</p>
           )}
         </div>
       </div>
 
-      {/* 프로젝트별 역할 메모 + 공개 설정 */}
+      {/* 프로젝트 관리 */}
       <div className={styles.section}>
-        <h3 className={styles.sectionTitle}>프로젝트 관리</h3>
-        <p className={styles.sectionDesc}>내가 참여한 프로젝트의 역할과 공개 여부를 설정하세요</p>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>프로젝트 관리</h3>
+          <p className={styles.sectionDesc}>공개 여부를 설정하고 나의 역할을 기록해요</p>
+        </div>
 
         <div className={styles.projectList}>
-          {myProjects.map((p) => {
+          {myProjects.filter((p) => !p.isTutorial).map((p) => {
             const me = p.members.find((m) => m.id === currentUser.id)
             const isEditing = editingMemo === p.id
             return (
@@ -85,24 +95,26 @@ export default function ProfilePage() {
                 <div className={styles.projectItemTop}>
                   <div className={styles.projectItemLeft}>
                     <span className={styles.projectItemName}>{p.name}</span>
-                    <span className={styles.projectItemRole}>{ROLE_LABEL[me?.role] || '팀원'}</span>
-                    <span className={`${styles.projectItemStatus} ${p.status === 'archived' ? styles.projectItemStatusDone : ''}`}>
+                    <span className={styles.projectItemRole}>{ROLE_LABEL[me?.role]}</span>
+                    <span className={`${styles.projectItemStatus} ${p.status === 'archived' ? styles.statusDone : styles.statusActive}`}>
                       {p.status === 'archived' ? '완료' : '진행 중'}
                     </span>
                   </div>
-                  <label className={styles.switch}>
-                    <input type="checkbox" checked={p.isPublic} onChange={() => togglePublic(p.id)} />
-                    <span className={styles.slider} />
-                  </label>
+                  <button
+                    className={`${styles.toggle} ${p.isPublic ? styles.toggleOn : styles.toggleOff}`}
+                    onClick={() => togglePublic(p.id)}
+                    aria-label={p.isPublic ? '공개 중' : '비공개'}
+                  >
+                    <span className={styles.toggleKnob} />
+                    <span className={styles.toggleLabel}>{p.isPublic ? '공개' : '비공개'}</span>
+                  </button>
                 </div>
-
-                {/* 역할 메모 */}
                 <div className={styles.memoArea}>
                   {isEditing ? (
                     <div className={styles.memoEdit}>
                       <input className={styles.memoInput} value={memoText}
                         onChange={(e) => setMemoText(e.target.value)}
-                        placeholder="이 프로젝트에서 내가 한 역할을 짧게 적어요 (공개 시 프로필에 표시)" />
+                        placeholder="이 프로젝트에서 내가 한 역할을 짧게 적어요" autoFocus />
                       <div className={styles.memoBtns}>
                         <button className={styles.memoSave} onClick={() => saveMemo(p.id)}>저장</button>
                         <button className={styles.memoCancel} onClick={() => setEditingMemo(null)}>취소</button>
@@ -120,6 +132,9 @@ export default function ProfilePage() {
               </div>
             )
           })}
+          {myProjects.filter((p) => !p.isTutorial).length === 0 && (
+            <p className={styles.emptyText}>아직 참여한 프로젝트가 없어요</p>
+          )}
         </div>
       </div>
 
