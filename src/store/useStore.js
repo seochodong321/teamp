@@ -13,7 +13,7 @@ function calcProgress(startDate, endDate) {
 }
 
 function formatUnread(n) {
-  if (n <= 0) return 0
+  if (!n || n <= 0) return 0
   if (n > 99) return '+99'
   return n
 }
@@ -49,7 +49,8 @@ const makeDummyProjects = (myId, myName, myEmail, myAffiliation) => [
       { id: 'room_3',  name: '디자인팀',    lastMessage: '시안 올렸어요',              unread: 1, time: '10:10', ...ROOM_COLORS[2] },
     ],
     announcements: [
-      { id: 'ann_1', authorId: myId, author: myName, title: '중간 발표 미팅 안내', content: '이번 주 금요일 오후 3시에 중간 발표 미팅 있습니다!', isGlobal: true, createdAt: '2025-03-10', fileName: null },
+      { id: 'ann_1', authorId: myId, author: myName, title: '중간 발표 미팅 안내', content: '이번 주 금요일 오후 3시에 중간 발표 미팅 있습니다!\n\n참석 필수입니다.', isGlobal: true, createdAt: '2025-03-10', fileName: null },
+      { id: 'ann_2', authorId: 'user_2', author: '김하은', title: 'DB 설계 완료', content: 'users, projects, messages 테이블 설계 완료했습니다. 피드백 주세요!', isGlobal: false, createdAt: '2025-03-08', fileName: 'db_schema.pdf' },
     ],
     events: [
       { id: 'ev_1', title: '중간 발표 미팅',  date: '2025-04-25', time: '15:00', createdBy: myId, scope: 'all',   roomIds: [], isPersonal: false },
@@ -69,7 +70,7 @@ const makeDummyProjects = (myId, myName, myEmail, myAffiliation) => [
     leaderId: 'user_5',
     members: [
       { id: myId,     name: myName,  role: 'member', roomIds: [], memo: '행사 당일 진행 및 사회', affiliation: myAffiliation || '', email: myEmail || '' },
-      { id: 'user_5', name: '최리더', role: 'leader', roomIds: [], memo: '', affiliation: '', email: '' },
+      { id: 'user_5', name: '최리더', role: 'leader', roomIds: [], memo: '', affiliation: 'OO대학교', email: '' },
     ],
     rooms: [], announcements: [], events: [], isPublic: true,
   },
@@ -85,6 +86,14 @@ const makeDummyMessages = () => ({
   room_3: [{ id: 'm6', senderId: 'user_4', senderName: '박민준', type: 'text', text: '시안 올렸어요', time: '10:10' }],
 })
 
+// 더미 커넥트 (같은 프로젝트 참여자)
+const makeDummyConnects = () => [
+  { id: 'user_2', name: '김하은', affiliation: 'OO대학교', email: 'haeun@example.com', projectName: '2025 졸업작품', connectedAt: '2025-03-01' },
+  { id: 'user_3', name: '이준혁', affiliation: 'OO대학교', email: 'junho@example.com', projectName: '2025 졸업작품', connectedAt: '2025-03-01' },
+  { id: 'user_4', name: '박민준', affiliation: 'OO대학교', email: 'minjun@example.com', projectName: '2025 졸업작품', connectedAt: '2025-03-01' },
+  { id: 'user_5', name: '최리더', affiliation: 'OO대학교', email: '', projectName: '신입생 오리엔테이션', connectedAt: '2025-02-01' },
+]
+
 const INIT_INVITES = [
   { id: 'invite_1', projectName: 'UX 스터디 그룹', projectId: 'proj_invite_1', fromName: '박지수', purpose: 'UX/UI 스터디', endDate: '2025-08-31' },
 ]
@@ -97,6 +106,7 @@ export const useStore = create((set, get) => ({
   invites: INIT_INVITES,
   roomOrders: {},
   dmRooms: {},
+  connects: [], // 팀프 커넥트
 
   login: (name, email, uid, extra = {}) => {
     const user = {
@@ -113,18 +123,22 @@ export const useStore = create((set, get) => ({
       currentUser: user,
       projects: makeDummyProjects(user.id, user.name, user.email, user.affiliation),
       messages: makeDummyMessages(),
+      connects: makeDummyConnects(),
     })
   },
 
-  logout: () => set({ isLoggedIn: false, currentUser: null, projects: [], messages: {}, roomOrders: {}, dmRooms: {} }),
+  logout: () => set({ isLoggedIn: false, currentUser: null, projects: [], messages: {}, roomOrders: {}, dmRooms: {}, connects: [] }),
 
+  // ─── 유틸 ──────────────────────────────────────────────────────────
   getProgress: (project) => project.status === 'archived' ? 100 : calcProgress(project.startDate, project.endDate),
+
   getDday: (endDate) => {
     const diff = differenceInDays(parseISO(endDate), new Date())
     if (diff < 0) return '기한 초과'
     if (diff === 0) return 'D-day'
     return `D-${diff}`
   },
+
   isExpired: (endDate) => isAfter(new Date(), parseISO(endDate)),
   formatUnread,
 
@@ -150,10 +164,33 @@ export const useStore = create((set, get) => ({
 
   reorderRooms: (projectId, newOrder) => set((s) => ({ roomOrders: { ...s.roomOrders, [projectId]: newOrder } })),
 
+  // ─── 초대 ──────────────────────────────────────────────────────────
   acceptInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
   declineInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
 
-  // ─── 1:1 채팅 ────────────────────────────────────────
+  // ─── 팀프 커넥트 ───────────────────────────────────────────────────
+  removeConnect: (userId) => set((s) => ({ connects: s.connects.filter((c) => c.id !== userId) })),
+
+  addConnectsFromProject: (projectId) => {
+    const { projects, currentUser, connects } = get()
+    const project = projects.find((p) => p.id === projectId)
+    if (!project) return
+    const newConnects = project.members
+      .filter((m) => m.id !== currentUser.id && !connects.find((c) => c.id === m.id))
+      .map((m) => ({
+        id: m.id,
+        name: m.name,
+        affiliation: m.affiliation || '',
+        email: m.email || '',
+        projectName: project.name,
+        connectedAt: new Date().toISOString().split('T')[0],
+      }))
+    if (newConnects.length > 0) {
+      set((s) => ({ connects: [...s.connects, ...newConnects] }))
+    }
+  },
+
+  // ─── 1:1 채팅 ──────────────────────────────────────────────────────
   getOrCreateDmRoom: (projectId, otherUserId, otherUserName) => {
     const { currentUser, dmRooms } = get()
     const dmKey = [currentUser.id, otherUserId].sort().join('_')
@@ -163,13 +200,22 @@ export const useStore = create((set, get) => ({
     return newRoom
   },
 
-  // ─── 메시지 ──────────────────────────────────────────
+  // ─── 메시지 ────────────────────────────────────────────────────────
   sendMessage: (roomId, text, type = 'text') => {
     const { currentUser } = get()
-    const msg = { id: `m_${Date.now()}`, senderId: currentUser.id, senderName: currentUser.name, type, text, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) }
+    const msg = {
+      id: `m_${Date.now()}`,
+      senderId: currentUser.id,
+      senderName: currentUser.name,
+      type, text,
+      time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    }
     set((s) => ({
       messages: { ...s.messages, [roomId]: [...(s.messages[roomId] || []), msg] },
-      projects: s.projects.map((p) => ({ ...p, rooms: p.rooms.map((r) => r.id === roomId ? { ...r, lastMessage: `나: ${text}`, time: '방금' } : r) })),
+      projects: s.projects.map((p) => ({
+        ...p,
+        rooms: p.rooms.map((r) => r.id === roomId ? { ...r, lastMessage: `나: ${text}`, time: '방금' } : r),
+      })),
     }))
   },
 
@@ -188,16 +234,52 @@ export const useStore = create((set, get) => ({
   votePoll: (roomId, msgId, optionId) => {
     const { currentUser } = get()
     set((s) => ({
-      messages: { ...s.messages, [roomId]: s.messages[roomId].map((m) => { if (m.id !== msgId) return m; return { ...m, options: m.options.map((o) => { if (o.id !== optionId) return o; const has = o.votes.includes(currentUser.id); return { ...o, votes: has ? o.votes.filter((v) => v !== currentUser.id) : [...o.votes, currentUser.id] } }) } }) },
+      messages: {
+        ...s.messages,
+        [roomId]: s.messages[roomId].map((m) => {
+          if (m.id !== msgId) return m
+          return { ...m, options: m.options.map((o) => { if (o.id !== optionId) return o; const has = o.votes.includes(currentUser.id); return { ...o, votes: has ? o.votes.filter((v) => v !== currentUser.id) : [...o.votes, currentUser.id] } }) }
+        }),
+      },
     }))
   },
 
-  markAsRead: (roomId) => set((s) => ({ projects: s.projects.map((p) => ({ ...p, rooms: p.rooms.map((r) => r.id === roomId ? { ...r, unread: 0 } : r) })) })),
+  markAsRead: (roomId) => set((s) => ({
+    projects: s.projects.map((p) => ({ ...p, rooms: p.rooms.map((r) => r.id === roomId ? { ...r, unread: 0 } : r) })),
+  })),
 
-  // ─── 게시판 ──────────────────────────────────────────
+  // ─── 게시판 ────────────────────────────────────────────────────────
   addAnnouncement: (projectId, { title, content, isGlobal, fileName }) => {
     const { currentUser } = get()
-    const ann = { id: `ann_${Date.now()}`, authorId: currentUser.id, author: currentUser.name, title, content, isGlobal, fileName: fileName || null, createdAt: new Date().toISOString().split('T')[0] }
+    const ann = {
+      id: `ann_${Date.now()}`,
+      authorId: currentUser.id,
+      author: currentUser.name,
+      title, content, isGlobal,
+      fileName: fileName || null,
+      createdAt: new Date().toISOString().split('T')[0],
+    }
+    // 공지면 전체 채팅방에 알림
+    if (isGlobal) {
+      const project = get().projects.find((p) => p.id === projectId)
+      const notifyMsg = {
+        id: `notify_${Date.now()}`,
+        senderId: 'system',
+        senderName: '📢 공지',
+        type: 'notify',
+        text: `[공지] ${title}`,
+        time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+      }
+      if (project) {
+        set((s) => {
+          const newMessages = { ...s.messages }
+          project.rooms.filter((r) => !r.isDm).forEach((r) => {
+            newMessages[r.id] = [...(newMessages[r.id] || []), { ...notifyMsg, id: `${notifyMsg.id}_${r.id}` }]
+          })
+          return { messages: newMessages }
+        })
+      }
+    }
     set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, announcements: [ann, ...p.announcements] } : p) }))
   },
 
@@ -211,7 +293,42 @@ export const useStore = create((set, get) => ({
     set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, announcements: p.announcements.filter((a) => a.id !== annId) } : p) }))
   },
 
-  // ─── 캘린더 ──────────────────────────────────────────
+  // ─── 팀 채팅방 추가 ─────────────────────────────────────────────────
+  addRoom: (projectId, roomName) => {
+    const { projects } = get()
+    const project = projects.find((p) => p.id === projectId)
+    if (!project) return
+    const colorIdx = project.rooms.filter((r) => !r.isDm).length % ROOM_COLORS.length
+    const newRoom = {
+      id: `room_${Date.now()}`,
+      name: roomName.trim(),
+      lastMessage: '채팅방이 생성됐어요',
+      unread: 0,
+      time: '방금',
+      ...ROOM_COLORS[colorIdx],
+      isDm: false,
+    }
+    set((s) => ({
+      projects: s.projects.map((p) => {
+        if (p.id !== projectId) return p
+        // 리더/부리더는 자동으로 새 방에 접근 가능
+        return {
+          ...p,
+          rooms: [...p.rooms, newRoom],
+          members: p.members.map((m) => {
+            if (m.role === 'leader' || m.role === 'sub-leader') {
+              return { ...m, roomIds: [...m.roomIds, newRoom.id] }
+            }
+            return m
+          }),
+        }
+      }),
+      messages: { ...s.messages, [newRoom.id]: [] },
+    }))
+    return newRoom
+  },
+
+  // ─── 캘린더 ────────────────────────────────────────────────────────
   addEvent: (projectId, { title, date, time, scope, roomIds, isPersonal }) => {
     const { currentUser } = get()
     const project = get().projects.find((p) => p.id === projectId)
@@ -238,18 +355,21 @@ export const useStore = create((set, get) => ({
     set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, events: p.events.filter((e) => e.id !== eventId) } : p) }))
   },
 
-  // ─── 프로젝트 생성 ───────────────────────────────────
+  // ─── 프로젝트 생성 ──────────────────────────────────────────────────
   createProject: (data) => {
     const { currentUser } = get()
     const rooms = [
       { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true },
       { id: `room_all_${Date.now()}`, name: '전체',        lastMessage: '채팅방이 생성됐어요',       unread: 0, time: '방금', ...ROOM_COLORS[0] },
       ...data.roomNames.filter((n) => n !== '전체' && n !== '나와의 채팅').map((name, i) => ({
-        id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금', ...ROOM_COLORS[(i + 1) % ROOM_COLORS.length],
+        id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금', ...ROOM_COLORS[(i + 1) % ROOM_COLORS.length], isDm: false,
       })),
     ]
     const project = {
-      id: `proj_${Date.now()}`, ...data, status: 'active', leaderId: currentUser.id,
+      id: `proj_${Date.now()}`,
+      name: data.name, purpose: data.purpose, category: data.category,
+      startDate: data.startDate, endDate: data.endDate,
+      status: 'active', leaderId: currentUser.id,
       members: [{ id: currentUser.id, name: currentUser.name, role: 'leader', roomIds: rooms.map((r) => r.id), memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '' }],
       rooms, announcements: [], events: [], isPublic: false,
     }
@@ -257,12 +377,17 @@ export const useStore = create((set, get) => ({
     return project
   },
 
+  // ─── 멤버 권한 ──────────────────────────────────────────────────────
   updateMemberRole: (projectId, memberId, role) => {
     set((s) => ({ projects: s.projects.map((p) => { if (p.id !== projectId) return p; return { ...p, members: p.members.map((m) => { if (m.id !== memberId) return m; const roomIds = (role === 'leader' || role === 'sub-leader') ? p.rooms.map((r) => r.id) : m.roomIds; return { ...m, role, roomIds } }) } }) }))
   },
 
   toggleMemberRoom: (projectId, memberId, roomId) => {
     set((s) => ({ projects: s.projects.map((p) => { if (p.id !== projectId) return p; return { ...p, members: p.members.map((m) => { if (m.id !== memberId) return m; const has = m.roomIds.includes(roomId); return { ...m, roomIds: has ? m.roomIds.filter((r) => r !== roomId) : [...m.roomIds, roomId] } }) } }) }))
+  },
+
+  setMemberRooms: (projectId, memberId, roomIds) => {
+    set((s) => ({ projects: s.projects.map((p) => { if (p.id !== projectId) return p; return { ...p, members: p.members.map((m) => m.id !== memberId ? m : { ...m, roomIds }) } }) }))
   },
 
   transferLeader: (projectId, newLeaderId) => {
@@ -275,7 +400,7 @@ export const useStore = create((set, get) => ({
   },
 
   archiveProject: (projectId) => set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, status: 'archived' } : p) })),
-  extendProject: (projectId, newEndDate) => set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, endDate: newEndDate } : p) })),
+  extendProject: (projectId, d) => set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, endDate: d } : p) })),
   togglePublic: (projectId) => set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, isPublic: !p.isPublic } : p) })),
   updateMyMemo: (projectId, memo) => { const { currentUser } = get(); get().updateMemberMemo(projectId, currentUser.id, memo) },
 }))

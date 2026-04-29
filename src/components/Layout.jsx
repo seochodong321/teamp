@@ -13,26 +13,25 @@ export default function Layout() {
   const active = projects.filter((p) => p.status === 'active')
 
   const handleLogout = async () => {
-    await signOut(auth)
+    try { await signOut(auth) } catch {}
     logout()
     navigate('/login')
   }
 
+  const close = () => setMobileOpen(false)
+
   return (
     <div className={styles.shell}>
-      {mobileOpen && <div className={styles.overlay} onClick={() => setMobileOpen(false)} />}
+      {mobileOpen && <div className={styles.overlay} onClick={close} />}
 
       <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
-        {/* 로고 — 클릭하면 홈으로 */}
-        <div className={styles.logo} onClick={() => { navigate('/home'); setMobileOpen(false) }} style={{ cursor: 'pointer' }}>
+        <div className={styles.logo} onClick={() => { navigate('/home'); close() }}>
           <span className={styles.logoMark}>T</span>
           <span className={styles.logoText}>Teamp</span>
         </div>
 
         <nav className={styles.nav}>
-          <NavLink to="/home"
-            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
-            onClick={() => setMobileOpen(false)}>
+          <NavLink to="/home" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>⊞</span>
             <span>홈</span>
           </NavLink>
@@ -45,12 +44,10 @@ export default function Layout() {
                 return (
                   <NavLink key={p.id} to={`/project/${p.id}`}
                     className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
-                    onClick={() => setMobileOpen(false)}>
-                    <span className={styles.navDot} style={{ background: p.rooms[0]?.color || 'var(--primary)' }} />
+                    onClick={close}>
+                    <span className={styles.navDot} style={{ background: p.rooms.find((r) => !r.isDm)?.color || 'var(--primary)' }} />
                     <span className={styles.navProjectName}>{p.name}</span>
-                    {totalUnread > 0 && (
-                      <span className={styles.navBadge}>{formatUnread(totalUnread)}</span>
-                    )}
+                    {totalUnread > 0 && <span className={styles.navBadge}>{formatUnread(totalUnread)}</span>}
                   </NavLink>
                 )
               })}
@@ -58,15 +55,17 @@ export default function Layout() {
           )}
 
           <p className={styles.navSection}>메뉴</p>
-          <NavLink to="/profile"
-            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
-            onClick={() => setMobileOpen(false)}>
+          <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+            <span className={styles.navIcon}>🔗</span>
+            <span>팀프 커넥트</span>
+          </NavLink>
+          <NavLink to="/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>👤</span>
             <span>프로필</span>
           </NavLink>
         </nav>
 
-        <button className={styles.createBtn} onClick={() => { navigate('/create'); setMobileOpen(false) }}>
+        <button className={styles.createBtn} onClick={() => { navigate('/create'); close() }}>
           + 새 프로젝트
         </button>
 
@@ -74,7 +73,7 @@ export default function Layout() {
           <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
           <div className={styles.userInfo}>
             <p className={styles.userName}>{currentUser?.name}</p>
-            <p className={styles.userHandle}>{currentUser?.username}</p>
+            <p className={styles.userHandle}>{currentUser?.affiliation || currentUser?.username}</p>
           </div>
           <button className={styles.logoutBtn} onClick={handleLogout} title="로그아웃">↩</button>
         </div>
@@ -83,7 +82,7 @@ export default function Layout() {
       <main className={styles.main}>
         <div className={styles.mobileHeader}>
           <button className={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
-          <span className={styles.mobileLogo} onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>Teamp</span>
+          <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
           <div style={{ width: 40 }} />
         </div>
         <div className={styles.content}>
