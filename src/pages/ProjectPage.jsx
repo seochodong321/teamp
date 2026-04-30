@@ -1,16 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import CalendarInline from '../components/CalendarInline.jsx'
 import styles from './ProjectPage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
-const ROOM_COLORS = [
-  { color: '#534AB7', colorBg: '#EEEDFE' },
-  { color: '#0F6E56', colorBg: '#E1F5EE' },
-  { color: '#993C1D', colorBg: '#FAECE7' },
-  { color: '#185FA5', colorBg: '#E6F1FB' },
-  { color: '#854F0B', colorBg: '#FAEEDA' },
-]
 
 export default function ProjectPage() {
   const { projectId } = useParams()
@@ -19,14 +13,14 @@ export default function ProjectPage() {
     projects, currentUser,
     addAnnouncement, deleteAnnouncement,
     getProgress, getDday, getVisibleRooms, canManage,
-    updateMemberRole, toggleMemberRoom, transferLeader,
+    updateMemberRole, setMemberRooms, transferLeader,
     reorderRooms, archiveProject, extendProject,
-    formatUnread, isExpired, getOrCreateDmRoom,
+    formatUnread, isExpired, getOrCreateDmRoom, addRoom,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
-  const [tab, setTab]             = useState('rooms')
-  const [dragIdx, setDragIdx]     = useState(null)
+  const [tab, setTab]               = useState('rooms')
+  const [dragIdx, setDragIdx]       = useState(null)
   const [showExtend, setShowExtend] = useState(false)
   const [newEndDate, setNewEndDate] = useState('')
 
@@ -35,101 +29,88 @@ export default function ProjectPage() {
   const [newRoomName, setNewRoomName] = useState('')
 
   // 게시판
-  const [boardView, setBoardView]   = useState('list') // 'list' | 'write' | 'detail'
+  const [boardView, setBoardView]     = useState('list')
   const [selectedAnn, setSelectedAnn] = useState(null)
-  const [annTitle, setAnnTitle]     = useState('')
-  const [annContent, setAnnContent] = useState('')
+  const [annTitle, setAnnTitle]       = useState('')
+  const [annContent, setAnnContent]   = useState('')
   const [annIsGlobal, setAnnIsGlobal] = useState(false)
-  const [annFile, setAnnFile]       = useState(null)
+  const [annFile, setAnnFile]         = useState(null)
   const fileRef = useRef(null)
 
   // 멤버 프로필 모달
   const [profileMember, setProfileMember] = useState(null)
 
-  // 권한 관리 - 임시 저장 (저장 버튼 누를 때 적용)
-  const [pendingRoles, setPendingRoles]   = useState({})
-  const [pendingRooms, setPendingRooms]   = useState({})
-  const [savedManage, setSavedManage]     = useState(false)
+  // 권한 관리
+  const [pendingRoles, setPendingRoles] = useState({})
+  const [pendingRooms, setPendingRooms] = useState({})
+  const [saveMsg, setSaveMsg]           = useState('')
+
+  // 초대 링크
+  const [inviteCopied, setInviteCopied] = useState(false)
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
 
-  const isLeader    = project.leaderId === currentUser.id
-  const iCanManage  = canManage(project, currentUser.id)
-  const progress    = getProgress(project)
-  const dday        = getDday(project.endDate)
-  const expired     = isExpired(project.endDate)
+  const isLeader     = project.leaderId === currentUser.id
+  const iCanManage   = canManage(project, currentUser.id)
+  const progress     = getProgress(project)
+  const dday         = getDday(project.endDate)
+  const expired      = isExpired(project.endDate)
   const visibleRooms = getVisibleRooms(project, currentUser.id)
-  const today       = new Date().toISOString().split('T')[0]
+  const today        = new Date().toISOString().split('T')[0]
+  const inviteLink   = `${window.location.origin}/join/${project.inviteCode || project.id}`
 
-  // 권한 관리 탭 열 때 현재 상태로 초기화
+  const handleCopyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteLink)
+    } catch {
+      // fallback
+      const el = document.createElement('textarea')
+      el.value = inviteLink
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    }
+    setInviteCopied(true)
+    setTimeout(() => setInviteCopied(false), 2500)
+  }
+
   const initManage = () => {
-    const roles = {}
-    const rooms = {}
+    const roles = {}, rooms = {}
     project.members.filter((m) => m.id !== currentUser.id).forEach((m) => {
       roles[m.id] = m.role
       rooms[m.id] = [...m.roomIds]
     })
-    setPendingRoles(roles)
-    setPendingRooms(rooms)
-    setSavedManage(false)
+    setPendingRoles(roles); setPendingRooms(rooms); setSaveMsg('')
   }
 
-  // 저장 버튼
   const saveManage = () => {
     project.members.filter((m) => m.id !== currentUser.id).forEach((m) => {
       if (pendingRoles[m.id] !== m.role) updateMemberRole(project.id, m.id, pendingRoles[m.id])
-      // 룸 권한 동기화
-      const pending = pendingRooms[m.id] || []
-      const current = m.roomIds
-      project.rooms.forEach((r) => {
-        const shouldHave = pending.includes(r.id)
-        const has = current.includes(r.id)
-        if (shouldHave !== has) toggleMemberRoom(project.id, m.id, r.id)
-      })
+      if ((pendingRoles[m.id] ?? m.role) === 'member') setMemberRooms(project.id, m.id, pendingRooms[m.id] || [])
     })
-    setSavedManage(true)
-    setTimeout(() => setSavedManage(false), 2000)
+    setSaveMsg('저장됐어요!')
+    setTimeout(() => setSaveMsg(''), 2000)
   }
 
-  // 팀 채팅방 추가
   const handleAddRoom = () => {
     if (!newRoomName.trim()) return
-    const colorIdx = project.rooms.filter((r) => !r.isDm).length % ROOM_COLORS.length
-    const newRoom = {
-      id: `room_${Date.now()}`,
-      name: newRoomName.trim(),
-      lastMessage: '채팅방이 생성됐어요',
-      unread: 0,
-      time: '방금',
-      ...ROOM_COLORS[colorIdx],
-    }
-    // 스토어에 직접 추가
-    const { projects: allProjects } = useStore.getState()
-    useStore.setState({
-      projects: allProjects.map((p) =>
-        p.id !== projectId ? p : { ...p, rooms: [...p.rooms, newRoom] }
-      ),
-    })
-    setNewRoomName('')
-    setShowAddRoom(false)
+    addRoom(project.id, newRoomName)
+    setNewRoomName(''); setShowAddRoom(false)
   }
 
-  // 게시글 작성
   const handleWriteAnn = () => {
     if (!annTitle.trim() || !annContent.trim()) return
-    addAnnouncement(project.id, { title: annTitle.trim(), content: annContent.trim(), isGlobal: annIsGlobal, fileName: annFile?.name || null })
-    setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null)
-    setBoardView('list')
+    addAnnouncement(project.id, { title: annTitle, content: annContent, isGlobal: annIsGlobal, fileName: annFile?.name || null })
+    setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null); setBoardView('list')
   }
 
-  // 1:1 채팅
   const handleDm = (member) => {
     const room = getOrCreateDmRoom(project.id, member.id, member.name)
     setProfileMember(null)
     navigate(`/project/${projectId}/chat/${room.id}`)
   }
 
-  // 드래그
   const handleDragStart = (i) => setDragIdx(i)
   const handleDragOver  = (e, i) => {
     e.preventDefault()
@@ -143,9 +124,9 @@ export default function ProjectPage() {
   const handleDragEnd = () => setDragIdx(null)
 
   const TABS = [
-    ['rooms', '💬 채팅방'],
-    ['board', '📋 게시판'],
-    ['calendar', '📅 캘린더'],
+    ['rooms',   '💬 채팅방'],
+    ['board',   '📋 게시판'],
+    ['calendar','📅 캘린더'],
     ['members', '👥 멤버'],
     ...(iCanManage ? [['manage', '⚙️ 권한 관리']] : []),
   ]
@@ -155,14 +136,16 @@ export default function ProjectPage() {
 
       {/* ── 연장 모달 ── */}
       {showExtend && (
-        <div className={styles.modalBackdrop} onClick={() => setShowExtend(false)}>
+        <div className={styles.backdrop} onClick={() => setShowExtend(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>기간 연장</h3>
             <p className={styles.modalDesc}>새로운 종료일을 선택해주세요</p>
-            <input className={styles.modalInput} type="date" value={newEndDate} min={today} onChange={(e) => setNewEndDate(e.target.value)} />
+            <input className={styles.modalInput} type="date" value={newEndDate} min={today}
+              onChange={(e) => setNewEndDate(e.target.value)} />
             <div className={styles.modalBtns}>
               <button className={styles.modalCancel} onClick={() => setShowExtend(false)}>취소</button>
-              <button className={styles.modalConfirm} onClick={() => { extendProject(project.id, newEndDate); setShowExtend(false) }} disabled={!newEndDate}>연장하기</button>
+              <button className={styles.modalConfirm} disabled={!newEndDate}
+                onClick={() => { extendProject(project.id, newEndDate); setShowExtend(false) }}>연장하기</button>
             </div>
           </div>
         </div>
@@ -170,29 +153,29 @@ export default function ProjectPage() {
 
       {/* ── 멤버 프로필 모달 ── */}
       {profileMember && (
-        <div className={styles.modalBackdrop} onClick={() => setProfileMember(null)}>
+        <div className={styles.backdrop} onClick={() => setProfileMember(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.profileModalClose} onClick={() => setProfileMember(null)}>✕</button>
-            <div className={styles.profileModalAvatar}>{profileMember.name.charAt(0)}</div>
-            <h3 className={styles.profileModalName}>{profileMember.name}</h3>
-            <span className={styles.profileModalRole}>{ROLE_LABEL[profileMember.role]}</span>
-            <div className={styles.profileModalInfo}>
+            <button className={styles.profileClose} onClick={() => setProfileMember(null)}>✕</button>
+            <div className={styles.profileAvatar}>{profileMember.name.charAt(0)}</div>
+            <h3 className={styles.profileName}>{profileMember.name}</h3>
+            <span className={styles.profileRole}>{ROLE_LABEL[profileMember.role]}</span>
+            <div className={styles.profileInfo}>
               {profileMember.affiliation && (
-                <div className={styles.profileModalRow}>
-                  <span className={styles.profileModalKey}>소속</span>
-                  <span className={styles.profileModalVal}>{profileMember.affiliation}</span>
+                <div className={styles.profileRow}>
+                  <span className={styles.profileKey}>소속</span>
+                  <span className={styles.profileVal}>{profileMember.affiliation}</span>
                 </div>
               )}
               {profileMember.email && (
-                <div className={styles.profileModalRow}>
-                  <span className={styles.profileModalKey}>이메일</span>
-                  <span className={styles.profileModalVal}>{profileMember.email}</span>
+                <div className={styles.profileRow}>
+                  <span className={styles.profileKey}>이메일</span>
+                  <span className={styles.profileVal}>{profileMember.email}</span>
                 </div>
               )}
               {profileMember.memo && (
-                <div className={styles.profileModalRow}>
-                  <span className={styles.profileModalKey}>역할</span>
-                  <span className={styles.profileModalVal}>"{profileMember.memo}"</span>
+                <div className={styles.profileRow}>
+                  <span className={styles.profileKey}>역할</span>
+                  <span className={styles.profileVal}>"{profileMember.memo}"</span>
                 </div>
               )}
             </div>
@@ -228,9 +211,9 @@ export default function ProjectPage() {
         </div>
         <div className={styles.headerMeta}>
           <span>📅 {project.startDate} ~ {project.endDate}</span>
-          <span className={styles.metaDot}>·</span>
+          <span className={styles.dot}>·</span>
           <span>👥 {project.members.length}명</span>
-          <span className={styles.metaDot}>·</span>
+          <span className={styles.dot}>·</span>
           <span>💬 {visibleRooms.length}개 채팅방</span>
         </div>
         {expired && isLeader && (
@@ -249,12 +232,7 @@ export default function ProjectPage() {
         {TABS.map(([key, label]) => (
           <button key={key}
             className={`${styles.tab} ${tab === key ? styles.tabActive : ''}`}
-            onClick={() => {
-              if (key === 'calendar') { navigate(`/project/${projectId}/calendar`); return }
-              if (key === 'manage') initManage()
-              setTab(key)
-              setBoardView('list')
-            }}>
+            onClick={() => { if (key === 'manage') initManage(); setBoardView('list'); setTab(key) }}>
             {label}
           </button>
         ))}
@@ -263,7 +241,7 @@ export default function ProjectPage() {
       {/* ── 채팅방 ── */}
       {tab === 'rooms' && (
         <div className={styles.section}>
-          <p className={styles.sectionHint}>드래그해서 순서를 바꿀 수 있어요</p>
+          <p className={styles.hint}>드래그해서 순서를 바꿀 수 있어요</p>
           <div className={styles.roomList}>
             {visibleRooms.map((room, i) => {
               const unread = formatUnread(room.unread || 0)
@@ -288,19 +266,28 @@ export default function ProjectPage() {
             })}
           </div>
 
+          {/* 팀 채팅방 추가 — 디자인 통일 */}
           {iCanManage && (
-            <>
+            <div className={styles.addRoomWrap}>
               {showAddRoom ? (
                 <div className={styles.addRoomForm}>
-                  <input className={styles.addRoomInput} value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
-                    placeholder="팀 채팅방 이름" onKeyDown={(e) => e.key === 'Enter' && handleAddRoom()} autoFocus />
+                  <input
+                    className={styles.addRoomInput}
+                    value={newRoomName}
+                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="채팅방 이름을 입력하세요"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddRoom() }}
+                  />
                   <button className={styles.addRoomConfirm} onClick={handleAddRoom}>추가</button>
                   <button className={styles.addRoomCancel} onClick={() => { setShowAddRoom(false); setNewRoomName('') }}>취소</button>
                 </div>
               ) : (
-                <button className={styles.addRoom} onClick={() => setShowAddRoom(true)}>+ 팀 채팅방 추가</button>
+                <button className={styles.addRoomTrigger} onClick={() => setShowAddRoom(true)}>
+                  + 팀 채팅방 추가
+                </button>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
@@ -311,67 +298,97 @@ export default function ProjectPage() {
           {/* 목록 */}
           {boardView === 'list' && (
             <>
-              <div className={styles.boardHeader}>
-                <p className={styles.boardDesc}>모든 팀원이 글을 작성할 수 있어요</p>
-                <button className={styles.writeBtn} onClick={() => { setBoardView('write'); setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null) }}>
+              <div className={styles.boardToolbar}>
+                <div>
+                  <h3 className={styles.boardTitle}>게시판</h3>
+                  <p className={styles.boardDesc}>모든 팀원이 글을 작성할 수 있어요</p>
+                </div>
+                <button className={styles.writeBtn}
+                  onClick={() => { setBoardView('write'); setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null) }}>
                   ✏️ 글쓰기
                 </button>
               </div>
-              {project.announcements.length === 0 && (
-                <div className={styles.emptyState}>
-                  <p className={styles.emptyIcon}>📋</p>
-                  <p>아직 게시글이 없어요</p>
-                  <p className={styles.emptySub}>첫 번째 글을 작성해보세요</p>
+
+              {project.announcements.length === 0 ? (
+                <div className={styles.boardEmpty}>
+                  <div className={styles.boardEmptyIcon}>📋</div>
+                  <p className={styles.boardEmptyTitle}>아직 게시글이 없어요</p>
+                  <p className={styles.boardEmptySub}>첫 번째 글을 작성해보세요</p>
+                  <button className={styles.writeBtn} style={{ marginTop: 12 }}
+                    onClick={() => { setBoardView('write'); setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null) }}>
+                    ✏️ 첫 글 쓰기
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.boardList}>
+                  {project.announcements.map((ann) => (
+                    <div key={ann.id}
+                      className={`${styles.boardCard} ${ann.isGlobal ? styles.boardCardNotice : ''}`}
+                      onClick={() => { setSelectedAnn(ann); setBoardView('detail') }}>
+                      <div className={styles.boardCardLeft}>
+                        {ann.isGlobal
+                          ? <span className={styles.noticeBadge}>📢 공지</span>
+                          : <span className={styles.normalBadge}>일반</span>
+                        }
+                        <div className={styles.boardCardInfo}>
+                          <span className={styles.boardCardTitle}>{ann.title}</span>
+                          <span className={styles.boardCardPreview}>{ann.content.slice(0, 60)}{ann.content.length > 60 ? '...' : ''}</span>
+                        </div>
+                      </div>
+                      <div className={styles.boardCardRight}>
+                        {ann.fileName && <span className={styles.fileChip}>📎 파일</span>}
+                        <span className={styles.boardCardAuthor}>{ann.author}</span>
+                        <span className={styles.boardCardDate}>{ann.createdAt}</span>
+                        <span className={styles.boardCardArrow}>›</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-              <div className={styles.boardList}>
-                {project.announcements.map((ann, i) => (
-                  <div key={ann.id} className={`${styles.boardRow} ${ann.isGlobal ? styles.boardRowGlobal : ''}`}
-                    onClick={() => { setSelectedAnn(ann); setBoardView('detail') }}>
-                    <div className={styles.boardRowLeft}>
-                      {ann.isGlobal && <span className={styles.globalBadge}>📢 공지</span>}
-                      <span className={styles.boardRowTitle}>{ann.title}</span>
-                      {ann.fileName && <span className={styles.boardRowFile}>📎</span>}
-                    </div>
-                    <div className={styles.boardRowRight}>
-                      <span className={styles.boardRowAuthor}>{ann.author}</span>
-                      <span className={styles.boardRowDate}>{ann.createdAt}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </>
           )}
 
           {/* 글쓰기 */}
           {boardView === 'write' && (
-            <div className={styles.writeForm}>
-              <div className={styles.writeFormHeader}>
+            <div className={styles.writeWrap}>
+              <div className={styles.writeHeader}>
                 <button className={styles.backBtn} onClick={() => setBoardView('list')}>← 목록으로</button>
-                <h3 className={styles.writeFormTitle}>새 게시글</h3>
+                <h3 className={styles.writeTitle}>새 게시글</h3>
               </div>
-              <div className={styles.writeField}>
-                <label className={styles.writeLabel}>제목 *</label>
-                <input className={styles.writeInput} value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} placeholder="제목을 입력하세요" autoFocus />
-              </div>
-              <div className={styles.writeField}>
-                <label className={styles.writeLabel}>내용 *</label>
-                <textarea className={styles.writeTextarea} value={annContent} onChange={(e) => setAnnContent(e.target.value)} placeholder="내용을 입력하세요..." rows={8} />
-              </div>
-              <div className={styles.writeOptions}>
-                <label className={`${styles.globalLabel} ${annIsGlobal ? styles.globalLabelOn : ''}`}>
-                  <input type="checkbox" checked={annIsGlobal} onChange={(e) => setAnnIsGlobal(e.target.checked)} />
-                  📢 전체 공지로 등록
-                </label>
-                <button className={styles.attachBtn} onClick={() => fileRef.current.click()}>
-                  📎 {annFile ? annFile.name : '파일 첨부'}
-                </button>
-                <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={(e) => setAnnFile(e.target.files[0])} />
-                {annFile && <button className={styles.attachRemove} onClick={() => setAnnFile(null)}>✕</button>}
-              </div>
-              <div className={styles.writeBtns}>
-                <button className={styles.writeCancelBtn} onClick={() => setBoardView('list')}>취소</button>
-                <button className={styles.writeSubmitBtn} onClick={handleWriteAnn} disabled={!annTitle.trim() || !annContent.trim()}>등록하기</button>
+              <div className={styles.writeForm}>
+                {isLeader && (
+                  <div className={styles.writeTypeRow}>
+                    <button type="button"
+                      className={`${styles.typeBtn} ${!annIsGlobal ? styles.typeBtnActive : ''}`}
+                      onClick={() => setAnnIsGlobal(false)}>📝 일반 게시글</button>
+                    <button type="button"
+                      className={`${styles.typeBtn} ${annIsGlobal ? styles.typeBtnActiveNotice : ''}`}
+                      onClick={() => setAnnIsGlobal(true)}>📢 전체 공지</button>
+                    {annIsGlobal && <span className={styles.noticeHint}>모든 채팅방에 알림이 가요</span>}
+                  </div>
+                )}
+                <div className={styles.writeField}>
+                  <label className={styles.writeLabel}>제목 *</label>
+                  <input className={styles.writeInput} value={annTitle}
+                    onChange={(e) => setAnnTitle(e.target.value)} placeholder="제목을 입력하세요" autoFocus />
+                </div>
+                <div className={styles.writeField}>
+                  <label className={styles.writeLabel}>내용 *</label>
+                  <textarea className={styles.writeTextarea} value={annContent}
+                    onChange={(e) => setAnnContent(e.target.value)} placeholder="내용을 입력하세요..." rows={10} />
+                </div>
+                <div className={styles.writeBottom}>
+                  <button className={styles.attachBtn} onClick={() => fileRef.current.click()}>
+                    📎 {annFile ? annFile.name : '파일 첨부'}
+                  </button>
+                  <input ref={fileRef} type="file" style={{ display: 'none' }}
+                    onChange={(e) => setAnnFile(e.target.files[0])} />
+                  {annFile && <button className={styles.attachRemove} onClick={() => setAnnFile(null)}>✕</button>}
+                  <div style={{ flex: 1 }} />
+                  <button className={styles.cancelBtn} onClick={() => setBoardView('list')}>취소</button>
+                  <button className={styles.submitBtn} onClick={handleWriteAnn}
+                    disabled={!annTitle.trim() || !annContent.trim()}>게시하기</button>
+                </div>
               </div>
             </div>
           )}
@@ -380,39 +397,52 @@ export default function ProjectPage() {
           {boardView === 'detail' && selectedAnn && (
             <div className={styles.detailWrap}>
               <button className={styles.backBtn} onClick={() => setBoardView('list')}>← 목록으로</button>
-              <div className={styles.detailHeader}>
-                {selectedAnn.isGlobal && <span className={styles.globalBadge}>📢 전체 공지</span>}
-                <h2 className={styles.detailTitle}>{selectedAnn.title}</h2>
-                <div className={styles.detailMeta}>
-                  <span>{selectedAnn.author}</span>
-                  <span className={styles.metaDot}>·</span>
-                  <span>{selectedAnn.createdAt}</span>
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  {selectedAnn.isGlobal && <span className={styles.noticeBadge}>📢 공지</span>}
+                  <h2 className={styles.detailTitle}>{selectedAnn.title}</h2>
+                  <div className={styles.detailMeta}>
+                    <div className={styles.detailAuthorAvatar}>{selectedAnn.author.charAt(0)}</div>
+                    <span className={styles.detailAuthor}>{selectedAnn.author}</span>
+                    <span className={styles.dot}>·</span>
+                    <span className={styles.detailDate}>{selectedAnn.createdAt}</span>
+                  </div>
                 </div>
+                <div className={styles.detailDivider} />
+                <div className={styles.detailContent}>{selectedAnn.content}</div>
+                {selectedAnn.fileName && (
+                  <div className={styles.detailFile}>
+                    <span>📎</span><span>{selectedAnn.fileName}</span>
+                  </div>
+                )}
+                {(selectedAnn.authorId === currentUser.id || isLeader) && (
+                  <div className={styles.detailActions}>
+                    <button className={styles.deleteBtn}
+                      onClick={() => { deleteAnnouncement(project.id, selectedAnn.id); setBoardView('list') }}>
+                      🗑️ 삭제하기
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className={styles.detailContent}>{selectedAnn.content}</div>
-              {selectedAnn.fileName && (
-                <div className={styles.detailFile}>
-                  <span>📎</span>
-                  <span>{selectedAnn.fileName}</span>
-                </div>
-              )}
-              {(selectedAnn.authorId === currentUser.id || isLeader) && (
-                <button className={styles.deleteBtn} onClick={() => { deleteAnnouncement(project.id, selectedAnn.id); setBoardView('list') }}>
-                  🗑️ 삭제
-                </button>
-              )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── 캘린더 — 탭 내 인라인 표시 ── */}
+      {tab === 'calendar' && (
+        <div className={styles.section}>
+          <CalendarInline project={project} currentUser={currentUser} />
         </div>
       )}
 
       {/* ── 멤버 ── */}
       {tab === 'members' && (
         <div className={styles.section}>
-          <p className={styles.sectionHint}>멤버를 클릭하면 프로필을 볼 수 있어요</p>
+          <p className={styles.hint}>멤버를 클릭하면 프로필을 볼 수 있어요</p>
           <div className={styles.memberGrid}>
             {project.members.map((m) => (
-              <div key={m.id} className={styles.memberCard} onClick={() => setProfileMember(m)} style={{ cursor: 'pointer' }}>
+              <div key={m.id} className={styles.memberCard} onClick={() => setProfileMember(m)}>
                 <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
                 <div className={styles.memberInfo}>
                   <p className={styles.memberName}>
@@ -420,13 +450,30 @@ export default function ProjectPage() {
                     {m.id === currentUser.id && <span className={styles.meTag}>나</span>}
                   </p>
                   <p className={styles.memberRole}>{ROLE_LABEL[m.role]}</p>
-                  {m.affiliation && <p className={styles.memberAffiliation}>{m.affiliation}</p>}
+                  {m.affiliation && <p className={styles.memberAffil}>{m.affiliation}</p>}
                   {m.memo && <p className={styles.memberMemo}>"{m.memo}"</p>}
                 </div>
+                <span className={styles.memberArrow}>›</span>
               </div>
             ))}
           </div>
-          {iCanManage && <button className={styles.inviteBtn}>+ 팀원 초대</button>}
+
+          {/* 팀원 초대 — 실제 링크 복사 */}
+          <div className={styles.inviteSection}>
+            <div className={styles.inviteSectionHeader}>
+              <p className={styles.inviteSectionTitle}>팀원 초대</p>
+              <p className={styles.inviteSectionDesc}>링크를 공유하면 상대방이 직접 참여 여부를 선택해요</p>
+            </div>
+            <div className={styles.inviteLinkRow}>
+              <div className={styles.inviteLinkBox}>
+                <span className={styles.inviteLinkText}>{inviteLink}</span>
+              </div>
+              <button className={`${styles.copyBtn} ${inviteCopied ? styles.copyBtnDone : ''}`}
+                onClick={handleCopyInvite}>
+                {inviteCopied ? '✅ 복사됨' : '🔗 링크 복사'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -434,58 +481,62 @@ export default function ProjectPage() {
       {tab === 'manage' && iCanManage && (
         <div className={styles.section}>
           <div className={styles.manageTopRow}>
-            <p className={styles.sectionHint}>설정 후 저장 버튼을 눌러야 적용돼요</p>
-            <button className={`${styles.saveManageBtn} ${savedManage ? styles.saveManageBtnDone : ''}`} onClick={saveManage}>
-              {savedManage ? '✓ 저장됨' : '저장하기'}
-            </button>
+            <p className={styles.hint}>변경 후 저장 버튼을 눌러야 적용돼요</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {saveMsg && <span className={styles.saveMsg}>{saveMsg}</span>}
+              <button className={styles.saveBtn} onClick={saveManage}>저장하기</button>
+            </div>
           </div>
           <div className={styles.manageList}>
-            {project.members.filter((m) => m.id !== currentUser.id).map((m) => (
-              <div key={m.id} className={styles.manageCard}>
-                <div className={styles.manageTop}>
-                  <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
-                  <div className={styles.memberInfo}>
-                    <p className={styles.memberName}>{m.name}</p>
-                    <p className={styles.memberRole}>{ROLE_LABEL[pendingRoles[m.id] || m.role]}</p>
-                  </div>
-                  <div className={styles.manageActions}>
-                    <select className={styles.roleSelect} value={pendingRoles[m.id] || m.role}
-                      onChange={(e) => setPendingRoles((prev) => ({ ...prev, [m.id]: e.target.value }))}>
-                      <option value="leader">👑 리더</option>
-                      <option value="sub-leader">⭐ 부리더</option>
-                      <option value="member">팀원</option>
-                    </select>
-                    {isLeader && (pendingRoles[m.id] || m.role) !== 'leader' && (
-                      <button className={styles.transferBtn} onClick={() => { if (window.confirm(`${m.name} 님에게 리더를 양도할까요?`)) transferLeader(project.id, m.id) }}>
-                        리더 양도
-                      </button>
-                    )}
-                  </div>
-                </div>
-                {(pendingRoles[m.id] || m.role) === 'member' && (
-                  <div className={styles.roomAssign}>
-                    <p className={styles.roomAssignLabel}>접근 가능한 채팅방</p>
-                    <div className={styles.roomAssignList}>
-                      {project.rooms.map((r) => {
-                        const checked = (pendingRooms[m.id] || m.roomIds).includes(r.id)
-                        return (
-                          <label key={r.id} className={`${styles.roomAssignItem} ${checked ? styles.roomAssignItemOn : ''}`}
-                            style={checked ? { borderColor: r.color, background: r.colorBg } : {}}>
-                            <input type="checkbox" checked={checked}
-                              onChange={() => {
-                                const cur = pendingRooms[m.id] || [...m.roomIds]
-                                const next = cur.includes(r.id) ? cur.filter((x) => x !== r.id) : [...cur, r.id]
-                                setPendingRooms((prev) => ({ ...prev, [m.id]: next }))
-                              }} />
-                            <span style={checked ? { color: r.color } : {}}>{r.isDm ? '💬' : '#'} {r.name}</span>
-                          </label>
-                        )
-                      })}
+            {project.members.filter((m) => m.id !== currentUser.id).map((m) => {
+              const curRole  = pendingRoles[m.id] ?? m.role
+              const curRooms = pendingRooms[m.id] ?? m.roomIds
+              return (
+                <div key={m.id} className={styles.manageCard}>
+                  <div className={styles.manageTop}>
+                    <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
+                    <div className={styles.memberInfo}>
+                      <p className={styles.memberName}>{m.name}</p>
+                      {m.affiliation && <p className={styles.memberAffil}>{m.affiliation}</p>}
+                    </div>
+                    <div className={styles.manageRight}>
+                      <select className={styles.roleSelect} value={curRole}
+                        onChange={(e) => setPendingRoles((prev) => ({ ...prev, [m.id]: e.target.value }))}>
+                        <option value="sub-leader">⭐ 부리더</option>
+                        <option value="member">팀원</option>
+                      </select>
+                      {isLeader && (
+                        <button className={styles.transferBtn}
+                          onClick={() => { if (window.confirm(`${m.name} 님에게 리더를 양도할까요?`)) transferLeader(project.id, m.id) }}>
+                          리더 양도
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+                  {curRole === 'member' && (
+                    <div className={styles.roomAssign}>
+                      <p className={styles.roomAssignLabel}>접근 가능한 채팅방</p>
+                      <div className={styles.roomAssignList}>
+                        {project.rooms.map((r) => {
+                          const checked = curRooms.includes(r.id)
+                          return (
+                            <label key={r.id}
+                              className={`${styles.roomChip} ${checked ? styles.roomChipOn : ''}`}
+                              style={checked ? { borderColor: r.color, background: r.colorBg, color: r.color } : {}}>
+                              <input type="checkbox" checked={checked} onChange={() => {
+                                const next = checked ? curRooms.filter((x) => x !== r.id) : [...curRooms, r.id]
+                                setPendingRooms((prev) => ({ ...prev, [m.id]: next }))
+                              }} />
+                              {r.isDm ? '💬' : '#'} {r.name}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

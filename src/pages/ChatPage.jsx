@@ -6,29 +6,37 @@ import styles from './ChatPage.module.css'
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead } = useStore()
+  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
-  const room = project?.rooms.find((r) => r.id === roomId)
-  const roomMessages = messages[roomId] || []
 
-  const [text, setText] = useState('')
-  const [mode, setMode] = useState('text')
-  const [pollQ, setPollQ] = useState('')
+  // 일반 채팅방 or DM 방
+  const dmKey = Object.keys(dmRooms).find((k) => dmRooms[k].id === roomId)
+  const dmRoom = dmKey ? dmRooms[dmKey] : null
+  const room = project?.rooms.find((r) => r.id === roomId) || dmRoom
+
+  const roomMessages = messages[roomId] || []
+  const [text, setText]           = useState('')
+  const [mode, setMode]           = useState('text') // 'text' | 'poll'
+  const [pollQ, setPollQ]         = useState('')
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [showToolbar, setShowToolbar] = useState(false)
 
-  // ✅ 한글 조합 중 여부를 추적
   const isComposing = useRef(false)
-  const bottomRef = useRef(null)
-  const fileRef = useRef(null)
+  const bottomRef   = useRef(null)
+  const fileRef     = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     markAsRead(roomId)
   }, [roomMessages.length])
 
-  if (!project || !room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
+  if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
+
+  const isDm      = !!dmRoom
+  const roomName  = isDm ? dmRoom.name : room.name
+  const backLabel = isDm ? '← 뒤로' : `← ${project?.name || ''}`
+  const backPath  = isDm ? `/project/${dmRoom.projectId}` : `/project/${projectId}`
 
   const handleSend = () => {
     if (!text.trim()) return
@@ -36,8 +44,7 @@ export default function ChatPage() {
     setText('')
   }
 
-  const handleKeyDown = (e) => {
-    // ✅ 한글 조합 중이면 Enter 무시 (중복 전송 방지)
+  const handleKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing.current) {
       e.preventDefault()
       handleSend()
@@ -53,38 +60,52 @@ export default function ChatPage() {
   }
 
   const handlePollSend = () => {
-    const validOptions = pollOptions.filter((o) => o.trim())
-    if (!pollQ.trim() || validOptions.length < 2) return
-    sendPoll(roomId, pollQ.trim(), validOptions)
-    setPollQ('')
-    setPollOptions(['', ''])
-    setMode('text')
-    setShowToolbar(false)
+    const valid = pollOptions.filter((o) => o.trim())
+    if (!pollQ.trim() || valid.length < 2) return
+    sendPoll(roomId, pollQ.trim(), valid)
+    setPollQ(''); setPollOptions(['', '']); setMode('text'); setShowToolbar(false)
   }
 
-  const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
+  const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
 
   return (
     <div className={styles.page}>
+      {/* 헤더 */}
       <div className={styles.header}>
-        <button className={styles.back} onClick={() => navigate(`/project/${projectId}`)}>
-          ← {project.name}
-        </button>
+        <button className={styles.back} onClick={() => navigate(backPath)}>{backLabel}</button>
         <div className={styles.headerCenter}>
-          <span className={styles.roomName}># {room.name}</span>
-          <span className={styles.roomMemberCount}>
-            {project.members.filter((m) => m.roomIds.includes(roomId) || m.role === 'leader' || m.role === 'sub-leader').length}명
-          </span>
+          <span className={styles.roomName}>{isDm ? `💬 ${roomName}` : `# ${roomName}`}</span>
+          {!isDm && project && (
+            <span className={styles.roomMeta}>
+              {project.members.filter((m) =>
+                m.role === 'leader' || m.role === 'sub-leader' ||
+                m.roomIds.includes(roomId)
+              ).length}명
+            </span>
+          )}
         </div>
+        <div style={{ width: 80 }} />
       </div>
 
+      {/* 메시지 목록 */}
       <div className={styles.messages}>
         <div className={styles.dateDivider}><span>오늘</span></div>
 
         {roomMessages.map((msg) => {
-          const isMine = msg.senderId === currentUser.id
-          const member = project.members.find((m) => m.id === msg.senderId)
+          const isMine   = msg.senderId === currentUser.id
+          const isSystem = msg.senderId === 'system'
+          const member   = project?.members.find((m) => m.id === msg.senderId)
 
+          // 시스템 알림
+          if (isSystem || msg.type === 'notify') {
+            return (
+              <div key={msg.id} className={styles.systemMsg}>
+                <span>{msg.text}</span>
+              </div>
+            )
+          }
+
+          // 파일
           if (msg.type === 'file') {
             return (
               <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
@@ -93,11 +114,11 @@ export default function ChatPage() {
                   {!isMine && (
                     <span className={styles.sender}>
                       {msg.senderName}
-                      {member && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
+                      {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
                     </span>
                   )}
                   <div className={`${styles.fileBubble} ${isMine ? styles.fileBubbleMine : ''}`}>
-                    <span className={styles.fileIcon}>📎</span>
+                    <span>📎</span>
                     <span className={styles.fileName}>{msg.text}</span>
                   </div>
                   <span className={styles.time}>{msg.time}</span>
@@ -106,6 +127,7 @@ export default function ChatPage() {
             )
           }
 
+          // 투표
           if (msg.type === 'poll') {
             const total = msg.options.reduce((s, o) => s + o.votes.length, 0)
             return (
@@ -114,20 +136,20 @@ export default function ChatPage() {
                 <div className={styles.pollCard}>
                   <div className={styles.pollHeader}>
                     {!isMine && <span className={styles.pollAuthor}>{msg.senderName}</span>}
-                    <span className={styles.pollLabel}>투표</span>
+                    <span className={styles.pollBadge}>📊 투표</span>
                   </div>
                   <p className={styles.pollQuestion}>{msg.text}</p>
                   <div className={styles.pollOptions}>
                     {msg.options.map((opt) => {
-                      const pct = total === 0 ? 0 : Math.round((opt.votes.length / total) * 100)
+                      const pct   = total === 0 ? 0 : Math.round((opt.votes.length / total) * 100)
                       const voted = opt.votes.includes(currentUser.id)
                       return (
                         <button key={opt.id}
                           className={`${styles.pollOption} ${voted ? styles.pollOptionVoted : ''}`}
                           onClick={() => votePoll(roomId, msg.id, opt.id)}>
-                          <div className={styles.pollOptionBar} style={{ width: `${pct}%` }} />
-                          <span className={styles.pollOptionLabel}>{opt.label}</span>
-                          <span className={styles.pollOptionPct}>{pct}%</span>
+                          <div className={styles.pollBar} style={{ width: `${pct}%` }} />
+                          <span className={styles.pollOptLabel}>{opt.label}</span>
+                          <span className={styles.pollOptPct}>{pct}%</span>
                         </button>
                       )
                     })}
@@ -138,6 +160,7 @@ export default function ChatPage() {
             )
           }
 
+          // 일반 텍스트
           return (
             <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
               {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
@@ -145,7 +168,7 @@ export default function ChatPage() {
                 {!isMine && (
                   <span className={styles.sender}>
                     {msg.senderName}
-                    {member && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
+                    {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
                   </span>
                 )}
                 <div className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}>
@@ -159,27 +182,27 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* 투표 만들기 UI */}
+      {/* 투표 만들기 */}
       {mode === 'poll' && (
         <div className={styles.pollMaker}>
           <div className={styles.pollMakerHeader}>
             <span className={styles.pollMakerTitle}>투표 만들기</span>
-            <button onClick={() => setMode('text')} className={styles.pollMakerClose}>✕</button>
+            <button onClick={() => setMode('text')}>✕</button>
           </div>
-          <input className={styles.pollMakerInput} value={pollQ} onChange={(e) => setPollQ(e.target.value)}
-            placeholder="질문을 입력하세요" />
+          <input className={styles.pollMakerInput} value={pollQ}
+            onChange={(e) => setPollQ(e.target.value)} placeholder="질문을 입력하세요" />
           {pollOptions.map((opt, i) => (
-            <div key={i} className={styles.pollOptionRow}>
+            <div key={i} className={styles.pollOptRow}>
               <input className={styles.pollMakerInput} value={opt}
                 onChange={(e) => { const o = [...pollOptions]; o[i] = e.target.value; setPollOptions(o) }}
                 placeholder={`선택지 ${i + 1}`} />
               {pollOptions.length > 2 && (
-                <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))} className={styles.removeOpt}>✕</button>
+                <button onClick={() => setPollOptions(pollOptions.filter((_, j) => j !== i))}>✕</button>
               )}
             </div>
           ))}
           {pollOptions.length < 5 && (
-            <button className={styles.addOpt} onClick={() => setPollOptions([...pollOptions, ''])}>+ 선택지 추가</button>
+            <button className={styles.addOptBtn} onClick={() => setPollOptions([...pollOptions, ''])}>+ 선택지 추가</button>
           )}
           <button className={styles.pollSendBtn} onClick={handlePollSend}>투표 등록</button>
         </div>
@@ -187,15 +210,16 @@ export default function ChatPage() {
 
       {/* 입력창 */}
       <div className={styles.inputArea}>
-        <div className={styles.toolbar}>
-          <button className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
+        <div className={styles.toolbarWrap}>
+          <button
+            className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
             onClick={() => setShowToolbar(!showToolbar)}>+</button>
           {showToolbar && (
             <div className={styles.toolMenu}>
-              <button className={styles.toolMenuItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
+              <button className={styles.toolItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
                 📎 파일 공유
               </button>
-              <button className={styles.toolMenuItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
+              <button className={styles.toolItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
                 📊 투표 만들기
               </button>
             </div>
@@ -205,17 +229,15 @@ export default function ChatPage() {
           className={styles.input}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onKeyDown={handleKey}
           onCompositionStart={() => { isComposing.current = true }}
           onCompositionEnd={() => { isComposing.current = false }}
-          placeholder="메시지 입력... (Enter 전송, Shift+Enter 줄바꿈)"
+          placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"
           rows={1}
         />
         <button
           className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''}`}
-          onClick={handleSend}
-          disabled={!text.trim()}
-        >↑</button>
+          onClick={handleSend} disabled={!text.trim()}>↑</button>
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFile} />
       </div>
     </div>

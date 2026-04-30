@@ -1,7 +1,6 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - var(--header-height) - 48px);
+  display: flex; flex-direction: column;
+  height: calc(100vh - 48px);
   max-width: 860px;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -10,68 +9,35 @@
 }
 
 @media (max-width: 768px) {
-  .page { height: calc(100vh - var(--header-height) - 32px); }
+  .page { height: calc(100vh - var(--header-height) - 32px); border-radius: 0; border: none; }
 }
 
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }
 
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
+.header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .back { font-size: 13px; color: var(--primary); font-weight: 500; white-space: nowrap; }
 .back:hover { text-decoration: underline; }
-
-.headerCenter { flex: 1; }
+.headerCenter { flex: 1; display: flex; align-items: center; gap: 8px; }
 .roomName { font-size: 15px; font-weight: 700; color: var(--text); }
+.roomMeta { font-size: 12px; color: var(--text-tertiary); }
 
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.messages { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
 
-.dateDivider {
-  text-align: center;
-  margin: 8px 0;
-}
-.dateDivider span {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  background: var(--bg-secondary);
-  padding: 3px 12px;
-  border-radius: var(--radius-full);
-}
+.dateDivider { text-align: center; margin: 4px 0; }
+.dateDivider span { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); padding: 3px 12px; border-radius: var(--radius-full); }
+
+.systemMsg { text-align: center; font-size: 12px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: var(--radius-full); padding: 5px 16px; align-self: center; max-width: 80%; }
 
 .row { display: flex; align-items: flex-end; gap: 8px; }
 .rowMine { flex-direction: row-reverse; }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 .bubbleWrap { display: flex; flex-direction: column; gap: 3px; max-width: 65%; }
 .rowMine .bubbleWrap { align-items: flex-end; }
 
-.sender { font-size: 11px; color: var(--text-secondary); }
+.sender { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
+.roleTag { font-size: 11px; }
 
 .bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
 .bubbleOther { background: var(--bg-secondary); color: var(--text); border-top-left-radius: 4px; }
@@ -79,67 +45,46 @@
 
 .fileBubble { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-secondary); font-size: 13px; color: var(--text); }
 .fileBubbleMine { background: var(--primary-light); border-color: #AFA9EC; color: var(--primary-dark); }
-.fileIcon { font-size: 16px; }
 .fileName { font-weight: 500; }
 
 .time { font-size: 10px; color: var(--text-tertiary); }
 
+/* 투표 */
 .pollWrap { display: flex; gap: 8px; }
-.pollCard { flex: 1; max-width: 340px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.pollCard { flex: 1; max-width: 340px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .pollHeader { display: flex; align-items: center; justify-content: space-between; }
 .pollAuthor { font-size: 12px; color: var(--text-secondary); }
-.pollLabel { font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); }
+.pollBadge  { font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); }
 .pollQuestion { font-size: 14px; font-weight: 600; color: var(--text); }
 .pollOptions { display: flex; flex-direction: column; gap: 6px; }
-.pollOption { position: relative; overflow: hidden; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); text-align: left; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text); transition: border-color 0.15s; }
+.pollOption { position: relative; overflow: hidden; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); text-align: left; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text); transition: border-color 0.15s; }
 .pollOption:hover { border-color: var(--primary); }
 .pollOptionVoted { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); font-weight: 600; }
-.pollOptionBar { position: absolute; left: 0; top: 0; height: 100%; background: var(--primary-light); opacity: 0.5; transition: width 0.4s; }
-.pollOptionLabel { position: relative; z-index: 1; }
-.pollOptionPct { position: relative; z-index: 1; font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.pollBar { position: absolute; left: 0; top: 0; height: 100%; background: var(--primary-light); opacity: 0.5; transition: width 0.4s; }
+.pollOptLabel { position: relative; z-index: 1; }
+.pollOptPct   { position: relative; z-index: 1; font-size: 11px; font-weight: 600; color: var(--text-secondary); }
 .pollTotal { font-size: 11px; color: var(--text-tertiary); }
 
-.pollMaker {
-  flex-shrink: 0;
-  border-top: 1px solid var(--border);
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--bg-secondary);
-}
+/* 투표 만들기 */
+.pollMaker { flex-shrink: 0; border-top: 1px solid var(--border); padding: 14px 18px; background: var(--bg-secondary); display: flex; flex-direction: column; gap: 8px; }
 .pollMakerHeader { display: flex; align-items: center; justify-content: space-between; }
 .pollMakerTitle { font-size: 13px; font-weight: 600; color: var(--text); }
-.pollMakerClose { font-size: 14px; color: var(--text-tertiary); }
-.pollMakerInput { height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); padding: 0 12px; font-size: 13px; color: var(--text); width: 100%; transition: border-color 0.15s; }
+.pollMakerInput { height: 36px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); padding: 0 12px; font-size: 13px; color: var(--text); width: 100%; }
 .pollMakerInput:focus { border-color: var(--primary); }
-.pollOptionRow { display: flex; gap: 6px; }
-.removeOpt { font-size: 13px; color: var(--text-tertiary); padding: 0 6px; }
-.addOpt { font-size: 12px; color: var(--primary); align-self: flex-start; }
-.pollSendBtn { align-self: flex-end; padding: 8px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.pollOptRow { display: flex; gap: 6px; }
+.addOptBtn { font-size: 12px; color: var(--primary); align-self: flex-start; }
+.pollSendBtn { align-self: flex-end; padding: 7px 18px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 
-.inputArea {
-  flex-shrink: 0;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--bg);
-  position: relative;
-}
-
-.toolbar { position: relative; }
-.toolBtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); font-size: 18px; font-weight: 300; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+/* 입력창 */
+.inputArea { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--bg); position: relative; }
+.toolbarWrap { position: relative; }
+.toolBtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); font-size: 20px; font-weight: 300; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .toolBtn:hover, .toolBtnActive { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-
 .toolMenu { position: absolute; bottom: 44px; left: 0; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden; min-width: 160px; z-index: 10; }
-.toolMenuItem { display: block; width: 100%; padding: 10px 16px; text-align: left; font-size: 13px; color: var(--text); transition: background 0.15s; }
-.toolMenuItem:hover { background: var(--bg-secondary); }
-
-.input { flex: 1; min-height: 36px; max-height: 120px; border-radius: 18px; border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 16px; font-size: 14px; color: var(--text); resize: none; line-height: 1.5; transition: border-color 0.15s; }
+.toolItem { display: block; width: 100%; padding: 10px 16px; text-align: left; font-size: 13px; color: var(--text); transition: background 0.15s; }
+.toolItem:hover { background: var(--bg-secondary); }
+.input { flex: 1; min-height: 36px; max-height: 120px; border-radius: 18px; border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 16px; font-size: 14px; color: var(--text); resize: none; line-height: 1.5; transition: border-color 0.15s; font-family: inherit; }
 .input:focus { border-color: var(--primary); background: var(--bg); }
-
-.sendBtn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; flex-shrink: 0; }
+.sendBtn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
 .sendBtn:hover { opacity: 0.9; }
 .sendBtnOff { background: var(--border); cursor: not-allowed; }
