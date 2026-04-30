@@ -297,8 +297,11 @@ export default function HomePage() {
                   )}
                   <div className={styles.cardHeader}>
                     <div>
-                      <span className={styles.cardCategory}>{p.category}</span>
-                      <h3 className={styles.cardName}>{p.name}</h3>
+                    <span className={styles.cardCategory}>{p.category}</span>
+                    <h3 className={styles.cardName}>
+                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                      {p.name}
+                    </h3>
                     </div>
                     <span className={`${styles.dday}
                       ${dday === 'D-day' ? styles.ddayUrgent : ''}
@@ -338,8 +341,7 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      {/* ── 완료됨 ── */}
+ {/* ── 완료됨 ── */}
       {archived.length > 0 && (
         <section>
           <h2 className={styles.sectionTitle}>완료됨 ({archived.length})</h2>
@@ -349,7 +351,10 @@ export default function HomePage() {
                 <div className={styles.cardHeader}>
                   <div>
                     <span className={styles.cardCategory}>{p.category}</span>
-                    <h3 className={styles.cardName}>{p.name}</h3>
+                    <h3 className={styles.cardName}>
+                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                      {p.name}
+                    </h3>
                   </div>
                   <span className={styles.archivedBadge}>완료</span>
                 </div>
@@ -360,7 +365,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
       {projects.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>아직 프로젝트가 없어요</p>
