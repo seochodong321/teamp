@@ -5,20 +5,20 @@ import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
-import LoginPage      from './pages/LoginPage.jsx'
-import Layout         from './components/Layout.jsx'
-import HomePage       from './pages/HomePage.jsx'
-import ProjectPage    from './pages/ProjectPage.jsx'
-import ChatPage       from './pages/ChatPage.jsx'
-import CalendarPage   from './pages/CalendarPage.jsx'
-import ProfilePage    from './pages/ProfilePage.jsx'
-import ConnectPage    from './pages/ConnectPage.jsx'
+import LoginPage         from './pages/LoginPage.jsx'
+import JoinPage          from './pages/JoinPage.jsx'
+import Layout            from './components/Layout.jsx'
+import HomePage          from './pages/HomePage.jsx'
+import ProjectPage       from './pages/ProjectPage.jsx'
+import ChatPage          from './pages/ChatPage.jsx'
+import ProfilePage       from './pages/ProfilePage.jsx'
+import ConnectPage       from './pages/ConnectPage.jsx'
 import CreateProjectPage from './pages/CreateProjectPage.jsx'
 
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
   if (!ready) return (
-    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', fontSize:'14px', color:'#6B6B6B' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '14px', color: '#6B6B6B' }}>
       불러오는 중...
     </div>
   )
@@ -55,12 +55,13 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/join/:code" element={<JoinPage />} />
         <Route path="/" element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
           <Route index element={<Navigate to="/home" replace />} />
           <Route path="home"                            element={<HomePage />} />
           <Route path="project/:projectId"              element={<ProjectPage />} />
           <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
-          <Route path="project/:projectId/calendar"     element={<CalendarPage />} />
+          {/* 캘린더는 ProjectPage 탭 안에서 렌더링 — 별도 라우트 없음 */}
           <Route path="create"                          element={<CreateProjectPage />} />
           <Route path="profile"                         element={<ProfilePage />} />
           <Route path="connect"                         element={<ConnectPage />} />
