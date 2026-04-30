@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import CalendarInline from '../components/CalendarInline.jsx'
+import TodoBoard from '../components/TodoBoard.jsx'
 import styles from './ProjectPage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
@@ -24,11 +25,9 @@ export default function ProjectPage() {
   const [showExtend, setShowExtend] = useState(false)
   const [newEndDate, setNewEndDate] = useState('')
 
-  // 팀 채팅방 추가
   const [showAddRoom, setShowAddRoom] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
 
-  // 게시판
   const [boardView, setBoardView]     = useState('list')
   const [selectedAnn, setSelectedAnn] = useState(null)
   const [annTitle, setAnnTitle]       = useState('')
@@ -37,15 +36,12 @@ export default function ProjectPage() {
   const [annFile, setAnnFile]         = useState(null)
   const fileRef = useRef(null)
 
-  // 멤버 프로필 모달
   const [profileMember, setProfileMember] = useState(null)
 
-  // 권한 관리
   const [pendingRoles, setPendingRoles] = useState({})
   const [pendingRooms, setPendingRooms] = useState({})
   const [saveMsg, setSaveMsg]           = useState('')
 
-  // 초대 링크
   const [inviteCopied, setInviteCopied] = useState(false)
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
@@ -63,7 +59,6 @@ export default function ProjectPage() {
     try {
       await navigator.clipboard.writeText(inviteLink)
     } catch {
-      // fallback
       const el = document.createElement('textarea')
       el.value = inviteLink
       document.body.appendChild(el)
@@ -124,10 +119,11 @@ export default function ProjectPage() {
   const handleDragEnd = () => setDragIdx(null)
 
   const TABS = [
-    ['rooms',   '💬 채팅방'],
-    ['board',   '📋 게시판'],
-    ['calendar','📅 캘린더'],
-    ['members', '👥 멤버'],
+    ['rooms',    '💬 채팅방'],
+    ['board',    '📋 게시판'],
+    ['todo',     '✅ 할 일'],
+    ['calendar', '📅 캘린더'],
+    ['members',  '👥 멤버'],
     ...(iCanManage ? [['manage', '⚙️ 권한 관리']] : []),
   ]
 
@@ -266,7 +262,6 @@ export default function ProjectPage() {
             })}
           </div>
 
-          {/* 팀 채팅방 추가 — 디자인 통일 */}
           {iCanManage && (
             <div className={styles.addRoomWrap}>
               {showAddRoom ? (
@@ -295,7 +290,6 @@ export default function ProjectPage() {
       {/* ── 게시판 ── */}
       {tab === 'board' && (
         <div className={styles.section}>
-          {/* 목록 */}
           {boardView === 'list' && (
             <>
               <div className={styles.boardToolbar}>
@@ -348,7 +342,6 @@ export default function ProjectPage() {
             </>
           )}
 
-          {/* 글쓰기 */}
           {boardView === 'write' && (
             <div className={styles.writeWrap}>
               <div className={styles.writeHeader}>
@@ -393,7 +386,6 @@ export default function ProjectPage() {
             </div>
           )}
 
-          {/* 상세 */}
           {boardView === 'detail' && selectedAnn && (
             <div className={styles.detailWrap}>
               <button className={styles.backBtn} onClick={() => setBoardView('list')}>← 목록으로</button>
@@ -429,7 +421,14 @@ export default function ProjectPage() {
         </div>
       )}
 
-      {/* ── 캘린더 — 탭 내 인라인 표시 ── */}
+      {/* ── 할 일 ── */}
+      {tab === 'todo' && (
+        <div className={styles.section}>
+          <TodoBoard project={project} currentUser={currentUser} />
+        </div>
+      )}
+
+      {/* ── 캘린더 ── */}
       {tab === 'calendar' && (
         <div className={styles.section}>
           <CalendarInline project={project} currentUser={currentUser} />
@@ -458,7 +457,6 @@ export default function ProjectPage() {
             ))}
           </div>
 
-          {/* 팀원 초대 — 실제 링크 복사 */}
           <div className={styles.inviteSection}>
             <div className={styles.inviteSectionHeader}>
               <p className={styles.inviteSectionTitle}>팀원 초대</p>

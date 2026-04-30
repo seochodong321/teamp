@@ -5,42 +5,70 @@
 }
 
 :root {
-  --primary: #534AB7;
-  --primary-light: #EEEDFE;
-  --primary-dark: #3C3489;
+  /* ── 메인 보라 (3톤으로 확장) ── */
+  --primary: #534AB7;          /* 기본 */
+  --primary-light: #EEEDFE;    /* 밝은 배경용 */
+  --primary-dark: #3C3489;     /* 진한 강조용 */
+  --primary-soft: #F5F4FE;     /* 더 연한 배경 (NEW) */
+  --primary-hover: #6258C6;    /* 호버 상태 (NEW) */
 
-  --teal: #0F6E56;
+  /* ── 보조 색상 (의미별) ── */
+  --teal: #0F6E56;             /* 성공/완료 */
   --teal-light: #E1F5EE;
+  --teal-soft: #F0FAF6;        /* (NEW) */
 
-  --amber: #854F0B;
+  --amber: #854F0B;            /* 경고/D-day 임박 */
   --amber-light: #FAEEDA;
+  --amber-soft: #FDF8EE;       /* (NEW) */
 
-  --coral: #993C1D;
+  --coral: #993C1D;            /* 위험/긴급 */
   --coral-light: #FAECE7;
+  --coral-soft: #FDF5F1;       /* (NEW) */
 
+  --rose: #B73A6F;             /* 액센트 (NEW) */
+  --rose-light: #FDEEF4;       /* (NEW) */
+
+  /* ── 텍스트 ── */
   --text: #1A1A1A;
-  --text-secondary: #6B6B6B;
-  --text-tertiary: #9E9E9E;
+  --text-secondary: #5C5C5C;   /* 살짝 어둡게 (가독성↑) */
+  --text-tertiary: #8E8E8E;    /* 살짝 어둡게 */
+  --text-quaternary: #B5B5B5;  /* 가장 흐림 (NEW) */
 
+  /* ── 배경 (4톤) ── */
   --bg: #FFFFFF;
-  --bg-secondary: #F7F7F7;
-  --bg-tertiary: #F0F0F0;
+  --bg-secondary: #FAFAF8;     /* 살짝 따뜻하게 */
+  --bg-tertiary: #F4F4F1;
+  --bg-warm: #FBF9F5;          /* 따뜻한 배경 (NEW) */
 
-  --border: #E4E4E4;
-  --border-light: #F0F0F0;
+  /* ── 테두리 ── */
+  --border: #E8E8E4;
+  --border-light: #F2F2EE;
+  --border-strong: #D4D4D0;    /* (NEW) */
 
+  /* ── 모서리 ── */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
+  --radius-2xl: 28px;          /* (NEW) */
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
+  /* ── 그림자 (더 풍부하게) ── */
+  --shadow-xs: 0 1px 2px rgba(20, 14, 60, 0.04);                                    /* (NEW) */
+  --shadow-sm: 0 1px 3px rgba(20, 14, 60, 0.06), 0 1px 2px rgba(20, 14, 60, 0.04); /* 강화 */
+  --shadow-md: 0 4px 12px rgba(20, 14, 60, 0.08), 0 2px 4px rgba(20, 14, 60, 0.04);
+  --shadow-lg: 0 12px 28px rgba(20, 14, 60, 0.12), 0 4px 8px rgba(20, 14, 60, 0.06);
+  --shadow-xl: 0 24px 48px rgba(20, 14, 60, 0.18);                                  /* (NEW) */
+  --shadow-glow: 0 0 0 4px rgba(83, 74, 183, 0.12);                                 /* (NEW) 포커스용 */
 
+  /* ── 레이아웃 ── */
   --sidebar-width: 260px;
   --header-height: 56px;
+
+  /* ── 트랜지션 ── */
+  --transition-fast: 0.12s ease;            /* (NEW) */
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* (NEW) */
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* (NEW) */
 }
 
 html, body, #root {
