@@ -77,3 +77,48 @@
   .dateRow { grid-template-columns: 1fr; }
   .stepLabel { display: none; }
 }
+/* 이모지 선택 */
+.emojiPreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  background: var(--primary-light);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+.emojiBig { font-size: 48px; }
+.emojiPlaceholder { font-size: 13px; color: var(--text-tertiary); }
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+.emojiBtn {
+  aspect-ratio: 1;
+  font-size: 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.emojiBtn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: scale(1.1);
+}
+.emojiBtnActive {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: var(--shadow-glow);
+}
+.labelHint { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
+
+@media (max-width: 600px) {
+  .emojiGrid { grid-template-columns: repeat(6, 1fr); }
+}
