@@ -72,22 +72,23 @@ export default function CreateProjectPage() {
 
             <div className={styles.field}>
               <label className={styles.label}>프로젝트 이모지 * <span style={{ fontSize: 11, color: '#9E9E9E', fontWeight: 400 }}>(필수)</span></label>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, background: '#EEEDFE', borderRadius: 12, border: '1px solid #E4E4E4', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 56, background: '#EEEDFE', borderRadius: 10, border: '1px solid #E4E4E4', marginBottom: 8 }}>
                 {emoji
-                  ? <span style={{ fontSize: 48 }}>{emoji}</span>
-                  : <span style={{ fontSize: 13, color: '#9E9E9E' }}>아래에서 골라주세요</span>}
+                  ? <span style={{ fontSize: 32 }}>{emoji}</span>
+                  : <span style={{ fontSize: 12, color: '#9E9E9E' }}>아래에서 골라주세요</span>}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
                 {EMOJI_OPTIONS.map((em) => (
                   <button type="button" key={em}
                     onClick={() => setEmoji(em)}
                     style={{
                       aspectRatio: '1',
-                      fontSize: 22,
-                      borderRadius: 8,
+                      fontSize: 16,
+                      borderRadius: 6,
                       border: emoji === em ? '2px solid #534AB7' : '1px solid #E4E4E4',
                       background: emoji === em ? '#EEEDFE' : '#FFFFFF',
                       cursor: 'pointer',
+                      padding: 0,
                       transition: 'all 0.15s',
                     }}>
                     {em}

@@ -5,6 +5,12 @@ import styles from './HomePage.module.css'
 
 const CATEGORIES = ['학교', '회사', '스터디', '기타']
 const STEPS = ['기본 정보', '팀 구성', '초대']
+const EMOJI_OPTIONS = [
+  '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
+  '🎨', '🎬', '🎵', '⚽', '🏀', '🏃', '✈️', '🌱',
+  '🍕', '☕', '🐶', '🐱', '🌸', '🌟', '🔥', '💎',
+  '🎮', '📱', '💻', '🛠️', '📝', '📊', '🗓️', '🎉',
+]
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -21,9 +27,11 @@ export default function HomePage() {
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)
   const [step, setStep]           = useState(0)
+  const [emoji, setEmoji]         = useState('')
   const [pName, setPName]         = useState('')
   const [purpose, setPurpose]     = useState('')
   const [category, setCategory]   = useState('학교')
+  const [customCategory, setCustomCategory] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate]     = useState('')
   const [roomNames, setRoomNames] = useState(['개발팀'])
@@ -36,9 +44,10 @@ export default function HomePage() {
   const [newEndDate, setNewEndDate] = useState('')
 
   const today = new Date().toISOString().split('T')[0]
+  const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
 
   const openModal = () => {
-    setPName(''); setPurpose(''); setCategory('학교')
+    setEmoji(''); setPName(''); setPurpose(''); setCategory('학교'); setCustomCategory('')
     setStartDate(''); setEndDate(''); setRoomNames(['개발팀'])
     setNewRoom(''); setDateError(''); setCreated(null); setStep(0)
     setShowModal(true)
@@ -48,6 +57,10 @@ export default function HomePage() {
 
   const goNext = () => {
     if (step === 0) {
+      if (!emoji) {
+        alert('프로젝트를 표현할 이모지를 골라주세요!')
+        return
+      }
       if (!pName.trim() || !startDate || !endDate) {
         alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.')
         return
@@ -59,7 +72,7 @@ export default function HomePage() {
       setDateError('')
     }
     if (step === STEPS.length - 1) {
-      const p = createProject({ name: pName, purpose, category, startDate, endDate, roomNames })
+      const p = createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
       setCreated(p)
       setStep((s) => s + 1)
       return
@@ -72,6 +85,8 @@ export default function HomePage() {
     setRoomNames((prev) => [...prev, newRoom.trim()])
     setNewRoom('')
   }
+
+  const inviteLink = created ? `${window.location.origin}/join/${created.id}` : ''
 
   return (
     <div className={styles.page}>
@@ -98,9 +113,38 @@ export default function HomePage() {
 
             <div className={styles.modalBody}>
 
-              {/* STEP 0 */}
+              {/* STEP 0 — 기본 정보 (이모지 포함) */}
               {step === 0 && (
                 <>
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      프로젝트 이모지 * <span style={{ fontSize: 11, color: '#9E9E9E', fontWeight: 400 }}>(필수)</span>
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 56, background: '#EEEDFE', borderRadius: 10, border: '1px solid #E4E4E4', marginBottom: 8 }}>
+                      {emoji
+                        ? <span style={{ fontSize: 32 }}>{emoji}</span>
+                        : <span style={{ fontSize: 12, color: '#9E9E9E' }}>아래에서 골라주세요</span>}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
+                      {EMOJI_OPTIONS.map((em) => (
+                        <button type="button" key={em}
+                          onClick={() => setEmoji(em)}
+                          style={{
+                            aspectRatio: '1',
+                            fontSize: 16,
+                            borderRadius: 6,
+                            border: emoji === em ? '2px solid #534AB7' : '1px solid #E4E4E4',
+                            background: emoji === em ? '#EEEDFE' : '#FFFFFF',
+                            cursor: 'pointer',
+                            padding: 0,
+                            transition: 'all 0.15s',
+                          }}>
+                          {em}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className={styles.field}>
                     <label className={styles.label}>프로젝트 이름 *</label>
                     <input className={styles.input} value={pName} onChange={(e) => setPName(e.target.value)} placeholder="예) 2025 졸업작품" autoFocus />
@@ -118,6 +162,15 @@ export default function HomePage() {
                           onClick={() => setCategory(c)}>{c}</button>
                       ))}
                     </div>
+                    {category === '기타' && (
+                      <input
+                        className={styles.input}
+                        style={{ marginTop: 8 }}
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="카테고리를 직접 입력하세요 (예: 동아리, 연구팀)"
+                      />
+                    )}
                   </div>
                   <div className={styles.dateRow}>
                     <div className={styles.field}>
@@ -136,7 +189,7 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* STEP 1 */}
+              {/* STEP 1 — 팀 구성 */}
               {step === 1 && (
                 <>
                   <div className={styles.defaultRooms}>
@@ -170,8 +223,8 @@ export default function HomePage() {
                     <div className={styles.addRoomRow}>
                       <input className={styles.input} value={newRoom}
                         onChange={(e) => setNewRoom(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-                        placeholder="팀 채팅방 이름" />
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addRoom() } }}
+                        placeholder="팀 채팅방 이름 (Enter로 추가)" />
                       <button type="button" className={styles.addRoomBtn} onClick={addRoom}>추가</button>
                     </div>
                   </div>
@@ -179,16 +232,14 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* STEP 2 */}
+              {/* STEP 2 — 초대 */}
               {step === 2 && (
                 <>
                   <p className={styles.label}>초대 링크</p>
                   <div className={styles.linkBox}>
-                    <span className={styles.linkText}>teamp.app/join/abc123</span>
-                    <button type="button" className={styles.linkCopy}
-                      onClick={() => alert('링크가 복사됐어요!')}>복사</button>
+                    <span className={styles.linkText}>프로젝트 생성 후 링크가 만들어져요</span>
                   </div>
-                  <p className={styles.inviteHint}>💡 프로젝트 생성 후에도 언제든 초대할 수 있어요</p>
+                  <p className={styles.inviteHint}>💡 프로젝트 생성 후 멤버 탭에서 초대 링크를 복사할 수 있어요</p>
                 </>
               )}
 
@@ -197,7 +248,12 @@ export default function HomePage() {
                 <div className={styles.doneWrap}>
                   <div className={styles.doneIcon}>✓</div>
                   <p className={styles.doneTitle}>프로젝트가 만들어졌어요!</p>
-                  <p className={styles.doneSub}>{created.name}</p>
+                  <p className={styles.doneSub}>{emoji} {created.name}</p>
+                  <div className={styles.linkBox} style={{ marginTop: 12, width: '100%' }}>
+                    <span className={styles.linkText}>{inviteLink}</span>
+                    <button type="button" className={styles.linkCopy}
+                      onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -297,11 +353,11 @@ export default function HomePage() {
                   )}
                   <div className={styles.cardHeader}>
                     <div>
-                    <span className={styles.cardCategory}>{p.category}</span>
-                    <h3 className={styles.cardName}>
-                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
-                      {p.name}
-                    </h3>
+                      <span className={styles.cardCategory}>{p.category}</span>
+                      <h3 className={styles.cardName}>
+                        {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                        {p.name}
+                      </h3>
                     </div>
                     <span className={`${styles.dday}
                       ${dday === 'D-day' ? styles.ddayUrgent : ''}
@@ -341,7 +397,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
- {/* ── 완료됨 ── */}
+
+      {/* ── 완료됨 ── */}
       {archived.length > 0 && (
         <section>
           <h2 className={styles.sectionTitle}>완료됨 ({archived.length})</h2>
@@ -365,6 +422,7 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
       {projects.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyTitle}>아직 프로젝트가 없어요</p>
