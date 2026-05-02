@@ -99,6 +99,7 @@ export const useStore = create((set, get) => ({
       name: name || '사용자',
       username: `@${(email || 'user').split('@')[0]}`,
       bio: '',
+      oneliner: extra.oneliner || '',
       email: email || '',
       affiliation: extra.affiliation || '',
       phone: extra.phone || '',
@@ -457,7 +458,7 @@ export const useStore = create((set, get) => ({
     const project = {
       id: projectId,
       inviteCode: projectId,
-      name: data.name, purpose: data.purpose, category: data.category,
+      name: data.name, emoji: data.emoji || '📁', purpose: data.purpose, category: data.category,
       startDate: data.startDate, endDate: data.endDate,
       status: 'active', leaderId: currentUser.id,
       members: [{
@@ -566,6 +567,12 @@ export const useStore = create((set, get) => ({
 
   togglePublic: (projectId) =>
     set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? { ...p, isPublic: !p.isPublic } : p) })),
+
+  // ─── 프로필 편집 ──────────────────────────────────────
+  updateProfile: (updates) =>
+    set((s) => ({
+      currentUser: { ...s.currentUser, ...updates },
+    })),
 
   updateMyMemo: (projectId, memo) => {
     const { currentUser } = get()
