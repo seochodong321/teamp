@@ -3,14 +3,17 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import NotificationPanel from './NotificationPanel.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
-  const { projects, currentUser, logout, formatUnread } = useStore()
+  const { projects, currentUser, logout, formatUnread, notifications } = useStore()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
 
   const active = projects.filter((p) => p.status === 'active')
+  const unreadCount = (notifications || []).filter((n) => !n.read).length
 
   const handleLogout = async () => {
     try { await signOut(auth) } catch {}
@@ -25,9 +28,23 @@ export default function Layout() {
       {mobileOpen && <div className={styles.overlay} onClick={close} />}
 
       <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
-        <div className={styles.logo} onClick={() => { navigate('/home'); close() }}>
-          <span className={styles.logoMark}>T</span>
-          <span className={styles.logoText}>Teamp</span>
+        <div className={styles.logoRow}>
+          <div className={styles.logo} onClick={() => { navigate('/home'); close() }}>
+            <span className={styles.logoMark}>T</span>
+            <span className={styles.logoText}>Teamp</span>
+          </div>
+          <button
+            className={styles.notiBtn}
+            onClick={() => setShowNotifications(true)}
+            title="알림"
+          >
+            🔔
+            {unreadCount > 0 && (
+              <span className={styles.notiBadge}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
         </div>
 
         <nav className={styles.nav}>
@@ -46,7 +63,10 @@ export default function Layout() {
                     className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
                     onClick={close}>
                     <span className={styles.navDot} style={{ background: p.rooms.find((r) => !r.isDm)?.color || 'var(--primary)' }} />
-                    <span className={styles.navProjectName}>{p.name}</span>
+                    <span className={styles.navProjectName}>
+                      {p.emoji && <span style={{ marginRight: 4 }}>{p.emoji}</span>}
+                      {p.name}
+                    </span>
                     {totalUnread > 0 && <span className={styles.navBadge}>{formatUnread(totalUnread)}</span>}
                   </NavLink>
                 )
@@ -83,12 +103,23 @@ export default function Layout() {
         <div className={styles.mobileHeader}>
           <button className={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
           <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
-          <div style={{ width: 40 }} />
+          <button
+            className={styles.mobileNotiBtn}
+            onClick={() => setShowNotifications(true)}
+          >
+            🔔
+            {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          </button>
         </div>
         <div className={styles.content}>
           <Outlet />
         </div>
       </main>
+
+      <NotificationPanel
+        open={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </div>
   )
 }

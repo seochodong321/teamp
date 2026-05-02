@@ -92,6 +92,7 @@ export const useStore = create((set, get) => ({
   roomOrders: {},
   dmRooms: {},
   connects: [],
+  notifications: [],
 
   login: (name, email, uid, extra = {}) => {
     const user = {
@@ -110,12 +111,24 @@ export const useStore = create((set, get) => ({
       projects: [makeTutorialProject(user.id, user.name)],
       messages: makeTutorialMessages(),
       connects: [],
+      notifications: [
+        {
+          id: 'noti_welcome',
+          type: 'welcome',
+          title: '🎉 Teamp에 오신 걸 환영해요!',
+          message: '둘러보면서 Teamp 사용방법을 익혀보세요',
+          projectId: 'proj_tutorial',
+          link: '/project/proj_tutorial',
+          read: false,
+          createdAt: Date.now(),
+        },
+      ],
     })
   },
 
   logout: () => set({
     isLoggedIn: false, currentUser: null,
-    projects: [], messages: {}, roomOrders: {}, dmRooms: {}, connects: [], invites: [],
+    projects: [], messages: {}, roomOrders: {}, dmRooms: {}, connects: [], invites: [], notifications: [],
   }),
 
   getProgress: (project) => project.status === 'archived' ? 100 : calcProgress(project.startDate, project.endDate),
@@ -191,6 +204,16 @@ export const useStore = create((set, get) => ({
       },
       connects: [...s.connects, ...newConnects],
     }))
+    // 기존 멤버들에게 알림
+    project.members.forEach((m) => {
+      get().addNotification({
+        type: 'invite',
+        title: `🎉 새 멤버가 참여했어요`,
+        message: `${currentUser.name} 님이 ${project.emoji || ''} ${project.name}에 참여했어요`,
+        projectId: project.id,
+        link: `/project/${project.id}`,
+      })
+    })
     return { success: true, projectId: project.id }
   },
 
@@ -358,6 +381,14 @@ export const useStore = create((set, get) => ({
             messages: { ...s.messages, [allRoom.id]: [...(s.messages[allRoom.id] || []), notifyMsg] },
           }))
         }
+        // 알림 추가
+        get().addNotification({
+          type: 'todo',
+          title: `✅ 새 할 일이 배정됐어요`,
+          message: title,
+          projectId,
+          link: `/project/${projectId}`,
+        })
       }
     }
     set((s) => ({
@@ -573,6 +604,39 @@ export const useStore = create((set, get) => ({
     set((s) => ({
       currentUser: { ...s.currentUser, ...updates },
     })),
+    
+// ─── 알림 ─────────────────────────────────────────────
+  addNotification: (noti) =>
+    set((s) => ({
+      notifications: [
+        {
+          id: `noti_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          read: false,
+          createdAt: Date.now(),
+          ...noti,
+        },
+        ...s.notifications,
+      ].slice(0, 100), // 최대 100개만 보관
+    })),
+
+  markNotificationRead: (notiId) =>
+    set((s) => ({
+      notifications: s.notifications.map((n) =>
+        n.id === notiId ? { ...n, read: true } : n
+      ),
+    })),
+
+  markAllNotificationsRead: () =>
+    set((s) => ({
+      notifications: s.notifications.map((n) => ({ ...n, read: true })),
+    })),
+
+  removeNotification: (notiId) =>
+    set((s) => ({
+      notifications: s.notifications.filter((n) => n.id !== notiId),
+    })),
+
+  clearAllNotifications: () => set({ notifications: [] }),
 
   updateMyMemo: (projectId, memo) => {
     const { currentUser } = get()
