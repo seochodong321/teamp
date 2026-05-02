@@ -223,7 +223,12 @@ export default function HomePage() {
                     <div className={styles.addRoomRow}>
                       <input className={styles.input} value={newRoom}
                         onChange={(e) => setNewRoom(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addRoom() } }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            if (newRoom.trim()) addRoom()
+                          }
+                        }}
                         placeholder="팀 채팅방 이름 (Enter로 추가)" />
                       <button type="button" className={styles.addRoomBtn} onClick={addRoom}>추가</button>
                     </div>
