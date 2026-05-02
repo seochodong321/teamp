@@ -211,7 +211,7 @@ export const useStore = create((set, get) => ({
         title: `🎉 새 멤버가 참여했어요`,
         message: `${currentUser.name} 님이 ${project.emoji || ''} ${project.name}에 참여했어요`,
         projectId: project.id,
-        link: `/project/${project.id}`,
+        link: `/project/${projectId}?tab=todo`,
       })
     })
     return { success: true, projectId: project.id }
@@ -387,7 +387,7 @@ export const useStore = create((set, get) => ({
           title: `✅ 새 할 일이 배정됐어요`,
           message: title,
           projectId,
-          link: `/project/${projectId}`,
+          link: `/project/${projectId}?tab=board`,
         })
       }
     }

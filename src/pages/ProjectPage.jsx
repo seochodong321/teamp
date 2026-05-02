@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import CalendarInline from '../components/CalendarInline.jsx'
 import TodoBoard from '../components/TodoBoard.jsx'
@@ -10,6 +10,8 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 export default function ProjectPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
   const {
     projects, currentUser,
     addAnnouncement, deleteAnnouncement,
@@ -20,7 +22,7 @@ export default function ProjectPage() {
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
-  const [tab, setTab]               = useState('rooms')
+  const [tab, setTab] = useState(tabParam || 'rooms')
   const [dragIdx, setDragIdx]       = useState(null)
   const [showExtend, setShowExtend] = useState(false)
   const [newEndDate, setNewEndDate] = useState('')
@@ -43,6 +45,10 @@ export default function ProjectPage() {
   const [saveMsg, setSaveMsg]           = useState('')
 
   const [inviteCopied, setInviteCopied] = useState(false)
+
+  React.useEffect(() => {
+    if (tabParam) setTab(tabParam)
+  }, [tabParam])
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
 
