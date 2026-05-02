@@ -638,6 +638,27 @@ export const useStore = create((set, get) => ({
 
   clearAllNotifications: () => set({ notifications: [] }),
 
+// ─── 다크 모드 ─────────────────────────────────────────
+  theme: (typeof window !== 'undefined' && localStorage.getItem('teamp-theme')) || 'light',
+
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('teamp-theme', theme)
+      if (theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark')
+      } else {
+        document.documentElement.removeAttribute('data-theme')
+      }
+    }
+    set({ theme })
+  },
+
+  toggleTheme: () => {
+    const current = get().theme
+    const next = current === 'dark' ? 'light' : 'dark'
+    get().setTheme(next)
+  },
+
   updateMyMemo: (projectId, memo) => {
     const { currentUser } = get()
     get().updateMemberMemo(projectId, currentUser.id, memo)

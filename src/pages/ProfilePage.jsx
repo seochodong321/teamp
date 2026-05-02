@@ -10,7 +10,7 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, togglePublic, updateMemberMemo, updateProfile, logout } = useStore()
+  const { currentUser, projects, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 편집 모달 상태
@@ -260,6 +260,34 @@ export default function ProfilePage() {
         </div>
         <button className={styles.upgradeBtn}>업그레이드 →</button>
       </div>
+      
+      {/* 환경 설정 */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>환경 설정</h3>
+          <p className={styles.sectionDesc}>나에게 맞는 환경을 설정하세요</p>
+        </div>
+        <div className={styles.themeRow}>
+          <div className={styles.themeInfo}>
+            <span className={styles.themeIcon}>{theme === 'dark' ? '🌙' : '☀️'}</span>
+            <div>
+              <p className={styles.themeName}>{theme === 'dark' ? '다크 모드' : '라이트 모드'}</p>
+              <p className={styles.themeDesc}>
+                {theme === 'dark' ? '눈이 편한 어두운 배경이에요' : '깔끔한 밝은 배경이에요'}
+              </p>
+            </div>
+          </div>
+          <button
+            className={`${styles.toggle} ${theme === 'dark' ? styles.toggleOn : styles.toggleOff}`}
+            onClick={toggleTheme}
+            aria-label="다크 모드 전환"
+          >
+            <span className={styles.toggleKnob} />
+            <span className={styles.toggleLabel}>{theme === 'dark' ? 'ON' : 'OFF'}</span>
+          </button>
+        </div>
+      </div>
     </div>
+    
   )
 }
