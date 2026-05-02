@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import CalendarInline from '../components/CalendarInline.jsx'
@@ -46,7 +46,7 @@ export default function ProjectPage() {
 
   const [inviteCopied, setInviteCopied] = useState(false)
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (tabParam) setTab(tabParam)
   }, [tabParam])
 
