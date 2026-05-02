@@ -224,7 +224,7 @@ export default function HomePage() {
                       <input className={styles.input} value={newRoom}
                         onChange={(e) => setNewRoom(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
                             e.preventDefault()
                             if (newRoom.trim()) addRoom()
                           }

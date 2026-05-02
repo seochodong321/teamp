@@ -270,7 +270,9 @@ export default function ProjectPage() {
                     onChange={(e) => setNewRoomName(e.target.value)}
                     placeholder="채팅방 이름을 입력하세요"
                     autoFocus
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddRoom() }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleAddRoom()
+                    }}
                   />
                   <button className={styles.addRoomConfirm} onClick={handleAddRoom}>추가</button>
                   <button className={styles.addRoomCancel} onClick={() => { setShowAddRoom(false); setNewRoomName('') }}>취소</button>
