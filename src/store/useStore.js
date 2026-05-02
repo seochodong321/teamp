@@ -644,10 +644,16 @@ export const useStore = create((set, get) => ({
   setTheme: (theme) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('teamp-theme', theme)
+      const html = document.documentElement
+      const body = document.body
       if (theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark')
+        html.setAttribute('data-theme', 'dark')
+        body.setAttribute('data-theme', 'dark')
+        html.classList.add('dark')
       } else {
-        document.documentElement.removeAttribute('data-theme')
+        html.removeAttribute('data-theme')
+        body.removeAttribute('data-theme')
+        html.classList.remove('dark')
       }
     }
     set({ theme })

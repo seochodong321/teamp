@@ -5,70 +5,117 @@
 }
 
 :root {
-  /* ── 메인 보라 (3톤으로 확장) ── */
-  --primary: #534AB7;          /* 기본 */
-  --primary-light: #EEEDFE;    /* 밝은 배경용 */
-  --primary-dark: #3C3489;     /* 진한 강조용 */
-  --primary-soft: #F5F4FE;     /* 더 연한 배경 (NEW) */
-  --primary-hover: #6258C6;    /* 호버 상태 (NEW) */
+  /* ── 메인 보라 ── */
+  --primary: #534AB7;
+  --primary-light: #EEEDFE;
+  --primary-dark: #3C3489;
+  --primary-soft: #F5F4FE;
+  --primary-hover: #6258C6;
 
-  /* ── 보조 색상 (의미별) ── */
-  --teal: #0F6E56;             /* 성공/완료 */
+  /* ── 보조 색상 ── */
+  --teal: #0F6E56;
   --teal-light: #E1F5EE;
-  --teal-soft: #F0FAF6;        /* (NEW) */
+  --teal-soft: #F0FAF6;
 
-  --amber: #854F0B;            /* 경고/D-day 임박 */
+  --amber: #854F0B;
   --amber-light: #FAEEDA;
-  --amber-soft: #FDF8EE;       /* (NEW) */
+  --amber-soft: #FDF8EE;
 
-  --coral: #993C1D;            /* 위험/긴급 */
+  --coral: #993C1D;
   --coral-light: #FAECE7;
-  --coral-soft: #FDF5F1;       /* (NEW) */
+  --coral-soft: #FDF5F1;
 
-  --rose: #B73A6F;             /* 액센트 (NEW) */
-  --rose-light: #FDEEF4;       /* (NEW) */
+  --rose: #B73A6F;
+  --rose-light: #FDEEF4;
 
   /* ── 텍스트 ── */
   --text: #1A1A1A;
-  --text-secondary: #5C5C5C;   /* 살짝 어둡게 (가독성↑) */
-  --text-tertiary: #8E8E8E;    /* 살짝 어둡게 */
-  --text-quaternary: #B5B5B5;  /* 가장 흐림 (NEW) */
+  --text-secondary: #5C5C5C;
+  --text-tertiary: #8E8E8E;
+  --text-quaternary: #B5B5B5;
 
-  /* ── 배경 (4톤) ── */
+  /* ── 배경 ── */
   --bg: #FFFFFF;
-  --bg-secondary: #FAFAF8;     /* 살짝 따뜻하게 */
+  --bg-secondary: #FAFAF8;
   --bg-tertiary: #F4F4F1;
-  --bg-warm: #FBF9F5;          /* 따뜻한 배경 (NEW) */
+  --bg-warm: #FBF9F5;
 
   /* ── 테두리 ── */
   --border: #E8E8E4;
   --border-light: #F2F2EE;
-  --border-strong: #D4D4D0;    /* (NEW) */
+  --border-strong: #D4D4D0;
 
   /* ── 모서리 ── */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-  --radius-2xl: 28px;          /* (NEW) */
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
-  /* ── 그림자 (더 풍부하게) ── */
-  --shadow-xs: 0 1px 2px rgba(20, 14, 60, 0.04);                                    /* (NEW) */
-  --shadow-sm: 0 1px 3px rgba(20, 14, 60, 0.06), 0 1px 2px rgba(20, 14, 60, 0.04); /* 강화 */
+  /* ── 그림자 ── */
+  --shadow-xs: 0 1px 2px rgba(20, 14, 60, 0.04);
+  --shadow-sm: 0 1px 3px rgba(20, 14, 60, 0.06), 0 1px 2px rgba(20, 14, 60, 0.04);
   --shadow-md: 0 4px 12px rgba(20, 14, 60, 0.08), 0 2px 4px rgba(20, 14, 60, 0.04);
   --shadow-lg: 0 12px 28px rgba(20, 14, 60, 0.12), 0 4px 8px rgba(20, 14, 60, 0.06);
-  --shadow-xl: 0 24px 48px rgba(20, 14, 60, 0.18);                                  /* (NEW) */
-  --shadow-glow: 0 0 0 4px rgba(83, 74, 183, 0.12);                                 /* (NEW) 포커스용 */
+  --shadow-xl: 0 24px 48px rgba(20, 14, 60, 0.18);
+  --shadow-glow: 0 0 0 4px rgba(83, 74, 183, 0.12);
 
   /* ── 레이아웃 ── */
   --sidebar-width: 260px;
   --header-height: 56px;
 
   /* ── 트랜지션 ── */
-  --transition-fast: 0.12s ease;            /* (NEW) */
-  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);  /* (NEW) */
-  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* (NEW) */
+  --transition-fast: 0.12s ease;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 다크 모드 ── */
+:root[data-theme='dark'],
+html[data-theme='dark'],
+html.dark {
+  --primary: #8077E0;
+  --primary-light: #2A2545;
+  --primary-dark: #ADA6F0;
+  --primary-soft: #1F1B33;
+  --primary-hover: #9189E8;
+
+  --teal: #4FBFA0;
+  --teal-light: #1A2E27;
+  --teal-soft: #15211D;
+
+  --amber: #E0A560;
+  --amber-light: #2E2515;
+  --amber-soft: #221C10;
+
+  --coral: #E68573;
+  --coral-light: #2E1F1A;
+  --coral-soft: #221512;
+
+  --rose: #E08CB1;
+  --rose-light: #2E1D27;
+
+  --text: #F0F0EE;
+  --text-secondary: #B0B0AE;
+  --text-tertiary: #808080;
+  --text-quaternary: #5A5A58;
+
+  --bg: #161618;
+  --bg-secondary: #1E1E20;
+  --bg-tertiary: #28282B;
+  --bg-warm: #1C1C1E;
+
+  --border: #2E2E32;
+  --border-light: #232326;
+  --border-strong: #3A3A3E;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.35);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 0 4px rgba(128, 119, 224, 0.18);
 }
 
 html, body, #root {
@@ -77,6 +124,11 @@ html, body, #root {
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  transition: opacity 0.2s ease-in;
 }
 
 button {
@@ -84,11 +136,13 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  color: inherit;
 }
 
-input, textarea {
+input, textarea, select {
   font-family: inherit;
   outline: none;
+  color: inherit;
 }
 
 a {
@@ -102,3 +156,4 @@ a {
 }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
