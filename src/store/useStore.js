@@ -450,7 +450,7 @@ export const useStore = create((set, get) => ({
     const rooms = [
       { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true },
       { id: `room_all_${Date.now()}`, name: '전체',        lastMessage: '채팅방이 생성됐어요',       unread: 0, time: '방금', ...ROOM_COLORS[0], isDm: false },
-      ...data.roomNames.filter((n) => n !== '전체' && n !== '나와의 채팅').map((name, i) => ({
+      ...data.roomNames.filter((n) => n && n.trim() && n !== '전체' && n !== '나와의 채팅').map((name, i) => ({
         id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금',
         ...ROOM_COLORS[(i + 1) % ROOM_COLORS.length], isDm: false,
       })),
