@@ -32,7 +32,7 @@ export default function CreateProjectPage() {
   const today = new Date().toISOString().split('T')[0]
   const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
 
-  const goNext = () => {
+  const goNext = async () => {
     if (step === 0) {
       if (!emoji) { alert('프로젝트를 표현할 이모지를 골라주세요!'); return }
       if (!name.trim() || !startDate || !endDate) { alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
@@ -40,7 +40,7 @@ export default function CreateProjectPage() {
       setDateError('')
     }
     if (step === 2) {
-      const p = createProject({ name, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+      const p = await createProject({ name, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
       setCreated(p)
     }
     setStep((s) => s + 1)

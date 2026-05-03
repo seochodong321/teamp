@@ -13,20 +13,28 @@ export default function JoinPage() {
   const [msg, setMsg]         = useState('')
 
   useEffect(() => {
-    const p = getProjectByInviteCode(code)
-    setProject(p)
+    const run = async () => {
+      const p = await getProjectByInviteCode(code)
+      setProject(p)
+    }
+    run()
   }, [code, isLoggedIn])
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     setStatus('joining')
-    const result = joinProjectByCode(code)
-    if (result.success) {
-      setStatus('done')
-      setMsg(result.message || '프로젝트에 참여했어요!')
-      setTimeout(() => navigate(`/project/${result.projectId}`), 1500)
-    } else {
+    try {
+      const result = await joinProjectByCode(code)
+      if (result.success) {
+        setStatus('done')
+        setMsg(result.message || '프로젝트에 참여했어요!')
+        setTimeout(() => navigate(`/project/${result.projectId}`), 1500)
+      } else {
+        setStatus('error')
+        setMsg(result.message || '참여에 실패했어요.')
+      }
+    } catch (e) {
       setStatus('error')
-      setMsg(result.message || '참여에 실패했어요.')
+      setMsg('오류가 발생했어요. 다시 시도해주세요.')
     }
   }
 

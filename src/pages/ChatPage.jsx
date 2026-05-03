@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
 
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms } = useStore()
+  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, setRoomMessages } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
 
@@ -26,6 +28,20 @@ export default function ChatPage() {
   const bottomRef   = useRef(null)
   const fileRef     = useRef(null)
 
+  // 채팅방 진입 시 Firestore 메시지 실시간 구독
+  useEffect(() => {
+    const q = query(
+      collection(db, 'rooms', roomId, 'messages'),
+      orderBy('createdAt', 'asc')
+    )
+    const unsub = onSnapshot(q, (snapshot) => {
+      const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+      setRoomMessages(roomId, msgs)
+    })
+    return () => unsub()
+  }, [roomId, setRoomMessages])
+
+  // 새 메시지 도착 시 스크롤 + 읽음 처리
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     markAsRead(roomId)

@@ -55,7 +55,7 @@ export default function HomePage() {
 
   const closeModal = () => setShowModal(false)
 
-  const goNext = () => {
+  const goNext = async () => {
     if (step === 0) {
       if (!emoji) {
         alert('프로젝트를 표현할 이모지를 골라주세요!')
@@ -72,7 +72,7 @@ export default function HomePage() {
       setDateError('')
     }
     if (step === STEPS.length - 1) {
-      const p = createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+      const p = await createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
       setCreated(p)
       setStep((s) => s + 1)
       return

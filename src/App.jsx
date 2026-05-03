@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore'
 import { auth, db } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
@@ -26,30 +26,55 @@ function PrivateRoute({ children, ready }) {
 }
 
 export default function App() {
-  const { login, logout } = useStore()
+  const { login, logout, setProjects, createTutorialProject } = useStore()
   const [ready, setReady] = useState(false)
+  const projectsUnsubRef = useRef(null)  // 프로젝트 구독 cleanup용
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // 유저 정보 Firestore에서 로드
         try {
           const snap = await getDoc(doc(db, 'users', user.uid))
-          if (snap.exists()) {
-            const d = snap.data()
-            login(d.name, d.email, user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
-          } else {
-            login(user.displayName || '사용자', user.email, user.uid)
-          }
+          const d = snap.exists() ? snap.data() : {}
+          login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
         } catch {
           login(user.displayName || '사용자', user.email, user.uid)
         }
+
+        // 이전 구독 해제 후 재구독 (계정 전환 대비)
+        if (projectsUnsubRef.current) projectsUnsubRef.current()
+
+        // 사용자가 속한 프로젝트 실시간 구독
+        projectsUnsubRef.current = onSnapshot(
+          query(collection(db, 'projects'), where('memberIds', 'array-contains', user.uid)),
+          async (snapshot) => {
+            const projects = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+            setProjects(projects)
+
+            // 첫 로그인 감지 — Firestore에 프로젝트가 없으면 튜토리얼 생성
+            if (snapshot.empty && !snapshot.metadata.fromCache) {
+              const currentUser = useStore.getState().currentUser
+              if (currentUser) await createTutorialProject(currentUser.id, currentUser.name)
+            }
+          }
+        )
       } else {
+        // 로그아웃 시 구독 해제
+        if (projectsUnsubRef.current) {
+          projectsUnsubRef.current()
+          projectsUnsubRef.current = null
+        }
         logout()
       }
       setReady(true)
     })
-    return () => unsub()
-  }, [login, logout])
+
+    return () => {
+      unsub()
+      if (projectsUnsubRef.current) projectsUnsubRef.current()
+    }
+  }, [login, logout, setProjects, createTutorialProject])
 
   return (
     <BrowserRouter>
@@ -61,7 +86,6 @@ export default function App() {
           <Route path="home"                            element={<HomePage />} />
           <Route path="project/:projectId"              element={<ProjectPage />} />
           <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
-          {/* 캘린더는 ProjectPage 탭 안에서 렌더링 — 별도 라우트 없음 */}
           <Route path="create"                          element={<CreateProjectPage />} />
           <Route path="profile"                         element={<ProfilePage />} />
           <Route path="connect"                         element={<ConnectPage />} />
