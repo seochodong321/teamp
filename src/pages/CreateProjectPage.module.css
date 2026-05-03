@@ -40,7 +40,10 @@
 .roomItem { display: flex; align-items: center; justify-content: space-between; background: var(--primary-light); border-radius: var(--radius-sm); padding: 10px 14px; }
 .roomItemText { font-size: 13px; font-weight: 600; color: var(--primary-dark); }
 .removeRoom { font-size: 13px; color: var(--text-tertiary); }
-.removeRoom:hover { color: #E24B4A; }
+.removeRoom:hover { color: var(--coral); }
+
+.inputError { border-color: var(--coral) !important; }
+.dateErrorMsg { font-size: 12px; color: var(--coral); background: var(--coral-soft); border-radius: var(--radius-sm); padding: 8px 12px; }
 
 .addRoomRow { display: flex; gap: 8px; }
 .addRoomBtn { padding: 0 18px; height: 44px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; transition: opacity 0.15s; }

@@ -9,6 +9,13 @@ if (savedTheme === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark')
 }
 
+// 서비스워커 등록 (PWA 오프라인 지원)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />

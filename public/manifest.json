@@ -1,0 +1,44 @@
+{
+  "name": "Teamp",
+  "short_name": "Teamp",
+  "description": "팀 프로젝트, 더 쉽게",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#534AB7",
+  "theme_color": "#534AB7",
+  "lang": "ko",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "홈",
+      "short_name": "홈",
+      "description": "프로젝트 목록으로 이동",
+      "url": "/home",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "새 프로젝트",
+      "short_name": "새 프로젝트",
+      "description": "새 프로젝트 만들기",
+      "url": "/create",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -19,7 +19,7 @@ teamp-web/
 ├── vite.config.js
 ├── vercel.json (SPA 라우팅)
 └── src/
-    ├── main.jsx (다크 모드 초기 적용 포함)
+    ├── main.jsx (다크 모드 초기 적용 + SW 등록)
     ├── App.jsx (라우터)
     ├── firebase.js (Firebase 설정)
     ├── styles/global.css (CSS 변수, 다크 모드)
@@ -36,6 +36,7 @@ teamp-web/
         ├── ProjectPage.jsx (탭: 채팅방/게시판/할 일/캘린더/멤버/권한)
         ├── ChatPage.jsx
         ├── CreateProjectPage.jsx (사이드바 진입용 단계별 페이지)
+        ├── WrapupPage.jsx + WrapupPage.module.css (프로젝트 마무리)
         ├── ProfilePage.jsx (다크 모드 토글, 편집 모달)
         └── ConnectPage.jsx (팀프 커넥트)
 ```
@@ -43,10 +44,19 @@ teamp-web/
 ## Firebase 설정
 
 - Firebase Auth: 이메일/비밀번호 활성화
-- Firestore: 테스트 모드, asia-northeast3(서울)
-- users 컬렉션: { uid, name, username, email, affiliation, phone, oneliner, bio, createdAt }
-- **projects/messages는 Firestore 저장 + onSnapshot 실시간 동기화 (2025-05-03 완료)**
-- roomOrders, dmRooms, connects, notifications, invites, theme은 localStorage(Zustand persist)로 관리
+- Firestore: asia-northeast3(서울)
+- **Firestore 보안 규칙** (Firebase 콘솔에 적용 완료):
+  - `users/{userId}`: 본인만 읽기/쓰기
+  - `projects/{projectId}`: memberIds 포함 시 읽기/수정, 인증 사용자 생성
+  - `rooms/{roomId}/messages/{msgId}`: 인증 사용자 읽기/쓰기
+  - `wrapups/{wrapupId}`: 인증 사용자 읽기/생성/수정
+- **컬렉션 구조**:
+  - `users/`: { uid, name, username, email, affiliation, phone, oneliner, bio, createdAt }
+  - `projects/`: { id, name, emoji, category, startDate, endDate, status, leaderId, memberIds, members, rooms, announcements, todos, events, isPublic, inviteCode, wrapupId?, feedbackDeadline?, collectFeedback? }
+  - `rooms/{roomId}/messages/`: { senderId, senderName, type, text, time, createdAt, options? }
+  - `wrapups/`: { projectId, projectName, summary, highlights, members, reflections, feedbacks, createdAt }
+- projects/messages는 Firestore onSnapshot 실시간 구독
+- roomOrders, dmRooms, connects, notifications, invites, theme은 localStorage(Zustand persist)
 
 ## 완성된 기능
 
@@ -57,13 +67,13 @@ teamp-web/
 
 ### 프로젝트
 - 새 프로젝트 생성 (홈 팝업 모달 + /create 페이지 둘 다 가능)
-- **프로젝트 이모지 필수 선택** (32종)
+- 프로젝트 이모지 필수 선택 (32종, CSS 클래스 기반 선택기)
 - 카테고리: 학교/회사/스터디/기타 (기타 선택 시 직접 입력)
 - 기본 채팅방: '나와의 채팅' + '전체' 자동 생성
-- 추가 팀 채팅방 (Enter로 추가, 한글 IME 버그 처리됨)
-- 종료일 과거 설정 방지
-- 기한 만료 → 종료/연장 (달력 모달)
-- 신규 로그인 시 '📖 Teamp 사용방법' 튜토리얼 프로젝트 자동 생성
+- 추가 팀 채팅방 (Enter로 추가, 한글 IME 이중 입력 버그 수정 완료)
+- 종료일 과거 설정 방지 + 날짜 오류 메시지 스타일 적용
+- 기한 만료 → 마무리하기 모달(피드백 수집 옵션) / 연장 (달력 모달)
+- 신규 로그인 시 '📖 Teamp 사용방법' 튜토리얼 프로젝트 자동 생성 (Firestore)
 
 ### 초대 링크
 - 실제 작동: `${window.location.origin}/join/${project.id}`
@@ -75,6 +85,7 @@ teamp-web/
 - 한글 IME 중복 입력 버그 수정 (isComposing)
 - 파일 공유, 투표 기능
 - 1:1 DM 채팅 (getOrCreateDmRoom)
+- Firestore 실시간 구독 (onSnapshot)
 
 ### 게시판
 - 카드형 디자인 (목록/작성/상세 3단계)
@@ -126,6 +137,17 @@ teamp-web/
 - 모든 페이지에 자동 적용 (CSS 변수 기반)
 - 보라색은 살짝 밝게, 배경은 깊은 검정 톤
 
+### 프로젝트 마무리 (Wrap-up)
+- 리더가 기한 만료 시 "🏁 마무리하기" 버튼으로 종료 흐름 시작
+- 피드백 수집 여부 + 기간(3/5/7/14일) 선택 모달
+- 프로젝트 상태: active → collecting → archived
+- WrapupPage (/project/:id/wrapup):
+  - 📊 요약 탭: 메시지 수, 할 일 완료율, 파일 공유 수, 가장 활발한 팀원
+  - 💬 회고 탭: 개인 회고 작성/수정, 전체 팀원 회고 목록
+  - ⭐ 피드백 탭: 팀원별 피드백 (잘한 점/개선할 점/한 마디/익명 옵션), 받은 피드백 확인
+- 피드백 마감일 자동 archived 전환 (checkAndArchive)
+- 홈화면: "피드백 수집 중" 섹션 별도 표시, 완료 프로젝트 클릭 시 랩업 페이지 이동
+
 ### 디자인 시스템
 - 메인: 보라 #534AB7 (4단계: soft → light → primary → dark)
 - 보조: teal, amber, coral, rose (각 light/soft 단계 있음)
@@ -134,6 +156,7 @@ teamp-web/
 - 트랜지션: fast/normal/slow
 - 카드 hover 시 위로 떠오르며 보라→분홍 그라데이션 라인
 - 버튼에 부드러운 보라 그림자
+- **모든 색상 값을 CSS 변수로 통일 (하드코딩 제거 완료)**
 
 ## 라우팅 (App.jsx)
 
@@ -144,30 +167,30 @@ teamp-web/
   /home                                   → HomePage
   /project/:projectId                     → ProjectPage (?tab= 파라미터 지원)
   /project/:projectId/chat/:roomId        → ChatPage (DM 지원)
+  /project/:projectId/wrapup              → WrapupPage (프로젝트 마무리)
   /create                                 → CreateProjectPage
   /profile                                → ProfilePage
   /connect                                → ConnectPage
 ```
 
-## 깃허브 배포
-
-```bash
-git add .
-git commit -m "변경 내용"
-git push
-```
-→ Vercel 자동 배포 (1~2분)
-
 ## 핵심 함수 (useStore.js)
 
 - `login(name, email, uid, extra)` → currentUser 세팅만. 프로젝트는 Firestore onSnapshot이 담당
+- `setProjects(firestoreProjects)` → Firestore 데이터로 projects 동기화 (unread 카운트 보존)
+- `setRoomMessages(roomId, msgs)` → 채팅방 메시지 동기화
 - `createTutorialProject(userId, userName)` → 첫 로그인 시 App.jsx에서 호출, Firestore에 튜토리얼 프로젝트 생성
 - `getProjectByInviteCode(code)`, `joinProjectByCode(code)`
 - `getOrCreateDmRoom(projectId, otherUserId, otherUserName)`
 - `addRoom`, `addAnnouncement`, `addTodo`, `updateTodo`, `deleteTodo`
 - `addEvent`, `removeEvent`
-- `createProject(data)` → inviteCode = project.id, emoji 포함
+- `createProject(data)` → inviteCode = project.id, emoji 포함, Firestore에 저장
+- `sendMessage(roomId, text)`, `sendFile(roomId, fileName)`, `sendPoll(roomId, question, options)`, `votePoll(roomId, msgId, optId)`
 - `updateMemberRole`, `setMemberRooms`, `transferLeader`
+- `archiveProject`, `extendProject`
+- `endProject(projectId, { collectFeedback, feedbackDuration })` → 통계 집계 후 wrapup 문서 생성, 상태 전환
+- `addReflection(wrapupId, text)` → 회고 저장 (1인 1회고, 수정 가능)
+- `addFeedback(wrapupId, feedbackData)` → 피드백 저장 (트랜잭션)
+- `checkAndArchive(projectId)` → collecting 상태 + 마감일 지남 → archived 전환
 - `togglePublic`, `updateMemberMemo`, `updateProfile`
 - `removeConnect`, `addConnectsFromProject`
 - `addNotification`, `markNotificationRead`, `markAllNotificationsRead`, `removeNotification`
@@ -176,20 +199,21 @@ git push
 ## 다음에 할 일 (우선순위 순)
 
 ### 🔥 베타 출시 전 필수
-1. ~~**Firestore 연동**~~ ✅ 완료 (2025-05-03)
-2. **도메인 연결** — teamp.app 같은 정식 도메인
-3. **PWA 설정** — manifest.json + 아이콘 (앱처럼 홈화면 추가 가능)
-4. **초대 링크 다중 사용자 테스트** — 진짜로 다른 사람이 들어와서 채팅까지 되는지
+1. ~~**Firestore 연동**~~ ✅ 완료
+2. ~~**디자인 정돈**~~ ✅ 완료 (CSS 변수 통일, WrapupPage 재작성, 이모지 선택기 정리)
+3. **PWA 설정** ← 현재 진행 중 — manifest.json + 아이콘 + 서비스워커 (앱처럼 홈화면 추가)
+4. **도메인 연결** — teamp.app 같은 정식 도메인 (Vercel에서 설정)
+5. **초대 링크 다중 사용자 테스트** — 진짜로 다른 사람이 들어와서 채팅까지 되는지
 
 ### 🌟 기능 추가
-- 검색 (글로벌 검색)
-- 빈 화면 개선 (empty state 일러스트)
-- 마이크로 인터랙션
-- 타이포그래피 위계 강화
-- 모바일 반응형 점검
+- 검색 (글로벌 검색 — 프로젝트명, 메시지, 멤버)
+- 빈 화면 개선 (empty state 일러스트/안내)
+- 모바일 반응형 점검 및 개선
+- 마이크로 인터랙션 (로딩 스켈레톤, 전송 애니메이션 등)
 
-### 🛠️ 알려진 이슈 (Firestore 연동 후 검증)
-- 할 일 알림 정확성: 지금은 1인 데모라 진짜 다중 사용자 환경에서 알림이 올바른 사람에게만 가는지 확인 필요
+### 🛠️ 알려진 이슈
+- 할 일 알림 정확성: 다중 사용자 환경에서 알림이 올바른 사람에게만 가는지 확인 필요
+- WrapupPage 통계: 현재 메시지 카운트 방식이 대용량 프로젝트에서 느릴 수 있음 (getDocs 루프)
 
 ### 🚀 장기 비전
 - React Native로 네이티브 앱 변환
@@ -199,7 +223,7 @@ git push
 
 ## 작업 스타일 메모
 
-- 사용자는 부분 수정보다 전체 코드를 받는 걸 선호함
-- 깃 푸시 명령어를 응답 끝에 항상 포함하는 게 좋음
-- 한 번 요청한 것은 정확히 수행. 반복 요청은 비효율
-- 모든 코드는 한국어 주석 + 친근한 톤
+- 깃 푸시 명령어를 응답 끝에 항상 포함
+- 한국어 인라인 주석 사용
+- CSS는 반드시 global.css에 정의된 CSS 변수 사용 (하드코딩 금지)
+- 새 페이지는 WrapupPage.module.css 스타일로 통일 (CSS 변수 기반)
