@@ -24,6 +24,7 @@ export default function ProjectPage() {
   const project = projects.find((p) => p.id === projectId)
   const [tab, setTab] = useState(tabParam || 'rooms')
   const [dragIdx, setDragIdx]       = useState(null)
+  const [dragOrder, setDragOrder]   = useState(null)
   const [showExtend, setShowExtend] = useState(false)
   const [newEndDate, setNewEndDate] = useState('')
 
@@ -112,17 +113,21 @@ export default function ProjectPage() {
     navigate(`/project/${projectId}/chat/${room.id}`)
   }
 
-  const handleDragStart = (i) => setDragIdx(i)
+  const handleDragStart = (i) => { setDragIdx(i); setDragOrder(visibleRooms) }
   const handleDragOver  = (e, i) => {
     e.preventDefault()
     if (dragIdx === null || dragIdx === i) return
-    const newOrder = [...visibleRooms]
+    const newOrder = [...(dragOrder || visibleRooms)]
     const [moved] = newOrder.splice(dragIdx, 1)
     newOrder.splice(i, 0, moved)
-    reorderRooms(project.id, newOrder.map((r) => r.id))
+    setDragOrder(newOrder)
     setDragIdx(i)
   }
-  const handleDragEnd = () => setDragIdx(null)
+  const handleDragEnd = () => {
+    if (dragOrder) reorderRooms(project.id, dragOrder.map((r) => r.id))
+    setDragOrder(null)
+    setDragIdx(null)
+  }
 
   const TABS = [
     ['rooms',    '💬 채팅방'],
@@ -243,7 +248,7 @@ export default function ProjectPage() {
         <div className={styles.section}>
           <p className={styles.hint}>드래그해서 순서를 바꿀 수 있어요</p>
           <div className={styles.roomList}>
-            {visibleRooms.map((room, i) => {
+            {(dragOrder || visibleRooms).map((room, i) => {
               const unread = formatUnread(room.unread || 0)
               return (
                 <div key={room.id}

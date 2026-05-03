@@ -49,7 +49,7 @@ export default function App() {
       setReady(true)
     })
     return () => unsub()
-  }, [])
+  }, [login, logout])
 
   return (
     <BrowserRouter>

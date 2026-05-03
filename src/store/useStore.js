@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 
 function calcProgress(startDate, endDate) {
@@ -83,7 +84,9 @@ const makeTutorialMessages = () => ({
   ],
 })
 
-export const useStore = create((set, get) => ({
+export const useStore = create(
+  persist(
+    (set, get) => ({
   isLoggedIn: false,
   currentUser: null,
   projects: [],
@@ -105,24 +108,27 @@ export const useStore = create((set, get) => ({
       affiliation: extra.affiliation || '',
       phone: extra.phone || '',
     }
-    set({
-      isLoggedIn: true,
-      currentUser: user,
-      projects: [makeTutorialProject(user.id, user.name)],
-      messages: makeTutorialMessages(),
-      connects: [],
-      notifications: [
-        {
-          id: 'noti_welcome',
-          type: 'welcome',
-          title: '🎉 Teamp에 오신 걸 환영해요!',
-          message: '둘러보면서 Teamp 사용방법을 익혀보세요',
-          projectId: 'proj_tutorial',
-          link: '/project/proj_tutorial',
-          read: false,
-          createdAt: Date.now(),
-        },
-      ],
+    set((s) => {
+      const hasProjects = s.projects.length > 0
+      return {
+        isLoggedIn: true,
+        currentUser: user,
+        projects: hasProjects ? s.projects : [makeTutorialProject(user.id, user.name)],
+        messages: hasProjects ? s.messages : makeTutorialMessages(),
+        connects: hasProjects ? s.connects : [],
+        notifications: hasProjects ? s.notifications : [
+          {
+            id: 'noti_welcome',
+            type: 'welcome',
+            title: '🎉 Teamp에 오신 걸 환영해요!',
+            message: '둘러보면서 Teamp 사용방법을 익혀보세요',
+            projectId: 'proj_tutorial',
+            link: '/project/proj_tutorial',
+            read: false,
+            createdAt: Date.now(),
+          },
+        ],
+      }
     })
   },
 
@@ -211,7 +217,7 @@ export const useStore = create((set, get) => ({
         title: `🎉 새 멤버가 참여했어요`,
         message: `${currentUser.name} 님이 ${project.emoji || ''} ${project.name}에 참여했어요`,
         projectId: project.id,
-        link: `/project/${projectId}?tab=todo`,
+        link: `/project/${project.id}?tab=todo`,
       })
     })
     return { success: true, projectId: project.id }
@@ -288,12 +294,16 @@ export const useStore = create((set, get) => ({
         ...s.messages,
         [roomId]: s.messages[roomId].map((m) => {
           if (m.id !== msgId) return m
+          const alreadyVoted = m.options.find((o) => o.id === optionId)?.votes.includes(currentUser.id)
           return {
             ...m,
             options: m.options.map((o) => {
-              if (o.id !== optionId) return o
-              const has = o.votes.includes(currentUser.id)
-              return { ...o, votes: has ? o.votes.filter((v) => v !== currentUser.id) : [...o.votes, currentUser.id] }
+              if (o.id === optionId) {
+                // 이미 투표한 선택지면 취소, 아니면 선택
+                return { ...o, votes: alreadyVoted ? o.votes.filter((v) => v !== currentUser.id) : [...o.votes, currentUser.id] }
+              }
+              // 다른 선택지에서 이 유저 표 제거 (단일 선택)
+              return { ...o, votes: o.votes.filter((v) => v !== currentUser.id) }
             }),
           }
         }),
@@ -669,4 +679,19 @@ export const useStore = create((set, get) => ({
     const { currentUser } = get()
     get().updateMemberMemo(projectId, currentUser.id, memo)
   },
-}))
+}),
+    {
+      name: 'teamp-storage',
+      partialize: (state) => ({
+        projects: state.projects,
+        messages: state.messages,
+        roomOrders: state.roomOrders,
+        dmRooms: state.dmRooms,
+        connects: state.connects,
+        notifications: state.notifications,
+        invites: state.invites,
+        theme: state.theme,
+      }),
+    }
+  )
+)

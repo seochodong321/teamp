@@ -29,7 +29,7 @@ export default function ChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     markAsRead(roomId)
-  }, [roomMessages.length])
+  }, [roomMessages.length, roomId, markAsRead])
 
   if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
 
