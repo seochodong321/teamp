@@ -47,7 +47,7 @@ export default function CreateProjectPage() {
   }
 
   const addRoom = () => { if (!newRoom.trim()) return; setRoomNames((prev) => [...prev, newRoom.trim()]); setNewRoom('') }
-  const handleRoomKeyDown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addRoom() } }
+  const handleRoomKeyDown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addRoom() } }
   const removeRoom = (i) => setRoomNames((prev) => prev.filter((_, j) => j !== i))
   const inviteLink = created ? `${window.location.origin}/join/${created.id}` : ''
 

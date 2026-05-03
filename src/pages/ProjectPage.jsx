@@ -17,7 +17,7 @@ export default function ProjectPage() {
     addAnnouncement, deleteAnnouncement,
     getProgress, getDday, getVisibleRooms, canManage,
     updateMemberRole, setMemberRooms, transferLeader,
-    reorderRooms, archiveProject, extendProject,
+    reorderRooms, archiveProject, extendProject, endProject,
     formatUnread, isExpired, getOrCreateDmRoom, addRoom,
   } = useStore()
 
@@ -46,6 +46,11 @@ export default function ProjectPage() {
   const [saveMsg, setSaveMsg]           = useState('')
 
   const [inviteCopied, setInviteCopied] = useState(false)
+
+  const [showEndProject, setShowEndProject]     = useState(false)
+  const [endCollectFeedback, setEndCollectFeedback] = useState(true)
+  const [endFeedbackDuration, setEndFeedbackDuration] = useState(7)
+  const [endSubmitting, setEndSubmitting]       = useState(false)
 
   useEffect(() => {
     if (tabParam) setTab(tabParam)
@@ -157,6 +162,45 @@ export default function ProjectPage() {
         </div>
       )}
 
+      {showEndProject && (
+        <div className={styles.backdrop} onClick={() => setShowEndProject(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>🏁 프로젝트 마무리</h3>
+            <p className={styles.modalDesc}>마무리 후 팀원들이 회고와 피드백을 남길 수 있어요</p>
+            <label className={styles.modalCheckRow}>
+              <input type="checkbox" checked={endCollectFeedback}
+                onChange={(e) => setEndCollectFeedback(e.target.checked)} />
+              <span>팀원 피드백 수집하기</span>
+            </label>
+            {endCollectFeedback && (
+              <div className={styles.modalField}>
+                <label className={styles.modalLabel}>피드백 수집 기간</label>
+                <select className={styles.modalSelect} value={endFeedbackDuration}
+                  onChange={(e) => setEndFeedbackDuration(Number(e.target.value))}>
+                  <option value={3}>3일</option>
+                  <option value={5}>5일</option>
+                  <option value={7}>7일</option>
+                  <option value={14}>14일</option>
+                </select>
+              </div>
+            )}
+            <div className={styles.modalBtns}>
+              <button className={styles.modalCancel} onClick={() => setShowEndProject(false)}>취소</button>
+              <button className={styles.modalConfirm} disabled={endSubmitting}
+                onClick={async () => {
+                  setEndSubmitting(true)
+                  await endProject(project.id, { collectFeedback: endCollectFeedback, feedbackDuration: endFeedbackDuration })
+                  setEndSubmitting(false)
+                  setShowEndProject(false)
+                  navigate(`/project/${project.id}/wrapup`)
+                }}>
+                {endSubmitting ? '처리 중...' : '마무리하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {profileMember && (
         <div className={styles.backdrop} onClick={() => setProfileMember(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
@@ -223,13 +267,25 @@ export default function ProjectPage() {
           <span className={styles.dot}>·</span>
           <span>💬 {visibleRooms.length}개 채팅방</span>
         </div>
-        {expired && isLeader && (
+        {expired && isLeader && project.status === 'active' && (
           <div className={styles.expiredBar}>
             <span>기한이 만료됐어요</span>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className={styles.expiredArchive} onClick={() => archiveProject(project.id)}>종료하기</button>
+              <button className={styles.expiredArchive} onClick={() => setShowEndProject(true)}>🏁 마무리하기</button>
               <button className={styles.expiredExtend} onClick={() => setShowExtend(true)}>연장하기</button>
             </div>
+          </div>
+        )}
+        {(project.status === 'collecting' || project.status === 'archived') && (
+          <div className={styles.wrapupBar}>
+            <span>
+              {project.status === 'collecting'
+                ? `📬 피드백 수집 중 · 마감: ${project.feedbackDeadline || ''}`
+                : '✅ 프로젝트가 완료됐어요'}
+            </span>
+            <button className={styles.wrapupBtn} onClick={() => navigate(`/project/${project.id}/wrapup`)}>
+              랩업 보기 →
+            </button>
           </div>
         )}
       </div>

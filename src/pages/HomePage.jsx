@@ -21,8 +21,9 @@ export default function HomePage() {
     archiveProject, extendProject, createProject,
   } = useStore()
 
-  const active   = projects.filter((p) => p.status === 'active')
-  const archived = projects.filter((p) => p.status === 'archived')
+  const active     = projects.filter((p) => p.status === 'active')
+  const collecting = projects.filter((p) => p.status === 'collecting')
+  const archived   = projects.filter((p) => p.status === 'archived')
 
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)
@@ -350,7 +351,8 @@ export default function HomePage() {
                     <div className={styles.expiredBanner}>
                       <span>기한이 만료됐어요</span>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button className={styles.expiredArchive} onClick={() => archiveProject(p.id)}>종료</button>
+                        <button className={styles.expiredArchive}
+                          onClick={() => navigate(`/project/${p.id}`)}>마무리하기</button>
                         <button className={styles.expiredExtend}
                           onClick={() => { setExtendId(p.id); setNewEndDate('') }}>연장</button>
                       </div>
@@ -403,13 +405,14 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── 완료됨 ── */}
-      {archived.length > 0 && (
+      {/* ── 피드백 수집 중 ── */}
+      {collecting.length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>완료됨 ({archived.length})</h2>
+          <h2 className={styles.sectionTitle}>피드백 수집 중 ({collecting.length})</h2>
           <div className={styles.grid}>
-            {archived.map((p) => (
-              <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}>
+            {collecting.map((p) => (
+              <div key={p.id} className={`${styles.card} ${styles.cardCollecting}`}
+                onClick={() => navigate(`/project/${p.id}/wrapup`)} style={{ cursor: 'pointer' }}>
                 <div className={styles.cardHeader}>
                   <div>
                     <span className={styles.cardCategory}>{p.category}</span>
@@ -418,7 +421,36 @@ export default function HomePage() {
                       {p.name}
                     </h3>
                   </div>
-                  <span className={styles.archivedBadge}>완료</span>
+                  <span className={styles.collectingBadge}>📬 수집 중</span>
+                </div>
+                <p className={styles.cardPurpose}>{p.purpose}</p>
+                {p.feedbackDeadline && (
+                  <p className={styles.cardDate}>마감: {p.feedbackDeadline}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── 완료됨 ── */}
+      {archived.length > 0 && (
+        <section>
+          <h2 className={styles.sectionTitle}>완료됨 ({archived.length})</h2>
+          <div className={styles.grid}>
+            {archived.map((p) => (
+              <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}
+                onClick={() => p.wrapupId ? navigate(`/project/${p.id}/wrapup`) : navigate(`/project/${p.id}`)}
+                style={{ cursor: 'pointer' }}>
+                <div className={styles.cardHeader}>
+                  <div>
+                    <span className={styles.cardCategory}>{p.category}</span>
+                    <h3 className={styles.cardName}>
+                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                      {p.name}
+                    </h3>
+                  </div>
+                  <span className={styles.archivedBadge}>✅ 완료</span>
                 </div>
                 <p className={styles.cardPurpose}>{p.purpose}</p>
                 <p className={styles.cardDate}>~ {p.endDate}</p>

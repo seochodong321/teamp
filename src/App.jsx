@@ -14,6 +14,7 @@ import ChatPage          from './pages/ChatPage.jsx'
 import ProfilePage       from './pages/ProfilePage.jsx'
 import ConnectPage       from './pages/ConnectPage.jsx'
 import CreateProjectPage from './pages/CreateProjectPage.jsx'
+import WrapupPage        from './pages/WrapupPage.jsx'
 
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
@@ -55,7 +56,13 @@ export default function App() {
             // 첫 로그인 감지 — Firestore에 프로젝트가 없으면 튜토리얼 생성
             if (snapshot.empty && !snapshot.metadata.fromCache) {
               const currentUser = useStore.getState().currentUser
-              if (currentUser) await createTutorialProject(currentUser.id, currentUser.name)
+              if (currentUser) {
+                try {
+                  await createTutorialProject(currentUser.id, currentUser.name)
+                } catch (e) {
+                  console.error('튜토리얼 프로젝트 생성 실패:', e)
+                }
+              }
             }
           }
         )
@@ -86,6 +93,7 @@ export default function App() {
           <Route path="home"                            element={<HomePage />} />
           <Route path="project/:projectId"              element={<ProjectPage />} />
           <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
+          <Route path="project/:projectId/wrapup"      element={<WrapupPage />} />
           <Route path="create"                          element={<CreateProjectPage />} />
           <Route path="profile"                         element={<ProfilePage />} />
           <Route path="connect"                         element={<ConnectPage />} />

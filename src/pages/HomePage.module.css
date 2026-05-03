@@ -189,6 +189,8 @@
 .cardArchived:hover { transform: none; }
 .cardArchived::before { display: none; }
 .cardExpired { border-color: #F09595; }
+.cardCollecting { border-color: #FFB74D; }
+.collectingBadge { font-size: 11px; font-weight: 600; background: #FFF3E0; color: #E65100; padding: 4px 10px; border-radius: var(--radius-full); white-space: nowrap; }
 
 .expiredBanner {
   background: var(--coral-soft);
