@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import {
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
+  setPersistence, browserLocalPersistence, browserSessionPersistence,
+} from 'firebase/auth'
 import { doc, setDoc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
-
-const DEMO_EMAIL = 'demo@teamp.app'
-const DEMO_PW    = 'demo1234'
 
 const FEATURES = [
   { icon: '💬', text: '채팅 · 할 일 · 캘린더 · 게시판' },
@@ -18,40 +18,22 @@ const FEATURES = [
 export default function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirectTo   = searchParams.get('redirect') || '/home'
-  const defaultMode  = searchParams.get('mode') || 'login'
+  const redirectTo  = searchParams.get('redirect') || '/home'
+  const defaultMode = searchParams.get('mode') || 'login'
   const { login, isLoggedIn } = useStore()
 
   const [mode, setMode]               = useState(defaultMode)
   const [name, setName]               = useState('')
-  const [email, setEmail]             = useState('')
+  const [email, setEmail]             = useState(() => localStorage.getItem('teamp-saved-email') || '')
   const [password, setPassword]       = useState('')
   const [affiliation, setAffiliation] = useState('')
   const [phone, setPhone]             = useState('')
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
+  const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
+  const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
 
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
-
-  const handleDemoLogin = async () => {
-    setError('')
-    setLoading(true)
-    try {
-      const cred = await signInWithEmailAndPassword(auth, DEMO_EMAIL, DEMO_PW)
-      const snap = await getDoc(doc(db, 'users', cred.user.uid))
-      if (snap.exists()) {
-        const d = snap.data()
-        login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
-      } else {
-        login(cred.user.displayName || '데모 사용자', cred.user.email, cred.user.uid)
-      }
-      navigate(redirectTo, { replace: true })
-    } catch {
-      setError('데모 계정 로그인에 실패했어요.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -64,6 +46,9 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
+      // 자동 로그인 여부에 따라 세션 지속성 설정
+      await setPersistence(auth, autoLogin ? browserLocalPersistence : browserSessionPersistence)
+
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
@@ -84,6 +69,20 @@ export default function LoginPage() {
           login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
         }
       }
+
+      // 아이디 저장 처리
+      if (rememberEmail) {
+        localStorage.setItem('teamp-saved-email', email.trim())
+      } else {
+        localStorage.removeItem('teamp-saved-email')
+      }
+      // 자동 로그인 설정 기억
+      if (!autoLogin) {
+        localStorage.setItem('teamp-auto-login', 'false')
+      } else {
+        localStorage.removeItem('teamp-auto-login')
+      }
+
       navigate(redirectTo, { replace: true })
     } catch (err) {
       const map = {
@@ -137,7 +136,6 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        {/* 배경 장식 원 */}
         <div className={styles.decorCircle1} />
         <div className={styles.decorCircle2} />
       </div>
@@ -191,21 +189,28 @@ export default function LoginPage() {
                 placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
             </div>
 
+            {/* 로그인 옵션 (로그인 모드 전용) */}
+            {mode === 'login' && (
+              <div className={styles.optRow}>
+                <label className={styles.optItem}>
+                  <input type="checkbox" checked={rememberEmail}
+                    onChange={(e) => setRememberEmail(e.target.checked)} />
+                  <span>아이디 저장</span>
+                </label>
+                <label className={styles.optItem}>
+                  <input type="checkbox" checked={autoLogin}
+                    onChange={(e) => setAutoLogin(e.target.checked)} />
+                  <span>자동 로그인</span>
+                </label>
+              </div>
+            )}
+
             {error && <p className={styles.error}>{error}</p>}
 
             <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading}>
               {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
             </button>
           </form>
-
-          {mode === 'login' && (
-            <>
-              <div className={styles.divider}><span>또는</span></div>
-              <button type="button" className={styles.demoBtn} onClick={handleDemoLogin} disabled={loading}>
-                🎯 데모 계정으로 체험하기
-              </button>
-            </>
-          )}
 
           <p className={styles.switchText}>
             {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
