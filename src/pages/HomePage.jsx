@@ -97,7 +97,8 @@ export default function HomePage() {
     setNewRoom('')
   }
 
-  const inviteLink = created ? `${window.location.origin}/join/${created.id}` : ''
+  const appOrigin  = import.meta.env.VITE_APP_URL || window.location.origin
+  const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
 
   return (
     <div className={styles.page}>

@@ -58,7 +58,8 @@ export default function CreateProjectPage() {
   const addRoom = () => { if (!newRoom.trim()) return; setRoomNames((prev) => [...prev, newRoom.trim()]); setNewRoom('') }
   const handleRoomKeyDown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addRoom() } }
   const removeRoom = (i) => setRoomNames((prev) => prev.filter((_, j) => j !== i))
-  const inviteLink = created ? `${window.location.origin}/join/${created.id}` : ''
+  const appOrigin  = import.meta.env.VITE_APP_URL || window.location.origin
+  const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
 
   return (
     <div className={styles.page}>
@@ -187,8 +188,8 @@ export default function CreateProjectPage() {
             <h2 className={styles.doneTitle}>프로젝트가 만들어졌어요!</h2>
             <p className={styles.doneSub}>팀원들에게 초대 링크를 공유해보세요</p>
             <div className={styles.linkBoxDone}>
-              <span className={styles.linkText}>{`${window.location.origin}/join/${created.id}`}</span>
-              <button type="button" className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/join/${created.id}`); alert('초대 링크가 복사됐어요!') }}>복사</button>
+              <span className={styles.linkText}>{inviteLink}</span>
+              <button type="button" className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
             </div>
             <div className={styles.summary}>
               {[

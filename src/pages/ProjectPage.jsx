@@ -66,7 +66,7 @@ export default function ProjectPage() {
   const expired      = isExpired(project.endDate)
   const visibleRooms = getVisibleRooms(project, currentUser.id)
   const today        = new Date().toISOString().split('T')[0]
-  const inviteLink   = `${window.location.origin}/join/${project.inviteCode || project.id}`
+  const inviteLink   = `${import.meta.env.VITE_APP_URL || window.location.origin}/join/${project.inviteCode || project.id}`
 
   const handleCopyInvite = async () => {
     try {
