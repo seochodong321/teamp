@@ -6,7 +6,8 @@ import {
   updateDoc, arrayUnion, query, where, runTransaction,
   serverTimestamp, writeBatch,
 } from 'firebase/firestore'
-import { db } from '../firebase.js'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { db, storage } from '../firebase.js'
 
 function calcProgress(startDate, endDate) {
   const now = new Date()
@@ -56,10 +57,10 @@ const makeTutorialProject = (myId, myName) => {
     memberIds: [myId],
     members: [
       { id: myId, name: myName, role: 'leader', roomIds: [dmId, allId, devId], memo: '', affiliation: '', email: '' },
-      { id: 'teamp_bot', name: 'Teamp 봇', role: 'member', roomIds: [dmId, allId, devId], memo: '', affiliation: 'Teamp', email: 'hello@teamp.app' },
+      { id: 'teamp_bot', name: 'Teamp 봇', role: 'member', roomIds: [allId, devId], memo: '', affiliation: 'Teamp', email: 'hello@teamp.app' },
     ],
     rooms: [
-      { id: dmId,  name: '나와의 채팅', lastMessage: '메모처럼 혼자 쓸 수 있어요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true },
+      { id: dmId,  name: '나와의 채팅', lastMessage: '메모처럼 혼자 쓸 수 있어요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true, ownerId: myId },
       { id: allId, name: '전체',        lastMessage: 'Teamp에 오신 걸 환영해요 👋', unread: 2, time: '방금', ...ROOM_COLORS[0] },
       { id: devId, name: '개발팀',      lastMessage: '팀별 채팅방 예시예요',          unread: 0, time: '', ...ROOM_COLORS[1] },
     ],
@@ -246,9 +247,16 @@ export const useStore = create(
         const visible = (me.role === 'leader' || me.role === 'sub-leader')
           ? project.rooms
           : project.rooms.filter((r) => me.roomIds.includes(r.id))
+        // 나와의 채팅(isDm)은 본인 소유인 방만 표시
+        const filtered = visible.filter((r) => {
+          if (!r.isDm) return true
+          if (r.ownerId) return r.ownerId === userId
+          // ownerId 없는 구버전 데이터: 리더(프로젝트 생성자)만 접근
+          return me.role === 'leader'
+        })
         const order = get().roomOrders[project.id]
-        if (!order) return visible
-        return [...visible].sort((a, b) => {
+        if (!order) return filtered
+        return [...filtered].sort((a, b) => {
           const ai = order.indexOf(a.id), bi = order.indexOf(b.id)
           return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
         })
@@ -305,25 +313,27 @@ export const useStore = create(
           return { success: true, message: '이미 참여 중인 프로젝트예요.', projectId: project.id }
         }
 
-        const allRoomIds = [
-          project.rooms.find((r) => r.isDm)?.id,
-          project.rooms.find((r) => r.name === '전체')?.id,
-        ].filter(Boolean)
+        const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
+        // 참여자 전용 개인 DM 방 생성 (기존 isDm 방은 프로젝트 생성자 소유)
+        const personalDmId = `room_dm_${currentUser.id}_${Date.now()}`
+        const personalDm = {
+          id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id,
+          lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4],
+        }
 
         const newMember = {
           id: currentUser.id, name: currentUser.name, role: 'member',
-          roomIds: allRoomIds, memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '',
+          roomIds: [personalDmId, allRoomId].filter(Boolean),
+          memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '',
         }
 
-        // arrayUnion으로 멤버 추가 — 비멤버도 자신을 추가할 수 있도록 Firestore 규칙 필요:
-        // allow update: if request.auth.uid in request.resource.data.memberIds;
         await updateDoc(doc(db, 'projects', project.id), {
+          rooms: arrayUnion(personalDm),
           members: arrayUnion(newMember),
           memberIds: arrayUnion(currentUser.id),
         })
 
         // 전체방에 참여 알림 메시지 전송
-        const allRoomId = allRoomIds[1]
         if (allRoomId) {
           await addDoc(collection(db, 'rooms', allRoomId, 'messages'), {
             senderId: 'system', senderName: '시스템', type: 'notify',
@@ -392,6 +402,7 @@ export const useStore = create(
           id: msgRef.id,
           senderId: currentUser.id, senderName: currentUser.name,
           type, text, time: timeStr,
+          readBy: [currentUser.id],
           createdAt: serverTimestamp(),
         })
 
@@ -404,14 +415,24 @@ export const useStore = create(
         }
       },
 
-      sendFile: async (roomId, fileName) => {
+      sendFile: async (roomId, file) => {
         const { currentUser } = get()
+        const isImage = file.type?.startsWith('image/')
+        let fileUrl = null
+        if (isImage) {
+          const sRef = storageRef(storage, `chat/${roomId}/${Date.now()}_${file.name}`)
+          await uploadBytes(sRef, file)
+          fileUrl = await getDownloadURL(sRef)
+        }
         const msgRef = doc(collection(db, 'rooms', roomId, 'messages'))
         await setDoc(msgRef, {
           id: msgRef.id,
           senderId: currentUser.id, senderName: currentUser.name,
-          type: 'file', text: fileName,
+          type: isImage ? 'image' : 'file',
+          text: file.name,
+          fileUrl: fileUrl || null,
           time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          readBy: [currentUser.id],
           createdAt: serverTimestamp(),
         })
       },
@@ -632,7 +653,7 @@ export const useStore = create(
         const { currentUser } = get()
         const projectId = `proj_${Date.now()}`
         const rooms = [
-          { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true },
+          { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true, ownerId: currentUser.id },
           { id: `room_all_${Date.now()}`, name: '전체',        lastMessage: '채팅방이 생성됐어요',       unread: 0, time: '방금', ...ROOM_COLORS[0], isDm: false },
           ...data.roomNames.filter((n) => n && n.trim() && n !== '전체' && n !== '나와의 채팅').map((name, i) => ({
             id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금',
@@ -845,8 +866,7 @@ export const useStore = create(
             fromUserName: feedbackData.isAnonymous ? '익명' : currentUser.name,
             toUserId: feedbackData.toUserId,
             toUserName: feedbackData.toUserName,
-            positives: feedbackData.positives,
-            improvements: feedbackData.improvements,
+            tags: feedbackData.tags || [],
             comment: feedbackData.comment || '',
             isAnonymous: feedbackData.isAnonymous,
             createdAt: new Date().toISOString(),

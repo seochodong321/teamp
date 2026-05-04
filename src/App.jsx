@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { auth, db } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
@@ -54,6 +54,15 @@ export default function App() {
           async (snapshot) => {
             const projects = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
             setProjects(projects)
+
+            // 튜토리얼 프로젝트 리더 자동 수정
+            const tutProj = projects.find((p) => p.isTutorial)
+            if (tutProj && tutProj.leaderId !== user.uid) {
+              updateDoc(doc(db, 'projects', tutProj.id), {
+                leaderId: user.uid,
+                members: tutProj.members.map((m) => ({ ...m, role: m.id === user.uid ? 'leader' : 'member' })),
+              }).catch(() => {})
+            }
 
             // 첫 로그인 감지 — Firestore에 프로젝트가 없으면 튜토리얼 생성
             if (snapshot.empty && !snapshot.metadata.fromCache) {

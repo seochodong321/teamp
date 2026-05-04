@@ -136,3 +136,24 @@
   max-width: 240px;
   line-height: 1.6;
 }
+/* 이미지 */
+.chatImg { max-width: 260px; max-height: 260px; border-radius: var(--radius-md); object-fit: cover; cursor: zoom-in; display: block; transition: opacity 0.15s; }
+.chatImg:hover { opacity: 0.88; }
+
+/* 읽음 + 시간 행 */
+.timeRow { display: flex; align-items: center; gap: 4px; }
+.readReceipt { font-size: 10px; color: var(--primary); font-weight: 600; }
+
+/* 라이트박스 */
+.lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; cursor: zoom-out; }
+.lightboxImg { max-width: 90vw; max-height: 78vh; border-radius: var(--radius-md); object-fit: contain; cursor: default; box-shadow: var(--shadow-xl); }
+.lightboxBar { display: flex; align-items: center; gap: 12px; background: rgba(0,0,0,0.5); border-radius: var(--radius-md); padding: 8px 16px; cursor: default; }
+.lightboxName { font-size: 13px; color: white; flex: 1; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lightboxDown { font-size: 13px; color: white; background: var(--primary); padding: 5px 14px; border-radius: var(--radius-sm); font-weight: 600; text-decoration: none; }
+.lightboxClose { font-size: 18px; color: white; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.15s; }
+.lightboxClose:hover { background: rgba(255,255,255,0.2); }
+
+@keyframes messageIn { from { opacity: 0; transform: translateY(6px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes bounceIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes sendPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }

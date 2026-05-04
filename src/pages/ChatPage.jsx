@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
+import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
@@ -23,6 +23,7 @@ export default function ChatPage() {
   const [pollQ, setPollQ]         = useState('')
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [showToolbar, setShowToolbar] = useState(false)
+  const [lightbox, setLightbox]   = useState(null)
 
   const isComposing = useRef(false)
   const bottomRef   = useRef(null)
@@ -46,6 +47,20 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     markAsRead(roomId)
   }, [roomMessages.length, roomId, markAsRead])
+
+  // 내가 읽지 않은 메시지에 readBy 추가 (배치 처리)
+  useEffect(() => {
+    if (!currentUser?.id) return
+    const unread = roomMessages.filter(
+      (m) => m.id && m.senderId !== currentUser.id && !(m.readBy || []).includes(currentUser.id)
+    )
+    if (!unread.length) return
+    const batch = writeBatch(db)
+    unread.slice(-30).forEach((m) => {
+      batch.update(doc(db, 'rooms', roomId, 'messages', m.id), { readBy: arrayUnion(currentUser.id) })
+    })
+    batch.commit().catch(() => {})
+  }, [roomMessages, roomId, currentUser?.id])
 
   if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
 
@@ -75,7 +90,7 @@ export default function ChatPage() {
   const handleFile = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    sendFile(roomId, file.name)
+    sendFile(roomId, file)
     e.target.value = ''
     setShowToolbar(false)
   }
@@ -91,6 +106,16 @@ export default function ChatPage() {
 
   return (
     <div className={styles.page}>
+      {lightbox && (
+        <div className={styles.lightbox} onClick={() => setLightbox(null)}>
+          <img src={lightbox.url} alt={lightbox.name} className={styles.lightboxImg} onClick={(e) => e.stopPropagation()} />
+          <div className={styles.lightboxBar} onClick={(e) => e.stopPropagation()}>
+            <span className={styles.lightboxName}>{lightbox.name}</span>
+            <a href={lightbox.url} download={lightbox.name} target="_blank" rel="noreferrer" className={styles.lightboxDown}>⬇ 다운로드</a>
+            <button className={styles.lightboxClose} onClick={() => setLightbox(null)}>✕</button>
+          </div>
+        </div>
+      )}
       {/* 헤더 */}
       <div className={styles.header}>
         <button className={styles.back} onClick={() => navigate(backPath)}>{backLabel}</button>
@@ -134,8 +159,36 @@ export default function ChatPage() {
             )
           }
 
+          // 이미지
+          if (msg.type === 'image') {
+            const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
+            return (
+              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
+                {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
+                <div className={styles.bubbleWrap}>
+                  {!isMine && (
+                    <span className={styles.sender}>
+                      {msg.senderName}
+                      {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
+                    </span>
+                  )}
+                  <img
+                    src={msg.fileUrl} alt={msg.text}
+                    className={styles.chatImg}
+                    onClick={() => setLightbox({ url: msg.fileUrl, name: msg.text })}
+                  />
+                  <div className={styles.timeRow}>
+                    {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                    <span className={styles.time}>{msg.time}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          }
+
           // 파일
           if (msg.type === 'file') {
+            const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
             return (
               <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
                 {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
@@ -150,7 +203,10 @@ export default function ChatPage() {
                     <span>📎</span>
                     <span className={styles.fileName}>{msg.text}</span>
                   </div>
-                  <span className={styles.time}>{msg.time}</span>
+                  <div className={styles.timeRow}>
+                    {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                    <span className={styles.time}>{msg.time}</span>
+                  </div>
                 </div>
               </div>
             )
@@ -190,6 +246,7 @@ export default function ChatPage() {
           }
 
           // 일반 텍스트
+          const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
           return (
             <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
               {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
@@ -203,7 +260,10 @@ export default function ChatPage() {
                 <div className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}>
                   {msg.text}
                 </div>
-                <span className={styles.time}>{msg.time}</span>
+                <div className={styles.timeRow}>
+                  {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                  <span className={styles.time}>{msg.time}</span>
+                </div>
               </div>
             </div>
           )
@@ -267,7 +327,7 @@ export default function ChatPage() {
         <button
           className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
           onClick={handleSend} disabled={!text.trim()}>↑</button>
-        <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFile} />
+        <input ref={fileRef} type="file" accept="image/*,*/*" style={{ display: 'none' }} onChange={handleFile} />
       </div>
     </div>
   )

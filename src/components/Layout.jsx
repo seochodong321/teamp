@@ -104,7 +104,7 @@ export default function Layout() {
 
           {dmRoomList.length > 0 && (
             <>
-              <p className={styles.navSection}>직접 메시지</p>
+              <p className={styles.navSection}>채팅</p>
               {dmRoomList.map((room) => {
                 const contactName = Object.entries(room.participantNames || {})
                   .find(([id]) => id !== currentUser?.id)?.[1] || '?'
