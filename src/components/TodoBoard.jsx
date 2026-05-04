@@ -100,7 +100,10 @@ export default function TodoBoard({ project, currentUser }) {
               </div>
               <div className={styles.cards}>
                 {colTodos.length === 0 ? (
-                  <div className={styles.emptyCard}>비어있어요</div>
+                  <div className={styles.emptyCard}>
+                    <span className={styles.emptyCardIcon}>{col.id === 'todo' ? '📝' : col.id === 'in-progress' ? '⚡' : '🎉'}</span>
+                    <span>{col.id === 'done' ? '완료된 할 일이 없어요' : '비어있어요'}</span>
+                  </div>
                 ) : (
                   colTodos.map((todo) => {
                     const overdue = isOverdue(todo.dueDate, todo.status)

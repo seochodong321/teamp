@@ -98,9 +98,13 @@
 .writeBtn { padding: 9px 16px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 .writeBtn:hover { opacity: 0.9; }
 
-.boardEmpty { display: flex; flex-direction: column; align-items: center; padding: 48px 20px; gap: 8px; }
-.boardEmptyIcon  { font-size: 36px; }
-.boardEmptyTitle { font-size: 15px; font-weight: 600; color: var(--text); }
+.boardEmpty {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 52px 20px; gap: 10px;
+  animation: slideUp 0.3s ease;
+}
+.boardEmptyIcon  { font-size: 40px; animation: emptyFloat 3s ease-in-out infinite; }
+.boardEmptyTitle { font-size: 15px; font-weight: 600; color: var(--text); margin-top: 4px; }
 .boardEmptySub   { font-size: 13px; color: var(--text-secondary); }
 
 .boardList { display: flex; flex-direction: column; gap: 8px; }
@@ -209,8 +213,15 @@
 
 @media (max-width: 640px) {
   .headerTop { flex-direction: column; }
-  .headerRight { align-items: flex-start; width: 100%; }
+  .headerRight { align-items: flex-start; width: 100%; min-width: unset; }
   .progressWrap { width: 100%; }
   .memberGrid { grid-template-columns: 1fr; }
   .inviteLinkRow { flex-direction: column; align-items: stretch; }
+  .headerCard { padding: 16px; }
+  .projectName { font-size: 18px; }
+  .tab { padding: 10px 12px; font-size: 12px; }
+  .writeForm { padding: 16px; }
+  .manageCard { padding: 12px; }
+  .detailCard { padding: 16px; }
+  .detailTitle { font-size: 17px; }
 }

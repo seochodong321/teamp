@@ -6,6 +6,10 @@ import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
 
+// 데모 계정 — Firebase에 미리 만들어둔 계정
+const DEMO_EMAIL = 'demo@teamp.app'
+const DEMO_PW    = 'demo1234'
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -25,6 +29,26 @@ export default function LoginPage() {
   const [loading, setLoading]         = useState(false)
 
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
+
+  const handleDemoLogin = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      const cred = await signInWithEmailAndPassword(auth, DEMO_EMAIL, DEMO_PW)
+      const snap = await getDoc(doc(db, 'users', cred.user.uid))
+      if (snap.exists()) {
+        const d = snap.data()
+        login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
+      } else {
+        login(cred.user.displayName || '데모 사용자', cred.user.email, cred.user.uid)
+      }
+      navigate(redirectTo, { replace: true })
+    } catch {
+      setError('데모 계정 로그인에 실패했어요. Firebase에서 데모 계정을 먼저 만들어주세요.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -131,6 +155,20 @@ export default function LoginPage() {
             {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
           </button>
         </form>
+
+        {mode === 'login' && (
+          <>
+            <div className={styles.divider}><span>또는</span></div>
+            <button
+              type="button"
+              className={styles.demoBtn}
+              onClick={handleDemoLogin}
+              disabled={loading}
+            >
+              🎯 데모 계정으로 체험하기
+            </button>
+          </>
+        )}
 
         <p className={styles.switchText}>
           {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}

@@ -462,9 +462,10 @@ export default function HomePage() {
 
       {projects.length === 0 && (
         <div className={styles.empty}>
-          <p className={styles.emptyTitle}>아직 프로젝트가 없어요</p>
-          <p className={styles.emptySub}>새 프로젝트를 만들어보세요</p>
-          <button className={styles.emptyBtn} onClick={openModal}>+ 프로젝트 만들기</button>
+          <div className={styles.emptyIcon}>🚀</div>
+          <p className={styles.emptyTitle}>첫 번째 프로젝트를 시작해보세요</p>
+          <p className={styles.emptySub}>팀원을 초대하고 함께 목표를 향해 달려가요</p>
+          <button className={styles.emptyBtn} onClick={openModal}>+ 새 프로젝트 만들기</button>
         </div>
       )}
     </div>

@@ -58,7 +58,12 @@ export default function ChatPage() {
     if (!text.trim()) return
     sendMessage(roomId, text.trim())
     setText('')
+    // 전송 버튼 펄스 효과
+    setSendPulse(true)
+    setTimeout(() => setSendPulse(false), 400)
   }
+
+  const [sendPulseActive, setSendPulse] = useState(false)
 
   const handleKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing.current) {
@@ -105,7 +110,15 @@ export default function ChatPage() {
 
       {/* 메시지 목록 */}
       <div className={styles.messages}>
-        <div className={styles.dateDivider}><span>오늘</span></div>
+        {roomMessages.length === 0 ? (
+          <div className={styles.emptyMessages}>
+            <div className={styles.emptyIcon}>{isDm ? '💬' : '#'}</div>
+            <p className={styles.emptyTitle}>{isDm ? `${roomName}와의 대화` : `# ${roomName}`}</p>
+            <p className={styles.emptySub}>아직 메시지가 없어요. 첫 번째 메시지를 보내보세요!</p>
+          </div>
+        ) : (
+          <div className={styles.dateDivider}><span>오늘</span></div>
+        )}
 
         {roomMessages.map((msg) => {
           const isMine   = msg.senderId === currentUser.id
@@ -252,7 +265,7 @@ export default function ChatPage() {
           rows={1}
         />
         <button
-          className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''}`}
+          className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
           onClick={handleSend} disabled={!text.trim()}>↑</button>
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFile} />
       </div>

@@ -91,13 +91,23 @@
 .dueDateOver { color: var(--coral); font-weight: 600; }
 
 .emptyCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   text-align: center;
-  padding: 20px;
+  padding: 24px 16px;
   font-size: 12px;
   color: var(--text-tertiary);
   background: var(--bg);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  animation: slideUp 0.25s ease;
+}
+
+.emptyCardIcon {
+  font-size: 22px;
+  opacity: 0.6;
 }
 
 @media (max-width: 768px) {
