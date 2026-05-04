@@ -126,6 +126,8 @@ export const useStore = create(
       invites: [],
       roomOrders: {},
       dmRooms: {},
+      dmRoomList: [],
+      mutedProjects: [],
       connects: [],
       notifications: [],
 
@@ -150,6 +152,8 @@ export const useStore = create(
       setRoomMessages: (roomId, msgs) =>
         set((s) => ({ messages: { ...s.messages, [roomId]: msgs } })),
 
+      setDmRoomList: (rooms) => set({ dmRoomList: rooms }),
+
       // ─── 인증 ────────────────────────────────────────────
       login: (name, email, uid, extra = {}) => {
         const user = {
@@ -168,7 +172,7 @@ export const useStore = create(
 
       logout: () => set({
         isLoggedIn: false, currentUser: null,
-        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, connects: [], invites: [], notifications: [],
+        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [],
       }),
 
       // ─── 튜토리얼 프로젝트 Firestore 생성 ───────────────
@@ -328,17 +332,31 @@ export const useStore = create(
         if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
       },
 
-      getOrCreateDmRoom: (projectId, otherUserId, otherUserName) => {
+      getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {
         const { currentUser, dmRooms } = get()
         const dmKey = [currentUser.id, otherUserId].sort().join('_')
+        const roomId = `dm_${dmKey}`
         if (dmRooms[dmKey]) return dmRooms[dmKey]
-        const newRoom = { id: `dm_${dmKey}`, dmKey, projectId, name: otherUserName, otherUserId, isDirect: true }
+        const newRoom = {
+          id: roomId, dmKey, projectId,
+          participants: [currentUser.id, otherUserId],
+          participantNames: { [currentUser.id]: currentUser.name, [otherUserId]: otherUserName },
+          isDirect: true, createdBy: currentUser.id,
+          lastMessage: '', createdAt: new Date().toISOString(),
+        }
+        await setDoc(doc(db, 'dmRooms', roomId), { ...newRoom, createdAt: serverTimestamp() })
         set((s) => ({
           dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
-          messages: { ...s.messages, [`dm_${dmKey}`]: [] },
+          messages: { ...s.messages, [roomId]: [] },
         }))
         return newRoom
       },
+
+      toggleMuteProject: (projectId) => set((s) => ({
+        mutedProjects: s.mutedProjects.includes(projectId)
+          ? s.mutedProjects.filter((id) => id !== projectId)
+          : [...s.mutedProjects, projectId],
+      })),
 
       // ─── 채팅 ─────────────────────────────────────────────
       sendMessage: async (roomId, text, type = 'text') => {
@@ -844,16 +862,16 @@ export const useStore = create(
       },
 
       // ─── 알림 ─────────────────────────────────────────────
-      addNotification: (noti) =>
+      addNotification: (noti) => {
+        const { mutedProjects } = get()
+        if (noti.projectId && mutedProjects.includes(noti.projectId)) return
         set((s) => ({
           notifications: [
-            {
-              id: `noti_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-              read: false, createdAt: Date.now(), ...noti,
-            },
+            { id: `noti_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, read: false, createdAt: Date.now(), ...noti },
             ...s.notifications,
           ].slice(0, 100),
-        })),
+        }))
+      },
 
       markNotificationRead: (notiId) =>
         set((s) => ({ notifications: s.notifications.map((n) => n.id === notiId ? { ...n, read: true } : n) })),
@@ -902,6 +920,7 @@ export const useStore = create(
         notifications: state.notifications,
         invites:       state.invites,
         theme:         state.theme,
+        mutedProjects: state.mutedProjects,
       }),
     }
   )

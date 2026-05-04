@@ -113,8 +113,8 @@ export default function ProjectPage() {
     setAnnTitle(''); setAnnContent(''); setAnnIsGlobal(false); setAnnFile(null); setBoardView('list')
   }
 
-  const handleDm = (member) => {
-    const room = getOrCreateDmRoom(project.id, member.id, member.name)
+  const handleDm = async (member) => {
+    const room = await getOrCreateDmRoom(project.id, member.id, member.name)
     setProfileMember(null)
     navigate(`/project/${projectId}/chat/${room.id}`)
   }
