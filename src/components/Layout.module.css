@@ -218,13 +218,37 @@
 
   .content { padding: 16px; }
 }
-/* 알림 종 아이콘 */
+/* 로고 행 */
 .logoRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
+
+.logoActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* 검색 버튼 */
+.searchBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: var(--bg-secondary);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.searchBtn:hover { background: var(--primary-light); transform: translateY(-1px); }
+
+/* 알림 종 아이콘 */
 
 .notiBtn {
   position: relative;

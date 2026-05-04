@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import NotificationPanel from './NotificationPanel.jsx'
+import SearchModal from './SearchModal.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
@@ -11,6 +12,19 @@ export default function Layout() {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+
+  // Cmd+K / Ctrl+K 단축키로 검색 열기
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setShowSearch(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const active = projects.filter((p) => p.status === 'active')
   const unreadCount = (notifications || []).filter((n) => !n.read).length
@@ -33,18 +47,23 @@ export default function Layout() {
             <span className={styles.logoMark}>T</span>
             <span className={styles.logoText}>Teamp</span>
           </div>
-          <button
-            className={styles.notiBtn}
-            onClick={() => setShowNotifications(true)}
-            title="알림"
-          >
-            🔔
-            {unreadCount > 0 && (
-              <span className={styles.notiBadge}>
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
+          <div className={styles.logoActions}>
+            <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">
+              🔍
+            </button>
+            <button
+              className={styles.notiBtn}
+              onClick={() => setShowNotifications(true)}
+              title="알림"
+            >
+              🔔
+              {unreadCount > 0 && (
+                <span className={styles.notiBadge}>
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <nav className={styles.nav}>
@@ -119,6 +138,10 @@ export default function Layout() {
       <NotificationPanel
         open={showNotifications}
         onClose={() => setShowNotifications(false)}
+      />
+      <SearchModal
+        open={showSearch}
+        onClose={() => setShowSearch(false)}
       />
     </div>
   )
