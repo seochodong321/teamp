@@ -291,6 +291,19 @@
 
 .doneSub { font-size: 13px; color: var(--text-secondary); }
 
+/* ── 리더 크라운 ── */
+.leaderCrown { font-size: 13px; margin-right: 2px; line-height: 1; }
+
+/* ── 완료됨 토글 ── */
+.archivedHeader { display: flex; align-items: center; justify-content: space-between; }
+.archivedToggle { font-size: 12px; color: var(--text-tertiary); padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--bg); transition: all 0.15s; }
+.archivedToggle:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ── 숨기기 버튼 ── */
+.hideBtn { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: transparent; color: var(--text-tertiary); font-size: 11px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s, background 0.15s; }
+.cardArchived:hover .hideBtn { opacity: 1; }
+.hideBtn:hover { background: #FCEBEB; color: #E24B4A; }
+
 /* ── 카드 상태 미리보기 ── */
 .cardPreview { display: flex; flex-direction: column; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 8px 10px; margin: 2px 0 4px; }
 .cardPreviewMsg, .cardPreviewTodo { display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; padding: 1px 2px; transition: background 0.12s; }

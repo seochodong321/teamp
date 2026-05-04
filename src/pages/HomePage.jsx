@@ -19,6 +19,7 @@ export default function HomePage() {
     acceptInvite, declineInvite,
     getProgress, getDday, isExpired,
     archiveProject, extendProject, createProject,
+    hiddenProjects, hideProject,
   } = useStore()
 
   const active     = projects.filter((p) => p.status === 'active')
@@ -41,6 +42,9 @@ export default function HomePage() {
   const [dateError, setDateError] = useState('')
   const [created, setCreated]     = useState(null)
   const [loading, setLoading]     = useState(false)
+
+  // ── 완료됨 섹션 접기 ──
+  const [showArchived, setShowArchived] = useState(false)
 
   // ── 연장 모달 ──
   const [extendId, setExtendId]     = useState(null)
@@ -380,9 +384,10 @@ export default function HomePage() {
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 
           return (
-            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}>
+            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}
+              onClick={() => navigate(`/project/${p.id}`)} style={{ cursor: 'pointer' }}>
               {expired && isLeader && (
-                <div className={styles.expiredBanner}>
+                <div className={styles.expiredBanner} onClick={(e) => e.stopPropagation()}>
                   <span>기한이 만료됐어요</span>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button className={styles.expiredArchive}
@@ -394,12 +399,7 @@ export default function HomePage() {
               )}
               <div className={styles.cardHeader}>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className={styles.cardCategory}>{p.category}</span>
-                    <span className={isLeader ? styles.roleBadgeLeader : styles.roleBadgeMember}>
-                      {isLeader ? '👑 리더' : '팀원'}
-                    </span>
-                  </div>
+                  <span className={styles.cardCategory}>{p.category}</span>
                   <h3 className={styles.cardName}>
                     {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
                     {p.name}
@@ -415,7 +415,7 @@ export default function HomePage() {
 
               {/* 상태 미리보기 */}
               {hasPreview && (
-                <div className={styles.cardPreview}>
+                <div className={styles.cardPreview} onClick={(e) => e.stopPropagation()}>
                   {lastMsg && (
                     <div className={styles.cardPreviewMsg}
                       onClick={() => activeRoom && navigate(`/project/${p.id}/chat/${activeRoom.id}`)}>
@@ -451,8 +451,9 @@ export default function HomePage() {
                     style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
                 </div>
               </div>
-              <div className={styles.cardFooter}>
+              <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.memberAvatars}>
+                  {isLeader && <span className={styles.leaderCrown}>👑</span>}
                   {p.members.slice(0, 4).map((m, i) => (
                     <div key={m.id} className={styles.avatar} style={{ zIndex: 4 - i }}>
                       {m.name.charAt(0)}
@@ -516,29 +517,44 @@ export default function HomePage() {
       )}
 
       {/* ── 완료됨 ── */}
-      {archived.length > 0 && (
+      {archived.filter((p) => !hiddenProjects.includes(p.id)).length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>완료됨 ({archived.length})</h2>
-          <div className={styles.grid}>
-            {archived.map((p) => (
-              <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}
-                onClick={() => p.wrapupId ? navigate(`/project/${p.id}/wrapup`) : navigate(`/project/${p.id}`)}
-                style={{ cursor: 'pointer' }}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <span className={styles.cardCategory}>{p.category}</span>
-                    <h3 className={styles.cardName}>
-                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
-                      {p.name}
-                    </h3>
-                  </div>
-                  <span className={styles.archivedBadge}>✅ 완료</span>
-                </div>
-                <p className={styles.cardPurpose}>{p.purpose}</p>
-                <p className={styles.cardDate}>~ {p.endDate}</p>
-              </div>
-            ))}
+          <div className={styles.archivedHeader}>
+            <h2 className={styles.sectionTitle}>
+              완료됨 ({archived.filter((p) => !hiddenProjects.includes(p.id)).length})
+            </h2>
+            <button className={styles.archivedToggle} onClick={() => setShowArchived((v) => !v)}>
+              {showArchived ? '접기 ∧' : '펼치기 ∨'}
+            </button>
           </div>
+          {showArchived && (
+            <div className={styles.grid}>
+              {archived.filter((p) => !hiddenProjects.includes(p.id)).map((p) => (
+                <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}
+                  onClick={() => p.wrapupId ? navigate(`/project/${p.id}/wrapup`) : navigate(`/project/${p.id}`)}
+                  style={{ cursor: 'pointer', position: 'relative' }}>
+                  <button
+                    className={styles.hideBtn}
+                    title="내 목록에서 숨기기"
+                    onClick={(e) => { e.stopPropagation(); hideProject(p.id) }}>
+                    ✕
+                  </button>
+                  <div className={styles.cardHeader}>
+                    <div>
+                      <span className={styles.cardCategory}>{p.category}</span>
+                      <h3 className={styles.cardName}>
+                        {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                        {p.name}
+                      </h3>
+                    </div>
+                    <span className={styles.archivedBadge}>✅ 완료</span>
+                  </div>
+                  <p className={styles.cardPurpose}>{p.purpose}</p>
+                  <p className={styles.cardDate}>~ {p.endDate}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

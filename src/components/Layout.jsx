@@ -56,7 +56,7 @@ export default function Layout() {
               onClick={() => setShowNotifications(true)}
               title="알림"
             >
-              🔔
+              ✦
               {unreadCount > 0 && (
                 <span className={styles.notiBadge}>
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -94,7 +94,7 @@ export default function Layout() {
                       className={`${styles.muteBtn} ${muted ? styles.muteBtnOn : ''}`}
                       onClick={() => toggleMuteProject(p.id)}
                       title={muted ? '알림 켜기' : '알림 끄기'}>
-                      {muted ? '🔕' : '🔔'}
+                      {muted ? '○' : '●'}
                     </button>
                   </div>
                 )
@@ -153,7 +153,7 @@ export default function Layout() {
             className={styles.mobileNotiBtn}
             onClick={() => setShowNotifications(true)}
           >
-            🔔
+            ✦
             {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>
         </div>

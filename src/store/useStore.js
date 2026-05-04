@@ -129,6 +129,7 @@ export const useStore = create(
       dmRooms: {},
       dmRoomList: [],
       mutedProjects: [],
+      hiddenProjects: [],
       connects: [],
       notifications: [],
 
@@ -384,6 +385,12 @@ export const useStore = create(
         }))
         return newRoom
       },
+
+      hideProject: (projectId) => set((s) => ({
+        hiddenProjects: s.hiddenProjects.includes(projectId)
+          ? s.hiddenProjects
+          : [...s.hiddenProjects, projectId],
+      })),
 
       toggleMuteProject: (projectId) => set((s) => ({
         mutedProjects: s.mutedProjects.includes(projectId)
@@ -971,8 +978,9 @@ export const useStore = create(
         connects:      state.connects,
         notifications: state.notifications,
         invites:       state.invites,
-        theme:         state.theme,
-        mutedProjects: state.mutedProjects,
+        theme:          state.theme,
+        mutedProjects:  state.mutedProjects,
+        hiddenProjects: state.hiddenProjects,
       }),
     }
   )
