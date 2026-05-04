@@ -25,18 +25,6 @@ export default function HomePage() {
   const collecting = projects.filter((p) => p.status === 'collecting')
   const archived   = projects.filter((p) => p.status === 'archived')
 
-  // 퀵액션: 가장 최근 활성·비튜토리얼 프로젝트
-  const quickProject = active.find((p) => !p.isTutorial)
-  const appOriginQuick = import.meta.env.VITE_APP_URL || window.location.origin
-  const quickInviteLink = quickProject ? `${appOriginQuick}/join/${quickProject.inviteCode || quickProject.id}` : ''
-  const [quickCopied, setQuickCopied] = useState(false)
-
-  const handleQuickCopy = () => {
-    navigator.clipboard.writeText(quickInviteLink).catch(() => {})
-    setQuickCopied(true)
-    setTimeout(() => setQuickCopied(false), 2000)
-  }
-
   // 개인화 힌트 도우미
   const getProjectHint = (p) => {
     const myId = currentUser?.id
@@ -356,27 +344,6 @@ export default function HomePage() {
         </div>
         <button className={styles.createBtn} onClick={openModal}>+ 새 프로젝트</button>
       </div>
-
-      {/* ── 퀵액션 카드 ── */}
-      {quickProject && (
-        <div className={styles.quickActions}>
-          <button className={styles.quickCard} onClick={handleQuickCopy}>
-            <span className={styles.quickCardIcon}>{quickCopied ? '✅' : '🔗'}</span>
-            <span className={styles.quickCardLabel}>{quickCopied ? '복사됐어요!' : '초대 링크 복사'}</span>
-            <span className={styles.quickCardSub}>{quickProject.name}</span>
-          </button>
-          <button className={styles.quickCard} onClick={() => navigate(`/project/${quickProject.id}?tab=todo`)}>
-            <span className={styles.quickCardIcon}>✅</span>
-            <span className={styles.quickCardLabel}>할 일 추가</span>
-            <span className={styles.quickCardSub}>{quickProject.name}</span>
-          </button>
-          <button className={styles.quickCard} onClick={() => navigate(`/project/${quickProject.id}?tab=members`)}>
-            <span className={styles.quickCardIcon}>👥</span>
-            <span className={styles.quickCardLabel}>팀원 확인</span>
-            <span className={styles.quickCardSub}>{quickProject.members?.length}명</span>
-          </button>
-        </div>
-      )}
 
       {/* ── 초대 배너 ── */}
       {invites.map((invite) => (
