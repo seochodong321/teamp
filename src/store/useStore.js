@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, query, where, runTransaction,
+  updateDoc, arrayUnion, query, where, runTransaction,
   serverTimestamp, writeBatch,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -255,6 +255,8 @@ export const useStore = create(
       // ─── 초대 코드로 프로젝트 참여 ───────────────────────
       joinProjectByCode: async (code) => {
         const { currentUser, connects } = get()
+        if (!currentUser) return { success: false, message: '로그인이 필요해요.' }
+
         // 직접 ID 조회 먼저 시도
         let projectDoc = null
         try {
@@ -286,11 +288,12 @@ export const useStore = create(
           roomIds: allRoomIds, memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '',
         }
 
-        // 트랜잭션으로 멤버 추가
-        await txProject(project.id, (data) => ({
-          members: [...data.members, newMember],
-          memberIds: [...(data.memberIds || []), currentUser.id],
-        }))
+        // arrayUnion으로 멤버 추가 — 비멤버도 자신을 추가할 수 있도록 Firestore 규칙 필요:
+        // allow update: if request.auth.uid in request.resource.data.memberIds;
+        await updateDoc(doc(db, 'projects', project.id), {
+          members: arrayUnion(newMember),
+          memberIds: arrayUnion(currentUser.id),
+        })
 
         // 전체방에 참여 알림 메시지 전송
         const allRoomId = allRoomIds[1]
