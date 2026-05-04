@@ -50,13 +50,13 @@ const makeTutorialProject = (myId, myName) => {
     startDate: today,
     endDate: today,
     status: 'active',
-    leaderId: 'teamp_system',
+    leaderId: myId,
     isTutorial: true,
     inviteCode: `tutorial_${myId}`,
     memberIds: [myId],
     members: [
-      { id: myId, name: myName, role: 'member', roomIds: [dmId, allId, devId], memo: '', affiliation: '', email: '' },
-      { id: 'teamp_bot', name: 'Teamp 봇', role: 'leader', roomIds: [dmId, allId, devId], memo: '', affiliation: 'Teamp', email: 'hello@teamp.app' },
+      { id: myId, name: myName, role: 'leader', roomIds: [dmId, allId, devId], memo: '', affiliation: '', email: '' },
+      { id: 'teamp_bot', name: 'Teamp 봇', role: 'member', roomIds: [dmId, allId, devId], memo: '', affiliation: 'Teamp', email: 'hello@teamp.app' },
     ],
     rooms: [
       { id: dmId,  name: '나와의 채팅', lastMessage: '메모처럼 혼자 쓸 수 있어요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true },
