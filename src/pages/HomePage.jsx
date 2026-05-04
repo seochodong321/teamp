@@ -25,22 +25,6 @@ export default function HomePage() {
   const collecting = projects.filter((p) => p.status === 'collecting')
   const archived   = projects.filter((p) => p.status === 'archived')
 
-  // 개인화 힌트 도우미
-  const getProjectHint = (p) => {
-    const myId = currentUser?.id
-    const today = new Date().toISOString().split('T')[0]
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
-    // 1순위: 읽지 않은 메시지
-    const unreadRoom = p.rooms?.find((r) => (r.unread || 0) > 0)
-    if (unreadRoom) return { text: `💬 새 메시지가 있어요`, tab: 'rooms' }
-    // 2순위: 오늘 마감 할 일
-    const todayTodos = (p.todos || []).filter((t) => t.dueDate === today && t.status !== 'done')
-    if (todayTodos.length > 0) return { text: `✅ 오늘 마감 할 일 ${todayTodos.length}개`, tab: 'todo' }
-    // 3순위: 내일 일정
-    const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
-    if (tomorrowEvent) return { text: `📅 내일 일정 — ${tomorrowEvent.title}`, tab: 'calendar' }
-    return null
-  }
 
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)
@@ -376,6 +360,25 @@ export default function HomePage() {
           const dday     = getDday(p.endDate)
           const expired  = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
+          const today    = new Date().toISOString().split('T')[0]
+
+          // 마지막 메시지: 전체 채팅방 우선, 없으면 isDm 제외 첫 번째 방
+          const activeRoom = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
+            || p.rooms?.find((r) => !r.isDm && r.lastMessage)
+          const lastMsg  = activeRoom?.lastMessage || ''
+          const lastTime = activeRoom?.time || ''
+
+          // 오늘 마감 미완료 할 일 수
+          const todayTodoCount = (p.todos || []).filter(
+            (t) => t.dueDate === today && t.status !== 'done'
+          ).length
+
+          // 내일 일정
+          const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+          const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
+
+          const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
+
           return (
             <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}>
               {expired && isLeader && (
@@ -408,7 +411,36 @@ export default function HomePage() {
                   {dday}
                 </span>
               </div>
-              <p className={styles.cardPurpose}>{p.purpose}</p>
+              {p.purpose && <p className={styles.cardPurpose}>{p.purpose}</p>}
+
+              {/* 상태 미리보기 */}
+              {hasPreview && (
+                <div className={styles.cardPreview}>
+                  {lastMsg && (
+                    <div className={styles.cardPreviewMsg}
+                      onClick={() => activeRoom && navigate(`/project/${p.id}/chat/${activeRoom.id}`)}>
+                      <span className={styles.cardPreviewIcon}>💬</span>
+                      <span className={styles.cardPreviewText}>{lastMsg}</span>
+                      {lastTime && <span className={styles.cardPreviewTime}>{lastTime}</span>}
+                    </div>
+                  )}
+                  {todayTodoCount > 0 && (
+                    <div className={styles.cardPreviewTodo}
+                      onClick={() => navigate(`/project/${p.id}?tab=todo`)}>
+                      <span className={styles.cardPreviewIcon}>✅</span>
+                      <span className={styles.cardPreviewText}>오늘 마감 할 일 {todayTodoCount}개</span>
+                    </div>
+                  )}
+                  {tomorrowEvent && (
+                    <div className={styles.cardPreviewTodo}
+                      onClick={() => navigate(`/project/${p.id}?tab=calendar`)}>
+                      <span className={styles.cardPreviewIcon}>📅</span>
+                      <span className={styles.cardPreviewText}>내일 — {tomorrowEvent.title}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className={styles.cardProgress}>
                 <div className={styles.progressInfo}>
                   <span className={styles.progressLabel}>기간 진행률</span>
@@ -419,14 +451,6 @@ export default function HomePage() {
                     style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
                 </div>
               </div>
-              {(() => {
-                const hint = getProjectHint(p)
-                return hint ? (
-                  <button className={styles.hintBadge} onClick={() => navigate(`/project/${p.id}?tab=${hint.tab}`)}>
-                    {hint.text}
-                  </button>
-                ) : null
-              })()}
               <div className={styles.cardFooter}>
                 <div className={styles.memberAvatars}>
                   {p.members.slice(0, 4).map((m, i) => (
