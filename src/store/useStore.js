@@ -238,22 +238,38 @@ export const useStore = create(
         // 로컬 store 먼저 확인
         const local = get().projects.find((p) => p.inviteCode === code || p.id === code)
         if (local) return local
-        // Firestore에서 조회
-        const q = query(collection(db, 'projects'), where('inviteCode', '==', code))
-        const snap = await getDocs(q)
-        if (!snap.empty) return { id: snap.docs[0].id, ...snap.docs[0].data() }
+        // inviteCode === projectId 이므로 직접 문서 조회 (비멤버도 읽을 수 있는 규칙 필요)
+        try {
+          const docSnap = await getDoc(doc(db, 'projects', code))
+          if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() }
+        } catch {}
+        // 커스텀 코드 폴백
+        try {
+          const q = query(collection(db, 'projects'), where('inviteCode', '==', code))
+          const snap = await getDocs(q)
+          if (!snap.empty) return { id: snap.docs[0].id, ...snap.docs[0].data() }
+        } catch {}
         return null
       },
 
       // ─── 초대 코드로 프로젝트 참여 ───────────────────────
       joinProjectByCode: async (code) => {
         const { currentUser, connects } = get()
-        // Firestore에서 초대 코드로 프로젝트 검색
-        const q = query(collection(db, 'projects'), where('inviteCode', '==', code))
-        const snap = await getDocs(q)
-        if (snap.empty) return { success: false, message: '유효하지 않은 초대 링크예요.' }
+        // 직접 ID 조회 먼저 시도
+        let projectDoc = null
+        try {
+          const docSnap = await getDoc(doc(db, 'projects', code))
+          if (docSnap.exists()) projectDoc = docSnap
+        } catch {}
+        if (!projectDoc) {
+          try {
+            const q = query(collection(db, 'projects'), where('inviteCode', '==', code))
+            const snap = await getDocs(q)
+            if (!snap.empty) projectDoc = snap.docs[0]
+          } catch {}
+        }
+        if (!projectDoc) return { success: false, message: '유효하지 않은 초대 링크예요.' }
 
-        const projectDoc = snap.docs[0]
         const project = { id: projectDoc.id, ...projectDoc.data() }
 
         if (project.members.find((m) => m.id === currentUser.id)) {

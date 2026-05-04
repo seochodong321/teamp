@@ -1,6 +1,6 @@
-.page { display: flex; justify-content: center; padding: 8px 0; }
+.page { display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px 48px; min-height: calc(100vh - 56px); }
 
-.card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 36px; width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 28px; box-shadow: var(--shadow-md); }
+.card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px 32px; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 22px; box-shadow: var(--shadow-md); }
 
 .stepBar { display: flex; align-items: center; }
 .stepItem { display: flex; align-items: center; flex: 1; }
@@ -35,6 +35,17 @@
 .chipActive { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
 
 .dateRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* 기본 생성 채팅방 */
+.defaultRooms { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.defaultRoomsLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.defaultRoomItem { display: flex; align-items: center; gap: 10px; }
+.defaultRoomIcon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.defaultRoomName { font-size: 13px; font-weight: 500; color: var(--text); }
+.defaultRoomDesc { font-size: 11px; color: var(--text-tertiary); }
+
+.addRoomLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.roomHint { font-size: 12px; color: var(--text-tertiary); }
 
 .roomList { display: flex; flex-direction: column; gap: 6px; }
 .roomItem { display: flex; align-items: center; justify-content: space-between; background: var(--primary-light); border-radius: var(--radius-sm); padding: 10px 14px; }
@@ -76,7 +87,8 @@
 .doneButtons { display: flex; gap: 8px; }
 
 @media (max-width: 600px) {
-  .card { padding: 24px 20px; }
+  .page { padding: 16px 12px 40px; }
+  .card { padding: 20px 16px; gap: 18px; }
   .dateRow { grid-template-columns: 1fr; }
   .stepLabel { display: none; }
 }
