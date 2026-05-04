@@ -15,7 +15,7 @@ const EMOJI_OPTIONS = [
 export default function HomePage() {
   const navigate = useNavigate()
   const {
-    projects, invites,
+    projects, currentUser, invites,
     acceptInvite, declineInvite,
     getProgress, getDday, isExpired,
     archiveProject, extendProject, createProject,
@@ -348,73 +348,95 @@ export default function HomePage() {
       ))}
 
       {/* ── 진행 중 ── */}
-      {active.length > 0 && (
-        <section>
-          <h2 className={styles.sectionTitle}>진행 중 ({active.length})</h2>
-          <div className={styles.grid}>
-            {active.map((p) => {
-              const progress = getProgress(p)
-              const dday     = getDday(p.endDate)
-              const expired  = isExpired(p.endDate)
-              return (
-                <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}>
-                  {expired && (
-                    <div className={styles.expiredBanner}>
-                      <span>기한이 만료됐어요</span>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button className={styles.expiredArchive}
-                          onClick={() => navigate(`/project/${p.id}`)}>마무리하기</button>
-                        <button className={styles.expiredExtend}
-                          onClick={() => { setExtendId(p.id); setNewEndDate('') }}>연장</button>
-                      </div>
-                    </div>
-                  )}
-                  <div className={styles.cardHeader}>
-                    <div>
-                      <span className={styles.cardCategory}>{p.category}</span>
-                      <h3 className={styles.cardName}>
-                        {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
-                        {p.name}
-                      </h3>
-                    </div>
-                    <span className={`${styles.dday}
-                      ${dday === 'D-day' ? styles.ddayUrgent : ''}
-                      ${dday === '기한 초과' ? styles.ddayOver : ''}`}>
-                      {dday}
-                    </span>
-                  </div>
-                  <p className={styles.cardPurpose}>{p.purpose}</p>
-                  <div className={styles.cardProgress}>
-                    <div className={styles.progressInfo}>
-                      <span className={styles.progressLabel}>기간 진행률</span>
-                      <span className={styles.progressValue}>{progress}%</span>
-                    </div>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill}
-                        style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
-                    </div>
-                  </div>
-                  <div className={styles.cardFooter}>
-                    <div className={styles.memberAvatars}>
-                      {p.members.slice(0, 4).map((m, i) => (
-                        <div key={m.id} className={styles.avatar} style={{ zIndex: 4 - i }}>
-                          {m.name.charAt(0)}
-                        </div>
-                      ))}
-                      {p.members.length > 4 && (
-                        <div className={styles.avatarMore}>+{p.members.length - 4}</div>
-                      )}
-                    </div>
-                    <button className={styles.enterBtn} onClick={() => navigate(`/project/${p.id}`)}>
-                      입장하기 →
-                    </button>
+      {active.length > 0 && (() => {
+        const myId = currentUser?.id
+        const leaderActive = active.filter((p) => p.leaderId === myId)
+        const memberActive = active.filter((p) => p.leaderId !== myId)
+        const showGroups = leaderActive.length > 0 && memberActive.length > 0
+
+        const renderCard = (p) => {
+          const progress = getProgress(p)
+          const dday     = getDday(p.endDate)
+          const expired  = isExpired(p.endDate)
+          const isLeader = p.leaderId === myId
+          return (
+            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}>
+              {expired && isLeader && (
+                <div className={styles.expiredBanner}>
+                  <span>기한이 만료됐어요</span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className={styles.expiredArchive}
+                      onClick={() => navigate(`/project/${p.id}`)}>마무리하기</button>
+                    <button className={styles.expiredExtend}
+                      onClick={() => { setExtendId(p.id); setNewEndDate('') }}>연장</button>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </section>
-      )}
+              )}
+              <div className={styles.cardHeader}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className={styles.cardCategory}>{p.category}</span>
+                    <span className={isLeader ? styles.roleBadgeLeader : styles.roleBadgeMember}>
+                      {isLeader ? '👑 리더' : '팀원'}
+                    </span>
+                  </div>
+                  <h3 className={styles.cardName}>
+                    {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                    {p.name}
+                  </h3>
+                </div>
+                <span className={`${styles.dday}
+                  ${dday === 'D-day' ? styles.ddayUrgent : ''}
+                  ${dday === '기한 초과' ? styles.ddayOver : ''}`}>
+                  {dday}
+                </span>
+              </div>
+              <p className={styles.cardPurpose}>{p.purpose}</p>
+              <div className={styles.cardProgress}>
+                <div className={styles.progressInfo}>
+                  <span className={styles.progressLabel}>기간 진행률</span>
+                  <span className={styles.progressValue}>{progress}%</span>
+                </div>
+                <div className={styles.progressBar}>
+                  <div className={styles.progressFill}
+                    style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
+                </div>
+              </div>
+              <div className={styles.cardFooter}>
+                <div className={styles.memberAvatars}>
+                  {p.members.slice(0, 4).map((m, i) => (
+                    <div key={m.id} className={styles.avatar} style={{ zIndex: 4 - i }}>
+                      {m.name.charAt(0)}
+                    </div>
+                  ))}
+                  {p.members.length > 4 && (
+                    <div className={styles.avatarMore}>+{p.members.length - 4}</div>
+                  )}
+                </div>
+                <button className={styles.enterBtn} onClick={() => navigate(`/project/${p.id}`)}>
+                  입장하기 →
+                </button>
+              </div>
+            </div>
+          )
+        }
+
+        return (
+          <section>
+            <h2 className={styles.sectionTitle}>진행 중 ({active.length})</h2>
+            {showGroups ? (
+              <>
+                <p className={styles.groupLabel}>👑 내가 리더인 프로젝트</p>
+                <div className={styles.grid}>{leaderActive.map(renderCard)}</div>
+                <p className={styles.groupLabel} style={{ marginTop: 20 }}>팀원으로 참여 중</p>
+                <div className={styles.grid}>{memberActive.map(renderCard)}</div>
+              </>
+            ) : (
+              <div className={styles.grid}>{active.map(renderCard)}</div>
+            )}
+          </section>
+        )
+      })()}
 
       {/* ── 피드백 수집 중 ── */}
       {collecting.length > 0 && (

@@ -170,11 +170,9 @@ export default function CalendarInline({ project, currentUser }) {
             <>
               <div className={styles.panelHeader}>
                 <span className={styles.panelDate}>{fmtDay(selected)}</span>
-                {iCanManage && (
-                  <button className={styles.addBtn} onClick={() => setShowForm(!showForm)}>
-                    {showForm ? '취소' : '+ 추가'}
-                  </button>
-                )}
+                <button className={styles.addBtn} onClick={() => setShowForm(!showForm)}>
+                  {showForm ? '취소' : '+ 추가'}
+                </button>
               </div>
 
               {showForm && (

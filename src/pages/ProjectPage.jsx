@@ -216,7 +216,10 @@ export default function ProjectPage() {
                     setShowEndProject(false)
                     navigate(`/project/${project.id}/wrapup`)
                   } catch (e) {
-                    setEndError('오류가 발생했어요. 다시 시도해주세요.')
+                    const msg = e?.code === 'permission-denied'
+                      ? 'Firestore 권한 오류 — Firebase 콘솔에서 wrapups 규칙을 추가해주세요'
+                      : `오류: ${e?.message || '알 수 없는 오류'}`
+                    setEndError(msg)
                     console.error('endProject 오류:', e)
                   } finally {
                     setEndSubmitting(false)

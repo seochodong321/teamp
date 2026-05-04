@@ -133,7 +133,7 @@ export const useStore = create(
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
-        const { projects: local } = get()
+        const { projects: local, currentUser, connects } = get()
         // Firestore에 없는 로컬 unread 카운트 보존
         const merged = firestoreProjects.map(fp => {
           const lp = local.find(p => p.id === fp.id)
@@ -146,7 +146,30 @@ export const useStore = create(
             }),
           }
         })
-        set({ projects: merged })
+
+        // 같은 프로젝트에 속한 멤버를 커넥트에 자동 동기화
+        const stateUpdate = { projects: merged }
+        if (currentUser) {
+          const existingIds = new Set(connects.map(c => c.id))
+          const newConnects = []
+          firestoreProjects.forEach(fp => {
+            fp.members?.forEach(m => {
+              if (m.id !== currentUser.id && !existingIds.has(m.id)) {
+                existingIds.add(m.id)
+                newConnects.push({
+                  id: m.id, name: m.name,
+                  affiliation: m.affiliation || '',
+                  email: m.email || '',
+                  projectName: fp.name,
+                  connectedAt: new Date().toISOString().split('T')[0],
+                })
+              }
+            })
+          })
+          if (newConnects.length > 0) stateUpdate.connects = [...connects, ...newConnects]
+        }
+
+        set(stateUpdate)
       },
 
       setRoomMessages: (roomId, msgs) =>
