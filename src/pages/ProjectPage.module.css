@@ -51,6 +51,20 @@
 .expiredBar { background: var(--coral-soft); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--coral); font-weight: 500; flex-wrap: wrap; gap: 8px; }
 .expiredArchive { padding: 5px 12px; background: var(--coral); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .expiredExtend  { padding: 5px 12px; border: 1px solid var(--coral); color: var(--coral); border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+/* 기한 내 조기 종료 */
+.earlyEndBar { display: flex; justify-content: flex-end; padding-top: 4px; }
+.earlyEndBtn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: var(--bg);
+  transition: all var(--transition-fast);
+}
+.earlyEndBtn:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-soft); }
 .wrapupBar { background: var(--teal-soft); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--teal); font-weight: 500; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .wrapupBtn { padding: 5px 12px; background: var(--teal); color: white; border-radius: 6px; font-size: 12px; font-weight: 600; }
 .modalCheckRow { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); margin: 12px 0 8px; cursor: pointer; }

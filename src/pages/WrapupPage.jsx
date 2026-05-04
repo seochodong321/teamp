@@ -5,6 +5,17 @@ import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './WrapupPage.module.css'
 
+const FLOWER_TAGS = [
+  { id: 'reliable',  emoji: '🌹', label: '믿음직한' },
+  { id: 'energetic', emoji: '🌻', label: '에너지 넘치는' },
+  { id: 'detailed',  emoji: '🌷', label: '섬세한' },
+  { id: 'creative',  emoji: '🌼', label: '아이디어 부자' },
+  { id: 'pillar',    emoji: '💐', label: '팀의 기둥' },
+  { id: 'diligent',  emoji: '🍀', label: '묵묵히 해내는' },
+  { id: 'fast',      emoji: '⚡', label: '빠른 실행력' },
+  { id: 'focused',   emoji: '🎯', label: '목표에 집중하는' },
+]
+
 export default function WrapupPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
@@ -12,21 +23,19 @@ export default function WrapupPage() {
 
   const project = projects.find((p) => p.id === projectId)
   const [wrapup, setWrapup] = useState(null)
-  const [tab, setTab] = useState('overview') // 'overview' | 'reflection' | 'feedback'
+  const [tab, setTab] = useState('overview')
 
-  // 내 회고 입력
+  // 내 회고
   const [reflectionText, setReflectionText] = useState('')
   const [reflectionSaving, setReflectionSaving] = useState(false)
 
-  // 피드백 작성 대상
+  // 피드백 — 태그 + 한 줄 메시지
   const [feedbackTarget, setFeedbackTarget] = useState(null)
-  const [positives, setPositives] = useState([''])
-  const [improvements, setImprovements] = useState([''])
-  const [feedbackComment, setFeedbackComment] = useState('')
+  const [selectedTags, setSelectedTags] = useState([])
+  const [tagComment, setTagComment] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [feedbackSaving, setFeedbackSaving] = useState(false)
 
-  // wrapup 실시간 구독
   useEffect(() => {
     if (!project?.wrapupId) return
     const unsub = onSnapshot(doc(db, 'wrapups', project.wrapupId), (snap) => {
@@ -35,14 +44,10 @@ export default function WrapupPage() {
     return () => unsub()
   }, [project?.wrapupId])
 
-  // 피드백 수집 마감 체크
   useEffect(() => {
-    if (project?.status === 'collecting') {
-      checkAndArchive(projectId)
-    }
+    if (project?.status === 'collecting') checkAndArchive(projectId)
   }, [project?.status, projectId, checkAndArchive])
 
-  // 내 기존 회고 불러오기
   useEffect(() => {
     if (!wrapup) return
     const mine = wrapup.reflections?.find((r) => r.userId === currentUser?.id)
@@ -51,11 +56,16 @@ export default function WrapupPage() {
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
 
-  const isLeader = project.members.find((m) => m.id === currentUser?.id)?.role === 'leader'
-  const isMember = project.members.some((m) => m.id === currentUser?.id)
+  const isLeader     = project.members.find((m) => m.id === currentUser?.id)?.role === 'leader'
+  const isMember     = project.members.some((m) => m.id === currentUser?.id)
   const isCollecting = project.status === 'collecting'
-  const isArchived = project.status === 'archived'
-  const feedbackDeadline = project.feedbackDeadline
+  const isArchived   = project.status === 'archived'
+
+  const completionRate = wrapup
+    ? wrapup.summary.totalTodos === 0
+      ? 0
+      : Math.round((wrapup.summary.completedTodos / wrapup.summary.totalTodos) * 100)
+    : 0
 
   const myFeedbackTargets = wrapup
     ? project.members.filter((m) => m.id !== currentUser?.id)
@@ -64,41 +74,37 @@ export default function WrapupPage() {
   const getFeedbackFromMe = (toUserId) =>
     wrapup?.feedbacks?.find((f) => f.fromUserId === currentUser?.id && f.toUserId === toUserId)
 
-  const getMyFeedbacksFor = (toUserId) =>
-    wrapup?.feedbacks?.filter((f) => f.toUserId === toUserId) || []
+  const getMyFeedbacksFor = (userId) =>
+    wrapup?.feedbacks?.filter((f) => f.toUserId === userId) || []
 
   const handleReflectionSave = async () => {
     if (!reflectionText.trim()) return
     setReflectionSaving(true)
-    try {
-      await addReflection(wrapup.id, reflectionText.trim())
-    } finally {
-      setReflectionSaving(false)
-    }
+    try { await addReflection(wrapup.id, reflectionText.trim()) }
+    finally { setReflectionSaving(false) }
   }
+
+  const toggleTag = (id) =>
+    setSelectedTags((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id])
 
   const handleFeedbackOpen = (member) => {
     const existing = getFeedbackFromMe(member.id)
     setFeedbackTarget(member)
-    setPositives(existing?.positives?.length ? existing.positives : [''])
-    setImprovements(existing?.improvements?.length ? existing.improvements : [''])
-    setFeedbackComment(existing?.comment || '')
+    // 이전 태그 불러오기 (old format: positives array / new format: tags array)
+    setSelectedTags(existing?.tags?.map((t) => t.id) || [])
+    setTagComment(existing?.comment || '')
     setIsAnonymous(existing?.isAnonymous || false)
   }
 
   const handleFeedbackSubmit = async () => {
-    if (!feedbackTarget) return
-    const validPos = positives.filter((p) => p.trim())
-    const validImp = improvements.filter((i) => i.trim())
-    if (!validPos.length && !validImp.length) return
+    if (!feedbackTarget || selectedTags.length === 0) return
     setFeedbackSaving(true)
     try {
       await addFeedback(wrapup.id, {
         toUserId: feedbackTarget.id,
         toUserName: feedbackTarget.name,
-        positives: validPos,
-        improvements: validImp,
-        comment: feedbackComment.trim(),
+        tags: selectedTags.map((id) => FLOWER_TAGS.find((t) => t.id === id)),
+        comment: tagComment.trim(),
         isAnonymous,
       })
       setFeedbackTarget(null)
@@ -106,12 +112,6 @@ export default function WrapupPage() {
       setFeedbackSaving(false)
     }
   }
-
-  const completionRate = wrapup
-    ? wrapup.summary.totalTodos === 0
-      ? 0
-      : Math.round((wrapup.summary.completedTodos / wrapup.summary.totalTodos) * 100)
-    : 0
 
   return (
     <div className={styles.page}>
@@ -126,7 +126,7 @@ export default function WrapupPage() {
         <div style={{ width: 80 }} />
       </div>
 
-      {/* 프로젝트 배너 */}
+      {/* 프로젝트 배너 — amber 톤 */}
       <div className={styles.banner}>
         <span className={styles.bannerEmoji}>{project.emoji || '📁'}</span>
         <div className={styles.bannerInfo}>
@@ -140,13 +140,13 @@ export default function WrapupPage() {
         </div>
       </div>
 
-      {isCollecting && feedbackDeadline && (
+      {isCollecting && project.feedbackDeadline && (
         <div className={styles.deadlineBanner}>
-          📅 피드백 마감: <strong>{feedbackDeadline}</strong>
+          📅 피드백 마감: <strong>{project.feedbackDeadline}</strong>
         </div>
       )}
 
-      {/* 탭 */}
+      {/* 탭 — amber 활성 색상 */}
       <div className={styles.tabs}>
         {['overview', 'reflection', 'feedback'].map((t) => (
           <button
@@ -160,30 +160,45 @@ export default function WrapupPage() {
       </div>
 
       <div className={styles.content}>
-        {/* ── 요약 탭 ── */}
+        {/* ── 요약 탭 — 문장형 ── */}
         {tab === 'overview' && (
           <div className={styles.overviewTab}>
             {!wrapup ? (
               <p className={styles.loadingText}>데이터를 불러오는 중...</p>
             ) : (
               <>
-                <div className={styles.statsGrid}>
-                  <div className={styles.statCard}>
-                    <span className={styles.statNum}>{wrapup.summary.totalMessages}</span>
-                    <span className={styles.statLabel}>총 메시지</span>
-                  </div>
-                  <div className={styles.statCard}>
-                    <span className={styles.statNum}>{wrapup.summary.totalTodos}</span>
-                    <span className={styles.statLabel}>할 일</span>
-                  </div>
-                  <div className={styles.statCard}>
-                    <span className={`${styles.statNum} ${styles.statGreen}`}>{completionRate}%</span>
-                    <span className={styles.statLabel}>완료율</span>
-                  </div>
-                  <div className={styles.statCard}>
-                    <span className={styles.statNum}>{wrapup.summary.totalFiles}</span>
-                    <span className={styles.statLabel}>파일 공유</span>
-                  </div>
+                <div className={styles.statSentences}>
+                  <h3 className={styles.sectionTitle}>활동 요약</h3>
+
+                  {wrapup.summary.totalMessages > 0 && (
+                    <div className={styles.statLine}>
+                      <span className={styles.statLineIcon}>💬</span>
+                      <span className={styles.statLineText}>
+                        총 <strong>{wrapup.summary.totalMessages}개</strong>의 메시지가 오갔어요
+                      </span>
+                    </div>
+                  )}
+                  {wrapup.summary.totalTodos > 0 && (
+                    <div className={styles.statLine}>
+                      <span className={styles.statLineIcon}>✅</span>
+                      <span className={styles.statLineText}>
+                        할 일 <strong>{wrapup.summary.totalTodos}개</strong> 중{' '}
+                        <strong>{wrapup.summary.completedTodos || 0}개</strong>를 완료했어요
+                        {' '}({completionRate}%)
+                      </span>
+                    </div>
+                  )}
+                  {wrapup.summary.totalFiles > 0 && (
+                    <div className={styles.statLine}>
+                      <span className={styles.statLineIcon}>📎</span>
+                      <span className={styles.statLineText}>
+                        파일 <strong>{wrapup.summary.totalFiles}개</strong>를 공유했어요
+                      </span>
+                    </div>
+                  )}
+                  {!wrapup.summary.totalMessages && !wrapup.summary.totalTodos && !wrapup.summary.totalFiles && (
+                    <p className={styles.emptyText}>아직 집계된 활동이 없어요</p>
+                  )}
                 </div>
 
                 {wrapup.highlights?.mostActiveUserName && (
@@ -263,7 +278,7 @@ export default function WrapupPage() {
           <div className={styles.feedbackTab}>
             {isMember && (isCollecting || isArchived) && (
               <>
-                <h3 className={styles.sectionTitle}>팀원에게 피드백 보내기</h3>
+                <h3 className={styles.sectionTitle}>팀원에게 꽃다발 보내기</h3>
                 <div className={styles.feedbackTargets}>
                   {myFeedbackTargets.map((m) => {
                     const sent = getFeedbackFromMe(m.id)
@@ -275,7 +290,7 @@ export default function WrapupPage() {
                           className={`${styles.feedbackBtn} ${sent ? styles.feedbackBtnDone : ''}`}
                           onClick={() => handleFeedbackOpen(m)}
                         >
-                          {sent ? '✅ 수정' : '피드백 쓰기'}
+                          {sent ? '✅ 수정' : '🌸 보내기'}
                         </button>
                       </div>
                     )
@@ -288,13 +303,24 @@ export default function WrapupPage() {
               <h3 className={styles.sectionTitle}>나에 대한 피드백</h3>
               {(() => {
                 const forMe = getMyFeedbacksFor(currentUser?.id)
-                if (!forMe.length) return <p className={styles.emptyText}>아직 받은 피드백이 없어요</p>
+                if (!forMe.length) return <p className={styles.emptyText}>아직 받은 피드백이 없어요 🌱</p>
                 return forMe.map((f, i) => (
                   <div key={i} className={styles.feedbackCard}>
                     <p className={styles.feedbackFrom}>
-                      {f.isAnonymous ? '익명' : f.fromUserName} → {f.toUserName}
+                      {f.isAnonymous ? '익명' : f.fromUserName}이 보낸 꽃다발 🌸
                     </p>
-                    {f.positives?.length > 0 && (
+                    {/* 신 포맷 — 태그 */}
+                    {f.tags?.length > 0 && (
+                      <div className={styles.tagDisplay}>
+                        {f.tags.map((t, j) => (
+                          <span key={j} className={styles.tagChip}>
+                            {t.emoji} {t.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* 구 포맷 — 텍스트 리스트 하위호환 */}
+                    {!f.tags && f.positives?.length > 0 && (
                       <div className={styles.feedbackSection}>
                         <span className={styles.feedbackSectionLabel}>👍 잘한 점</span>
                         <ul className={styles.feedbackList}>
@@ -302,15 +328,9 @@ export default function WrapupPage() {
                         </ul>
                       </div>
                     )}
-                    {f.improvements?.length > 0 && (
-                      <div className={styles.feedbackSection}>
-                        <span className={styles.feedbackSectionLabel}>💡 개선할 점</span>
-                        <ul className={styles.feedbackList}>
-                          {f.improvements.map((p, j) => <li key={j}>{p}</li>)}
-                        </ul>
-                      </div>
+                    {f.comment && (
+                      <p className={styles.feedbackComment}>"{f.comment}"</p>
                     )}
-                    {f.comment && <p className={styles.feedbackComment}>{f.comment}</p>}
                   </div>
                 ))
               })()}
@@ -319,59 +339,47 @@ export default function WrapupPage() {
         )}
       </div>
 
-      {/* 피드백 작성 모달 */}
+      {/* 피드백 작성 모달 — 태그 선택 UI */}
       {feedbackTarget && (
         <div className={styles.modalBackdrop} onClick={() => setFeedbackTarget(null)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{feedbackTarget.name}에게 피드백</h3>
+              <div>
+                <h3 className={styles.modalTitle}>
+                  {feedbackTarget.name} 님에게 꽃다발을 건네세요 🌸
+                </h3>
+                <p className={styles.modalSubtitle}>여러 개 선택 가능해요</p>
+              </div>
               <button className={styles.modalClose} onClick={() => setFeedbackTarget(null)}>✕</button>
             </div>
 
-            <label className={styles.fieldLabel}>👍 잘한 점</label>
-            {positives.map((p, i) => (
-              <div key={i} className={styles.listInputRow}>
-                <input
-                  className={styles.listInput}
-                  value={p}
-                  onChange={(e) => { const a = [...positives]; a[i] = e.target.value; setPositives(a) }}
-                  placeholder={`잘한 점 ${i + 1}`}
-                />
-                {positives.length > 1 && (
-                  <button onClick={() => setPositives(positives.filter((_, j) => j !== i))}>✕</button>
-                )}
-              </div>
-            ))}
-            {positives.length < 5 && (
-              <button className={styles.addItemBtn} onClick={() => setPositives([...positives, ''])}>+ 추가</button>
-            )}
+            <div className={styles.tagGrid}>
+              {FLOWER_TAGS.map((tag) => (
+                <button
+                  key={tag.id}
+                  className={`${styles.tagBtn} ${selectedTags.includes(tag.id) ? styles.tagBtnActive : ''}`}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  <span className={styles.tagEmoji}>{tag.emoji}</span>
+                  <span className={styles.tagLabel}>{tag.label}</span>
+                </button>
+              ))}
+            </div>
 
-            <label className={styles.fieldLabel}>💡 개선할 점</label>
-            {improvements.map((p, i) => (
-              <div key={i} className={styles.listInputRow}>
-                <input
-                  className={styles.listInput}
-                  value={p}
-                  onChange={(e) => { const a = [...improvements]; a[i] = e.target.value; setImprovements(a) }}
-                  placeholder={`개선할 점 ${i + 1}`}
-                />
-                {improvements.length > 1 && (
-                  <button onClick={() => setImprovements(improvements.filter((_, j) => j !== i))}>✕</button>
-                )}
-              </div>
-            ))}
-            {improvements.length < 5 && (
-              <button className={styles.addItemBtn} onClick={() => setImprovements([...improvements, ''])}>+ 추가</button>
-            )}
-
-            <label className={styles.fieldLabel}>한 마디 (선택)</label>
-            <textarea
-              className={styles.commentInput}
-              value={feedbackComment}
-              onChange={(e) => setFeedbackComment(e.target.value)}
-              placeholder="자유롭게 한 마디 남겨주세요"
-              rows={3}
-            />
+            <label className={styles.fieldLabel}>
+              한 줄 메시지
+              <span className={styles.fieldOptional}> (선택 · 최대 50자)</span>
+            </label>
+            <div className={styles.commentWrap}>
+              <input
+                className={styles.commentInput}
+                value={tagComment}
+                onChange={(e) => setTagComment(e.target.value.slice(0, 50))}
+                placeholder="한 마디를 전해보세요"
+                maxLength={50}
+              />
+              <span className={styles.charCount}>{tagComment.length}/50</span>
+            </div>
 
             <label className={styles.anonRow}>
               <input
@@ -387,9 +395,9 @@ export default function WrapupPage() {
               <button
                 className={styles.submitBtn}
                 onClick={handleFeedbackSubmit}
-                disabled={feedbackSaving}
+                disabled={feedbackSaving || selectedTags.length === 0}
               >
-                {feedbackSaving ? '전송 중...' : '피드백 보내기'}
+                {feedbackSaving ? '전송 중...' : '꽃다발 전하기 🌸'}
               </button>
             </div>
           </div>

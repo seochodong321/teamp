@@ -48,6 +48,7 @@ export default function ProjectPage() {
   const [inviteCopied, setInviteCopied] = useState(false)
 
   const [showEndProject, setShowEndProject]     = useState(false)
+  const [showConfirmEnd, setShowConfirmEnd]     = useState(false)
   const [endCollectFeedback, setEndCollectFeedback] = useState(true)
   const [endFeedbackDuration, setEndFeedbackDuration] = useState(7)
   const [endSubmitting, setEndSubmitting]       = useState(false)
@@ -162,6 +163,22 @@ export default function ProjectPage() {
         </div>
       )}
 
+      {showConfirmEnd && (
+        <div className={styles.backdrop} onClick={() => setShowConfirmEnd(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>프로젝트를 마칠까요? 🍜</h3>
+            <p className={styles.modalDesc}>이 작업은 되돌릴 수 없어요. 정말 마치시겠어요?</p>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalCancel} onClick={() => setShowConfirmEnd(false)}>아직은요</button>
+              <button className={styles.modalConfirm}
+                onClick={() => { setShowConfirmEnd(false); setShowEndProject(true) }}>
+                네, 마칠게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showEndProject && (
         <div className={styles.backdrop} onClick={() => setShowEndProject(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
@@ -271,9 +288,16 @@ export default function ProjectPage() {
           <div className={styles.expiredBar}>
             <span>기한이 만료됐어요</span>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className={styles.expiredArchive} onClick={() => setShowEndProject(true)}>🏁 마무리하기</button>
+              <button className={styles.expiredArchive} onClick={() => setShowEndProject(true)}>프로젝트 마치기 🍜</button>
               <button className={styles.expiredExtend} onClick={() => setShowExtend(true)}>연장하기</button>
             </div>
+          </div>
+        )}
+        {!expired && isLeader && project.status === 'active' && (
+          <div className={styles.earlyEndBar}>
+            <button className={styles.earlyEndBtn} onClick={() => setShowConfirmEnd(true)}>
+              프로젝트 마치기 🍜
+            </button>
           </div>
         )}
         {(project.status === 'collecting' || project.status === 'archived') && (
