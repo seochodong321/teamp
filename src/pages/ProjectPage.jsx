@@ -52,6 +52,7 @@ export default function ProjectPage() {
   const [endCollectFeedback, setEndCollectFeedback] = useState(true)
   const [endFeedbackDuration, setEndFeedbackDuration] = useState(7)
   const [endSubmitting, setEndSubmitting]       = useState(false)
+  const [endError, setEndError]                 = useState('')
 
   useEffect(() => {
     if (tabParam) setTab(tabParam)
@@ -194,6 +195,8 @@ export default function ProjectPage() {
                 <label className={styles.modalLabel}>피드백 수집 기간</label>
                 <select className={styles.modalSelect} value={endFeedbackDuration}
                   onChange={(e) => setEndFeedbackDuration(Number(e.target.value))}>
+                  <option value={0.5}>12시간</option>
+                  <option value={1}>1일</option>
                   <option value={3}>3일</option>
                   <option value={5}>5일</option>
                   <option value={7}>7일</option>
@@ -201,15 +204,23 @@ export default function ProjectPage() {
                 </select>
               </div>
             )}
+            {endError && <p style={{ color: 'var(--coral)', fontSize: 13, margin: '4px 0 0' }}>{endError}</p>}
             <div className={styles.modalBtns}>
               <button className={styles.modalCancel} onClick={() => setShowEndProject(false)}>취소</button>
               <button className={styles.modalConfirm} disabled={endSubmitting}
                 onClick={async () => {
                   setEndSubmitting(true)
-                  await endProject(project.id, { collectFeedback: endCollectFeedback, feedbackDuration: endFeedbackDuration })
-                  setEndSubmitting(false)
-                  setShowEndProject(false)
-                  navigate(`/project/${project.id}/wrapup`)
+                  setEndError('')
+                  try {
+                    await endProject(project.id, { collectFeedback: endCollectFeedback, feedbackDuration: endFeedbackDuration })
+                    setShowEndProject(false)
+                    navigate(`/project/${project.id}/wrapup`)
+                  } catch (e) {
+                    setEndError('오류가 발생했어요. 다시 시도해주세요.')
+                    console.error('endProject 오류:', e)
+                  } finally {
+                    setEndSubmitting(false)
+                  }
                 }}>
                 {endSubmitting ? '처리 중...' : '마무리하기'}
               </button>

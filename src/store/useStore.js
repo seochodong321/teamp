@@ -515,10 +515,7 @@ export const useStore = create(
               createdAt: serverTimestamp(),
             })
           }
-          get().addNotification({
-            type: 'todo', title: '✅ 새 할 일이 배정됐어요', message: title,
-            projectId, link: `/project/${projectId}?tab=board`,
-          })
+          // 알림은 배정받은 사람 기기에서만 의미 있음 — 배정한 사람에게 보내지 않음
         }
 
         await txProject(projectId, (data) => ({
@@ -746,7 +743,7 @@ export const useStore = create(
         }
 
         const totalTodos = project.todos?.length ?? 0
-        const completedTodos = project.todos?.filter((t) => t.done).length ?? 0
+        const completedTodos = project.todos?.filter((t) => t.status === 'done').length ?? 0
 
         const mostActiveUserId = Object.keys(messageSenderCount).sort(
           (a, b) => (messageSenderCount[b] || 0) - (messageSenderCount[a] || 0)
@@ -754,7 +751,7 @@ export const useStore = create(
         const mostActiveUserName = project.members.find((m) => m.id === mostActiveUserId)?.name || null
 
         const feedbackDeadline = collectFeedback
-          ? new Date(Date.now() + feedbackDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          ? new Date(Date.now() + feedbackDuration * 24 * 60 * 60 * 1000).toISOString()
           : null
 
         const wrapupData = {

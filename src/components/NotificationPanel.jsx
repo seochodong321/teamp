@@ -12,6 +12,8 @@ const TYPE_ICONS = {
   event: '📅',
   invite: '👋',
   mention: '🔔',
+  dm: '💬',
+  system: '🔔',
 }
 
 function timeAgo(timestamp) {
@@ -83,7 +85,7 @@ export default function NotificationPanel({ open, onClose }) {
               >
                 <div className={styles.itemIcon}>{TYPE_ICONS[noti.type] || '🔔'}</div>
                 <div className={styles.itemBody}>
-                  <p className={styles.itemTitle}>{noti.title}</p>
+                  <p className={styles.itemTitle}>{noti.title || noti.text}</p>
                   {noti.message && <p className={styles.itemMessage}>{noti.message}</p>}
                   <p className={styles.itemTime}>{timeAgo(noti.createdAt)}</p>
                 </div>

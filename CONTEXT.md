@@ -47,22 +47,26 @@ teamp-web/
 - Firestore: asia-northeast3(서울)
 - **Firestore 보안 규칙** (Firebase 콘솔에 적용 완료):
   - `users/{userId}`: 본인만 읽기/쓰기
-  - `projects/{projectId}`: memberIds 포함 시 읽기/수정, 인증 사용자 생성
+  - `projects/{projectId}`: 기존 멤버 읽기/수정, 인증 사용자 생성; 비멤버 참여는 `request.resource.data.memberIds`에 자신이 포함되는 경우 허용 (arrayUnion 참여 방식)
   - `rooms/{roomId}/messages/{msgId}`: 인증 사용자 읽기/쓰기
   - `wrapups/{wrapupId}`: 인증 사용자 읽기/생성/수정
+  - `dmRooms/{roomId}`: participants 포함 시 읽기/수정, 인증 사용자 생성
+- **레포는 public** — 보안 경계는 Firestore 규칙. Firebase Web API 키는 공개 설계. 규칙을 항상 타이트하게 유지.
 - **컬렉션 구조**:
   - `users/`: { uid, name, username, email, affiliation, phone, oneliner, bio, createdAt }
   - `projects/`: { id, name, emoji, category, startDate, endDate, status, leaderId, memberIds, members, rooms, announcements, todos, events, isPublic, inviteCode, wrapupId?, feedbackDeadline?, collectFeedback? }
   - `rooms/{roomId}/messages/`: { senderId, senderName, type, text, time, createdAt, options? }
   - `wrapups/`: { projectId, projectName, summary, highlights, members, reflections, feedbacks, createdAt }
-- projects/messages는 Firestore onSnapshot 실시간 구독
-- roomOrders, dmRooms, connects, notifications, invites, theme은 localStorage(Zustand persist)
+  - `dmRooms/`: { id, dmKey, projectId, participants, participantNames, isDirect, createdBy, lastMessage, createdAt }
+- projects/messages/dmRooms는 Firestore onSnapshot 실시간 구독
+- roomOrders, connects, notifications, invites, theme, mutedProjects은 localStorage(Zustand persist)
 
 ## 완성된 기능
 
 ### 인증
 - Firebase 회원가입/로그인 (이름, 소속 필수, 핸드폰 선택)
-- 새로고침 시 로그인 유지
+- **아이디 저장** / **자동 로그인** 체크박스 (localStorage 기반, `setPersistence` 연동)
+- 새로고침 시 로그인 유지 (자동 로그인 ON 시 브라우저 재시작 후에도 유지)
 - 로그아웃
 
 ### 프로젝트
@@ -76,7 +80,8 @@ teamp-web/
 - 신규 로그인 시 '📖 Teamp 사용방법' 튜토리얼 프로젝트 자동 생성 (Firestore)
 
 ### 초대 링크
-- 실제 작동: `${window.location.origin}/join/${project.id}`
+- 실제 작동: `${import.meta.env.VITE_APP_URL || window.location.origin}/join/${project.id}`
+- `.env.production`에 `VITE_APP_URL=https://teamp.vercel.app` 고정 (Vercel 프리뷰 URL 방지)
 - `/join/:code` 라우트 (로그인 없이 접근 가능)
 - 로그인 후 자동 참여 + 커넥트 추가 + 시스템 메시지
 - 멤버 탭에 초대 링크 복사 버튼
@@ -84,7 +89,9 @@ teamp-web/
 ### 채팅
 - 한글 IME 중복 입력 버그 수정 (isComposing)
 - 파일 공유, 투표 기능
-- 1:1 DM 채팅 (getOrCreateDmRoom)
+- 1:1 DM 채팅 (getOrCreateDmRoom) — Firestore `dmRooms` 컬렉션에 저장
+- DM 방이 생기면 사이드바 "직접 메시지" 섹션에 자동 표시 (onSnapshot 구독)
+- 상대방에게 DM 시작 알림 발송
 - Firestore 실시간 구독 (onSnapshot)
 
 ### 게시판
@@ -109,10 +116,11 @@ teamp-web/
 - 사이드바 좌상단 🔔 종 아이콘 (모바일은 우상단)
 - 빨간 점 + 읽지 않은 알림 개수
 - 슬라이드 패널 (오른쪽에서 등장)
-- 알림 종류: 환영, 공지, 게시글, 할 일, 일정, 초대
+- 알림 종류: 환영, 공지, 게시글, 할 일, 일정, 초대, DM 시작
 - 클릭하면 정확한 탭으로 이동 (?tab=board, ?tab=todo)
 - 모두 읽음 처리 / 전체 삭제 / 개별 삭제
 - "3분 전" 같은 상대 시간 표시
+- **프로젝트별 알림 뮤트/언뮤트** (사이드바 프로젝트 hover 시 🔔/🔕 버튼, Zustand persist)
 
 ### 멤버/권한
 - 멤버 프로필 클릭 → 모달 (이름, 소속, 이메일, 역할 메모)
@@ -180,7 +188,9 @@ teamp-web/
 - `setRoomMessages(roomId, msgs)` → 채팅방 메시지 동기화
 - `createTutorialProject(userId, userName)` → 첫 로그인 시 App.jsx에서 호출, Firestore에 튜토리얼 프로젝트 생성
 - `getProjectByInviteCode(code)`, `joinProjectByCode(code)`
-- `getOrCreateDmRoom(projectId, otherUserId, otherUserName)`
+- `getOrCreateDmRoom(projectId, otherUserId, otherUserName)` → Firestore `dmRooms`에 저장 (async)
+- `setDmRoomList(rooms)` → App.jsx onSnapshot에서 호출, 사이드바 DM 목록 갱신
+- `toggleMuteProject(projectId)` → mutedProjects 배열 토글, Zustand persist
 - `addRoom`, `addAnnouncement`, `addTodo`, `updateTodo`, `deleteTodo`
 - `addEvent`, `removeEvent`
 - `createProject(data)` → inviteCode = project.id, emoji 포함, Firestore에 저장
@@ -201,9 +211,9 @@ teamp-web/
 ### 🔥 베타 출시 전 필수
 1. ~~**Firestore 연동**~~ ✅ 완료
 2. ~~**디자인 정돈**~~ ✅ 완료 (CSS 변수 통일, WrapupPage 재작성, 이모지 선택기 정리)
-3. **PWA 설정** ← 현재 진행 중 — manifest.json + 아이콘 + 서비스워커 (앱처럼 홈화면 추가)
-4. **도메인 연결** — teamp.app 같은 정식 도메인 (Vercel에서 설정)
-5. **초대 링크 다중 사용자 테스트** — 진짜로 다른 사람이 들어와서 채팅까지 되는지
+3. ~~**PWA 설정**~~ ✅ 완료 (manifest.json + icon.svg + sw.js)
+4. ~~**초대 링크 다중 사용자 테스트**~~ ✅ 완료 (참여 + 실시간 채팅 확인)
+5. **도메인 연결** — teamp.app 같은 정식 도메인 (Vercel에서 설정, 유저 담당)
 
 ### 🌟 서비스 고도화 (개발 집중)
 - 모바일 반응형 점검 및 개선
@@ -213,7 +223,6 @@ teamp-web/
 - 마이크로 인터랙션 (메시지 전송 애니메이션 등)
 
 ### ❌ 개발 범위 외 (유저가 직접 담당)
-- 글로벌 검색
 - 마케팅 / 홍보
 - 도메인 연결
 
@@ -229,8 +238,9 @@ teamp-web/
 
 ## 작업 방향
 
-- Claude는 **개발과 서비스 고도화**에만 집중 (검색, 마케팅, 도메인은 유저 담당)
+- Claude는 **개발과 서비스 고도화**에만 집중 (마케팅, 도메인은 유저 담당)
 - 장기 목표: 웹 완성 후 React Native로 앱 버전 확장 (Zustand + Firebase 로직 재사용)
+- **보안**: 레포가 public이므로 Firestore 규칙을 항상 타이트하게 유지. 규칙 변경 시 최소 권한 원칙 적용.
 
 ## 작업 스타일 메모
 
