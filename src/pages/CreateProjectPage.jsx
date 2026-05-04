@@ -28,6 +28,7 @@ export default function CreateProjectPage() {
   const [newRoom, setNewRoom]     = useState('')
   const [created, setCreated]     = useState(null)
   const [dateError, setDateError] = useState('')
+  const [loading, setLoading]     = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
   const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
@@ -37,11 +38,19 @@ export default function CreateProjectPage() {
       if (!emoji) { alert('프로젝트를 표현할 이모지를 골라주세요!'); return }
       if (!name.trim() || !startDate || !endDate) { alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
       if (endDate < today) { setDateError('종료일이 오늘보다 이전이에요. 날짜를 다시 설정해주세요.'); return }
+      if (startDate && endDate && endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
     if (step === 2) {
-      const p = await createProject({ name, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
-      setCreated(p)
+      setLoading(true)
+      try {
+        const p = await createProject({ name, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+        setCreated(p)
+        setStep((s) => s + 1)
+      } finally {
+        setLoading(false)
+      }
+      return
     }
     setStep((s) => s + 1)
   }
@@ -200,7 +209,7 @@ export default function CreateProjectPage() {
         <div className={styles.footer}>
           {step > 0 && step < 3 && <button type="button" className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
           <div style={{ flex: 1 }} />
-          {step < 3 && <button type="button" className={styles.nextBtn} onClick={goNext}>{step === 2 ? '완료하기' : '다음 →'}</button>}
+          {step < 3 && <button type="button" className={styles.nextBtn} onClick={goNext} disabled={loading}>{loading ? '생성 중...' : step === 2 ? '완료하기' : '다음 →'}</button>}
           {step === 3 && (
             <div className={styles.doneButtons}>
               <button type="button" className={styles.prevBtn} onClick={() => navigate('/home')}>홈으로</button>

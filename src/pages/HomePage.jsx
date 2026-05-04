@@ -39,6 +39,7 @@ export default function HomePage() {
   const [newRoom, setNewRoom]     = useState('')
   const [dateError, setDateError] = useState('')
   const [created, setCreated]     = useState(null)
+  const [loading, setLoading]     = useState(false)
 
   // ── 연장 모달 ──
   const [extendId, setExtendId]     = useState(null)
@@ -50,7 +51,7 @@ export default function HomePage() {
   const openModal = () => {
     setEmoji(''); setPName(''); setPurpose(''); setCategory('학교'); setCustomCategory('')
     setStartDate(''); setEndDate(''); setRoomNames(['개발팀'])
-    setNewRoom(''); setDateError(''); setCreated(null); setStep(0)
+    setNewRoom(''); setDateError(''); setCreated(null); setStep(0); setLoading(false)
     setShowModal(true)
   }
 
@@ -70,12 +71,21 @@ export default function HomePage() {
         setDateError('종료일이 오늘보다 이전이에요. 다시 설정해주세요.')
         return
       }
+      if (startDate && endDate && endDate < startDate) {
+        setDateError('종료일은 시작일보다 늦어야 해요.')
+        return
+      }
       setDateError('')
     }
     if (step === STEPS.length - 1) {
-      const p = await createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
-      setCreated(p)
-      setStep((s) => s + 1)
+      setLoading(true)
+      try {
+        const p = await createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+        setCreated(p)
+        setStep((s) => s + 1)
+      } finally {
+        setLoading(false)
+      }
       return
     }
     setStep((s) => s + 1)
@@ -270,8 +280,8 @@ export default function HomePage() {
               )}
               <div style={{ flex: 1 }} />
               {step < STEPS.length && (
-                <button className={styles.nextBtn} onClick={goNext}>
-                  {step === STEPS.length - 1 ? '완료하기' : '다음 →'}
+                <button className={styles.nextBtn} onClick={goNext} disabled={loading}>
+                  {loading ? '생성 중...' : step === STEPS.length - 1 ? '완료하기' : '다음 →'}
                 </button>
               )}
               {step === STEPS.length && (
