@@ -18,7 +18,7 @@ export default function ProjectPage() {
     getProgress, getDday, getVisibleRooms, canManage,
     updateMemberRole, setMemberRooms, transferLeader,
     reorderRooms, archiveProject, extendProject, endProject,
-    formatUnread, isExpired, getOrCreateDmRoom, addRoom,
+    formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -47,6 +47,8 @@ export default function ProjectPage() {
 
   const [inviteCopied, setInviteCopied] = useState(false)
 
+  const [showLeave, setShowLeave]               = useState(false)
+  const [leaveLoading, setLeaveLoading]         = useState(false)
   const [showEndProject, setShowEndProject]     = useState(false)
   const [showConfirmEnd, setShowConfirmEnd]     = useState(false)
   const [endCollectFeedback, setEndCollectFeedback] = useState(true)
@@ -174,6 +176,34 @@ export default function ProjectPage() {
               <button className={styles.modalConfirm}
                 onClick={() => { setShowConfirmEnd(false); setShowEndProject(true) }}>
                 네, 마칠게요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLeave && (
+        <div className={styles.backdrop} onClick={() => setShowLeave(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>프로젝트에서 나갈까요?</h3>
+            <p className={styles.modalDesc}>나가면 다시 초대를 받아야 참여할 수 있어요. 이 작업은 되돌릴 수 없어요.</p>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalCancel} onClick={() => setShowLeave(false)}>취소</button>
+              <button
+                className={styles.modalConfirm}
+                style={{ background: '#E24B4A' }}
+                disabled={leaveLoading}
+                onClick={async () => {
+                  setLeaveLoading(true)
+                  try {
+                    await leaveProject(project.id)
+                    navigate('/home')
+                  } finally {
+                    setLeaveLoading(false)
+                  }
+                }}
+              >
+                {leaveLoading ? '처리 중...' : '나가기'}
               </button>
             </div>
           </div>
@@ -318,7 +348,7 @@ export default function ProjectPage() {
           <div className={styles.wrapupBar}>
             <span>
               {project.status === 'collecting'
-                ? `📬 피드백 수집 중 · 마감: ${project.feedbackDeadline || ''}`
+                ? `📬 피드백 수집 중 · 마감: ${project.feedbackDeadline?.slice(0, 10) || ''}`
                 : '✅ 프로젝트가 완료됐어요'}
             </span>
             <button className={styles.wrapupBtn} onClick={() => navigate(`/project/${project.id}/wrapup`)}>
@@ -573,6 +603,12 @@ export default function ProjectPage() {
               </button>
             </div>
           </div>
+
+          {!isLeader && (
+            <button className={styles.leaveBtn} onClick={() => setShowLeave(true)}>
+              프로젝트 나가기
+            </button>
+          )}
         </div>
       )}
 

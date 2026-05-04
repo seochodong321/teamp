@@ -142,7 +142,7 @@ export default function WrapupPage() {
 
       {isCollecting && project.feedbackDeadline && (
         <div className={styles.deadlineBanner}>
-          📅 피드백 마감: <strong>{project.feedbackDeadline}</strong>
+          📅 피드백 마감: <strong>{project.feedbackDeadline?.slice(0, 10)}</strong>
         </div>
       )}
 
@@ -307,7 +307,7 @@ export default function WrapupPage() {
                 return forMe.map((f, i) => (
                   <div key={i} className={styles.feedbackCard}>
                     <p className={styles.feedbackFrom}>
-                      {f.isAnonymous ? '익명' : f.fromUserName}이 보낸 꽃다발 🌸
+                      {f.isAnonymous ? '익명' : f.fromUserName}님이 보낸 꽃다발 🌸
                     </p>
                     {/* 신 포맷 — 태그 */}
                     {f.tags?.length > 0 && (

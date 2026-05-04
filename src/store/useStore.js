@@ -875,6 +875,18 @@ export const useStore = create(
         })
       },
 
+      leaveProject: async (projectId) => {
+        const { currentUser } = get()
+        const project = get().projects.find((p) => p.id === projectId)
+        if (!project) return
+        const newMembers = project.members.filter((m) => m.id !== currentUser.id)
+        const newMemberIds = (project.memberIds || []).filter((id) => id !== currentUser.id)
+        await updateDoc(doc(db, 'projects', projectId), {
+          members: newMembers,
+          memberIds: newMemberIds,
+        })
+      },
+
       checkAndArchive: async (projectId) => {
         const project = get().projects.find((p) => p.id === projectId)
         if (!project || project.status !== 'collecting') return

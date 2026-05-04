@@ -25,6 +25,35 @@ export default function HomePage() {
   const collecting = projects.filter((p) => p.status === 'collecting')
   const archived   = projects.filter((p) => p.status === 'archived')
 
+  // 퀵액션: 가장 최근 활성·비튜토리얼 프로젝트
+  const quickProject = active.find((p) => !p.isTutorial)
+  const appOriginQuick = import.meta.env.VITE_APP_URL || window.location.origin
+  const quickInviteLink = quickProject ? `${appOriginQuick}/join/${quickProject.inviteCode || quickProject.id}` : ''
+  const [quickCopied, setQuickCopied] = useState(false)
+
+  const handleQuickCopy = () => {
+    navigator.clipboard.writeText(quickInviteLink).catch(() => {})
+    setQuickCopied(true)
+    setTimeout(() => setQuickCopied(false), 2000)
+  }
+
+  // 개인화 힌트 도우미
+  const getProjectHint = (p) => {
+    const myId = currentUser?.id
+    const today = new Date().toISOString().split('T')[0]
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+    // 1순위: 읽지 않은 메시지
+    const unreadRoom = p.rooms?.find((r) => (r.unread || 0) > 0)
+    if (unreadRoom) return { text: `💬 새 메시지가 있어요`, tab: 'rooms' }
+    // 2순위: 오늘 마감 할 일
+    const todayTodos = (p.todos || []).filter((t) => t.dueDate === today && t.status !== 'done')
+    if (todayTodos.length > 0) return { text: `✅ 오늘 마감 할 일 ${todayTodos.length}개`, tab: 'todo' }
+    // 3순위: 내일 일정
+    const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
+    if (tomorrowEvent) return { text: `📅 내일 일정 — ${tomorrowEvent.title}`, tab: 'calendar' }
+    return null
+  }
+
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)
   const [step, setStep]           = useState(0)
@@ -328,6 +357,27 @@ export default function HomePage() {
         <button className={styles.createBtn} onClick={openModal}>+ 새 프로젝트</button>
       </div>
 
+      {/* ── 퀵액션 카드 ── */}
+      {quickProject && (
+        <div className={styles.quickActions}>
+          <button className={styles.quickCard} onClick={handleQuickCopy}>
+            <span className={styles.quickCardIcon}>{quickCopied ? '✅' : '🔗'}</span>
+            <span className={styles.quickCardLabel}>{quickCopied ? '복사됐어요!' : '초대 링크 복사'}</span>
+            <span className={styles.quickCardSub}>{quickProject.name}</span>
+          </button>
+          <button className={styles.quickCard} onClick={() => navigate(`/project/${quickProject.id}?tab=todo`)}>
+            <span className={styles.quickCardIcon}>✅</span>
+            <span className={styles.quickCardLabel}>할 일 추가</span>
+            <span className={styles.quickCardSub}>{quickProject.name}</span>
+          </button>
+          <button className={styles.quickCard} onClick={() => navigate(`/project/${quickProject.id}?tab=members`)}>
+            <span className={styles.quickCardIcon}>👥</span>
+            <span className={styles.quickCardLabel}>팀원 확인</span>
+            <span className={styles.quickCardSub}>{quickProject.members?.length}명</span>
+          </button>
+        </div>
+      )}
+
       {/* ── 초대 배너 ── */}
       {invites.map((invite) => (
         <div key={invite.id} className={styles.inviteBanner}>
@@ -402,6 +452,14 @@ export default function HomePage() {
                     style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
                 </div>
               </div>
+              {(() => {
+                const hint = getProjectHint(p)
+                return hint ? (
+                  <button className={styles.hintBadge} onClick={() => navigate(`/project/${p.id}?tab=${hint.tab}`)}>
+                    {hint.text}
+                  </button>
+                ) : null
+              })()}
               <div className={styles.cardFooter}>
                 <div className={styles.memberAvatars}>
                   {p.members.slice(0, 4).map((m, i) => (

@@ -8,13 +8,14 @@ import styles from './ChatPage.module.css'
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, setRoomMessages } = useStore()
+  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
 
-  // 일반 채팅방 or DM 방
-  const dmKey = Object.keys(dmRooms).find((k) => dmRooms[k].id === roomId)
-  const dmRoom = dmKey ? dmRooms[dmKey] : null
+  // 일반 채팅방 or DM 방 (dmRooms 캐시 → dmRoomList Firestore 순서로 탐색)
+  const dmRoom = Object.values(dmRooms).find((r) => r.id === roomId)
+    || dmRoomList.find((r) => r.id === roomId)
+    || null
   const room = project?.rooms.find((r) => r.id === roomId) || dmRoom
 
   const roomMessages = messages[roomId] || []
@@ -64,10 +65,15 @@ export default function ChatPage() {
 
   if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
 
-  const isDm      = !!dmRoom
-  const roomName  = isDm ? dmRoom.name : room.name
+  const isDm = !!dmRoom
+  const roomName = isDm
+    ? (() => {
+        const otherId = (dmRoom?.participants || []).find((id) => id !== currentUser.id)
+        return dmRoom?.participantNames?.[otherId] || '1:1 대화'
+      })()
+    : room?.name
   const backLabel = isDm ? '← 뒤로' : `← ${project?.name || ''}`
-  const backPath  = isDm ? `/project/${dmRoom.projectId}` : `/project/${projectId}`
+  const backPath  = isDm ? `/project/${dmRoom?.projectId || projectId}` : `/project/${projectId}`
 
   const handleSend = () => {
     if (!text.trim()) return

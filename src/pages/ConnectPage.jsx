@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ConnectPage.module.css'
@@ -34,9 +34,13 @@ export default function ConnectPage() {
     setPubProjects([])
     setLoadingProfile(true)
     try {
-      const q = query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id))
-      const snap = await getDocs(q)
-      const pubs = snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.isPublic)
+      const [userSnap, projSnap] = await Promise.all([
+        getDoc(doc(db, 'users', contact.id)),
+        getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id))),
+      ])
+      const oneliner = userSnap.exists() ? (userSnap.data().oneliner || '') : ''
+      setProfile({ ...contact, oneliner })
+      const pubs = projSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.isPublic)
       setPubProjects(pubs)
     } catch {}
     setLoadingProfile(false)
@@ -70,6 +74,7 @@ export default function ConnectPage() {
             <button className={styles.modalClose} onClick={() => setProfile(null)}>✕</button>
             <div className={styles.profileAvatar}>{profile.name.charAt(0)}</div>
             <h3 className={styles.profileName}>{profile.name}</h3>
+            {profile.oneliner && <p className={styles.profileOneliner}>"{profile.oneliner}"</p>}
             {profile.affiliation && <p className={styles.profileAffil}>{profile.affiliation}</p>}
             {profile.email && <p className={styles.profileEmail}>{profile.email}</p>}
 
