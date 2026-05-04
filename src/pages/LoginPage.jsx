@@ -6,16 +6,20 @@ import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
 
-// 데모 계정 — Firebase에 미리 만들어둔 계정
 const DEMO_EMAIL = 'demo@teamp.app'
 const DEMO_PW    = 'demo1234'
+
+const FEATURES = [
+  { icon: '💬', text: '채팅 · 할 일 · 캘린더 · 게시판' },
+  { icon: '🌸', text: '프로젝트가 끝나면 팀원 피드백이 남아요' },
+  { icon: '🎓', text: '쌓인 기록이 나의 포트폴리오가 돼요' },
+]
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/home'
-  const defaultMode = searchParams.get('mode') || 'login'
-
+  const redirectTo   = searchParams.get('redirect') || '/home'
+  const defaultMode  = searchParams.get('mode') || 'login'
   const { login, isLoggedIn } = useStore()
 
   const [mode, setMode]               = useState(defaultMode)
@@ -24,7 +28,6 @@ export default function LoginPage() {
   const [password, setPassword]       = useState('')
   const [affiliation, setAffiliation] = useState('')
   const [phone, setPhone]             = useState('')
-  const [customCategory, setCustomCategory] = useState('')
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
 
@@ -44,7 +47,7 @@ export default function LoginPage() {
       }
       navigate(redirectTo, { replace: true })
     } catch {
-      setError('데모 계정 로그인에 실패했어요. Firebase에서 데모 계정을 먼저 만들어주세요.')
+      setError('데모 계정 로그인에 실패했어요.')
     } finally {
       setLoading(false)
     }
@@ -59,7 +62,6 @@ export default function LoginPage() {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
     }
-
     setLoading(true)
     try {
       if (mode === 'signup') {
@@ -102,81 +104,117 @@ export default function LoginPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.card}>
-        <div className={styles.logo}>
-          <div className={styles.logoMark}>T</div>
-          <h1 className={styles.logoName}>Teamp</h1>
-          <p className={styles.logoSub}>팀 프로젝트, 더 쉽게</p>
+
+      {/* ── 왼쪽: 서비스 소개 ── */}
+      <div className={styles.left}>
+        <div className={styles.leftInner}>
+          <div className={styles.brand}>
+            <div className={styles.brandMark}>T</div>
+            <span className={styles.brandName}>Teamp</span>
+          </div>
+
+          <div className={styles.copy}>
+            <h1 className={styles.headline}>
+              기한이 있는<br />프로젝트라면,<br />
+              <span className={styles.headlineAccent}>팀프에서 시작하세요.</span>
+            </h1>
+            <p className={styles.subCopy}>
+              단톡방에 묻히는 파일,<br />
+              흩어지는 할 일,<br />
+              끝나고 사라지는 기억.<br />
+              <br />
+              <strong>팀프에선 다 남아요.</strong>
+            </p>
+          </div>
+
+          <ul className={styles.features}>
+            {FEATURES.map((f, i) => (
+              <li key={i} className={styles.featureItem}>
+                <span className={styles.featureIcon}>{f.icon}</span>
+                <span className={styles.featureText}>{f.text}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className={styles.tabs}>
-          <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`}
-            onClick={() => { setMode('login');  setError('') }}>로그인</button>
-          <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
-            onClick={() => { setMode('signup'); setError('') }}>회원가입</button>
-        </div>
+        {/* 배경 장식 원 */}
+        <div className={styles.decorCircle1} />
+        <div className={styles.decorCircle2} />
+      </div>
 
-        <form className={styles.form} onSubmit={handleSubmit}>
-          {mode === 'signup' && (
+      {/* ── 오른쪽: 폼 ── */}
+      <div className={styles.right}>
+        <div className={styles.card}>
+          {/* 모바일에서만 보이는 로고 */}
+          <div className={styles.mobileLogoRow}>
+            <div className={styles.mobileMark}>T</div>
+            <span className={styles.mobileName}>Teamp</span>
+          </div>
+
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`}
+              onClick={() => { setMode('login');  setError('') }}>로그인</button>
+            <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
+              onClick={() => { setMode('signup'); setError('') }}>회원가입</button>
+          </div>
+
+          <form className={styles.form} onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <>
+                <div className={styles.field}>
+                  <label className={styles.label}>이름 *</label>
+                  <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
+                    placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>소속 * <span className={styles.labelHint}>(학교, 회사, 단체 등)</span></label>
+                  <input className={styles.input} value={affiliation} onChange={(e) => setAffiliation(e.target.value)}
+                    placeholder="예) OO대학교 컴퓨터공학과, OO회사" disabled={loading} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>핸드폰 번호 <span className={styles.labelHint}>(선택)</span></label>
+                  <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)}
+                    placeholder="010-0000-0000" type="tel" disabled={loading} />
+                </div>
+                <div className={styles.divider}><span>계정 정보</span></div>
+              </>
+            )}
+
+            <div className={styles.field}>
+              <label className={styles.label}>이메일 *</label>
+              <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="example@email.com" autoComplete="email" disabled={loading} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>비밀번호 *</label>
+              <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
+            </div>
+
+            {error && <p className={styles.error}>{error}</p>}
+
+            <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading}>
+              {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
+            </button>
+          </form>
+
+          {mode === 'login' && (
             <>
-              <div className={styles.field}>
-                <label className={styles.label}>이름 *</label>
-                <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>소속 * <span className={styles.labelHint}>(학교, 회사, 단체 등)</span></label>
-                <input className={styles.input} value={affiliation} onChange={(e) => setAffiliation(e.target.value)}
-                  placeholder="예) OO대학교 컴퓨터공학과, OO회사" disabled={loading} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>핸드폰 번호 <span className={styles.labelHint}>(선택)</span></label>
-                <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)}
-                  placeholder="010-0000-0000" type="tel" disabled={loading} />
-              </div>
-              <div className={styles.divider}><span>계정 정보</span></div>
+              <div className={styles.divider}><span>또는</span></div>
+              <button type="button" className={styles.demoBtn} onClick={handleDemoLogin} disabled={loading}>
+                🎯 데모 계정으로 체험하기
+              </button>
             </>
           )}
 
-          <div className={styles.field}>
-            <label className={styles.label}>이메일 *</label>
-            <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@email.com" autoComplete="email" disabled={loading} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>비밀번호 *</label>
-            <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
-          </div>
-
-          {error && <p className={styles.error}>{error}</p>}
-
-          <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading}>
-            {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
-          </button>
-        </form>
-
-        {mode === 'login' && (
-          <>
-            <div className={styles.divider}><span>또는</span></div>
-            <button
-              type="button"
-              className={styles.demoBtn}
-              onClick={handleDemoLogin}
-              disabled={loading}
-            >
-              🎯 데모 계정으로 체험하기
+          <p className={styles.switchText}>
+            {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
+            <button className={styles.switchBtn} type="button"
+              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}>
+              {mode === 'login' ? '회원가입' : '로그인'}
             </button>
-          </>
-        )}
-
-        <p className={styles.switchText}>
-          {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
-          <button className={styles.switchBtn} type="button"
-            onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}>
-            {mode === 'login' ? '회원가입' : '로그인'}
-          </button>
-        </p>
+          </p>
+        </div>
       </div>
     </div>
   )

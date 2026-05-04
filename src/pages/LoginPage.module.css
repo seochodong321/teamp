@@ -1,10 +1,159 @@
+/* ── 전체 레이아웃: 좌우 2분할 ── */
 .page {
+  display: flex;
   min-height: 100vh;
+}
+
+/* ── 왼쪽 소개 영역 ── */
+.left {
+  position: relative;
+  flex: 0 0 45%;
+  background: linear-gradient(150deg, #3C3489 0%, #534AB7 40%, #7B6FD4 80%, #9B8EE8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  overflow: hidden;
+}
+
+.leftInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  max-width: 360px;
+  width: 100%;
+}
+
+/* 브랜드 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brandMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brandName {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+/* 헤드라인 + 서브 카피 */
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.headline {
+  font-size: 32px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.25;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.headlineAccent {
+  color: white;
+}
+
+.subCopy {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.subCopy strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+}
+
+/* 기능 목록 */
+.features {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(4px);
+  transition: background 0.15s;
+}
+
+.featureItem:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.featureIcon { font-size: 18px; flex-shrink: 0; }
+
+.featureText {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.4;
+}
+
+/* 배경 장식 */
+.decorCircle1 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  top: -100px;
+  right: -100px;
+  pointer-events: none;
+}
+
+.decorCircle2 {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  bottom: -60px;
+  left: -60px;
+  pointer-events: none;
+}
+
+/* ── 오른쪽 폼 영역 ── */
+.right {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-secondary);
-  padding: 24px;
+  padding: 40px 24px;
+  overflow-y: auto;
 }
 
 .card {
@@ -17,37 +166,36 @@
   box-shadow: var(--shadow-md);
 }
 
-.logo {
-  text-align: center;
-  margin-bottom: 32px;
+/* 모바일 로고 (데스크탑에서 숨김) */
+.mobileLogoRow {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
-.logoMark {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+.mobileMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: var(--primary);
   color: white;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 12px;
 }
 
-.logoName {
-  font-size: 22px;
+.mobileName {
+  font-size: 20px;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
+  color: var(--primary);
+  letter-spacing: -0.02em;
 }
 
-.logoSub {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
+/* ── 폼 공통 ── */
 .tabs {
   display: flex;
   background: var(--bg-secondary);
@@ -78,6 +226,7 @@
 .field { display: flex; flex-direction: column; gap: 6px; }
 
 .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.labelHint { font-weight: 400; color: var(--text-tertiary); }
 
 .input {
   height: 44px;
@@ -87,10 +236,9 @@
   padding: 0 14px;
   font-size: 14px;
   color: var(--text);
-  transition: border-color 0.15s;
+  transition: all 0.15s;
 }
-
-.input:focus { border-color: var(--primary); background: var(--bg); }
+.input:focus { border-color: var(--primary); background: var(--bg); box-shadow: var(--shadow-glow); }
 
 .submitBtn {
   height: 48px;
@@ -103,7 +251,6 @@
   transition: all var(--transition);
   box-shadow: 0 2px 10px rgba(83, 74, 183, 0.3);
 }
-
 .submitBtn:hover { opacity: 0.9; box-shadow: 0 4px 16px rgba(83, 74, 183, 0.4); transform: translateY(-1px); }
 .submitBtnLoading { opacity: 0.7; }
 
@@ -115,7 +262,6 @@
   color: var(--text-tertiary);
   font-size: 12px;
 }
-
 .divider::before,
 .divider::after {
   content: '';
@@ -136,7 +282,6 @@
   transition: all var(--transition-fast);
   letter-spacing: -0.01em;
 }
-
 .demoBtn:hover {
   border-color: var(--primary);
   color: var(--primary);
@@ -147,15 +292,13 @@
   text-align: center;
   font-size: 13px;
   color: var(--text-secondary);
-  margin-top: 4px;
+  margin-top: 16px;
 }
-
 .switchBtn {
   color: var(--primary);
   font-weight: 600;
   font-size: 13px;
 }
-
 .switchBtn:hover { text-decoration: underline; }
 
 .error {
@@ -167,9 +310,51 @@
   animation: slideUp 0.2s ease;
 }
 
-.labelHint { font-weight: 400; color: var(--text-tertiary); }
+/* ── 모바일: 위아래 구조 ── */
+@media (max-width: 768px) {
+  .page { flex-direction: column; }
 
-@media (max-width: 480px) {
-  .card { padding: 28px 20px; }
-  .logo { margin-bottom: 20px; }
+  .left {
+    flex: none;
+    padding: 32px 24px;
+    min-height: auto;
+  }
+
+  .leftInner { gap: 20px; max-width: 100%; }
+
+  .headline { font-size: 24px; }
+
+  /* 서브 카피 줄이기 */
+  .subCopy { font-size: 14px; }
+
+  /* 기능 리스트 가로 스크롤로 */
+  .features {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    gap: 8px;
+  }
+  .featureItem {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .featureText { font-size: 12px; white-space: nowrap; }
+
+  .right {
+    flex: none;
+    padding: 24px 16px 40px;
+    background: var(--bg-secondary);
+    align-items: flex-start;
+  }
+
+  .card {
+    padding: 28px 20px;
+    max-width: 100%;
+  }
+
+  /* 모바일에서 로고 행 노출 */
+  .mobileLogoRow { display: flex; }
+
+  .decorCircle1, .decorCircle2 { display: none; }
 }
