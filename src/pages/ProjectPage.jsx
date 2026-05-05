@@ -150,6 +150,13 @@ export default function ProjectPage() {
   return (
     <div className={styles.page}>
 
+      {/* 상단 네비게이션 */}
+      <div className={styles.topNav}>
+        <button className={styles.topNavBack} onClick={() => navigate('/home')}>← 홈</button>
+        <span className={styles.topNavLogo}>Teamp</span>
+        <div style={{ width: 80 }} />
+      </div>
+
       {showExtend && (
         <div className={styles.backdrop} onClick={() => setShowExtend(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
