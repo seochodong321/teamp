@@ -43,8 +43,9 @@ export default function HomePage() {
   const [created, setCreated]     = useState(null)
   const [loading, setLoading]     = useState(false)
 
-  // ── 완료됨 섹션 접기 ──
-  const [showArchived, setShowArchived] = useState(false)
+  // ── 섹션 접기 ──
+  const [showCollecting, setShowCollecting] = useState(true)
+  const [showArchived, setShowArchived]     = useState(false)
 
   // ── 연장 모달 ──
   const [extendId, setExtendId]     = useState(null)
@@ -453,10 +454,12 @@ export default function HomePage() {
               </div>
               <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.memberAvatars}>
-                  {isLeader && <span className={styles.leaderCrown}>👑</span>}
                   {p.members.slice(0, 4).map((m, i) => (
-                    <div key={m.id} className={styles.avatar} style={{ zIndex: 4 - i }}>
-                      {m.name.charAt(0)}
+                    <div key={m.id} className={styles.avatarOuter} style={{ zIndex: 4 - i, marginLeft: i === 0 ? 0 : -6 }}>
+                      {isLeader && m.id === myId && (
+                        <span className={styles.avatarCrown}>👑</span>
+                      )}
+                      <div className={styles.avatar}>{m.name.charAt(0)}</div>
                     </div>
                   ))}
                   {p.members.length > 4 && (
@@ -491,28 +494,35 @@ export default function HomePage() {
       {/* ── 피드백 수집 중 ── */}
       {collecting.length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>피드백 수집 중 ({collecting.length})</h2>
-          <div className={styles.grid}>
-            {collecting.map((p) => (
-              <div key={p.id} className={`${styles.card} ${styles.cardCollecting}`}
-                onClick={() => navigate(`/project/${p.id}/wrapup`)} style={{ cursor: 'pointer' }}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <span className={styles.cardCategory}>{p.category}</span>
-                    <h3 className={styles.cardName}>
-                      {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
-                      {p.name}
-                    </h3>
-                  </div>
-                  <span className={styles.collectingBadge}>📬 수집 중</span>
-                </div>
-                <p className={styles.cardPurpose}>{p.purpose}</p>
-                {p.feedbackDeadline && (
-                  <p className={styles.cardDate}>마감: {p.feedbackDeadline}</p>
-                )}
-              </div>
-            ))}
+          <div className={styles.archivedHeader}>
+            <h2 className={styles.sectionTitle}>피드백 수집 중 ({collecting.length})</h2>
+            <button className={styles.archivedToggle} onClick={() => setShowCollecting((v) => !v)}>
+              {showCollecting ? '접기 ∧' : '펼치기 ∨'}
+            </button>
           </div>
+          {showCollecting && (
+            <div className={styles.grid}>
+              {collecting.map((p) => (
+                <div key={p.id} className={`${styles.card} ${styles.cardCollecting}`}
+                  onClick={() => navigate(`/project/${p.id}/wrapup`)} style={{ cursor: 'pointer' }}>
+                  <div className={styles.cardHeader}>
+                    <div>
+                      <span className={styles.cardCategory}>{p.category}</span>
+                      <h3 className={styles.cardName}>
+                        {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                        {p.name}
+                      </h3>
+                    </div>
+                    <span className={styles.collectingBadge}>📬 수집 중</span>
+                  </div>
+                  <p className={styles.cardPurpose}>{p.purpose}</p>
+                  {p.feedbackDeadline && (
+                    <p className={styles.cardDate}>마감: {p.feedbackDeadline?.slice(0, 10)}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

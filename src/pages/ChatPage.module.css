@@ -157,3 +157,15 @@
 @keyframes bounceIn { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes sendPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+/* DM 나가기 */
+.dmLeaveBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
+.dmLeaveBtn:hover { border-color: #E24B4A; color: #E24B4A; }
+.leaveBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.leaveModal { background: var(--bg); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-xl); }
+.leaveTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.leaveDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.leaveBtns { display: flex; gap: 8px; margin-top: 4px; }
+.leaveCancelBtn { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
+.leaveConfirmBtn { flex: 1; height: 40px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.leaveConfirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }

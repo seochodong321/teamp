@@ -291,8 +291,9 @@
 
 .doneSub { font-size: 13px; color: var(--text-secondary); }
 
-/* ── 리더 크라운 ── */
-.leaderCrown { font-size: 13px; margin-right: 2px; line-height: 1; }
+/* ── 아바타 크라운 ── */
+.avatarOuter { position: relative; display: flex; }
+.avatarCrown { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; line-height: 1; pointer-events: none; z-index: 1; }
 
 /* ── 완료됨 토글 ── */
 .archivedHeader { display: flex; align-items: center; justify-content: space-between; }

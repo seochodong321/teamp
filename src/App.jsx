@@ -81,7 +81,9 @@ export default function App() {
         dmUnsubRef.current = onSnapshot(
           query(collection(db, 'dmRooms'), where('participants', 'array-contains', user.uid)),
           (snapshot) => {
-            const rooms = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+            const rooms = snapshot.docs
+              .map((d) => ({ id: d.id, ...d.data() }))
+              .filter((r) => !(r.left || []).includes(user.uid))
             // 자신이 만들지 않은 새 DM 방 → 알림
             snapshot.docChanges().forEach((change) => {
               if (change.type === 'added') {

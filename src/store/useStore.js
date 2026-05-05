@@ -366,6 +366,48 @@ export const useStore = create(
         if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
       },
 
+      leaveDmRoom: async (roomId) => {
+        const { currentUser } = get()
+        const msgsRef = collection(db, 'rooms', roomId, 'messages')
+
+        // 내 메시지 삭제 + 퇴장 시스템 메시지 작성
+        const myMsgsSnap = await getDocs(query(msgsRef, where('senderId', '==', currentUser.id)))
+        const batch = writeBatch(db)
+        myMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+        const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
+        batch.set(sysRef, {
+          senderId: 'system', type: 'notify',
+          text: `${currentUser.name}님이 퇴장하셨습니다`,
+          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          createdAt: serverTimestamp(),
+        })
+
+        // dmRoom left 배열 업데이트
+        const dmRef = doc(db, 'dmRooms', roomId)
+        const dmSnap = await getDoc(dmRef)
+        if (dmSnap.exists()) {
+          const dmData = dmSnap.data()
+          const newLeft = [...new Set([...(dmData.left || []), currentUser.id])]
+          if (newLeft.length >= (dmData.participants || []).length) {
+            // 양쪽 다 나감 → 남은 메시지 전부 삭제 + dmRoom 삭제
+            const allMsgsSnap = await getDocs(msgsRef)
+            allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+            batch.delete(dmRef)
+          } else {
+            batch.update(dmRef, { left: newLeft })
+          }
+        }
+        await batch.commit()
+
+        // 로컬 캐시에서 제거
+        set((s) => {
+          const newDmRooms = { ...s.dmRooms }
+          const key = Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
+          if (key) delete newDmRooms[key]
+          return { dmRooms: newDmRooms }
+        })
+      },
+
       getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {
         const { currentUser, dmRooms } = get()
         const dmKey = [currentUser.id, otherUserId].sort().join('_')

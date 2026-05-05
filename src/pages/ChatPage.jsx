@@ -8,7 +8,7 @@ import styles from './ChatPage.module.css'
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages } = useStore()
+  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages, leaveDmRoom } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
 
@@ -85,6 +85,19 @@ export default function ChatPage() {
   }
 
   const [sendPulseActive, setSendPulse] = useState(false)
+  const [showLeave, setShowLeave]       = useState(false)
+  const [leaving, setLeaving]           = useState(false)
+
+  const handleLeaveDm = async () => {
+    setLeaving(true)
+    try {
+      await leaveDmRoom(roomId)
+      navigate(backPath)
+    } finally {
+      setLeaving(false)
+      setShowLeave(false)
+    }
+  }
 
   const handleKey = (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !isComposing.current) {
@@ -122,6 +135,22 @@ export default function ChatPage() {
           </div>
         </div>
       )}
+      {/* DM 나가기 확인 모달 */}
+      {showLeave && (
+        <div className={styles.leaveBackdrop} onClick={() => setShowLeave(false)}>
+          <div className={styles.leaveModal} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.leaveTitle}>대화방을 나갈까요?</p>
+            <p className={styles.leaveDesc}>내 메시지가 모두 삭제되고, 상대방에게 퇴장 알림이 전송돼요.</p>
+            <div className={styles.leaveBtns}>
+              <button className={styles.leaveCancelBtn} onClick={() => setShowLeave(false)}>취소</button>
+              <button className={styles.leaveConfirmBtn} disabled={leaving} onClick={handleLeaveDm}>
+                {leaving ? '처리 중...' : '나가기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className={styles.header}>
         <button className={styles.back} onClick={() => navigate(backPath)}>{backLabel}</button>
@@ -136,7 +165,10 @@ export default function ChatPage() {
             </span>
           )}
         </div>
-        <div style={{ width: 80 }} />
+        {isDm
+          ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
+          : <div style={{ width: 80 }} />
+        }
       </div>
 
       {/* 메시지 목록 */}
