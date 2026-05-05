@@ -89,13 +89,19 @@ export default function ChatPage() {
   const [leaving, setLeaving]           = useState(false)
 
   const handleLeaveDm = async () => {
-    setLeaving(true)
+    // 상태 변경 전에 목적지 결정 — 마무리된 프로젝트면 홈으로
+    const linkedProject = projects.find((p) => p.id === (dmRoom?.projectId || projectId))
+    const destination = linkedProject?.status === 'active'
+      ? `/project/${linkedProject.id}`
+      : '/home'
+
+    // 먼저 이동 후 정리 — 타이밍 문제(흰 화면) 방지
+    navigate(destination)
+    setShowLeave(false)
     try {
       await leaveDmRoom(roomId)
-      navigate(backPath)
-    } finally {
-      setLeaving(false)
-      setShowLeave(false)
+    } catch (e) {
+      console.error('DM 나가기 오류:', e)
     }
   }
 
