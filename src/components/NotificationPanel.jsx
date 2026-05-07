@@ -11,6 +11,7 @@ const TYPE_ICONS = {
   todo: '✅',
   event: '📅',
   invite: '👋',
+  join: '🎉',
   mention: '🔔',
   dm: '💬',
   system: '🔔',

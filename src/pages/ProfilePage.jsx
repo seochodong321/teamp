@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { doc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ProfilePage.module.css'
@@ -10,8 +10,32 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
+
+  // 나의 여정 통계
+  const [flowers, setFlowers] = useState(0)
+  const completedProjects = myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length
+  const doneTodos = myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length
+  const sentMessages = Object.values(messages).flat().filter((m) => m.senderId === currentUser?.id).length
+
+  useEffect(() => {
+    const fetchFlowers = async () => {
+      const archivedWithWrapup = myProjects.filter((p) => p.status === 'archived' && p.wrapupId && !p.isTutorial)
+      let count = 0
+      await Promise.all(archivedWithWrapup.map(async (p) => {
+        try {
+          const snap = await getDoc(doc(db, 'wrapups', p.wrapupId))
+          if (snap.exists()) {
+            const data = snap.data()
+            count += (data.feedbacks || []).filter((f) => f.toUserId === currentUser?.id).length
+          }
+        } catch {}
+      }))
+      setFlowers(count)
+    }
+    fetchFlowers()
+  }, [myProjects.map((p) => p.wrapupId).join(',')])
 
   // 편집 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)
@@ -162,6 +186,36 @@ export default function ProfilePage() {
         <div className={styles.profileActions}>
           <button className={styles.editBtn} onClick={openEditModal}>편집</button>
           <button className={styles.logoutBtn} onClick={handleLogout}>로그아웃</button>
+        </div>
+      </div>
+
+      {/* 나의 여정 */}
+      <div className={styles.journeySection}>
+        <div className={styles.journeyHeader}>
+          <span className={styles.journeyTitle}>나의 여정</span>
+          <span className={styles.journeyEmoji}>✨</span>
+        </div>
+        <div className={styles.journeyGrid}>
+          <div className={styles.journeyItem}>
+            <span className={styles.journeyIcon}>🎓</span>
+            <span className={styles.journeyCount}>{completedProjects}</span>
+            <span className={styles.journeyLabel}>완료한 프로젝트</span>
+          </div>
+          <div className={styles.journeyItem}>
+            <span className={styles.journeyIcon}>🌸</span>
+            <span className={styles.journeyCount}>{flowers}</span>
+            <span className={styles.journeyLabel}>받은 꽃다발</span>
+          </div>
+          <div className={styles.journeyItem}>
+            <span className={styles.journeyIcon}>💬</span>
+            <span className={styles.journeyCount}>{sentMessages}</span>
+            <span className={styles.journeyLabel}>오간 메시지</span>
+          </div>
+          <div className={styles.journeyItem}>
+            <span className={styles.journeyIcon}>✅</span>
+            <span className={styles.journeyCount}>{doneTodos}</span>
+            <span className={styles.journeyLabel}>완료한 할 일</span>
+          </div>
         </div>
       </div>
 

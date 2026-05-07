@@ -33,6 +33,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const projectsUnsubRef = useRef(null)
   const dmUnsubRef       = useRef(null)
+  const notifUnsubRef    = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -49,6 +50,7 @@ export default function App() {
         // 이전 구독 해제 후 재구독 (계정 전환 대비)
         if (projectsUnsubRef.current) projectsUnsubRef.current()
         if (dmUnsubRef.current) dmUnsubRef.current()
+        if (notifUnsubRef.current) notifUnsubRef.current()
 
         // 사용자가 속한 프로젝트 실시간 구독
         projectsUnsubRef.current = onSnapshot(
@@ -79,6 +81,29 @@ export default function App() {
             }
           }
         )
+        // Firestore 푸시 알림 구독 (read: false인 것만)
+        notifUnsubRef.current = onSnapshot(
+          query(
+            collection(db, 'notifications'),
+            where('targetUserId', '==', user.uid),
+            where('read', '==', false)
+          ),
+          (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const noti = change.doc.data()
+                addNotification({
+                  type: noti.type || 'system',
+                  text: noti.text,
+                  projectId: noti.projectId,
+                  link: noti.link,
+                })
+                updateDoc(doc(db, 'notifications', change.doc.id), { read: true }).catch(() => {})
+              }
+            })
+          }
+        )
+
         // 1:1 DM 방 실시간 구독
         let isFirstDmSnap = true  // 최초 로드 시 기존 방을 'added'로 처리하는 것 방지
         dmUnsubRef.current = onSnapshot(
@@ -111,6 +136,7 @@ export default function App() {
         // 로그아웃 시 구독 해제
         if (projectsUnsubRef.current) { projectsUnsubRef.current(); projectsUnsubRef.current = null }
         if (dmUnsubRef.current) { dmUnsubRef.current(); dmUnsubRef.current = null }
+        if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
         logout()
       }
       setReady(true)
@@ -120,6 +146,7 @@ export default function App() {
       unsub()
       if (projectsUnsubRef.current) projectsUnsubRef.current()
       if (dmUnsubRef.current) dmUnsubRef.current()
+      if (notifUnsubRef.current) notifUnsubRef.current()
     }
   }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification])
 

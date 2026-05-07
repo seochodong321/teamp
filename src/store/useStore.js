@@ -341,12 +341,25 @@ export const useStore = create(
           memberIds: arrayUnion(currentUser.id),
         })
 
-        // 전체방에 참여 알림 메시지 전송
+        // 전체방에 환영 메시지 전송 (팀프봇)
         if (allRoomId) {
           await addDoc(collection(db, 'rooms', allRoomId, 'messages'), {
-            senderId: 'system', senderName: '시스템', type: 'notify',
-            text: `${currentUser.name} 님이 프로젝트에 참여했어요 🎉`,
+            senderId: 'teampbot', senderName: '팀프봇', type: 'notify',
+            text: `👋 ${currentUser.name}님이 팀에 합류했어요! 함께 해서 반가워요.`,
             time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+            createdAt: serverTimestamp(),
+          })
+        }
+
+        // 리더에게 합류 알림 (본인이 리더인 경우 제외)
+        if (project.leaderId && project.leaderId !== currentUser.id) {
+          await addDoc(collection(db, 'notifications'), {
+            targetUserId: project.leaderId,
+            type: 'join',
+            text: `🎉 ${currentUser.name}님이 ${project.name}에 합류했어요`,
+            projectId: project.id,
+            link: `/project/${project.id}`,
+            read: false,
             createdAt: serverTimestamp(),
           })
         }
@@ -972,6 +985,17 @@ export const useStore = create(
           members: arrayUnion(newMember),
           memberIds: arrayUnion(userId),
         })
+
+        // 전체방에 환영 메시지 전송 (팀프봇)
+        if (allRoomId) {
+          await addDoc(collection(db, 'rooms', allRoomId, 'messages'), {
+            senderId: 'teampbot', senderName: '팀프봇', type: 'notify',
+            text: `👋 ${userName}님이 팀에 합류했어요! 함께 해서 반가워요.`,
+            time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+            createdAt: serverTimestamp(),
+          })
+        }
+
         return { success: true }
       },
 
