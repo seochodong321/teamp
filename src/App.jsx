@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, doc, getDoc, limit, onSnapshot, orderBy, query, updateDoc, where } from 'firebase/firestore'
+import { Timestamp, collection, doc, getDoc, onSnapshot, orderBy, query, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
@@ -181,11 +181,14 @@ export default function App() {
     // 새 방 구독
     allRoomIds.forEach((roomId) => {
       if (msgWatchersRef.current[roomId]) return
-      let isFirst = true
+      const startTime = Timestamp.now()
       const unsub = onSnapshot(
-        query(collection(db, 'rooms', roomId, 'messages'), orderBy('createdAt', 'desc'), limit(1)),
+        query(
+          collection(db, 'rooms', roomId, 'messages'),
+          orderBy('createdAt', 'asc'),
+          startAfter(startTime)
+        ),
         (snapshot) => {
-          if (isFirst) { isFirst = false; return }
           snapshot.docChanges().forEach((change) => {
             if (change.type !== 'added') return
             const msg = { id: change.doc.id, ...change.doc.data() }
@@ -210,7 +213,8 @@ export default function App() {
               roomName: info.roomName,
             })
           })
-        }
+        },
+        (error) => console.error(`[toast] room ${roomId} 구독 오류:`, error)
       )
       msgWatchersRef.current[roomId] = unsub
     })
