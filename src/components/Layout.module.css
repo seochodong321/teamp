@@ -388,6 +388,21 @@
 }
 .searchBtn:hover { background: var(--bg); border-color: var(--border); }
 
+/* 다크모드 토글 */
+.themeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: var(--bg-secondary);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.themeBtn:hover { background: var(--primary-light); transform: translateY(-1px); }
+
 /* 알림 종 아이콘 */
 
 .notiBtn {

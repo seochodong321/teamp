@@ -10,7 +10,7 @@ import ChatToastContainer from './ChatToastContainer.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
-  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts } = useStore()
+  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme } = useStore()
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen]           = useState(false)
@@ -58,6 +58,9 @@ export default function Layout() {
           </div>
           <div className={styles.logoActions}>
             <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">🔍</button>
+            <button className={styles.themeBtn} onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
+              {theme === 'dark' ? '☀︎' : '◑'}
+            </button>
             <button className={styles.notiBtn} onClick={() => setShowNotifications(true)} title="알림">
               ✦
               {unreadCount > 0 && <span className={styles.notiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
@@ -175,6 +178,9 @@ export default function Layout() {
           <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <button className={styles.mobileSearchBtn} onClick={() => setShowSearch(true)}>🔍</button>
+            <button className={styles.mobileSearchBtn} onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
+              {theme === 'dark' ? '☀︎' : '◑'}
+            </button>
             <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
               ✦
               {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
