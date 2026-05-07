@@ -17,6 +17,10 @@ export default function Layout() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [showSearch, setShowSearch]           = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [collapsedProjects, setCollapsedProjects] = useState({}) // { [projectId]: true }
+
+  const toggleCollapse = (projectId) =>
+    setCollapsedProjects((s) => ({ ...s, [projectId]: !s[projectId] }))
 
   useEffect(() => {
     const handler = (e) => {
@@ -80,17 +84,32 @@ export default function Layout() {
               {active.map((p) => {
                 const muted = mutedProjects.includes(p.id)
                 const chatRooms = p.rooms.filter((r) => !r.isDm)
+                const totalUnread = chatRooms.reduce((s, r) => s + (r.unread || 0), 0)
+                const isCollapsed = collapsedProjects[p.id] ?? false
                 return (
                   <div key={p.id}>
                     <div className={styles.projectNavRow}>
+                      {/* 접힘 토글 버튼 */}
+                      <button
+                        className={styles.collapseBtn}
+                        onClick={() => toggleCollapse(p.id)}
+                        title={isCollapsed ? '펼치기' : '접기'}>
+                        <span className={`${styles.collapseIcon} ${isCollapsed ? styles.collapseIconClosed : ''}`}>›</span>
+                      </button>
                       <NavLink to={`/project/${p.id}`}
                         className={({ isActive }) => `${styles.navItem} ${styles.navItemFlex} ${isActive ? styles.navActive : ''}`}
                         onClick={close}>
-                        <span className={styles.navDot} style={{ background: chatRooms[0]?.color || 'var(--primary)' }} />
                         <span className={styles.navProjectName}>
                           {p.emoji && <span style={{ marginRight: 4 }}>{p.emoji}</span>}
                           {p.name}
                         </span>
+                        {/* 접혔을 때만 총 미읽음 표시 */}
+                        {isCollapsed && totalUnread > 0 && !muted && (
+                          <>
+                            {totalUnread > 99 && <span className={styles.navBadgePlus}>+</span>}
+                            <span className={styles.navBadge}>{totalUnread > 99 ? 99 : totalUnread}</span>
+                          </>
+                        )}
                       </NavLink>
                       <button
                         className={`${styles.muteBtn} ${muted ? styles.muteBtnOn : ''}`}
@@ -99,7 +118,7 @@ export default function Layout() {
                         {muted ? '○' : '●'}
                       </button>
                     </div>
-                    {chatRooms.map((room) => (
+                    {!isCollapsed && chatRooms.map((room) => (
                       <NavLink key={room.id} to={`/project/${p.id}/chat/${room.id}`}
                         className={({ isActive }) => `${styles.navItem} ${styles.roomNavItem} ${isActive ? styles.navActive : ''}`}
                         onClick={close}>

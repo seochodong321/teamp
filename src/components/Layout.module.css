@@ -169,6 +169,28 @@
 }
 .projectNavRow:hover .muteBtn { opacity: 0.6; }
 
+/* 접힘 토글 */
+.collapseBtn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-quaternary);
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+.collapseBtn:hover { color: var(--text-secondary); }
+.collapseIcon {
+  font-size: 13px;
+  line-height: 1;
+  display: inline-block;
+  transform: rotate(90deg);
+  transition: transform 0.18s ease;
+}
+.collapseIconClosed { transform: rotate(0deg); }
+
 .navItemFlex { flex: 1; min-width: 0; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
 
 .muteBtn {
