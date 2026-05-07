@@ -335,13 +335,91 @@ export default function HomePage() {
       )}
 
       {/* ── 페이지 헤더 ── */}
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.title}>내 프로젝트</h1>
-          <p className={styles.subtitle}>진행 중인 프로젝트를 확인하세요</p>
-        </div>
-        <button className={styles.createBtn} onClick={openModal}>+ 새 프로젝트</button>
-      </div>
+      {(() => {
+        const totalActive = active.length
+        const totalCollecting = collecting.length
+        // D-day가 가장 임박한 프로젝트 (진행 중에서)
+        const upcoming = [...active]
+          .filter((p) => p.deadline)
+          .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))[0]
+        const upcomingDday = upcoming ? calcDday(upcoming.deadline) : null
+        const today = new Date()
+        const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
+        const weekday = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()]
+
+        return (
+          <>
+            <div className={styles.pageHeader}>
+              <div>
+                <div className={styles.heroEyebrow}>{dateStr} · {weekday}요일</div>
+                <h1 className={styles.title}>
+                  안녕하세요, <em>{currentUser?.name || '게스트'}</em>님
+                </h1>
+                <p className={styles.subtitle}>
+                  <span><b>{totalActive}개</b> 진행 중</span>
+                  <span className={styles.dot}>·</span>
+                  <span><b>{totalCollecting}개</b> 수집 중</span>
+                  {upcoming && (
+                    <>
+                      <span className={styles.dot}>·</span>
+                      <span>가장 가까운 마감 <b>{upcomingDday}</b></span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <button className={styles.createBtn} onClick={openModal}>새 프로젝트</button>
+            </div>
+
+            {active.length > 0 && (
+              <div className={styles.todayStrip}>
+                <div className={`${styles.todayCell} ${styles.todayCellFeature}`}>
+                  <span className={styles.todayLabel}>가장 임박</span>
+                  {upcoming ? (
+                    <div className={styles.todayFeature}>
+                      <div className={styles.todayFeatureEmoji}>{upcoming.emoji || '📌'}</div>
+                      <div className={styles.todayFeatureBody}>
+                        <div className={styles.todayFeatureName}>{upcoming.name}</div>
+                        <div className={styles.todayFeatureMeta}>
+                          {upcoming.deadline && new Date(upcoming.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 마감
+                        </div>
+                      </div>
+                      <span className={styles.todayPill}>{upcomingDday}</span>
+                    </div>
+                  ) : (
+                    <div className={styles.todayFeatureMeta}>임박한 마감 없음</div>
+                  )}
+                </div>
+                <div className={styles.todayCell}>
+                  <span className={styles.todayLabel}>진행 중</span>
+                  <div className={styles.todayRow}>
+                    <span className={styles.todayBig}>{totalActive}</span>
+                    <span className={styles.todayUnit}>프로젝트</span>
+                  </div>
+                  <div className={styles.todayLine}>
+                    리드 <b>{active.filter((p) => p.leaderId === currentUser?.id).length}</b> · 멤버 <b>{active.filter((p) => p.leaderId !== currentUser?.id).length}</b>
+                  </div>
+                </div>
+                <div className={styles.todayCell}>
+                  <span className={styles.todayLabel}>수집 중</span>
+                  <div className={styles.todayRow}>
+                    <span className={styles.todayBig}>{totalCollecting}</span>
+                    <span className={styles.todayUnit}>피드백</span>
+                  </div>
+                  <div className={styles.todayLine}>응답 대기 중인 프로젝트</div>
+                </div>
+                <div className={styles.todayCell}>
+                  <span className={styles.todayLabel}>완료됨</span>
+                  <div className={styles.todayRow}>
+                    <span className={styles.todayBig}>{archived.filter((p) => !hiddenProjects.includes(p.id)).length}</span>
+                    <span className={styles.todayUnit}>아카이브</span>
+                  </div>
+                  <div className={styles.todayLine}>회고 가능한 프로젝트</div>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* ── 초대 배너 ── */}
       {invites.map((invite) => (

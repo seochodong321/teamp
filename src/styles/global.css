@@ -5,45 +5,45 @@
 }
 
 :root {
-  /* ── 메인 보라 ── */
-  --primary: #534AB7;
-  --primary-light: #EEEDFE;
-  --primary-dark: #3C3489;
-  --primary-soft: #F5F4FE;
-  --primary-hover: #6258C6;
+  /* ── 메인 잉크 보라 (refined) ── */
+  --primary: #4B41A6;
+  --primary-light: #ECE9FA;
+  --primary-dark: #2B2470;
+  --primary-soft: #F6F4FE;
+  --primary-hover: #5C52BD;
 
-  /* ── 보조 색상 ── */
+  /* ── 보조 색상 (채도 다운, 잉크 톤) ── */
   --teal: #0F6E56;
   --teal-light: #E1F5EE;
   --teal-soft: #F0FAF6;
 
-  --amber: #854F0B;
-  --amber-light: #FAEEDA;
-  --amber-soft: #FDF8EE;
+  --amber: #6E4408;
+  --amber-light: #F6EAD2;
+  --amber-soft: #FBF3E1;
 
-  --coral: #993C1D;
-  --coral-light: #FAECE7;
-  --coral-soft: #FDF5F1;
+  --coral: #8A2A55;
+  --coral-light: #F7E9EE;
+  --coral-soft: #FBF1F4;
 
-  --rose: #B73A6F;
-  --rose-light: #FDEEF4;
+  --rose: #8A2A55;
+  --rose-light: #F7E9EE;
 
-  /* ── 텍스트 ── */
-  --text: #1A1A1A;
-  --text-secondary: #5C5C5C;
-  --text-tertiary: #8E8E8E;
-  --text-quaternary: #B5B5B5;
+  /* ── 텍스트 (warm ink) ── */
+  --text: #14131C;
+  --text-secondary: #4A4757;
+  --text-tertiary: #807C8E;
+  --text-quaternary: #B5B1BE;
 
-  /* ── 배경 ── */
+  /* ── 배경 (warm off-white) ── */
   --bg: #FFFFFF;
-  --bg-secondary: #FAFAF8;
-  --bg-tertiary: #F4F4F1;
+  --bg-secondary: #F6F4EE;
+  --bg-tertiary: #F1EEE6;
   --bg-warm: #FBF9F5;
 
   /* ── 테두리 ── */
-  --border: #E8E8E4;
-  --border-light: #F2F2EE;
-  --border-strong: #D4D4D0;
+  --border: #E5E1D6;
+  --border-light: #EFEBE0;
+  --border-strong: #D4CFC0;
 
   /* ── 모서리 ── */
   --radius-sm: 8px;
@@ -75,40 +75,40 @@
 :root[data-theme='dark'],
 html[data-theme='dark'],
 html.dark {
-  --primary: #8077E0;
-  --primary-light: #2A2545;
-  --primary-dark: #ADA6F0;
-  --primary-soft: #1F1B33;
-  --primary-hover: #9189E8;
+  --primary: #B7AFFF;
+  --primary-light: #25204A;
+  --primary-dark: #E5DFFF;
+  --primary-soft: #1B1830;
+  --primary-hover: #C9C2FF;
 
   --teal: #4FBFA0;
   --teal-light: #1A2E27;
   --teal-soft: #15211D;
 
-  --amber: #E0A560;
-  --amber-light: #2E2515;
-  --amber-soft: #221C10;
+  --amber: #E0B477;
+  --amber-light: #2A2113;
+  --amber-soft: #221A0E;
 
-  --coral: #E68573;
-  --coral-light: #2E1F1A;
-  --coral-soft: #221512;
+  --coral: #F2A0BE;
+  --coral-light: #2A1A24;
+  --coral-soft: #1F1218;
 
-  --rose: #E08CB1;
-  --rose-light: #2E1D27;
+  --rose: #F2A0BE;
+  --rose-light: #2A1A24;
 
-  --text: #F0F0EE;
-  --text-secondary: #B0B0AE;
-  --text-tertiary: #808080;
-  --text-quaternary: #5A5A58;
+  --text: #F1EEF8;
+  --text-secondary: #B6B1C4;
+  --text-tertiary: #7E7990;
+  --text-quaternary: #4F4A5C;
 
-  --bg: #161618;
-  --bg-secondary: #1E1E20;
-  --bg-tertiary: #28282B;
-  --bg-warm: #1C1C1E;
+  --bg: #100F14;
+  --bg-secondary: #1A181F;
+  --bg-tertiary: #14131A;
+  --bg-warm: #161420;
 
-  --border: #2E2E32;
-  --border-light: #232326;
-  --border-strong: #3A3A3E;
+  --border: #2A2733;
+  --border-light: #221F2A;
+  --border-strong: #3A3645;
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.3);

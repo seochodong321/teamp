@@ -6,14 +6,14 @@
 }
 
 .sidebar {
-  width: var(--sidebar-width);
+  width: 232px;
   flex-shrink: 0;
-  background: var(--bg);
+  background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 20px 12px;
-  gap: 4px;
+  padding: 14px 10px 10px;
+  gap: 1px;
   overflow-y: auto;
   z-index: 100;
 }
@@ -34,22 +34,27 @@
 }
 
 .logoMark {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--primary);
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background:
+    radial-gradient(120% 120% at 0% 0%, #6B5FE8 0%, transparent 55%),
+    linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #7165D4 100%);
   color: white;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 1px 2px rgba(20,14,60,.25);
 }
 
 .logoText {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--primary);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .nav {
@@ -62,30 +67,40 @@
 .navSection {
   font-size: 10px;
   font-weight: 600;
-  color: var(--text-tertiary);
+  color: var(--text-quaternary);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 12px 8px 4px;
+  letter-spacing: 0.14em;
+  padding: 14px 10px 6px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  gap: 9px;
+  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
   transition: background 0.15s, color 0.15s;
   cursor: pointer;
+  height: 28px;
+  position: relative;
 }
 
-.navItem:hover { background: var(--bg-secondary); color: var(--text); }
+.navItem:hover { background: var(--bg); color: var(--text); }
 
 .navActive {
-  background: var(--primary-light);
-  color: var(--primary);
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.navActive::before {
+  content: "";
+  position: absolute;
+  left: -3px; top: 7px; bottom: 7px;
+  width: 3px; border-radius: 2px;
+  background: var(--primary);
 }
 
 .navIcon { font-size: 15px; width: 18px; text-align: center; }
@@ -191,16 +206,18 @@
 .createBtn {
   margin: 8px 0;
   padding: 10px;
-  background: var(--primary);
-  color: white;
-  border-radius: var(--radius-sm);
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   width: 100%;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
+  box-shadow: 0 1px 2px rgba(20,14,60,.18);
 }
 
-.createBtn:hover { opacity: 0.9; }
+.createBtn:hover { opacity: 0.92; transform: translateY(-1px); }
 
 .userArea {
   display: flex;
@@ -356,35 +373,39 @@
 
 /* 검색 버튼 */
 .searchBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  background: var(--bg-secondary);
+  font-size: 13px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
-.searchBtn:hover { background: var(--primary-light); transform: translateY(-1px); }
+.searchBtn:hover { background: var(--bg); border-color: var(--border); }
 
 /* 알림 종 아이콘 */
 
 .notiBtn {
   position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  background: var(--bg-secondary);
+  font-size: 13px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
-.notiBtn:hover { background: var(--primary-light); transform: translateY(-1px); }
+.notiBtn:hover { background: var(--bg); border-color: var(--border); }
 
 .notiBadge {
   position: absolute;
