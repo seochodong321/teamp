@@ -429,7 +429,7 @@ export default function HomePage() {
             <div>
               <p className={styles.inviteTitle}>초대가 도착했어요</p>
               <p className={styles.inviteSub}>
-                <strong>{invite.projectName}</strong> · {invite.fromName} 님 · ~ {invite.endDate}
+                <strong>{invite.projectName}</strong> · {invite.inviterName || invite.fromName} 님 · ~ {invite.endDate}
               </p>
             </div>
           </div>

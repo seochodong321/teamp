@@ -74,6 +74,8 @@ export default function ProjectPage() {
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
 
   const isLeader     = project.leaderId === currentUser.id
+  const myRole       = project.members.find((m) => m.id === currentUser.id)?.role
+  const canInvite    = isLeader || myRole === 'sub-leader'
   const iCanManage   = canManage(project, currentUser.id)
   const progress     = getProgress(project)
   const dday         = getDday(project.endDate)
@@ -686,7 +688,7 @@ export default function ProjectPage() {
             ))}
           </div>
 
-          <div className={styles.inviteSection}>
+          {canInvite && <div className={styles.inviteSection}>
             <div className={styles.inviteSectionHeader}>
               <p className={styles.inviteSectionTitle}>팀원 초대</p>
             </div>
@@ -736,7 +738,7 @@ export default function ProjectPage() {
                 </div>
               )
             })()}
-          </div>
+          </div>}
 
           {!isLeader && (
             <button className={styles.leaveBtn} onClick={() => setShowLeave(true)}>
@@ -791,7 +793,7 @@ export default function ProjectPage() {
                     <div className={styles.roomAssign}>
                       <p className={styles.roomAssignLabel}>접근 가능한 채팅방</p>
                       <div className={styles.roomAssignList}>
-                        {project.rooms.map((r) => {
+                        {project.rooms.filter((r) => !r.isDm).map((r) => {
                           const checked = curRooms.includes(r.id)
                           return (
                             <label key={r.id}
@@ -801,7 +803,7 @@ export default function ProjectPage() {
                                 const next = checked ? curRooms.filter((x) => x !== r.id) : [...curRooms, r.id]
                                 setPendingRooms((prev) => ({ ...prev, [m.id]: next }))
                               }} />
-                              {r.isDm ? '💬' : '#'} {r.name}
+                              # {r.name}
                             </label>
                           )
                         })}
