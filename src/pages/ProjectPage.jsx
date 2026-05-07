@@ -13,13 +13,14 @@ export default function ProjectPage() {
   const [searchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const {
-    projects, currentUser,
+    projects, currentUser, connects,
     addAnnouncement, deleteAnnouncement,
     getProgress, getDday, getVisibleRooms, canManage,
     updateMemberRole, setMemberRooms, transferLeader,
     reorderRooms, archiveProject, extendProject, endProject,
     formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
     kickMember, setWeeklyGoalSchedule, addWeeklyGoal,
+    sendProjectInvite,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -47,6 +48,7 @@ export default function ProjectPage() {
   const [saveMsg, setSaveMsg]           = useState('')
 
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [sentInvites, setSentInvites]   = useState({}) // inviteeId → 'sent' | 'error'
 
   const [showLeave, setShowLeave]               = useState(false)
   const [leaveLoading, setLeaveLoading]         = useState(false)
@@ -93,6 +95,17 @@ export default function ProjectPage() {
     }
     setInviteCopied(true)
     setTimeout(() => setInviteCopied(false), 2500)
+  }
+
+  const handleDirectInvite = async (connect) => {
+    if (sentInvites[connect.id]) return
+    setSentInvites((s) => ({ ...s, [connect.id]: 'sending' }))
+    try {
+      await sendProjectInvite(projectId, connect)
+      setSentInvites((s) => ({ ...s, [connect.id]: 'sent' }))
+    } catch {
+      setSentInvites((s) => ({ ...s, [connect.id]: 'error' }))
+    }
   }
 
   const initManage = () => {
@@ -676,17 +689,53 @@ export default function ProjectPage() {
           <div className={styles.inviteSection}>
             <div className={styles.inviteSectionHeader}>
               <p className={styles.inviteSectionTitle}>팀원 초대</p>
-              <p className={styles.inviteSectionDesc}>링크를 공유하면 상대방이 직접 참여 여부를 선택해요</p>
             </div>
-            <div className={styles.inviteLinkRow}>
-              <div className={styles.inviteLinkBox}>
-                <span className={styles.inviteLinkText}>{inviteLink}</span>
+
+            {/* 링크 초대 */}
+            <div className={styles.inviteBlock}>
+              <p className={styles.inviteBlockLabel}>링크 공유</p>
+              <div className={styles.inviteLinkRow}>
+                <div className={styles.inviteLinkBox}>
+                  <span className={styles.inviteLinkText}>{inviteLink}</span>
+                </div>
+                <button className={`${styles.copyBtn} ${inviteCopied ? styles.copyBtnDone : ''}`}
+                  onClick={handleCopyInvite}>
+                  {inviteCopied ? '✅ 복사됨' : '🔗 복사'}
+                </button>
               </div>
-              <button className={`${styles.copyBtn} ${inviteCopied ? styles.copyBtnDone : ''}`}
-                onClick={handleCopyInvite}>
-                {inviteCopied ? '✅ 복사됨' : '🔗 링크 복사'}
-              </button>
             </div>
+
+            {/* 커넥트 직접 초대 */}
+            {(() => {
+              const memberIds = new Set(project.members.map((m) => m.id))
+              const invitable = connects.filter((c) => !memberIds.has(c.id))
+              if (invitable.length === 0) return null
+              return (
+                <div className={styles.inviteBlock}>
+                  <p className={styles.inviteBlockLabel}>커넥트 초대</p>
+                  <div className={styles.connectInviteList}>
+                    {invitable.map((c) => {
+                      const state = sentInvites[c.id]
+                      return (
+                        <div key={c.id} className={styles.connectInviteRow}>
+                          <div className={styles.connectInviteAvatar}>{c.name.charAt(0)}</div>
+                          <div className={styles.connectInviteInfo}>
+                            <p className={styles.connectInviteName}>{c.name}</p>
+                            {c.affiliation && <p className={styles.connectInviteAff}>{c.affiliation}</p>}
+                          </div>
+                          <button
+                            className={`${styles.connectInviteBtn} ${state === 'sent' ? styles.connectInviteBtnDone : ''}`}
+                            onClick={() => handleDirectInvite(c)}
+                            disabled={!!state}>
+                            {state === 'sending' ? '...' : state === 'sent' ? '✅ 전송됨' : state === 'error' ? '오류' : '초대'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {!isLeader && (

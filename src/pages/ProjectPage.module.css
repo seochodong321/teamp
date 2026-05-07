@@ -233,6 +233,23 @@
 .copyBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .copyBtnDone { background: var(--teal); }
 
+/* 초대 블록 */
+.inviteBlock { display: flex; flex-direction: column; gap: 8px; }
+.inviteBlockLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* 커넥트 직접 초대 */
+.connectInviteList { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+.connectInviteRow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; transition: background 0.12s; }
+.connectInviteRow:hover { background: var(--bg-secondary); }
+.connectInviteAvatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.connectInviteInfo { flex: 1; min-width: 0; }
+.connectInviteName { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.connectInviteAff  { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.connectInviteBtn  { flex-shrink: 0; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; background: var(--text); color: var(--bg); transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.connectInviteBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.connectInviteBtn:disabled { opacity: 0.5; cursor: default; }
+.connectInviteBtnDone { background: var(--teal) !important; }
+
 /* 권한 관리 */
 .manageTopRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .saveBtn  { padding: 9px 20px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }

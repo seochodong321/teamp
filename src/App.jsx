@@ -29,7 +29,7 @@ function PrivateRoute({ children, ready }) {
 }
 
 export default function App() {
-  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread } = useStore()
+  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread, setInvites } = useStore()
   const isLoggedIn  = useStore((s) => s.isLoggedIn)
   const projects    = useStore((s) => s.projects)
   const dmRoomList  = useStore((s) => s.dmRoomList)
@@ -37,6 +37,7 @@ export default function App() {
   const projectsUnsubRef  = useRef(null)
   const dmUnsubRef        = useRef(null)
   const notifUnsubRef     = useRef(null)
+  const inviteUnsubRef    = useRef(null)
   const msgWatchersRef    = useRef({}) // roomId → unsub
   const dmMsgWatchersRef  = useRef({}) // dmRoomId → unsub
 
@@ -56,6 +57,7 @@ export default function App() {
         if (projectsUnsubRef.current) projectsUnsubRef.current()
         if (dmUnsubRef.current) dmUnsubRef.current()
         if (notifUnsubRef.current) notifUnsubRef.current()
+        if (inviteUnsubRef.current) inviteUnsubRef.current()
 
         // 사용자가 속한 프로젝트 실시간 구독
         projectsUnsubRef.current = onSnapshot(
@@ -109,6 +111,20 @@ export default function App() {
           }
         )
 
+        // 내게 온 프로젝트 초대 실시간 구독
+        inviteUnsubRef.current = onSnapshot(
+          query(
+            collection(db, 'projectInvites'),
+            where('inviteeId', '==', user.uid),
+            where('status', '==', 'pending')
+          ),
+          (snapshot) => {
+            const invites = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+            setInvites(invites)
+          },
+          (error) => console.error('[invites] 구독 오류:', error)
+        )
+
         // 1:1 DM 방 실시간 구독
         let isFirstDmSnap = true  // 최초 로드 시 기존 방을 'added'로 처리하는 것 방지
         dmUnsubRef.current = onSnapshot(
@@ -142,6 +158,7 @@ export default function App() {
         if (projectsUnsubRef.current) { projectsUnsubRef.current(); projectsUnsubRef.current = null }
         if (dmUnsubRef.current) { dmUnsubRef.current(); dmUnsubRef.current = null }
         if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
+        if (inviteUnsubRef.current) { inviteUnsubRef.current(); inviteUnsubRef.current = null }
         logout()
       }
       setReady(true)
@@ -152,8 +169,9 @@ export default function App() {
       if (projectsUnsubRef.current) projectsUnsubRef.current()
       if (dmUnsubRef.current) dmUnsubRef.current()
       if (notifUnsubRef.current) notifUnsubRef.current()
+      if (inviteUnsubRef.current) inviteUnsubRef.current()
     }
-  }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification])
+  }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, setInvites])
 
   // 백그라운드 메시지 감시 — 열려있지 않은 채팅방에 새 메시지 오면 토스트
   useEffect(() => {

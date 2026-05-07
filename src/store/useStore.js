@@ -188,6 +188,8 @@ export const useStore = create(
 
       setDmRoomList: (rooms) => set({ dmRoomList: rooms }),
 
+      setInvites: (invites) => set({ invites }),
+
       // ─── 인증 ────────────────────────────────────────────
       login: (name, email, uid, extra = {}) => {
         const user = {
@@ -275,8 +277,78 @@ export const useStore = create(
       reorderRooms: (projectId, newOrder) =>
         set((s) => ({ roomOrders: { ...s.roomOrders, [projectId]: newOrder } })),
 
-      acceptInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
-      declineInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
+      acceptInvite: async (id) => {
+        const { invites, currentUser, connects } = get()
+        const invite = invites.find((i) => i.id === id)
+        if (!invite || !currentUser) return
+
+        // 프로젝트에 직접 합류 (joinProjectByCode 로직 재사용)
+        try {
+          const docSnap = await getDoc(doc(db, 'projects', invite.projectId))
+          if (docSnap.exists()) {
+            const project = { id: docSnap.id, ...docSnap.data() }
+            if (!project.members.find((m) => m.id === currentUser.id)) {
+              const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
+              const personalDmId = `room_dm_${currentUser.id}_${Date.now()}`
+              const personalDm = { id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id, lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4] }
+              const newMember = { id: currentUser.id, name: currentUser.name, role: 'member', roomIds: [personalDmId, allRoomId].filter(Boolean), memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '' }
+              await updateDoc(doc(db, 'projects', project.id), { rooms: arrayUnion(personalDm), members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) })
+              if (allRoomId) {
+                await addDoc(collection(db, 'rooms', allRoomId, 'messages'), { senderId: 'teampbot', senderName: '팀프봇', type: 'notify', text: `👋 ${currentUser.name}님이 팀에 합류했어요!`, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), createdAt: serverTimestamp() })
+              }
+              const newConnects = project.members.filter((m) => m.id !== currentUser.id && !connects.find((c) => c.id === m.id)).map((m) => ({ id: m.id, name: m.name, affiliation: m.affiliation || '', email: m.email || '', projectName: project.name, connectedAt: todayStr() }))
+              if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
+            }
+          }
+        } catch (e) { console.error('초대 수락 오류:', e) }
+
+        // Firestore 초대 상태 업데이트
+        try { await updateDoc(doc(db, 'projectInvites', id), { status: 'accepted' }) } catch {}
+        set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
+      },
+
+      declineInvite: async (id) => {
+        try { await updateDoc(doc(db, 'projectInvites', id), { status: 'declined' }) } catch {}
+        set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
+      },
+
+      sendProjectInvite: async (projectId, invitee) => {
+        const { currentUser, projects } = get()
+        if (!currentUser) return
+        const project = projects.find((p) => p.id === projectId)
+        if (!project) return
+
+        // 이미 초대된 경우 방지 (중복 체크)
+        try {
+          const q = query(collection(db, 'projectInvites'), where('projectId', '==', projectId), where('inviteeId', '==', invitee.id), where('status', '==', 'pending'))
+          const snap = await getDocs(q)
+          if (!snap.empty) return { alreadySent: true }
+        } catch {}
+
+        const inviteDoc = {
+          projectId,
+          projectName: project.name,
+          inviterId: currentUser.id,
+          inviterName: currentUser.name,
+          inviteeId: invitee.id,
+          inviteeName: invitee.name,
+          endDate: project.endDate || '',
+          status: 'pending',
+          createdAt: serverTimestamp(),
+        }
+        await addDoc(collection(db, 'projectInvites'), inviteDoc)
+
+        // 초대받은 사람에게 Firestore 알림 전송
+        await addDoc(collection(db, 'notifications'), {
+          targetUserId: invitee.id,
+          type: 'projectInvite',
+          text: `📨 ${currentUser.name}님이 "${project.name}"에 초대했어요`,
+          projectId,
+          read: false,
+          createdAt: serverTimestamp(),
+        })
+        return { success: true }
+      },
 
       // ─── 초대 코드로 프로젝트 조회 ───────────────────────
       getProjectByInviteCode: async (code) => {
