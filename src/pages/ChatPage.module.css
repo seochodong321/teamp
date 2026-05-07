@@ -9,12 +9,24 @@
 }
 
 @media (max-width: 768px) {
-  .page { height: calc(100vh - var(--header-height) - 32px); border-radius: 0; border: none; }
-  .messages { padding: 12px 14px; }
-  .bubbleWrap { max-width: 80%; }
+  /* 헤더 아래~탭바 위 공간을 뷰포트 기준으로 정확히 채움 */
+  .page {
+    position: fixed;
+    top: var(--header-height);
+    left: 0; right: 0;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    height: auto;
+    border-radius: 0;
+    border: none;
+    z-index: 5;
+  }
+  .header { padding: 10px 14px; }
+  .messages { padding: 10px 14px; }
+  .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
   .inputArea { padding: 8px 10px; }
   .input { font-size: 16px; } /* iOS zoom 방지 */
+  .roomName { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
 }
 
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }

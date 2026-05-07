@@ -19,9 +19,16 @@
   align-items: flex-start;
 }
 
-/* 모바일 하단 탭바 위로 올리기 */
+/* 모바일: 탭바(56px) + 여백 위, 오른쪽 정렬로 */
 @media (max-width: 768px) {
-  .container { bottom: 76px; left: 12px; }
+  .container {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px);
+    left: 12px;
+    right: 12px;
+    align-items: stretch;
+  }
+  .toast { max-width: 100%; min-width: unset; }
+  .clearAll { align-self: flex-end; }
 }
 
 .clearAll {
