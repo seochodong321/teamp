@@ -40,9 +40,10 @@ export default function ChatPage() {
   const [showToolbar, setShowToolbar] = useState(false)
   const [lightbox, setLightbox]   = useState(null)
 
-  const isComposing = useRef(false)
-  const bottomRef   = useRef(null)
-  const fileRef     = useRef(null)
+  const isComposing  = useRef(false)
+  const bottomRef    = useRef(null)
+  const fileRef      = useRef(null)
+  const isInitialRef = useRef(true) // 방 진입 시 첫 로드 여부
 
   // 채팅방 진입 시 Firestore 메시지 실시간 구독
   useEffect(() => {
@@ -57,9 +58,22 @@ export default function ChatPage() {
     return () => unsub()
   }, [roomId, setRoomMessages])
 
+  // 방 전환 시 초기 플래그 리셋
+  useEffect(() => {
+    isInitialRef.current = true
+  }, [roomId])
+
   // 새 메시지 도착 시 스크롤 + 읽음 처리
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!bottomRef.current) return
+    if (isInitialRef.current) {
+      // 진입 시 애니메이션 없이 즉시 맨 아래로
+      bottomRef.current.scrollIntoView({ behavior: 'instant' })
+      isInitialRef.current = false
+    } else {
+      // 이후 새 메시지는 부드럽게
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
     markAsRead(roomId)
   }, [roomMessages.length, roomId, markAsRead])
 
