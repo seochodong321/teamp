@@ -1,0 +1,106 @@
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 960px; }
+
+.pageHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.title { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+.createBtn { padding: 10px 20px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(83,74,183,0.25); transition: all var(--transition); }
+.createBtn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+.layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* 목록 패널 */
+.listPanel { display: flex; flex-direction: column; gap: 10px; }
+.loading { padding: 40px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 20px; text-align: center; }
+.emptyIcon { font-size: 40px; }
+.emptyTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.emptySub { font-size: 13px; color: var(--text-secondary); }
+
+.postCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; cursor: pointer; transition: all 0.15s; display: flex; flex-direction: column; gap: 8px; }
+.postCard:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.postCardActive { border-color: var(--primary); background: var(--primary-light); }
+.postCardTop { display: flex; align-items: flex-start; gap: 10px; }
+.postEmoji { font-size: 22px; flex-shrink: 0; }
+.postTitle { font-size: 14px; font-weight: 600; color: var(--text); }
+.postMeta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.applicantCount { font-size: 11px; color: var(--primary); font-weight: 600; white-space: nowrap; flex-shrink: 0; background: var(--primary-light); padding: 2px 7px; border-radius: var(--radius-full); }
+
+/* 상세 패널 */
+.detailPanel { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; min-height: 320px; display: flex; flex-direction: column; gap: 16px; }
+.detailEmpty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: 13px; }
+
+.detailHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.detailProjectBadge { font-size: 12px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.categoryTag { font-size: 10px; background: var(--bg-secondary); color: var(--text-tertiary); padding: 2px 6px; border-radius: var(--radius-full); }
+.detailTitle { font-size: 18px; font-weight: 700; color: var(--text); }
+.detailLeader { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.closePostBtn { padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); white-space: nowrap; transition: all 0.15s; background: var(--bg); }
+.closePostBtn:hover { border-color: var(--coral); color: var(--coral); }
+
+.detailDesc { font-size: 14px; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; }
+
+.detailSection { display: flex; flex-direction: column; gap: 8px; }
+.detailSectionTitle { font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.skillTags { display: flex; flex-wrap: wrap; gap: 6px; }
+.skillTag { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 3px 9px; border-radius: var(--radius-full); font-weight: 500; }
+.skillTagLg { font-size: 12px; color: var(--primary); background: var(--primary-light); padding: 4px 12px; border-radius: var(--radius-full); font-weight: 600; }
+.skillTagRemove { cursor: pointer; transition: background 0.1s; }
+.skillTagRemove:hover { background: #D4D1F5; }
+
+.applySection { display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--border); }
+.applyBtn { padding: 10px 28px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: all 0.15s; }
+.applyBtn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.appliedBadge { font-size: 13px; color: var(--teal); font-weight: 600; background: var(--teal-light); padding: 8px 16px; border-radius: var(--radius-sm); }
+.alreadyMember { font-size: 12px; color: var(--text-tertiary); text-align: right; padding-top: 8px; border-top: 1px solid var(--border); }
+
+.noApplicants { font-size: 13px; color: var(--text-tertiary); }
+.applicantList { display: flex; flex-direction: column; gap: 8px; }
+.applicantCard { display: flex; align-items: center; gap: 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 12px; }
+.applicantAvatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.applicantName { font-size: 13px; font-weight: 600; color: var(--text); }
+.applicantDate { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+.profileBtn { padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); background: var(--bg); transition: all 0.15s; }
+.profileBtn:hover { border-color: var(--primary); color: var(--primary); }
+.acceptBtn { padding: 5px 12px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; transition: opacity 0.15s; }
+.acceptBtn:hover { opacity: 0.9; }
+.acceptedBadge { font-size: 11px; color: var(--teal); font-weight: 600; }
+
+/* 모집글 작성 모달 */
+.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.formModal { background: var(--bg); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-xl); overflow: hidden; }
+.formModalHeader { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.formModalTitle { font-size: 16px; font-weight: 700; color: var(--text); }
+.formClose { font-size: 16px; color: var(--text-tertiary); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+.formClose:hover { background: var(--bg-secondary); }
+.formBody { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.formField { display: flex; flex-direction: column; gap: 5px; }
+.formLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.formInput { height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 12px; font-size: 13px; color: var(--text); width: 100%; }
+.formInput:focus { border-color: var(--primary); background: var(--bg); }
+.formSelect { height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 12px; font-size: 13px; color: var(--text); width: 100%; }
+.formSelect:focus { border-color: var(--primary); }
+.formTextarea { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; color: var(--text); resize: none; line-height: 1.6; width: 100%; font-family: inherit; }
+.formTextarea:focus { border-color: var(--primary); background: var(--bg); }
+.skillPresets { display: flex; flex-wrap: wrap; gap: 6px; }
+.skillPresetBtn { padding: 5px 12px; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); transition: all 0.15s; }
+.skillPresetBtn:hover { border-color: var(--primary); color: var(--primary); }
+.skillPresetActive { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.formFooter { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid var(--border); }
+.cancelBtn { padding: 9px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
+.cancelBtn:hover { border-color: var(--primary); color: var(--primary); }
+.submitBtn { padding: 9px 22px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: all 0.15s; }
+.submitBtn:hover:not(:disabled) { background: var(--primary-hover); }
+.submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 지원자 프로필 모달 */
+.profileModal { background: var(--bg); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: var(--shadow-xl); }
+.profileAvatar { width: 64px; height: 64px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 26px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.profileName { font-size: 18px; font-weight: 700; color: var(--text); }
+.profileInfo { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.profileOneliner { font-size: 13px; color: var(--text-secondary); text-align: center; font-style: italic; }
+.profileDetail { font-size: 12px; color: var(--text-tertiary); text-align: center; }

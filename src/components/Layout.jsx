@@ -121,6 +121,10 @@ export default function Layout() {
           )}
 
           <p className={styles.navSection}>메뉴</p>
+          <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+            <span className={styles.navIcon}>🤝</span>
+            <span>팀프 매치</span>
+          </NavLink>
           <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>🔗</span>
             <span>팀프 커넥트</span>
@@ -128,6 +132,10 @@ export default function Layout() {
           <NavLink to="/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>👤</span>
             <span>프로필</span>
+          </NavLink>
+          <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+            <span className={styles.navIcon}>❓</span>
+            <span>도움말</span>
           </NavLink>
         </nav>
 

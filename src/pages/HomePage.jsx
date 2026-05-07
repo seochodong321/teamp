@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore.js'
 import styles from './HomePage.module.css'
 
 const CATEGORIES = ['학교', '회사', '스터디', '기타']
-const STEPS = ['기본 정보', '팀 구성', '초대']
+const STEPS = ['기본 정보', '팀 구성']
 const EMOJI_OPTIONS = [
   '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
   '🎨', '🎬', '🎵', '⚽', '🏀', '🏃', '✈️', '🌱',
@@ -26,7 +26,6 @@ export default function HomePage() {
   const collecting = projects.filter((p) => p.status === 'collecting')
   const archived   = projects.filter((p) => p.status === 'archived')
 
-
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)
   const [step, setStep]           = useState(0)
@@ -37,6 +36,8 @@ export default function HomePage() {
   const [customCategory, setCustomCategory] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate]     = useState('')
+  const [endTime, setEndTime]     = useState('')
+  const [showEndTime, setShowEndTime] = useState(false)
   const [roomNames, setRoomNames] = useState(['개발팀'])
   const [newRoom, setNewRoom]     = useState('')
   const [dateError, setDateError] = useState('')
@@ -47,6 +48,9 @@ export default function HomePage() {
   const [showCollecting, setShowCollecting] = useState(true)
   const [showArchived, setShowArchived]     = useState(false)
 
+  // ── 삭제 확인 모달 ──
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+
   // ── 연장 모달 ──
   const [extendId, setExtendId]     = useState(null)
   const [newEndDate, setNewEndDate] = useState('')
@@ -56,8 +60,9 @@ export default function HomePage() {
 
   const openModal = () => {
     setEmoji(''); setPName(''); setPurpose(''); setCategory('학교'); setCustomCategory('')
-    setStartDate(''); setEndDate(''); setRoomNames(['개발팀'])
-    setNewRoom(''); setDateError(''); setCreated(null); setStep(0); setLoading(false)
+    setStartDate(''); setEndDate(''); setEndTime(''); setShowEndTime(false)
+    setRoomNames(['개발팀']); setNewRoom(''); setDateError('')
+    setCreated(null); setStep(0); setLoading(false)
     setShowModal(true)
   }
 
@@ -65,28 +70,19 @@ export default function HomePage() {
 
   const goNext = async () => {
     if (step === 0) {
-      if (!emoji) {
-        alert('프로젝트를 표현할 이모지를 골라주세요!')
-        return
-      }
-      if (!pName.trim() || !startDate || !endDate) {
-        alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.')
-        return
-      }
-      if (endDate < today) {
-        setDateError('종료일이 오늘보다 이전이에요. 다시 설정해주세요.')
-        return
-      }
-      if (startDate && endDate && endDate < startDate) {
-        setDateError('종료일은 시작일보다 늦어야 해요.')
-        return
-      }
+      if (!emoji) { alert('프로젝트를 표현할 이모지를 골라주세요!'); return }
+      if (!pName.trim() || !startDate || !endDate) { alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
+      if (endDate < today) { setDateError('종료일이 오늘보다 이전이에요. 다시 설정해주세요.'); return }
+      if (startDate && endDate && endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
     if (step === STEPS.length - 1) {
       setLoading(true)
       try {
-        const p = await createProject({ name: pName, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+        const p = await createProject({
+          name: pName, emoji, purpose, category: finalCategory,
+          startDate, endDate, endTime: endTime || null, roomNames,
+        })
         setCreated(p)
         setStep((s) => s + 1)
       } finally {
@@ -131,7 +127,7 @@ export default function HomePage() {
 
             <div className={styles.modalBody}>
 
-              {/* STEP 0 — 기본 정보 (이모지 포함) */}
+              {/* STEP 0 — 기본 정보 */}
               {step === 0 && (
                 <>
                   <div className={styles.field}>
@@ -148,14 +144,10 @@ export default function HomePage() {
                         <button type="button" key={em}
                           onClick={() => setEmoji(em)}
                           style={{
-                            aspectRatio: '1',
-                            fontSize: 16,
-                            borderRadius: 6,
+                            aspectRatio: '1', fontSize: 16, borderRadius: 6,
                             border: emoji === em ? '2px solid #534AB7' : '1px solid #E4E4E4',
                             background: emoji === em ? '#EEEDFE' : '#FFFFFF',
-                            cursor: 'pointer',
-                            padding: 0,
-                            transition: 'all 0.15s',
+                            cursor: 'pointer', padding: 0, transition: 'all 0.15s',
                           }}>
                           {em}
                         </button>
@@ -181,13 +173,9 @@ export default function HomePage() {
                       ))}
                     </div>
                     {category === '기타' && (
-                      <input
-                        className={styles.input}
-                        style={{ marginTop: 8 }}
-                        value={customCategory}
+                      <input className={styles.input} style={{ marginTop: 8 }} value={customCategory}
                         onChange={(e) => setCustomCategory(e.target.value)}
-                        placeholder="카테고리를 직접 입력하세요 (예: 동아리, 연구팀)"
-                      />
+                        placeholder="카테고리를 직접 입력하세요 (예: 동아리, 연구팀)" />
                     )}
                   </div>
                   <div className={styles.dateRow}>
@@ -204,6 +192,19 @@ export default function HomePage() {
                     </div>
                   </div>
                   {dateError && <p className={styles.dateError}>⚠️ {dateError}</p>}
+                  <div className={styles.field}>
+                    <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      종료 시간
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 400, fontSize: 11, color: '#9E9E9E', cursor: 'pointer' }}>
+                        <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} style={{ width: 12, height: 12 }} />
+                        시간도 지정할게요
+                      </label>
+                    </label>
+                    {showEndTime && (
+                      <input className={styles.input} type="time" value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)} />
+                    )}
+                  </div>
                 </>
               )}
 
@@ -255,24 +256,14 @@ export default function HomePage() {
                 </>
               )}
 
-              {/* STEP 2 — 초대 */}
-              {step === 2 && (
-                <>
-                  <p className={styles.label}>초대 링크</p>
-                  <div className={styles.linkBox}>
-                    <span className={styles.linkText}>프로젝트 생성 후 링크가 만들어져요</span>
-                  </div>
-                  <p className={styles.inviteHint}>💡 프로젝트 생성 후 멤버 탭에서 초대 링크를 복사할 수 있어요</p>
-                </>
-              )}
-
-              {/* 완료 */}
+              {/* 완료 — 초대 링크 */}
               {step === STEPS.length && created && (
                 <div className={styles.doneWrap}>
                   <div className={styles.doneIcon}>✓</div>
                   <p className={styles.doneTitle}>프로젝트가 만들어졌어요!</p>
                   <p className={styles.doneSub}>{emoji} {created.name}</p>
-                  <div className={styles.linkBox} style={{ marginTop: 12, width: '100%' }}>
+                  <p className={styles.inviteHint}>팀원에게 초대 링크를 공유해보세요</p>
+                  <div className={styles.linkBox} style={{ marginTop: 4, width: '100%' }}>
                     <span className={styles.linkText}>{inviteLink}</span>
                     <button type="button" className={styles.linkCopy}
                       onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
@@ -325,6 +316,24 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── 삭제 확인 모달 ── */}
+      {confirmDeleteId && (
+        <div className={styles.backdrop} onClick={() => setConfirmDeleteId(null)}>
+          <div className={styles.extendModal} onClick={(e) => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>프로젝트 삭제</h3>
+            <p className={styles.extendDesc}>내 목록에서 삭제할까요?<br />삭제 후에는 되돌릴 수 없습니다.</p>
+            <div className={styles.modalFooter} style={{ paddingTop: 4, border: 'none' }}>
+              <button className={styles.prevBtn} onClick={() => setConfirmDeleteId(null)}>취소</button>
+              <div style={{ flex: 1 }} />
+              <button className={styles.deleteConfirmBtn}
+                onClick={() => { hideProject(confirmDeleteId); setConfirmDeleteId(null) }}>
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 페이지 헤더 ── */}
       <div className={styles.pageHeader}>
         <div>
@@ -365,23 +374,19 @@ export default function HomePage() {
           const dday     = getDday(p.endDate)
           const expired  = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
-          const today    = new Date().toISOString().split('T')[0]
+          const todayStr = new Date().toISOString().split('T')[0]
 
-          // 마지막 메시지: 전체 채팅방 우선, 없으면 isDm 제외 첫 번째 방
           const activeRoom = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
             || p.rooms?.find((r) => !r.isDm && r.lastMessage)
           const lastMsg  = activeRoom?.lastMessage || ''
           const lastTime = activeRoom?.time || ''
 
-          // 오늘 마감 미완료 할 일 수
           const todayTodoCount = (p.todos || []).filter(
-            (t) => t.dueDate === today && t.status !== 'done'
+            (t) => t.dueDate === todayStr && t.status !== 'done'
           ).length
 
-          // 내일 일정
           const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
           const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
-
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 
           return (
@@ -414,7 +419,6 @@ export default function HomePage() {
               </div>
               {p.purpose && <p className={styles.cardPurpose}>{p.purpose}</p>}
 
-              {/* 상태 미리보기 */}
               {hasPreview && (
                 <div className={styles.cardPreview} onClick={(e) => e.stopPropagation()}>
                   {lastMsg && (
@@ -456,7 +460,7 @@ export default function HomePage() {
                 <div className={styles.memberAvatars}>
                   {p.members.slice(0, 4).map((m, i) => (
                     <div key={m.id} className={styles.avatarOuter} style={{ zIndex: 4 - i, marginLeft: i === 0 ? 0 : -6 }}>
-                      {isLeader && m.id === myId && (
+                      {m.id === p.leaderId && (
                         <span className={styles.avatarCrown}>👑</span>
                       )}
                       <div className={styles.avatar}>{m.name.charAt(0)}</div>
@@ -543,12 +547,6 @@ export default function HomePage() {
                 <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}
                   onClick={() => p.wrapupId ? navigate(`/project/${p.id}/wrapup`) : navigate(`/project/${p.id}`)}
                   style={{ cursor: 'pointer', position: 'relative' }}>
-                  <button
-                    className={styles.hideBtn}
-                    title="내 목록에서 숨기기"
-                    onClick={(e) => { e.stopPropagation(); hideProject(p.id) }}>
-                    ✕
-                  </button>
                   <div className={styles.cardHeader}>
                     <div>
                       <span className={styles.cardCategory}>{p.category}</span>
@@ -561,6 +559,14 @@ export default function HomePage() {
                   </div>
                   <p className={styles.cardPurpose}>{p.purpose}</p>
                   <p className={styles.cardDate}>~ {p.endDate}</p>
+                  <div className={styles.archivedCardFooter} onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className={styles.deleteBtn}
+                      title="내 목록에서 삭제"
+                      onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(p.id) }}>
+                      삭제
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore.js'
 import styles from './CreateProjectPage.module.css'
 
 const PRESET_CATEGORIES = ['학교', '회사', '스터디', '기타']
-const STEPS = ['기본 정보', '팀 구성', '초대', '완료']
+const STEPS = ['기본 정보', '팀 구성', '완료']
 const EMOJI_OPTIONS = [
   '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
   '🎨', '🎬', '🎵', '⚽', '🏀', '🏃', '✈️', '🌱',
@@ -24,6 +24,8 @@ export default function CreateProjectPage() {
   const [customCategory, setCustomCategory] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate]     = useState('')
+  const [endTime, setEndTime]     = useState('')
+  const [showEndTime, setShowEndTime] = useState(false)
   const [roomNames, setRoomNames] = useState(['개발팀'])
   const [newRoom, setNewRoom]     = useState('')
   const [created, setCreated]     = useState(null)
@@ -41,12 +43,15 @@ export default function CreateProjectPage() {
       if (startDate && endDate && endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
-    if (step === 2) {
+    if (step === 1) {
       setLoading(true)
       try {
-        const p = await createProject({ name, emoji, purpose, category: finalCategory, startDate, endDate, roomNames })
+        const p = await createProject({
+          name, emoji, purpose, category: finalCategory,
+          startDate, endDate, endTime: endTime || null, roomNames,
+        })
         setCreated(p)
-        setStep((s) => s + 1)
+        setStep(2)
       } finally {
         setLoading(false)
       }
@@ -131,6 +136,19 @@ export default function CreateProjectPage() {
               </div>
             </div>
             {dateError && <p className={styles.dateErrorMsg}>⚠️ {dateError}</p>}
+
+            <div className={styles.field}>
+              <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                종료 시간
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 400, fontSize: 12, color: '#9E9E9E', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} />
+                  시간도 지정할게요
+                </label>
+              </label>
+              {showEndTime && (
+                <input className={styles.input} type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              )}
+            </div>
           </div>
         )}
 
@@ -168,21 +186,7 @@ export default function CreateProjectPage() {
           </div>
         )}
 
-        {step === 2 && (
-          <div className={styles.form}>
-            <h2 className={styles.formTitle}>팀원 초대</h2>
-            <p className={styles.formDesc}>링크를 공유하면 상대방이 참여 여부를 직접 선택해요</p>
-            <div className={styles.linkBox}>
-              <span className={styles.linkText}>{inviteLink || '프로젝트 생성 후 링크가 생성돼요'}</span>
-              {inviteLink && (
-                <button type="button" className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
-              )}
-            </div>
-            <div className={styles.inviteNote}><span>💡</span><p>프로젝트 생성 후 채팅방에서도 언제든 초대할 수 있어요</p></div>
-          </div>
-        )}
-
-        {step === 3 && created && (
+        {step === 2 && created && (
           <div className={styles.done}>
             <div className={styles.doneIcon}>✓</div>
             <h2 className={styles.doneTitle}>프로젝트가 만들어졌어요!</h2>
@@ -195,7 +199,7 @@ export default function CreateProjectPage() {
               {[
                 ['프로젝트명', `${emoji} ${created.name}`],
                 ['카테고리', finalCategory],
-                ['기간', `${created.startDate} ~ ${created.endDate}`],
+                ['기간', `${created.startDate} ~ ${created.endDate}${endTime ? ` ${endTime}` : ''}`],
                 ['채팅방', `${created.rooms.length}개`],
               ].map(([k, v]) => (
                 <div key={k} className={styles.summaryRow}>
@@ -208,10 +212,10 @@ export default function CreateProjectPage() {
         )}
 
         <div className={styles.footer}>
-          {step > 0 && step < 3 && <button type="button" className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
+          {step > 0 && step < 2 && <button type="button" className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
           <div style={{ flex: 1 }} />
-          {step < 3 && <button type="button" className={styles.nextBtn} onClick={goNext} disabled={loading}>{loading ? '생성 중...' : step === 2 ? '완료하기' : '다음 →'}</button>}
-          {step === 3 && (
+          {step < 2 && <button type="button" className={styles.nextBtn} onClick={goNext} disabled={loading}>{loading ? '생성 중...' : step === 1 ? '완료하기' : '다음 →'}</button>}
+          {step === 2 && (
             <div className={styles.doneButtons}>
               <button type="button" className={styles.prevBtn} onClick={() => navigate('/home')}>홈으로</button>
               <button type="button" className={styles.nextBtn} onClick={() => navigate(`/project/${created.id}`)}>프로젝트 바로 가기 →</button>

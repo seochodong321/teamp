@@ -292,18 +292,40 @@
 .doneSub { font-size: 13px; color: var(--text-secondary); }
 
 /* ── 아바타 크라운 ── */
+.memberAvatars { display: flex; padding-top: 14px; }
 .avatarOuter { position: relative; display: flex; }
-.avatarCrown { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 10px; line-height: 1; pointer-events: none; z-index: 1; }
+.avatarCrown {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 5;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.2));
+}
 
 /* ── 완료됨 토글 ── */
 .archivedHeader { display: flex; align-items: center; justify-content: space-between; }
 .archivedToggle { font-size: 12px; color: var(--text-tertiary); padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-full); background: var(--bg); transition: all 0.15s; }
 .archivedToggle:hover { border-color: var(--primary); color: var(--primary); }
 
-/* ── 숨기기 버튼 ── */
-.hideBtn { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; background: transparent; color: var(--text-tertiary); font-size: 11px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s, background 0.15s; }
-.cardArchived:hover .hideBtn { opacity: 1; }
-.hideBtn:hover { background: #FCEBEB; color: #E24B4A; }
+/* ── 완료됨 카드 푸터 + 삭제 버튼 ── */
+.archivedCardFooter { display: flex; justify-content: flex-end; margin-top: 4px; }
+.deleteBtn {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  opacity: 0;
+  transition: all 0.15s;
+}
+.cardArchived:hover .deleteBtn { opacity: 1; }
+.deleteBtn:hover { border-color: #E24B4A; color: #E24B4A; background: #FCEBEB; }
+.deleteConfirmBtn { padding: 9px 20px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 
 /* ── 카드 상태 미리보기 ── */
 .cardPreview { display: flex; flex-direction: column; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 8px 10px; margin: 2px 0 4px; }

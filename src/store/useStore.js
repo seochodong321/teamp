@@ -136,7 +136,6 @@ export const useStore = create(
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
         const { projects: local, currentUser, connects } = get()
-        // Firestore에 없는 로컬 unread 카운트 보존
         const merged = firestoreProjects.map(fp => {
           const lp = local.find(p => p.id === fp.id)
           if (!lp) return fp
@@ -149,7 +148,15 @@ export const useStore = create(
           }
         })
 
-        // 같은 프로젝트에 속한 멤버를 커넥트에 자동 동기화
+        // 피드백 수집 중 프로젝트 마감일 지나면 자동 완료 처리
+        firestoreProjects.forEach((fp) => {
+          if (fp.status === 'collecting' && fp.feedbackDeadline) {
+            if (new Date() > new Date(fp.feedbackDeadline)) {
+              updateDoc(doc(db, 'projects', fp.id), { status: 'archived' }).catch(() => {})
+            }
+          }
+        })
+
         const stateUpdate = { projects: merged }
         if (currentUser) {
           const existingIds = new Set(connects.map(c => c.id))
@@ -933,6 +940,63 @@ export const useStore = create(
         await updateDoc(doc(db, 'projects', projectId), {
           members: newMembers,
           memberIds: newMemberIds,
+        })
+      },
+
+      kickMember: async (projectId, memberId) => {
+        const project = get().projects.find((p) => p.id === projectId)
+        if (!project) return
+        await updateDoc(doc(db, 'projects', projectId), {
+          members: project.members.filter((m) => m.id !== memberId),
+          memberIds: (project.memberIds || []).filter((id) => id !== memberId),
+        })
+      },
+
+      addMemberToProject: async (projectId, userId, userName) => {
+        const project = get().projects.find((p) => p.id === projectId)
+        if (!project) return { success: false }
+        if (project.members.find((m) => m.id === userId)) return { success: false, message: '이미 멤버예요' }
+        const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
+        const personalDmId = `room_dm_${userId}_${Date.now()}`
+        const personalDm = {
+          id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: userId,
+          lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4],
+        }
+        const newMember = {
+          id: userId, name: userName, role: 'member',
+          roomIds: [personalDmId, allRoomId].filter(Boolean),
+          memo: '', affiliation: '', email: '',
+        }
+        await updateDoc(doc(db, 'projects', projectId), {
+          rooms: arrayUnion(personalDm),
+          members: arrayUnion(newMember),
+          memberIds: arrayUnion(userId),
+        })
+        return { success: true }
+      },
+
+      setWeeklyGoalSchedule: async (projectId, schedule) => {
+        await updateDoc(doc(db, 'projects', projectId), { weeklyGoalSchedule: schedule })
+      },
+
+      addWeeklyGoal: async (projectId, text) => {
+        const { currentUser } = get()
+        const now = new Date()
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+        const weekKey = monday.toISOString().split('T')[0]
+        await txProject(projectId, (data) => {
+          const goals = (data.weeklyGoals || []).filter((g) => g.week !== weekKey)
+          return {
+            weeklyGoals: [...goals, {
+              id: `wg_${Date.now()}`,
+              week: weekKey,
+              text,
+              authorId: currentUser.id,
+              authorName: currentUser.name,
+              createdAt: new Date().toISOString(),
+            }],
+          }
         })
       },
 

@@ -15,6 +15,8 @@ import ProfilePage       from './pages/ProfilePage.jsx'
 import ConnectPage       from './pages/ConnectPage.jsx'
 import CreateProjectPage from './pages/CreateProjectPage.jsx'
 import WrapupPage        from './pages/WrapupPage.jsx'
+import MatchPage         from './pages/MatchPage.jsx'
+import HelpPage          from './pages/HelpPage.jsx'
 
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
@@ -78,26 +80,30 @@ export default function App() {
           }
         )
         // 1:1 DM 방 실시간 구독
+        let isFirstDmSnap = true  // 최초 로드 시 기존 방을 'added'로 처리하는 것 방지
         dmUnsubRef.current = onSnapshot(
           query(collection(db, 'dmRooms'), where('participants', 'array-contains', user.uid)),
           (snapshot) => {
             const rooms = snapshot.docs
               .map((d) => ({ id: d.id, ...d.data() }))
               .filter((r) => !(r.left || []).includes(user.uid))
-            // 자신이 만들지 않은 새 DM 방 → 알림
-            snapshot.docChanges().forEach((change) => {
-              if (change.type === 'added') {
-                const room = { id: change.doc.id, ...change.doc.data() }
-                if (room.createdBy && room.createdBy !== user.uid) {
-                  const senderName = room.participantNames?.[room.createdBy] || '누군가'
-                  addNotification({
-                    type: 'dm',
-                    text: `${senderName} 님이 1:1 대화를 시작했어요`,
-                    projectId: room.projectId,
-                  })
+            // 초기 로드가 아닌 경우에만 새 DM 알림
+            if (!isFirstDmSnap) {
+              snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                  const room = { id: change.doc.id, ...change.doc.data() }
+                  if (room.createdBy && room.createdBy !== user.uid) {
+                    const senderName = room.participantNames?.[room.createdBy] || '누군가'
+                    addNotification({
+                      type: 'dm',
+                      text: `${senderName} 님이 1:1 대화를 시작했어요`,
+                      projectId: room.projectId,
+                    })
+                  }
                 }
-              }
-            })
+              })
+            }
+            isFirstDmSnap = false
             setDmRoomList(rooms)
           }
         )
@@ -131,6 +137,8 @@ export default function App() {
           <Route path="create"                          element={<CreateProjectPage />} />
           <Route path="profile"                         element={<ProfilePage />} />
           <Route path="connect"                         element={<ConnectPage />} />
+          <Route path="match"                           element={<MatchPage />} />
+          <Route path="help"                            element={<HelpPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

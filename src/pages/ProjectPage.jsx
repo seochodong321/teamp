@@ -19,6 +19,7 @@ export default function ProjectPage() {
     updateMemberRole, setMemberRooms, transferLeader,
     reorderRooms, archiveProject, extendProject, endProject,
     formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
+    kickMember, setWeeklyGoalSchedule, addWeeklyGoal,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -49,6 +50,14 @@ export default function ProjectPage() {
 
   const [showLeave, setShowLeave]               = useState(false)
   const [leaveLoading, setLeaveLoading]         = useState(false)
+
+  // 주간 목표
+  const [goalText, setGoalText]               = useState('')
+  const [showGoalForm, setShowGoalForm]       = useState(false)
+  const [showScheduleForm, setShowScheduleForm] = useState(false)
+  const [scheduleDay, setScheduleDay]         = useState('월')
+  const [scheduleTime, setScheduleTime]       = useState('09:00')
+
   const [showEndProject, setShowEndProject]     = useState(false)
   const [showConfirmEnd, setShowConfirmEnd]     = useState(false)
   const [endCollectFeedback, setEndCollectFeedback] = useState(true)
@@ -562,11 +571,80 @@ export default function ProjectPage() {
         </div>
       )}
 
-      {tab === 'todo' && (
-        <div className={styles.section}>
-          <TodoBoard project={project} currentUser={currentUser} />
-        </div>
-      )}
+      {tab === 'todo' && (() => {
+        const now = new Date()
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
+        const weekKey = monday.toISOString().split('T')[0]
+        const thisWeekGoal = (project.weeklyGoals || []).find((g) => g.week === weekKey)
+        const schedule = project.weeklyGoalSchedule
+
+        return (
+          <div className={styles.section}>
+            {/* 주간 목표 */}
+            <div className={styles.weeklyGoalBox}>
+              <div className={styles.weeklyGoalHeader}>
+                <div>
+                  <span className={styles.weeklyGoalTitle}>이번 주 목표</span>
+                  {schedule && (
+                    <span className={styles.weeklyGoalSchedule}>
+                      매주 {schedule.day} {schedule.time}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {isLeader && (
+                    <button className={styles.weeklyGoalBtn} onClick={() => {
+                      setScheduleDay(schedule?.day || '월')
+                      setScheduleTime(schedule?.time || '09:00')
+                      setShowScheduleForm((v) => !v)
+                    }}>일정 설정</button>
+                  )}
+                  {isLeader && (
+                    <button className={styles.weeklyGoalBtn} onClick={() => {
+                      setGoalText(thisWeekGoal?.text || '')
+                      setShowGoalForm((v) => !v)
+                    }}>
+                      {thisWeekGoal ? '수정' : '+ 목표 작성'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {showScheduleForm && isLeader && (
+                <div className={styles.scheduleForm}>
+                  <select className={styles.scheduleSelect} value={scheduleDay} onChange={(e) => setScheduleDay(e.target.value)}>
+                    {['월', '화', '수', '목', '금', '토', '일'].map((d) => <option key={d}>{d}</option>)}
+                  </select>
+                  <input className={styles.scheduleTime} type="time" value={scheduleTime} onChange={(e) => setScheduleTime(e.target.value)} />
+                  <button className={styles.weeklyGoalSave} onClick={() => {
+                    setWeeklyGoalSchedule(project.id, { day: scheduleDay, time: scheduleTime })
+                    setShowScheduleForm(false)
+                  }}>저장</button>
+                </div>
+              )}
+              {showGoalForm && isLeader && (
+                <div className={styles.goalForm}>
+                  <textarea className={styles.goalTextarea} value={goalText} onChange={(e) => setGoalText(e.target.value)} placeholder="이번 주 팀 목표를 입력하세요" rows={3} />
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    <button className={styles.weeklyGoalBtn} onClick={() => setShowGoalForm(false)}>취소</button>
+                    <button className={styles.weeklyGoalSave} onClick={() => {
+                      if (goalText.trim()) addWeeklyGoal(project.id, goalText.trim())
+                      setShowGoalForm(false)
+                    }}>저장</button>
+                  </div>
+                </div>
+              )}
+              {thisWeekGoal ? (
+                <p className={styles.goalContent}>{thisWeekGoal.text}</p>
+              ) : (
+                <p className={styles.goalEmpty}>아직 이번 주 목표가 없어요{isLeader ? ' — 위에서 작성해보세요' : ''}</p>
+              )}
+            </div>
+
+            <TodoBoard project={project} currentUser={currentUser} />
+          </div>
+        )
+      })()}
 
       {tab === 'calendar' && (
         <div className={styles.section}>
@@ -650,6 +728,12 @@ export default function ProjectPage() {
                         <button className={styles.transferBtn}
                           onClick={() => { if (window.confirm(`${m.name} 님에게 리더를 양도할까요?`)) transferLeader(project.id, m.id) }}>
                           리더 양도
+                        </button>
+                      )}
+                      {isLeader && (
+                        <button className={styles.kickBtn}
+                          onClick={() => { if (window.confirm(`${m.name} 님을 프로젝트에서 방출할까요?`)) kickMember(project.id, m.id) }}>
+                          방출
                         </button>
                       )}
                     </div>

@@ -87,6 +87,27 @@
 .section { display: flex; flex-direction: column; gap: 12px; }
 .hint { font-size: 12px; color: var(--text-tertiary); }
 
+/* 방출 버튼 */
+.kickBtn { padding: 4px 10px; border: 1px solid #E24B4A; color: #E24B4A; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; background: transparent; transition: all 0.15s; }
+.kickBtn:hover { background: #FCEBEB; }
+
+/* 주간 목표 */
+.weeklyGoalBox { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.weeklyGoalHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.weeklyGoalTitle { font-size: 13px; font-weight: 700; color: var(--text); }
+.weeklyGoalSchedule { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); margin-left: 8px; }
+.weeklyGoalBtn { font-size: 11px; color: var(--primary); padding: 4px 10px; border: 1px solid var(--primary); border-radius: var(--radius-sm); background: transparent; transition: all 0.15s; }
+.weeklyGoalBtn:hover { background: var(--primary-light); }
+.weeklyGoalSave { font-size: 11px; color: white; background: var(--primary); padding: 4px 12px; border-radius: var(--radius-sm); font-weight: 600; }
+.scheduleForm { display: flex; align-items: center; gap: 8px; background: var(--bg-secondary); padding: 10px 12px; border-radius: var(--radius-sm); flex-wrap: wrap; }
+.scheduleSelect { height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); padding: 0 8px; font-size: 13px; color: var(--text); }
+.scheduleTime { height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); padding: 0 8px; font-size: 13px; color: var(--text); }
+.goalForm { display: flex; flex-direction: column; gap: 8px; }
+.goalTextarea { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; color: var(--text); resize: none; line-height: 1.6; width: 100%; font-family: inherit; }
+.goalTextarea:focus { border-color: var(--primary); background: var(--bg); }
+.goalContent { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
+.goalEmpty { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+
 /* 채팅방 */
 .roomList { display: flex; flex-direction: column; gap: 6px; }
 .roomCard { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; cursor: pointer; transition: all 0.15s; user-select: none; }

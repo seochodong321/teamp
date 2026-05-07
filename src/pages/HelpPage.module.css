@@ -1,0 +1,40 @@
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 700px; }
+
+.header { display: flex; align-items: flex-start; justify-content: space-between; }
+.title { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* 흐름 요약 바 */
+.flowBar { display: flex; align-items: center; gap: 8px; background: var(--primary-light); border-radius: var(--radius-lg); padding: 14px 20px; flex-wrap: wrap; }
+.flowStep { font-size: 13px; font-weight: 700; color: var(--primary); }
+.flowArrow { font-size: 14px; color: var(--primary); opacity: 0.5; }
+
+/* 섹션 */
+.sections { display: flex; flex-direction: column; gap: 8px; }
+.section { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: box-shadow 0.15s; }
+.section:has(.stepList) { box-shadow: var(--shadow-sm); }
+.sectionHeader { display: flex; align-items: center; gap: 12px; padding: 16px 20px; width: 100%; text-align: left; transition: background 0.15s; cursor: pointer; }
+.sectionHeader:hover { background: var(--bg-secondary); }
+.sectionIcon { font-size: 20px; flex-shrink: 0; }
+.sectionTitle { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); }
+.sectionToggle { font-size: 12px; color: var(--text-tertiary); }
+
+/* 단계 목록 */
+.stepList { display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--border); }
+.step { display: flex; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border-light); }
+.step:last-child { border-bottom: none; }
+.stepNum { width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: white; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.stepLabel { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.stepDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* 팁 박스 */
+.tipBox { background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 20px 24px; }
+.tipTitle { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+.tipList { display: flex; flex-direction: column; gap: 8px; padding-left: 16px; list-style: disc; }
+.tipList li { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* 푸터 */
+.footer { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; text-align: center; }
+.footerText { font-size: 13px; color: var(--text-tertiary); }
+.footerBtn { font-size: 13px; color: var(--primary); font-weight: 500; padding: 6px 14px; border: 1px solid var(--primary); border-radius: var(--radius-sm); background: transparent; transition: background 0.15s; }
+.footerBtn:hover { background: var(--primary-light); }
