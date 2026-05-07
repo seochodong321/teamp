@@ -10,7 +10,7 @@ import ChatToastContainer from './ChatToastContainer.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
-  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject } = useStore()
+  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts } = useStore()
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen]           = useState(false)
@@ -75,26 +75,38 @@ export default function Layout() {
             <>
               <p className={styles.navSection}>진행 중인 프로젝트</p>
               {active.map((p) => {
-                const totalUnread = p.rooms.reduce((s, r) => s + (r.unread || 0), 0)
                 const muted = mutedProjects.includes(p.id)
+                const chatRooms = p.rooms.filter((r) => !r.isDm)
                 return (
-                  <div key={p.id} className={styles.projectNavRow}>
-                    <NavLink to={`/project/${p.id}`}
-                      className={({ isActive }) => `${styles.navItem} ${styles.navItemFlex} ${isActive ? styles.navActive : ''}`}
-                      onClick={close}>
-                      <span className={styles.navDot} style={{ background: p.rooms.find((r) => !r.isDm)?.color || 'var(--primary)' }} />
-                      <span className={styles.navProjectName}>
-                        {p.emoji && <span style={{ marginRight: 4 }}>{p.emoji}</span>}
-                        {p.name}
-                      </span>
-                      {totalUnread > 0 && !muted && <span className={styles.navBadge}>{formatUnread(totalUnread)}</span>}
-                    </NavLink>
-                    <button
-                      className={`${styles.muteBtn} ${muted ? styles.muteBtnOn : ''}`}
-                      onClick={() => toggleMuteProject(p.id)}
-                      title={muted ? '알림 켜기' : '알림 끄기'}>
-                      {muted ? '○' : '●'}
-                    </button>
+                  <div key={p.id}>
+                    <div className={styles.projectNavRow}>
+                      <NavLink to={`/project/${p.id}`}
+                        className={({ isActive }) => `${styles.navItem} ${styles.navItemFlex} ${isActive ? styles.navActive : ''}`}
+                        onClick={close}>
+                        <span className={styles.navDot} style={{ background: chatRooms[0]?.color || 'var(--primary)' }} />
+                        <span className={styles.navProjectName}>
+                          {p.emoji && <span style={{ marginRight: 4 }}>{p.emoji}</span>}
+                          {p.name}
+                        </span>
+                      </NavLink>
+                      <button
+                        className={`${styles.muteBtn} ${muted ? styles.muteBtnOn : ''}`}
+                        onClick={() => toggleMuteProject(p.id)}
+                        title={muted ? '알림 켜기' : '알림 끄기'}>
+                        {muted ? '○' : '●'}
+                      </button>
+                    </div>
+                    {chatRooms.map((room) => (
+                      <NavLink key={room.id} to={`/project/${p.id}/chat/${room.id}`}
+                        className={({ isActive }) => `${styles.navItem} ${styles.roomNavItem} ${isActive ? styles.navActive : ''}`}
+                        onClick={close}>
+                        <span className={styles.roomHash}>#</span>
+                        <span className={styles.navProjectName}>{room.name}</span>
+                        {room.unread > 0 && !muted && (
+                          <span className={styles.navBadge}>{formatUnread(room.unread)}</span>
+                        )}
+                      </NavLink>
+                    ))}
                   </div>
                 )
               })}
@@ -107,12 +119,14 @@ export default function Layout() {
               {dmRoomList.map((room) => {
                 const contactName = Object.entries(room.participantNames || {})
                   .find(([id]) => id !== currentUser?.id)?.[1] || '?'
+                const dmUnread = dmUnreadCounts?.[room.id] || 0
                 return (
                   <NavLink key={room.id} to={`/project/${room.projectId}/chat/${room.id}`}
                     className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`}
                     onClick={close}>
                     <div className={styles.dmAvatar}>{contactName.charAt(0)}</div>
                     <span className={styles.navProjectName}>{contactName}</span>
+                    {dmUnread > 0 && <span className={styles.navBadge}>{formatUnread(dmUnread)}</span>}
                   </NavLink>
                 )
               })}

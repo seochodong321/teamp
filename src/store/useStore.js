@@ -133,6 +133,7 @@ export const useStore = create(
       connects: [],
       notifications: [],
       chatToasts: [],
+      dmUnreadCounts: {},
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
@@ -205,7 +206,7 @@ export const useStore = create(
 
       logout: () => set({
         isLoggedIn: false, currentUser: null,
-        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [],
+        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [], dmUnreadCounts: {},
       }),
 
       // ─── 튜토리얼 프로젝트 Firestore 생성 ───────────────
@@ -560,7 +561,26 @@ export const useStore = create(
           projects: s.projects.map((p) => ({
             ...p, rooms: p.rooms.map((r) => r.id === roomId ? { ...r, unread: 0 } : r),
           })),
+          dmUnreadCounts: { ...s.dmUnreadCounts, [roomId]: 0 },
         })),
+
+      incrementUnread: (roomId) =>
+        set((s) => {
+          const isProjectRoom = s.projects.some((p) => p.rooms.some((r) => r.id === roomId))
+          if (isProjectRoom) {
+            return {
+              projects: s.projects.map((p) => ({
+                ...p,
+                rooms: p.rooms.map((r) =>
+                  r.id === roomId ? { ...r, unread: (r.unread || 0) + 1 } : r
+                ),
+              })),
+            }
+          }
+          return {
+            dmUnreadCounts: { ...s.dmUnreadCounts, [roomId]: (s.dmUnreadCounts[roomId] || 0) + 1 },
+          }
+        }),
 
       // ─── 게시판 ───────────────────────────────────────────
       addAnnouncement: async (projectId, { title, content, isGlobal, fileName }) => {
@@ -1112,14 +1132,15 @@ export const useStore = create(
       name: 'teamp-storage',
       // projects/messages는 Firestore가 관리 — 나머지만 localStorage에 보관
       partialize: (state) => ({
-        roomOrders:    state.roomOrders,
-        dmRooms:       state.dmRooms,
-        connects:      state.connects,
-        notifications: state.notifications,
-        invites:       state.invites,
+        roomOrders:     state.roomOrders,
+        dmRooms:        state.dmRooms,
+        connects:       state.connects,
+        notifications:  state.notifications,
+        invites:        state.invites,
         theme:          state.theme,
         mutedProjects:  state.mutedProjects,
         hiddenProjects: state.hiddenProjects,
+        dmUnreadCounts: state.dmUnreadCounts,
       }),
     }
   )

@@ -29,14 +29,16 @@ function PrivateRoute({ children, ready }) {
 }
 
 export default function App() {
-  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast } = useStore()
-  const isLoggedIn = useStore((s) => s.isLoggedIn)
-  const projects   = useStore((s) => s.projects)
+  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread } = useStore()
+  const isLoggedIn  = useStore((s) => s.isLoggedIn)
+  const projects    = useStore((s) => s.projects)
+  const dmRoomList  = useStore((s) => s.dmRoomList)
   const [ready, setReady] = useState(false)
   const projectsUnsubRef  = useRef(null)
   const dmUnsubRef        = useRef(null)
   const notifUnsubRef     = useRef(null)
   const msgWatchersRef    = useRef({}) // roomId → unsub
+  const dmMsgWatchersRef  = useRef({}) // dmRoomId → unsub
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -204,6 +206,7 @@ export default function App() {
               : msg.type === 'file' ? '📎 파일'
               : msg.type === 'vote' ? '📊 투표'
               : (msg.text || '').slice(0, 60)
+            incrementUnread(roomId)
             addChatToast({
               id: `ct_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
               senderName: msg.senderName || '누군가',
@@ -218,7 +221,49 @@ export default function App() {
       )
       msgWatchersRef.current[roomId] = unsub
     })
-  }, [projects, isLoggedIn, addChatToast])
+  }, [projects, isLoggedIn, addChatToast, incrementUnread])
+
+  // DM 룸 메시지 감시 — 1:1 DM 새 메시지 unread 카운트
+  useEffect(() => {
+    if (!isLoggedIn) return
+    const uid = useStore.getState().currentUser?.id
+    if (!uid) return
+
+    const activeIds = new Set(dmRoomList.map((r) => r.id))
+
+    // 없어진 DM 방 구독 해제
+    Object.keys(dmMsgWatchersRef.current).forEach((roomId) => {
+      if (!activeIds.has(roomId)) {
+        dmMsgWatchersRef.current[roomId]()
+        delete dmMsgWatchersRef.current[roomId]
+      }
+    })
+
+    dmRoomList.forEach((room) => {
+      if (dmMsgWatchersRef.current[room.id]) return
+      const startTime = Timestamp.now()
+      const unsub = onSnapshot(
+        query(
+          collection(db, 'rooms', room.id, 'messages'),
+          orderBy('createdAt', 'asc'),
+          startAfter(startTime)
+        ),
+        (snapshot) => {
+          snapshot.docChanges().forEach((change) => {
+            if (change.type !== 'added') return
+            const msg = { id: change.doc.id, ...change.doc.data() }
+            const { currentUser } = useStore.getState()
+            if (!currentUser || msg.senderId === currentUser.id) return
+            if (msg.senderId === 'system' || msg.type === 'notify') return
+            if (window.location.pathname.includes(`/chat/${room.id}`)) return
+            incrementUnread(room.id)
+          })
+        },
+        (error) => console.error(`[dm-toast] room ${room.id} 구독 오류:`, error)
+      )
+      dmMsgWatchersRef.current[room.id] = unsub
+    })
+  }, [dmRoomList, isLoggedIn, incrementUnread])
 
   return (
     <BrowserRouter>

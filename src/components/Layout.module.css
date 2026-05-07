@@ -99,6 +99,24 @@
   margin-left: 6px;
 }
 
+/* 채팅방 하위 항목 */
+.roomNavItem {
+  padding-left: 24px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+.roomNavItem:hover { color: var(--text); }
+
+.roomHash {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-quaternary);
+  flex-shrink: 0;
+  width: 12px;
+  text-align: center;
+}
+
 .navProjectName {
   flex: 1;
   white-space: nowrap;
