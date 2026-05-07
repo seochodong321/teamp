@@ -138,6 +138,14 @@
   flex-shrink: 0;
 }
 
+.navBadgePlus {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
 /* 프로젝트 + 뮤트 버튼 행 */
 .projectNavRow {
   display: flex;

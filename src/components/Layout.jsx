@@ -103,7 +103,10 @@ export default function Layout() {
                         <span className={styles.roomHash}>#</span>
                         <span className={styles.navProjectName}>{room.name}</span>
                         {room.unread > 0 && !muted && (
-                          <span className={styles.navBadge}>{formatUnread(room.unread)}</span>
+                          <>
+                            {room.unread > 99 && <span className={styles.navBadgePlus}>+</span>}
+                            <span className={styles.navBadge}>{room.unread > 99 ? 99 : room.unread}</span>
+                          </>
                         )}
                       </NavLink>
                     ))}
@@ -126,7 +129,12 @@ export default function Layout() {
                     onClick={close}>
                     <div className={styles.dmAvatar}>{contactName.charAt(0)}</div>
                     <span className={styles.navProjectName}>{contactName}</span>
-                    {dmUnread > 0 && <span className={styles.navBadge}>{formatUnread(dmUnread)}</span>}
+                    {dmUnread > 0 && (
+                      <>
+                        {dmUnread > 99 && <span className={styles.navBadgePlus}>+</span>}
+                        <span className={styles.navBadge}>{dmUnread > 99 ? 99 : dmUnread}</span>
+                      </>
+                    )}
                   </NavLink>
                 )
               })}
