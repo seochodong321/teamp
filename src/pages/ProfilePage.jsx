@@ -10,14 +10,14 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
   const [flowers, setFlowers] = useState(0)
   const completedProjects = myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length
   const doneTodos = myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length
-  const sentMessages = Object.values(messages).flat().filter((m) => m.senderId === currentUser?.id).length
+  const leaderProjects = myProjects.filter((p) => !p.isTutorial && p.members.find((m) => m.id === currentUser?.id)?.role === 'leader').length
 
   useEffect(() => {
     const fetchFlowers = async () => {
@@ -207,9 +207,9 @@ export default function ProfilePage() {
             <span className={styles.journeyLabel}>받은 꽃다발</span>
           </div>
           <div className={styles.journeyItem}>
-            <span className={styles.journeyIcon}>💬</span>
-            <span className={styles.journeyCount}>{sentMessages}</span>
-            <span className={styles.journeyLabel}>오간 메시지</span>
+            <span className={styles.journeyIcon}>👑</span>
+            <span className={styles.journeyCount}>{leaderProjects}</span>
+            <span className={styles.journeyLabel}>리더 프로젝트</span>
           </div>
           <div className={styles.journeyItem}>
             <span className={styles.journeyIcon}>✅</span>
@@ -231,7 +231,10 @@ export default function ProfilePage() {
             return (
               <div key={p.id} className={styles.publicChip}>
                 {p.emoji && <span>{p.emoji}</span>}
-                <span className={styles.publicChipName}>{p.name}</span>
+                <div className={styles.publicChipInfo}>
+                  <span className={styles.publicChipName}>{p.name}</span>
+                  {me?.memo && <span className={styles.publicChipMemo}>{me.memo}</span>}
+                </div>
                 <span className={styles.publicChipRole}>{ROLE_LABEL[me?.role]}</span>
                 <span className={`${styles.publicChipStatus} ${p.status === 'archived' ? styles.statusDone : styles.statusActive}`}>
                   {p.status === 'archived' ? '완료' : '진행 중'}
@@ -267,14 +270,29 @@ export default function ProfilePage() {
                       {p.status === 'archived' ? '완료' : '진행 중'}
                     </span>
                   </div>
-                  <button
-                    className={`${styles.toggle} ${p.isPublic ? styles.toggleOn : styles.toggleOff}`}
-                    onClick={() => togglePublic(p.id)}
-                    aria-label={p.isPublic ? '공개 중' : '비공개'}
-                  >
-                    <span className={styles.toggleKnob} />
-                    <span className={styles.toggleLabel}>{p.isPublic ? '공개' : '비공개'}</span>
-                  </button>
+                  <div className={styles.projectItemActions}>
+                    <button
+                      className={`${styles.toggle} ${p.isPublic ? styles.toggleOn : styles.toggleOff}`}
+                      onClick={() => togglePublic(p.id)}
+                      aria-label={p.isPublic ? '공개 중' : '비공개'}
+                    >
+                      <span className={styles.toggleKnob} />
+                      <span className={styles.toggleLabel}>{p.isPublic ? '공개' : '비공개'}</span>
+                    </button>
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={() => {
+                        const isLeader = p.members.find((m) => m.id === currentUser.id)?.role === 'leader'
+                        const msg = isLeader
+                          ? `"${p.name}" 프로젝트를 삭제할까요? 모든 팀원이 접근할 수 없게 돼요.`
+                          : `"${p.name}" 프로젝트에서 나갈까요?`
+                        if (window.confirm(msg)) leaveOrDeleteProject(p.id)
+                      }}
+                      title="삭제 / 나가기"
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </div>
                 <div className={styles.memoArea}>
                   {isEditing ? (

@@ -114,7 +114,9 @@
   box-shadow: var(--shadow-xs);
 }
 .publicChip:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.publicChipInfo { display: flex; flex-direction: column; gap: 2px; }
 .publicChipName { font-size: 13px; font-weight: 600; color: var(--primary-dark); }
+.publicChipMemo { font-size: 11px; color: var(--text-secondary); font-style: italic; }
 .publicChipRole { font-size: 11px; color: var(--primary); }
 .publicChipStatus { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-full); }
 .statusActive { background: var(--teal-light); color: var(--teal); }
@@ -126,6 +128,9 @@
 .projectItem { border-bottom: 1px solid var(--border-light); padding: 16px 0; display: flex; flex-direction: column; gap: 10px; }
 .projectItem:last-child { border-bottom: none; }
 .projectItemTop { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+.projectItemActions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.deleteBtn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-tertiary); transition: background 0.15s, color 0.15s; }
+.deleteBtn:hover { background: #FEE2E2; color: #DC2626; }
 .projectItemLeft { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; min-width: 0; }
 .projectItemEmoji { font-size: 18px; }
 .projectItemName { font-size: 14px; font-weight: 600; color: var(--text); }

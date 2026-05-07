@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import {
   collection, doc, addDoc, setDoc, getDoc, getDocs,
-  updateDoc, arrayUnion, query, where, runTransaction,
+  updateDoc, arrayUnion, arrayRemove, deleteDoc, query, where, runTransaction,
   serverTimestamp, writeBatch,
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
@@ -912,6 +912,22 @@ export const useStore = create(
 
       archiveProject: async (projectId) => {
         await updateDoc(doc(db, 'projects', projectId), { status: 'archived' })
+      },
+
+      leaveOrDeleteProject: async (projectId) => {
+        const { currentUser, projects } = get()
+        const project = projects.find((p) => p.id === projectId)
+        if (!project) return
+        const isLeader = project.members.find((m) => m.id === currentUser.id)?.role === 'leader'
+        if (isLeader) {
+          await deleteDoc(doc(db, 'projects', projectId))
+        } else {
+          const member = project.members.find((m) => m.id === currentUser.id)
+          await updateDoc(doc(db, 'projects', projectId), {
+            memberIds: arrayRemove(currentUser.id),
+            members: arrayRemove(member),
+          })
+        }
       },
 
       extendProject: async (projectId, newEndDate) => {
