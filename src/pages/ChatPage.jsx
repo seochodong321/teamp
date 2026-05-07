@@ -86,8 +86,8 @@ export default function ChatPage() {
         return dmRoom?.participantNames?.[otherId] || '1:1 대화'
       })()
     : room?.name
-  const backLabel = isDm ? '← 뒤로' : `← ${project?.name || ''}`
-  const backPath  = isDm ? `/project/${dmRoom?.projectId || projectId}` : `/project/${projectId}`
+  const backLabel = isDm ? '← 홈' : `← ${project?.name || ''}`
+  const backPath  = isDm ? '/home' : `/project/${projectId}`
 
   const handleSend = () => {
     if (!text.trim()) return
