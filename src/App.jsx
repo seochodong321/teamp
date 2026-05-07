@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
+import { collection, doc, getDoc, limit, onSnapshot, orderBy, query, updateDoc, where } from 'firebase/firestore'
 import { auth, db } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
@@ -29,11 +29,14 @@ function PrivateRoute({ children, ready }) {
 }
 
 export default function App() {
-  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification } = useStore()
+  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast } = useStore()
+  const isLoggedIn = useStore((s) => s.isLoggedIn)
+  const projects   = useStore((s) => s.projects)
   const [ready, setReady] = useState(false)
-  const projectsUnsubRef = useRef(null)
-  const dmUnsubRef       = useRef(null)
-  const notifUnsubRef    = useRef(null)
+  const projectsUnsubRef  = useRef(null)
+  const dmUnsubRef        = useRef(null)
+  const notifUnsubRef     = useRef(null)
+  const msgWatchersRef    = useRef({}) // roomId → unsub
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -149,6 +152,69 @@ export default function App() {
       if (notifUnsubRef.current) notifUnsubRef.current()
     }
   }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification])
+
+  // 백그라운드 메시지 감시 — 열려있지 않은 채팅방에 새 메시지 오면 토스트
+  useEffect(() => {
+    if (!isLoggedIn) return
+    const uid = useStore.getState().currentUser?.id
+    if (!uid) return
+
+    const roomProjectMap = {}
+    const allRoomIds = new Set()
+    projects.forEach((project) => {
+      ;(project.rooms || []).forEach((room) => {
+        if (!room.isDm) {
+          allRoomIds.add(room.id)
+          roomProjectMap[room.id] = { projectId: project.id, roomName: room.name }
+        }
+      })
+    })
+
+    // 이미 없어진 방 구독 해제
+    Object.keys(msgWatchersRef.current).forEach((roomId) => {
+      if (!allRoomIds.has(roomId)) {
+        msgWatchersRef.current[roomId]()
+        delete msgWatchersRef.current[roomId]
+      }
+    })
+
+    // 새 방 구독
+    allRoomIds.forEach((roomId) => {
+      if (msgWatchersRef.current[roomId]) return
+      let isFirst = true
+      const unsub = onSnapshot(
+        query(collection(db, 'rooms', roomId, 'messages'), orderBy('createdAt', 'desc'), limit(1)),
+        (snapshot) => {
+          if (isFirst) { isFirst = false; return }
+          snapshot.docChanges().forEach((change) => {
+            if (change.type !== 'added') return
+            const msg = { id: change.doc.id, ...change.doc.data() }
+            const { currentUser, mutedProjects } = useStore.getState()
+            if (!currentUser || msg.senderId === currentUser.id) return
+            if (msg.senderId === 'system' || msg.senderId === 'teampbot') return
+            if (msg.type === 'notify') return
+            const info = roomProjectMap[roomId]
+            if (!info) return
+            if ((mutedProjects || []).includes(info.projectId)) return
+            if (window.location.pathname.includes(`/chat/${roomId}`)) return
+            const preview = msg.type === 'image' ? '📷 사진'
+              : msg.type === 'file' ? '📎 파일'
+              : msg.type === 'vote' ? '📊 투표'
+              : (msg.text || '').slice(0, 60)
+            addChatToast({
+              id: `ct_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              senderName: msg.senderName || '누군가',
+              text: preview,
+              roomId,
+              projectId: info.projectId,
+              roomName: info.roomName,
+            })
+          })
+        }
+      )
+      msgWatchersRef.current[roomId] = unsub
+    })
+  }, [projects, isLoggedIn, addChatToast])
 
   return (
     <BrowserRouter>

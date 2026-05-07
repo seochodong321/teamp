@@ -1,0 +1,103 @@
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes slideDown {
+  from { transform: translateY(0);    opacity: 1; }
+  to   { transform: translateY(16px); opacity: 0; }
+}
+
+.container {
+  position: fixed;
+  bottom: 24px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 800;
+  pointer-events: none;
+  align-items: flex-start;
+}
+
+/* 모바일 하단 탭바 위로 올리기 */
+@media (max-width: 768px) {
+  .container { bottom: 76px; left: 12px; }
+}
+
+.clearAll {
+  pointer-events: all;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-self: flex-start;
+}
+.clearAll:hover { border-color: var(--coral); color: var(--coral); }
+
+.toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 10px 10px 10px 14px;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  max-width: 280px;
+  min-width: 220px;
+  animation: slideUp 0.28s ease;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.toast:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.toastClosing { animation: slideDown 0.26s ease forwards; }
+
+.toastInner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.toastIcon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+.toastBody { flex: 1; min-width: 0; }
+
+.toastSender {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.toastRoom { font-size: 11px; font-weight: 400; color: var(--text-tertiary); }
+
+.toastText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.closeBtn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.closeBtn:hover { background: var(--bg-secondary); color: var(--text); }

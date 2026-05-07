@@ -1,0 +1,65 @@
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useStore } from '../store/useStore.js'
+import styles from './ChatToastContainer.module.css'
+
+export default function ChatToastContainer() {
+  const { chatToasts, removeChatToast, clearChatToasts } = useStore()
+  const navigate = useNavigate()
+  const [closingIds, setClosingIds] = useState(new Set())
+
+  const handleDismiss = (e, id) => {
+    e.stopPropagation()
+    setClosingIds((prev) => new Set([...prev, id]))
+    setTimeout(() => {
+      removeChatToast(id)
+      setClosingIds((prev) => { const n = new Set(prev); n.delete(id); return n })
+    }, 260)
+  }
+
+  const handleClick = (toast) => {
+    removeChatToast(toast.id)
+    navigate(`/project/${toast.projectId}/chat/${toast.roomId}`)
+  }
+
+  const handleClearAll = () => {
+    setClosingIds(new Set(chatToasts.map((t) => t.id)))
+    setTimeout(() => {
+      clearChatToasts()
+      setClosingIds(new Set())
+    }, 260)
+  }
+
+  if (!chatToasts.length) return null
+
+  return (
+    <div className={styles.container}>
+      {chatToasts.length >= 2 && (
+        <button className={styles.clearAll} onClick={handleClearAll}>
+          전체 삭제 ✕
+        </button>
+      )}
+      {/* 새 토스트가 맨 아래에서 위로 쌓이도록 역순 렌더 */}
+      {[...chatToasts].reverse().map((toast) => (
+        <div
+          key={toast.id}
+          className={`${styles.toast} ${closingIds.has(toast.id) ? styles.toastClosing : ''}`}
+          onClick={() => handleClick(toast)}
+          role="button"
+          tabIndex={0}
+        >
+          <div className={styles.toastInner}>
+            <span className={styles.toastIcon}>💬</span>
+            <div className={styles.toastBody}>
+              <p className={styles.toastSender}>{toast.senderName}
+                {toast.roomName && <span className={styles.toastRoom}> · {toast.roomName}</span>}
+              </p>
+              <p className={styles.toastText}>{toast.text}</p>
+            </div>
+          </div>
+          <button className={styles.closeBtn} onClick={(e) => handleDismiss(e, toast.id)}>✕</button>
+        </div>
+      ))}
+    </div>
+  )
+}

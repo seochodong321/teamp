@@ -291,20 +291,7 @@
 
 .doneSub { font-size: 13px; color: var(--text-secondary); }
 
-/* ── 아바타 크라운 ── */
-.memberAvatars { display: flex; padding-top: 14px; }
 .avatarOuter { position: relative; display: flex; }
-.avatarCrown {
-  position: absolute;
-  top: -13px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 13px;
-  line-height: 1;
-  pointer-events: none;
-  z-index: 5;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.2));
-}
 
 /* ── 완료됨 토글 ── */
 .archivedHeader { display: flex; align-items: center; justify-content: space-between; }

@@ -460,9 +460,6 @@ export default function HomePage() {
                 <div className={styles.memberAvatars}>
                   {p.members.slice(0, 4).map((m, i) => (
                     <div key={m.id} className={styles.avatarOuter} style={{ zIndex: 4 - i, marginLeft: i === 0 ? 0 : -6 }}>
-                      {m.id === p.leaderId && (
-                        <span className={styles.avatarCrown}>👑</span>
-                      )}
                       <div className={styles.avatar}>{m.name.charAt(0)}</div>
                     </div>
                   ))}

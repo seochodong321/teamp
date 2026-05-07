@@ -132,6 +132,7 @@ export const useStore = create(
       hiddenProjects: [],
       connects: [],
       notifications: [],
+      chatToasts: [],
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
@@ -204,7 +205,7 @@ export const useStore = create(
 
       logout: () => set({
         isLoggedIn: false, currentUser: null,
-        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [],
+        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [],
       }),
 
       // ─── 튜토리얼 프로젝트 Firestore 생성 ───────────────
@@ -1072,6 +1073,14 @@ export const useStore = create(
         set((s) => ({ notifications: s.notifications.filter((n) => n.id !== notiId) })),
 
       clearAllNotifications: () => set({ notifications: [] }),
+
+      // ─── 채팅 토스트 ───────────────────────────────────────
+      addChatToast: (toast) => {
+        set((s) => ({ chatToasts: [toast, ...s.chatToasts].slice(0, 5) }))
+      },
+      removeChatToast: (id) =>
+        set((s) => ({ chatToasts: s.chatToasts.filter((t) => t.id !== id) })),
+      clearChatToasts: () => set({ chatToasts: [] }),
 
       // ─── 다크 모드 ────────────────────────────────────────
       theme: (typeof window !== 'undefined' && localStorage.getItem('teamp-theme')) || 'light',

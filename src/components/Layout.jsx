@@ -1,20 +1,23 @@
 import React, { useEffect, useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import NotificationPanel from './NotificationPanel.jsx'
 import SearchModal from './SearchModal.jsx'
+import CreateProjectModal from './CreateProjectModal.jsx'
+import ChatToastContainer from './ChatToastContainer.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
   const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject } = useStore()
-  const navigate = useNavigate()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const [mobileOpen, setMobileOpen]           = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
+  const [showSearch, setShowSearch]           = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // Cmd+K / Ctrl+K 단축키로 검색 열기
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -26,8 +29,8 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const active = projects.filter((p) => p.status === 'active')
-  const unreadCount = (notifications || []).filter((n) => !n.read).length
+  const active       = projects.filter((p) => p.status === 'active')
+  const unreadCount  = (notifications || []).filter((n) => !n.read).length
 
   const handleLogout = async () => {
     try { await signOut(auth) } catch {}
@@ -37,10 +40,16 @@ export default function Layout() {
 
   const close = () => setMobileOpen(false)
 
+  const openCreate = () => { setShowCreateModal(true); close() }
+
+  // 현재 경로가 해당 prefix로 시작하는지 확인
+  const isAt = (prefix) => location.pathname.startsWith(prefix)
+
   return (
     <div className={styles.shell}>
       {mobileOpen && <div className={styles.overlay} onClick={close} />}
 
+      {/* ── 사이드바 (데스크탑 / 모바일 드로어) ── */}
       <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoRow}>
           <div className={styles.logo} onClick={() => { navigate('/home'); close() }}>
@@ -48,20 +57,10 @@ export default function Layout() {
             <span className={styles.logoText}>Teamp</span>
           </div>
           <div className={styles.logoActions}>
-            <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">
-              🔍
-            </button>
-            <button
-              className={styles.notiBtn}
-              onClick={() => setShowNotifications(true)}
-              title="알림"
-            >
+            <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">🔍</button>
+            <button className={styles.notiBtn} onClick={() => setShowNotifications(true)} title="알림">
               ✦
-              {unreadCount > 0 && (
-                <span className={styles.notiBadge}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+              {unreadCount > 0 && <span className={styles.notiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
             </button>
           </div>
         </div>
@@ -122,26 +121,20 @@ export default function Layout() {
 
           <p className={styles.navSection}>메뉴</p>
           <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>🤝</span>
-            <span>팀프 매치</span>
+            <span className={styles.navIcon}>🤝</span><span>팀프 매치</span>
           </NavLink>
           <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>🔗</span>
-            <span>팀프 커넥트</span>
+            <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
           </NavLink>
           <NavLink to="/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>👤</span>
-            <span>프로필</span>
+            <span className={styles.navIcon}>👤</span><span>프로필</span>
           </NavLink>
           <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>❓</span>
-            <span>도움말</span>
+            <span className={styles.navIcon}>❓</span><span>도움말</span>
           </NavLink>
         </nav>
 
-        <button className={styles.createBtn} onClick={() => { navigate('/create'); close() }}>
-          + 새 프로젝트
-        </button>
+        <button className={styles.createBtn} onClick={openCreate}>+ 새 프로젝트</button>
 
         <div className={styles.userArea}>
           <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
@@ -153,31 +146,52 @@ export default function Layout() {
         </div>
       </aside>
 
+      {/* ── 메인 컨텐츠 ── */}
       <main className={styles.main}>
         <div className={styles.mobileHeader}>
           <button className={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
           <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
-          <button
-            className={styles.mobileNotiBtn}
-            onClick={() => setShowNotifications(true)}
-          >
-            ✦
-            {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button className={styles.mobileSearchBtn} onClick={() => setShowSearch(true)}>🔍</button>
+            <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
+              ✦
+              {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+            </button>
+          </div>
         </div>
+
         <div className={styles.content}>
           <Outlet />
         </div>
+
+        {/* ── 모바일 하단 탭바 ── */}
+        <nav className={styles.mobileTabBar}>
+          <NavLink to="/home" className={`${styles.mobileTab} ${isAt('/home') ? styles.mobileTabActive : ''}`}>
+            <span className={styles.mobileTabIcon}>⊞</span>
+            <span className={styles.mobileTabLabel}>홈</span>
+          </NavLink>
+          <NavLink to="/match" className={`${styles.mobileTab} ${isAt('/match') ? styles.mobileTabActive : ''}`}>
+            <span className={styles.mobileTabIcon}>🤝</span>
+            <span className={styles.mobileTabLabel}>매치</span>
+          </NavLink>
+          <button className={styles.mobileTabCreate} onClick={openCreate}>
+            <span className={styles.mobileTabCreateIcon}>＋</span>
+          </button>
+          <NavLink to="/connect" className={`${styles.mobileTab} ${isAt('/connect') ? styles.mobileTabActive : ''}`}>
+            <span className={styles.mobileTabIcon}>🔗</span>
+            <span className={styles.mobileTabLabel}>커넥트</span>
+          </NavLink>
+          <NavLink to="/profile" className={`${styles.mobileTab} ${isAt('/profile') ? styles.mobileTabActive : ''}`}>
+            <span className={styles.mobileTabIcon}>👤</span>
+            <span className={styles.mobileTabLabel}>프로필</span>
+          </NavLink>
+        </nav>
       </main>
 
-      <NotificationPanel
-        open={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
-      <SearchModal
-        open={showSearch}
-        onClose={() => setShowSearch(false)}
-      />
+      <NotificationPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
+      <SearchModal open={showSearch} onClose={() => setShowSearch(false)} />
+      {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} />}
+      <ChatToastContainer />
     </div>
   )
 }
