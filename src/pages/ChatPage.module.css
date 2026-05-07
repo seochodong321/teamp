@@ -1,11 +1,12 @@
 .page {
   display: flex; flex-direction: column;
   height: calc(100vh - 48px);
-  max-width: 860px;
+  max-width: 880px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 14px;
   overflow: hidden;
+  box-shadow: var(--shadow-xs);
 }
 
 @media (max-width: 768px) {
@@ -31,9 +32,9 @@
 
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }
 
-.header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.back { font-size: 13px; color: var(--primary); font-weight: 500; white-space: nowrap; }
-.back:hover { text-decoration: underline; }
+.header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
+.back { font-size: 13px; color: var(--text-secondary); font-weight: 500; white-space: nowrap; padding: 6px 10px; border-radius: 6px; transition: all var(--transition-fast); }
+.back:hover { background: var(--bg-secondary); color: var(--text); text-decoration: none; }
 .headerCenter { flex: 1; display: flex; align-items: center; gap: 8px; }
 .roomName { font-size: 15px; font-weight: 700; color: var(--text); }
 .roomMeta { font-size: 12px; color: var(--text-tertiary); }
@@ -49,8 +50,8 @@
 .rowMine { flex-direction: row-reverse; }
 .rowGrouped { margin-top: -4px; } /* 연속 메시지 간격 줄이기 */
 
-.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.avatarGap { width: 34px; flex-shrink: 0; } /* 아바타 없을 때 정렬 유지 */
+.avatar { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.avatarGap { width: 32px; flex-shrink: 0; }
 
 .bubbleWrap { display: flex; flex-direction: column; gap: 3px; max-width: 65%; }
 .rowMine .bubbleWrap { align-items: flex-end; }
@@ -58,19 +59,19 @@
 .sender { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; }
 .roleTag { font-size: 11px; }
 
-.bubble { padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; animation: messageIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.bubbleOther { background: var(--bg-secondary); color: var(--text); border-top-left-radius: 4px; }
-.bubbleMine  { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+.bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; animation: messageIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); letter-spacing: -0.005em; }
+.bubbleOther { background: var(--bg-secondary); color: var(--text); border-top-left-radius: 4px; border: 1px solid var(--border-light); }
+.bubbleMine  { background: var(--primary); color: white; border-bottom-right-radius: 4px; box-shadow: 0 1px 2px rgba(43, 36, 112, .18); }
 
-.fileBubble { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-secondary); font-size: 13px; color: var(--text); }
-.fileBubbleMine { background: var(--primary-light); border-color: #AFA9EC; color: var(--primary-dark); }
+.fileBubble { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-light); background: var(--bg-secondary); font-size: 13px; color: var(--text); }
+.fileBubbleMine { background: var(--primary-light); border-color: var(--primary-light); color: var(--primary-dark); }
 .fileName { font-weight: 500; }
 
 .time { font-size: 10px; color: var(--text-tertiary); }
 
 /* 투표 */
 .pollWrap { display: flex; gap: 8px; }
-.pollCard { flex: 1; max-width: 340px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.pollCard { flex: 1; max-width: 340px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-xs); }
 .pollHeader { display: flex; align-items: center; justify-content: space-between; }
 .pollAuthor { font-size: 12px; color: var(--text-secondary); }
 .pollBadge  { font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); }
@@ -97,16 +98,16 @@
 /* 입력창 */
 .inputArea { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--bg); position: relative; }
 .toolbarWrap { position: relative; }
-.toolBtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); font-size: 20px; font-weight: 300; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-.toolBtn:hover, .toolBtnActive { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.toolBtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); font-size: 18px; font-weight: 300; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--bg); }
+.toolBtn:hover, .toolBtnActive { border-color: var(--border-strong); color: var(--text); background: var(--bg-secondary); }
 .toolMenu { position: absolute; bottom: 44px; left: 0; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden; min-width: 160px; z-index: 10; }
 .toolItem { display: block; width: 100%; padding: 10px 16px; text-align: left; font-size: 13px; color: var(--text); transition: background 0.15s; }
 .toolItem:hover { background: var(--bg-secondary); }
-.input { flex: 1; min-height: 36px; max-height: 120px; border-radius: 18px; border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 16px; font-size: 14px; color: var(--text); resize: none; line-height: 1.5; transition: border-color 0.15s; font-family: inherit; }
-.input:focus { border-color: var(--primary); background: var(--bg); }
-.sendBtn { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
-.sendBtn:hover:not(:disabled) { opacity: 0.9; transform: scale(1.08); }
-.sendBtnOff { background: var(--border); cursor: not-allowed; }
+.input { flex: 1; min-height: 36px; max-height: 120px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 16px; font-size: 14px; color: var(--text); resize: none; line-height: 1.5; transition: all 0.15s; font-family: inherit; }
+.input:focus { border-color: var(--border-strong); background: var(--bg); }
+.sendBtn { width: 36px; height: 36px; border-radius: 10px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; box-shadow: var(--shadow-sm); }
+.sendBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.sendBtnOff { background: var(--border-strong); cursor: not-allowed; box-shadow: none; }
 .sendBtnPulse { animation: sendPulse 0.4s ease; }
 
 /* 빈 화면 */
@@ -122,18 +123,19 @@
 }
 
 .emptyIcon {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: var(--primary-light);
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--primary-soft);
   color: var(--primary);
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
   animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .emptyTitle {

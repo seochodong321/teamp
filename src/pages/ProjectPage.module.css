@@ -1,10 +1,10 @@
-.page { display: flex; flex-direction: column; gap: 20px; max-width: 900px; }
+.page { display: flex; flex-direction: column; gap: 18px; max-width: 1080px; }
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }
 
 /* 상단 네비게이션 */
 .topNav { display: flex; align-items: center; justify-content: space-between; padding: 0 0 4px; }
-.topNavBack { font-size: 13px; color: var(--primary); font-weight: 500; padding: 6px 10px; border-radius: var(--radius-sm); width: 80px; }
-.topNavBack:hover { background: var(--primary-light); }
+.topNavBack { font-size: 13px; color: var(--text-secondary); font-weight: 500; padding: 6px 10px; border-radius: 6px; width: 80px; transition: all var(--transition-fast); }
+.topNavBack:hover { background: var(--bg-secondary); color: var(--text); }
 .topNavLogo { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: var(--text); }
 
 /* 모달 */
@@ -36,14 +36,14 @@
 .dmBtn:hover { opacity: 0.9; }
 
 /* 헤더 카드 */
-.headerCard    { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.headerCard    { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-xs); }
 .headerTop     { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .headerLeft    { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.categoryBadge { display: inline-block; font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: var(--radius-full); align-self: flex-start; }
-.projectName   { font-size: 22px; font-weight: 700; color: var(--text); }
-.projectPurpose{ font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.categoryBadge { display: inline-block; font-size: 10.5px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.12em; text-transform: uppercase; padding: 0; align-self: flex-start; }
+.projectName   { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.025em; line-height: 1.15; margin-top: 2px; }
+.projectPurpose{ font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; max-width: 60ch; }
 .headerRight   { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 180px; }
-.ddayBadge   { font-size: 12px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: var(--radius-full); }
+.ddayBadge   { font-size: 11.5px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 5px 11px; border-radius: 7px; letter-spacing: -0.01em; }
 .ddayExpired { background: var(--coral-soft); color: var(--coral); }
 .ddayToday   { background: var(--amber-light); color: var(--amber); }
 .progressWrap  { width: 180px; }
@@ -79,10 +79,10 @@
 .modalSelect { width: 100%; height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 14px; font-size: 14px; color: var(--text); }
 
 /* 탭 */
-.tabs { display: flex; border-bottom: 1px solid var(--border); overflow-x: auto; }
-.tab  { padding: 10px 16px; font-size: 13px; font-weight: 500; color: var(--text-secondary); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all 0.15s; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; padding: 0 4px; }
+.tab  { padding: 11px 14px; font-size: 13px; font-weight: 500; color: var(--text-tertiary); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all 0.15s; }
 .tab:hover { color: var(--text); }
-.tabActive { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tabActive { color: var(--text); border-bottom-color: var(--primary); font-weight: 700; }
 
 .section { display: flex; flex-direction: column; gap: 12px; }
 .hint { font-size: 12px; color: var(--text-tertiary); }
@@ -92,7 +92,7 @@
 .kickBtn:hover { background: #FCEBEB; }
 
 /* 주간 목표 */
-.weeklyGoalBox { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.weeklyGoalBox { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-xs); }
 .weeklyGoalHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .weeklyGoalTitle { font-size: 13px; font-weight: 700; color: var(--text); }
 .weeklyGoalSchedule { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 2px 8px; border-radius: var(--radius-full); margin-left: 8px; }
@@ -110,8 +110,8 @@
 
 /* 채팅방 */
 .roomList { display: flex; flex-direction: column; gap: 6px; }
-.roomCard { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; cursor: pointer; transition: all 0.15s; user-select: none; }
-.roomCard:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+.roomCard { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; user-select: none; box-shadow: var(--shadow-xs); }
+.roomCard:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
 .roomCardDragging { opacity: 0.5; border-style: dashed; }
 .dragHandle { font-size: 14px; color: var(--text-tertiary); cursor: grab; padding: 0 2px; }
 .roomIcon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
@@ -124,8 +124,8 @@
 
 /* 팀 채팅방 추가 */
 .addRoomWrap { margin-top: 4px; }
-.addRoomTrigger { width: 100%; padding: 12px; border: 1.5px dashed var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--primary); transition: all 0.15s; text-align: center; }
-.addRoomTrigger:hover { border-color: var(--primary); background: var(--primary-light); }
+.addRoomTrigger { width: 100%; padding: 12px; border: 1.5px dashed var(--border-strong); border-radius: 12px; font-size: 13px; color: var(--text-tertiary); transition: all 0.15s; text-align: center; background: var(--bg); }
+.addRoomTrigger:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
 .addRoomForm { display: flex; gap: 8px; align-items: center; background: var(--bg); border: 1.5px solid var(--primary); border-radius: var(--radius-md); padding: 10px 14px; }
 .addRoomInput { flex: 1; height: 36px; border: none; outline: none; background: transparent; font-size: 14px; color: var(--text); }
 .addRoomInput::placeholder { color: var(--text-tertiary); }
@@ -136,8 +136,8 @@
 .boardToolbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .boardTitle { font-size: 15px; font-weight: 700; color: var(--text); }
 .boardDesc  { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
-.writeBtn { padding: 9px 16px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-.writeBtn:hover { opacity: 0.9; }
+.writeBtn { padding: 9px 16px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.writeBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 .boardEmpty {
   display: flex; flex-direction: column; align-items: center;
@@ -149,9 +149,9 @@
 .boardEmptySub   { font-size: 13px; color: var(--text-secondary); }
 
 .boardList { display: flex; flex-direction: column; gap: 8px; }
-.boardCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s; }
-.boardCard:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
-.boardCardNotice { border-left: 3px solid var(--amber-light); background: var(--amber-soft); }
+.boardCard { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-xs); }
+.boardCard:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.boardCardNotice { border-left: 2px solid var(--amber); background: var(--amber-soft); }
 .boardCardLeft   { flex: 1; display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
 .boardCardInfo   { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .boardCardTitle  { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -170,7 +170,7 @@
 .backBtn  { font-size: 13px; color: var(--primary); font-weight: 500; }
 .backBtn:hover { text-decoration: underline; }
 .writeTitle { font-size: 15px; font-weight: 700; color: var(--text); }
-.writeForm  { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.writeForm  { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-xs); }
 .writeTypeRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .typeBtn { padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 13px; color: var(--text-secondary); transition: all 0.15s; }
 .typeBtnActive { background: var(--bg-secondary); color: var(--text); font-weight: 500; border-color: var(--border); }
@@ -188,13 +188,13 @@
 .attachRemove { font-size: 12px; color: var(--text-tertiary); }
 .cancelBtn { padding: 9px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; color: var(--text-secondary); }
 .cancelBtn:hover { border-color: var(--primary); color: var(--primary); }
-.submitBtn { padding: 9px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; }
-.submitBtn:hover { opacity: 0.9; }
+.submitBtn { padding: 9px 20px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 14px; font-weight: 600; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.submitBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .submitBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* 상세글 */
 .detailWrap { display: flex; flex-direction: column; gap: 16px; }
-.detailCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.detailCard { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: var(--shadow-xs); }
 .detailHeader { display: flex; flex-direction: column; gap: 10px; }
 .detailTitle  { font-size: 20px; font-weight: 700; color: var(--text); }
 .detailMeta   { display: flex; align-items: center; gap: 8px; }
@@ -209,10 +209,10 @@
 .deleteBtn:hover { background: var(--coral-soft); }
 
 /* 멤버 */
-.memberGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-.memberCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; }
-.memberCard:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
-.memberAvatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.memberGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.memberCard { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow-xs); }
+.memberCard:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.memberAvatar { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
 .memberInfo   { flex: 1; }
 .memberName   { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
 .meTag        { font-size: 10px; background: var(--primary-light); color: var(--primary); padding: 1px 6px; border-radius: var(--radius-full); font-weight: 600; }
@@ -222,24 +222,24 @@
 .memberArrow  { font-size: 18px; color: var(--text-tertiary); }
 
 /* 초대 섹션 */
-.inviteSection { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+.inviteSection { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-xs); }
 .inviteSectionHeader { display: flex; flex-direction: column; gap: 3px; }
 .inviteSectionTitle  { font-size: 14px; font-weight: 600; color: var(--text); }
 .inviteSectionDesc   { font-size: 12px; color: var(--text-secondary); }
 .inviteLinkRow { display: flex; gap: 8px; align-items: center; }
 .inviteLinkBox { flex: 1; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; overflow: hidden; }
 .inviteLinkText { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-.copyBtn { padding: 10px 16px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
-.copyBtn:hover { opacity: 0.9; }
+.copyBtn { padding: 10px 16px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.copyBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .copyBtnDone { background: var(--teal); }
 
 /* 권한 관리 */
 .manageTopRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.saveBtn  { padding: 9px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
-.saveBtn:hover { opacity: 0.9; }
+.saveBtn  { padding: 9px 20px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.saveBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .saveMsg  { font-size: 12px; color: var(--teal); font-weight: 600; }
 .manageList { display: flex; flex-direction: column; gap: 12px; }
-.manageCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.manageCard { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-xs); }
 .manageTop  { display: flex; align-items: center; gap: 12px; }
 .manageRight { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .roleSelect { height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 10px; font-size: 12px; color: var(--text); cursor: pointer; }

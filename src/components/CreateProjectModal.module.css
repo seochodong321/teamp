@@ -8,12 +8,13 @@
 
 .modal {
   background: var(--bg);
-  border-radius: var(--radius-xl);
+  border-radius: 16px;
   width: 100%; max-width: 520px;
   max-height: 90vh;
   display: flex; flex-direction: column;
   box-shadow: var(--shadow-xl);
   overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 /* 헤더 */
@@ -77,9 +78,9 @@
 .textarea:focus { border-color: var(--primary); background: var(--bg); }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); transition: all 0.15s; }
-.chip:hover { border-color: var(--primary); color: var(--primary); }
-.chipActive { background: var(--primary-light); border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); background: var(--bg); transition: all 0.15s; }
+.chip:hover { border-color: var(--border-strong); color: var(--text); }
+.chipActive { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); font-weight: 600; }
 
 .dateRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -110,8 +111,8 @@
 .removeRoom { font-size: 12px; color: var(--text-tertiary); }
 .removeRoom:hover { color: var(--coral); }
 .addRoomRow { display: flex; gap: 8px; }
-.addRoomBtn { padding: 0 14px; height: 42px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; white-space: nowrap; }
-.addRoomBtn:hover { opacity: 0.9; }
+.addRoomBtn { padding: 0 14px; height: 42px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.addRoomBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
 /* 완료 화면 */
 .done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0; }
@@ -136,9 +137,9 @@
 }
 .prevBtn { padding: 9px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); transition: all 0.15s; }
 .prevBtn:hover { border-color: var(--primary); color: var(--primary); }
-.nextBtn { padding: 9px 22px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; transition: opacity 0.15s; }
-.nextBtn:hover:not(:disabled) { opacity: 0.9; }
-.nextBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.nextBtn { padding: 9px 22px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
+.nextBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.nextBtn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none; }
 
 @media (max-width: 480px) {
   .emojiGrid { grid-template-columns: repeat(6, 1fr); }

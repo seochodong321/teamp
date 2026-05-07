@@ -17,9 +17,9 @@
 
 .modal {
   width: 100%;
-  max-width: 560px;
+  max-width: 580px;
   background: var(--bg);
-  border-radius: var(--radius-xl);
+  border-radius: 16px;
   box-shadow: var(--shadow-xl);
   border: 1px solid var(--border);
   overflow: hidden;
