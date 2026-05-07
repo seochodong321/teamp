@@ -5,6 +5,20 @@ import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
 
+const USER_COLORS = [
+  { bg: 'var(--primary-light)', text: 'var(--primary)' },
+  { bg: 'var(--teal-light)',    text: 'var(--teal)' },
+  { bg: 'var(--amber-light)',   text: 'var(--amber)' },
+  { bg: 'var(--coral-light)',   text: 'var(--coral)' },
+  { bg: 'var(--rose-light)',    text: 'var(--rose)' },
+]
+function avatarStyle(userId) {
+  if (!userId) return USER_COLORS[0]
+  let h = 0
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) % USER_COLORS.length
+  return USER_COLORS[Math.abs(h) % USER_COLORS.length]
+}
+
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
@@ -189,10 +203,37 @@ export default function ChatPage() {
           <div className={styles.dateDivider}><span>오늘</span></div>
         )}
 
-        {roomMessages.map((msg) => {
+        {roomMessages.map((msg, index) => {
           const isMine   = msg.senderId === currentUser.id
           const isSystem = msg.senderId === 'system'
           const member   = project?.members.find((m) => m.id === msg.senderId)
+          const senderName = msg.senderName || '알 수 없음'
+
+          // 같은 사람이 연속으로 보낸 메시지면 아바타/이름 생략
+          const prevMsg  = index > 0 ? roomMessages[index - 1] : null
+          const isGrouped = !isDm && !isMine && prevMsg
+            && prevMsg.senderId === msg.senderId
+            && prevMsg.senderId !== 'system'
+            && msg.type !== 'notify' && prevMsg.type !== 'notify'
+
+          const avStyle = avatarStyle(msg.senderId)
+
+          // 아바타 요소 (그루핑이면 빈 공간으로 정렬 유지)
+          const avatarEl = isMine ? null : isGrouped
+            ? <div className={styles.avatarGap} />
+            : (
+              <div className={styles.avatar} style={{ background: avStyle.bg, color: avStyle.text }}>
+                {senderName.charAt(0)}
+              </div>
+            )
+
+          // 이름 행 (그루핑이면 생략, DM이면 생략)
+          const nameEl = (!isMine && !isDm && !isGrouped) ? (
+            <span className={styles.sender}>
+              <span style={{ color: avStyle.text, fontWeight: 700 }}>{senderName}</span>
+              {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
+            </span>
+          ) : null
 
           // 시스템 알림
           if (isSystem || msg.type === 'notify') {
@@ -207,15 +248,10 @@ export default function ChatPage() {
           if (msg.type === 'image') {
             const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
             return (
-              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
-                {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
+              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+                {avatarEl}
                 <div className={styles.bubbleWrap}>
-                  {!isMine && (
-                    <span className={styles.sender}>
-                      {msg.senderName}
-                      {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
-                    </span>
-                  )}
+                  {nameEl}
                   <img
                     src={msg.fileUrl} alt={msg.text}
                     className={styles.chatImg}
@@ -234,15 +270,10 @@ export default function ChatPage() {
           if (msg.type === 'file') {
             const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
             return (
-              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
-                {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
+              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+                {avatarEl}
                 <div className={styles.bubbleWrap}>
-                  {!isMine && (
-                    <span className={styles.sender}>
-                      {msg.senderName}
-                      {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
-                    </span>
-                  )}
+                  {nameEl}
                   <div className={`${styles.fileBubble} ${isMine ? styles.fileBubbleMine : ''}`}>
                     <span>📎</span>
                     <span className={styles.fileName}>{msg.text}</span>
@@ -260,11 +291,11 @@ export default function ChatPage() {
           if (msg.type === 'poll') {
             const total = msg.options.reduce((s, o) => s + o.votes.length, 0)
             return (
-              <div key={msg.id} className={styles.pollWrap}>
-                {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
+              <div key={msg.id} className={`${styles.pollWrap} ${isGrouped ? styles.rowGrouped : ''}`}>
+                {avatarEl}
                 <div className={styles.pollCard}>
                   <div className={styles.pollHeader}>
-                    {!isMine && <span className={styles.pollAuthor}>{msg.senderName}</span>}
+                    {!isMine && !isDm && <span className={styles.pollAuthor} style={{ color: avStyle.text }}>{senderName}</span>}
                     <span className={styles.pollBadge}>📊 투표</span>
                   </div>
                   <p className={styles.pollQuestion}>{msg.text}</p>
@@ -292,15 +323,10 @@ export default function ChatPage() {
           // 일반 텍스트
           const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
           return (
-            <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''}`}>
-              {!isMine && <div className={styles.avatar}>{msg.senderName.charAt(0)}</div>}
+            <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+              {avatarEl}
               <div className={styles.bubbleWrap}>
-                {!isMine && (
-                  <span className={styles.sender}>
-                    {msg.senderName}
-                    {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
-                  </span>
-                )}
+                {nameEl}
                 <div className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}>
                   {msg.text}
                 </div>

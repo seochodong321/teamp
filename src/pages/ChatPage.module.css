@@ -47,8 +47,10 @@
 
 .row { display: flex; align-items: flex-end; gap: 8px; }
 .rowMine { flex-direction: row-reverse; }
+.rowGrouped { margin-top: -4px; } /* 연속 메시지 간격 줄이기 */
 
 .avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.avatarGap { width: 34px; flex-shrink: 0; } /* 아바타 없을 때 정렬 유지 */
 
 .bubbleWrap { display: flex; flex-direction: column; gap: 3px; max-width: 65%; }
 .rowMine .bubbleWrap { align-items: flex-end; }
