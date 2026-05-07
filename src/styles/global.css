@@ -120,15 +120,25 @@ html.dark {
 
 html, body, #root {
   height: 100%;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* iOS Safari 러버밴드 스크롤 방지 */
 body {
-  transition: opacity 0.2s ease-in;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 탭 시 파란 하이라이트 제거 */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 button {
@@ -143,6 +153,14 @@ input, textarea, select {
   font-family: inherit;
   outline: none;
   color: inherit;
+}
+
+/* iOS Safari: 입력창 포커스 시 자동 줌 방지 */
+@supports (-webkit-touch-callout: none) {
+  input:not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="range"]),
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 a {

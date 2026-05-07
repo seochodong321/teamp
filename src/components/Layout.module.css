@@ -1,6 +1,7 @@
 .shell {
   display: flex;
-  height: 100vh;
+  height: 100vh;        /* 구형 브라우저 fallback */
+  height: 100dvh;       /* Safari 주소창 포함 안되는 동적 높이 */
   overflow: hidden;
 }
 
@@ -259,7 +260,7 @@
   .mobileHeader { display: flex; }
   .mobileTabBar { display: flex; }
 
-  .content { padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)); padding-bottom: calc(60px + 12px + env(safe-area-inset-bottom, 0px)); }
+  .content { padding: 10px 10px 0; padding-bottom: calc(56px + 16px + env(safe-area-inset-bottom, 0px)); }
   .mobileLogo { font-size: 16px; }
 }
 
@@ -294,7 +295,7 @@
 .mobileTabActive { color: var(--primary) !important; }
 
 .mobileTabIcon { font-size: 20px; line-height: 1; }
-.mobileTabLabel { font-size: 10px; font-weight: 500; }
+.mobileTabLabel { font-size: 11px; font-weight: 500; }
 
 /* 가운데 + 버튼 */
 .mobileTabCreate {
