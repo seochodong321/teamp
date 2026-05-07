@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teamp-v1'
+const CACHE_NAME = 'teamp-v2'
 
 // 앱 셸 — 오프라인에서도 빈 화면 대신 앱 프레임을 보여주기 위해 캐시
 const APP_SHELL = ['/index.html', '/']
@@ -11,7 +11,6 @@ self.addEventListener('install', (e) => {
 })
 
 self.addEventListener('activate', (e) => {
-  // 이전 버전 캐시 정리
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -37,7 +36,7 @@ self.addEventListener('fetch', (e) => {
     return
   }
 
-  // JS/CSS/이미지 같은 정적 에셋 — 캐시 우선, 없으면 네트워크
+  // JS/CSS/이미지 정적 에셋 — 캐시 우선, 없으면 네트워크
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
     e.respondWith(
       caches.match(request).then((cached) => {
@@ -51,4 +50,38 @@ self.addEventListener('fetch', (e) => {
       })
     )
   }
+})
+
+// 푸시 알림 수신 (FCM firebase-messaging-sw.js 외 폴백)
+self.addEventListener('push', (e) => {
+  if (!e.data) return
+  let data = {}
+  try { data = e.data.json() } catch { data = { notification: { title: 'Teamp', body: e.data.text() } } }
+
+  const { title, body, icon } = data.notification || {}
+  e.waitUntil(
+    self.registration.showNotification(title || 'Teamp', {
+      body: body || '',
+      icon: icon || '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: data.data || {},
+    })
+  )
+})
+
+// 알림 클릭 → 앱으로 포커스
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close()
+  const url = e.notification.data?.url || '/'
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const existing = list.find((c) => c.url.includes(self.location.origin))
+      if (existing) {
+        existing.focus()
+        existing.navigate(url)
+      } else {
+        clients.openWindow(url)
+      }
+    })
+  )
 })

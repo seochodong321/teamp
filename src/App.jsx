@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Timestamp, collection, doc, getDoc, onSnapshot, orderBy, query, startAfter, updateDoc, where } from 'firebase/firestore'
-import { auth, db } from './firebase.js'
+import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
 import LoginPage         from './pages/LoginPage.jsx'
@@ -124,6 +124,23 @@ export default function App() {
           },
           (error) => console.error('[invites] 구독 오류:', error)
         )
+
+        // FCM 토큰 등록 (알림 권한이 이미 granted인 경우 자동 등록)
+        if (Notification.permission === 'granted') {
+          requestNotificationPermission().then((token) => {
+            if (token) {
+              updateDoc(doc(db, 'users', user.uid), { fcmToken: token }).catch(() => {})
+            }
+          })
+        }
+
+        // 포그라운드 메시지 처리
+        if (messaging) {
+          onMessage(messaging, (payload) => {
+            const { title, body } = payload.notification || {}
+            addNotification({ type: 'push', text: body || title || '새 알림이 있어요' })
+          })
+        }
 
         // 1:1 DM 방 실시간 구독
         let isFirstDmSnap = true  // 최초 로드 시 기존 방을 'added'로 처리하는 것 방지

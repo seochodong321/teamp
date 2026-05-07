@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { auth } from '../firebase.js'
+import { doc, updateDoc } from 'firebase/firestore'
+import { auth, db, requestNotificationPermission } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import NotificationPanel from './NotificationPanel.jsx'
 import SearchModal from './SearchModal.jsx'
@@ -21,6 +22,24 @@ export default function Layout() {
 
   const toggleCollapse = (projectId) =>
     setCollapsedProjects((s) => ({ ...s, [projectId]: !s[projectId] }))
+
+  // 알림 권한 배너
+  const [showNotiPrompt, setShowNotiPrompt] = useState(
+    () => typeof Notification !== 'undefined'
+      && Notification.permission === 'default'
+      && !localStorage.getItem('teamp-noti-dismissed')
+  )
+  const handleAllowNoti = async () => {
+    setShowNotiPrompt(false)
+    const token = await requestNotificationPermission()
+    if (token && currentUser?.id) {
+      updateDoc(doc(db, 'users', currentUser.id), { fcmToken: token }).catch(() => {})
+    }
+  }
+  const dismissNotiPrompt = () => {
+    localStorage.setItem('teamp-noti-dismissed', '1')
+    setShowNotiPrompt(false)
+  }
 
   useEffect(() => {
     const handler = (e) => {
@@ -207,6 +226,15 @@ export default function Layout() {
           </div>
         </div>
 
+        {showNotiPrompt && (
+          <div className={styles.notiPrompt}>
+            <span className={styles.notiPromptIcon}>🔔</span>
+            <span className={styles.notiPromptText}>새 메시지·할 일 알림을 받을까요?</span>
+            <button className={styles.notiPromptAllow} onClick={handleAllowNoti}>허용</button>
+            <button className={styles.notiPromptDismiss} onClick={dismissNotiPrompt}>✕</button>
+          </div>
+        )}
+
         <div className={styles.content}>
           <Outlet />
         </div>
@@ -214,20 +242,33 @@ export default function Layout() {
         {/* ── 모바일 하단 탭바 ── */}
         <nav className={styles.mobileTabBar}>
           <NavLink to="/home" className={`${styles.mobileTab} ${isAt('/home') ? styles.mobileTabActive : ''}`}>
-            <span className={styles.mobileTabIcon}>⊞</span>
+            <span className={styles.mobileTabIcon}>🏠</span>
             <span className={styles.mobileTabLabel}>홈</span>
           </NavLink>
-          <NavLink to="/match" className={`${styles.mobileTab} ${isAt('/match') ? styles.mobileTabActive : ''}`}>
-            <span className={styles.mobileTabIcon}>🤝</span>
-            <span className={styles.mobileTabLabel}>매치</span>
-          </NavLink>
-          <button className={styles.mobileTabCreate} onClick={openCreate}>
-            <span className={styles.mobileTabCreateIcon}>＋</span>
+          <button
+            className={`${styles.mobileTab} ${(isAt('/project') && location.pathname.includes('/chat')) ? styles.mobileTabActive : ''}`}
+            onClick={() => {
+              const first = dmRoomList[0]
+              if (first) navigate(`/project/${first.projectId}/chat/${first.id}`)
+              else setMobileOpen(true)
+            }}
+          >
+            <span className={styles.mobileTabIcon}>💬</span>
+            {(() => {
+              const totalDmUnread = Object.values(dmUnreadCounts || {}).reduce((s, n) => s + n, 0)
+              return totalDmUnread > 0 ? (
+                <span className={styles.mobileTabBadge}>{totalDmUnread > 9 ? '9+' : totalDmUnread}</span>
+              ) : null
+            })()}
+            <span className={styles.mobileTabLabel}>채팅</span>
           </button>
-          <NavLink to="/connect" className={`${styles.mobileTab} ${isAt('/connect') ? styles.mobileTabActive : ''}`}>
-            <span className={styles.mobileTabIcon}>🔗</span>
-            <span className={styles.mobileTabLabel}>커넥트</span>
-          </NavLink>
+          <button className={`${styles.mobileTab}`} onClick={() => setShowNotifications(true)}>
+            <span className={styles.mobileTabIcon}>🔔</span>
+            {unreadCount > 0 && (
+              <span className={styles.mobileTabBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
+            <span className={styles.mobileTabLabel}>알림</span>
+          </button>
           <NavLink to="/profile" className={`${styles.mobileTab} ${isAt('/profile') ? styles.mobileTabActive : ''}`}>
             <span className={styles.mobileTabIcon}>👤</span>
             <span className={styles.mobileTabLabel}>프로필</span>
