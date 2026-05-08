@@ -1,7 +1,7 @@
 {
   "name": "Teamp",
   "short_name": "팀프",
-  "description": "관계와 기여의 기록 — 팀프",
+  "description": "기여와 관계의 기록 — 팀프",
   "start_url": "/home",
   "scope": "/",
   "display": "standalone",
