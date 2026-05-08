@@ -136,6 +136,7 @@ export const useStore = create(
       errorToasts: [],
       dmUnreadCounts: {},
       blockedUsers: [],
+      pinnedId: null,
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
@@ -334,11 +335,15 @@ export const useStore = create(
         const project = projects.find((p) => p.id === projectId)
         if (!project) return
 
-        // 이미 초대된 경우 방지 (중복 체크)
+        // 이미 초대된 경우 방지 — 복합 인덱스 불필요하도록 단일 조건 + 클라이언트 필터
         try {
-          const q = query(collection(db, 'projectInvites'), where('projectId', '==', projectId), where('inviteeId', '==', invitee.id), where('status', '==', 'pending'))
+          const q = query(collection(db, 'projectInvites'), where('inviteeId', '==', invitee.id))
           const snap = await getDocs(q)
-          if (!snap.empty) return { alreadySent: true }
+          const alreadySent = snap.docs.some((d) => {
+            const data = d.data()
+            return data.projectId === projectId && data.status === 'pending'
+          })
+          if (alreadySent) return { alreadySent: true }
         } catch (e) {
           console.error('[sendProjectInvite] 중복 체크 실패:', e)
         }
@@ -675,12 +680,22 @@ export const useStore = create(
           createdAt: serverTimestamp(),
         })
 
-        // lastMessage 업데이트 (프로젝트 문서에도 반영)
+        // lastMessage 업데이트 — 모든 유저에게 발신자 이름이 보이도록 실명 저장
         const project = projects.find(p => p.rooms.some(r => r.id === roomId))
         if (project) {
-          await txProject(project.id, (data) => ({
-            rooms: data.rooms.map(r => r.id === roomId ? { ...r, lastMessage: `나: ${text}`, time: '방금' } : r),
-          }))
+          const lastText = type === 'image' ? '📷 사진'
+            : type === 'file' ? '📎 파일'
+            : type === 'poll' ? '📊 투표'
+            : text
+          try {
+            await txProject(project.id, (data) => ({
+              rooms: data.rooms.map(r => r.id === roomId
+                ? { ...r, lastMessage: `${currentUser.name}: ${lastText}`, time: '방금' }
+                : r),
+            }))
+          } catch (e) {
+            console.error('[sendMessage] lastMessage 업데이트 실패:', e)
+          }
         }
       },
 
@@ -1338,6 +1353,9 @@ export const useStore = create(
 
       clearAllNotifications: () => set({ notifications: [] }),
 
+      // ─── 대표 프로젝트 ────────────────────────────────────
+      setPinnedId: (id) => set({ pinnedId: id }),
+
       // ─── 채팅 토스트 ───────────────────────────────────────
       addChatToast: (toast) => {
         set((s) => ({ chatToasts: [toast, ...s.chatToasts].slice(0, 5) }))
@@ -1398,6 +1416,7 @@ export const useStore = create(
         mutedProjects:  state.mutedProjects,
         hiddenProjects: state.hiddenProjects,
         dmUnreadCounts: state.dmUnreadCounts,
+        pinnedId:       state.pinnedId,
       }),
     }
   )

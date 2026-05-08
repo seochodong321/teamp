@@ -40,6 +40,7 @@ export default function HomePage() {
     getProgress, isExpired,
     archiveProject, extendProject, createProject,
     hiddenProjects, hideProject,
+    pinnedId, setPinnedId,
   } = useStore()
 
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
@@ -62,14 +63,11 @@ export default function HomePage() {
   const [newRoom, setNewRoom]     = useState('')
   const [dateError, setDateError] = useState('')
 
-  // 대표 프로젝트 (localStorage 저장)
-  const [pinnedId, setPinnedId] = useState(() => localStorage.getItem('teamp-pinned') || null)
+  // 대표 프로젝트 (Zustand persist)
   const [showPinPicker, setShowPinPicker] = useState(false)
 
   const setPinned = (id) => {
-    setPinnedId(id)
-    if (id) localStorage.setItem('teamp-pinned', id)
-    else localStorage.removeItem('teamp-pinned')
+    setPinnedId(id || null)
     setShowPinPicker(false)
   }
   const [created, setCreated]     = useState(null)

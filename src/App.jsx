@@ -124,15 +124,13 @@ export default function App() {
           }
         )
 
-        // 내게 온 프로젝트 초대 실시간 구독
+        // 내게 온 프로젝트 초대 실시간 구독 — 복합 인덱스 불필요하도록 단일 조건 + 클라이언트 필터
         inviteUnsubRef.current = onSnapshot(
-          query(
-            collection(db, 'projectInvites'),
-            where('inviteeId', '==', user.uid),
-            where('status', '==', 'pending')
-          ),
+          query(collection(db, 'projectInvites'), where('inviteeId', '==', user.uid)),
           (snapshot) => {
-            const invites = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+            const invites = snapshot.docs
+              .map((d) => ({ id: d.id, ...d.data() }))
+              .filter((inv) => inv.status === 'pending')
             setInvites(invites)
           },
           (error) => console.error('[invites] 구독 오류:', error)
