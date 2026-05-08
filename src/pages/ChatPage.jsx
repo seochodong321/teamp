@@ -211,12 +211,16 @@ export default function ChatPage() {
   }
 
   const handleLeaveDm = async () => {
+    setLeaving(true)
+    try {
+      await leaveDmRoom(roomId)  // Firestore 쓰기 완료 후 이동
+    } catch (e) {
+      console.error('DM 나가기 오류:', e)
+    }
     const linkedProject = projects.find((p) => p.id === (dmRoom?.projectId || projectId))
-    const destination = linkedProject?.status === 'active' ? `/project/${linkedProject.id}` : '/home'
-    navigate(destination)
+    navigate(linkedProject?.status === 'active' ? `/project/${linkedProject.id}` : '/home')
     setShowLeave(false)
     setLeaving(false)
-    try { await leaveDmRoom(roomId) } catch (e) { console.error('DM 나가기 오류:', e) }
   }
 
   // ─── 가드 ──────────────────────────────────────────────────────

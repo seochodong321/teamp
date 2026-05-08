@@ -589,24 +589,22 @@ export const useStore = create(
         if (dmSnap.exists()) {
           const data    = { id: roomId, ...dmSnap.data() }
           const leftArr = data.left || []
-          const iLeft   = leftArr.includes(currentUser.id)
-          const otherLeft = leftArr.includes(otherUserId)
+          const hadLeft = leftArr.length > 0
 
-          // 둘 다 방에 있음 — 기존 대화 이어가기
-          if (!iLeft && !otherLeft) return data
-
-          // 어느 쪽이든 left에 있으면 → 클린 슬레이트로 재시작
-          // (내가 나간 채 돌아오거나, 상대가 나간 채 내가 다시 초대하는 경우 모두 해당)
+          // DM 버튼을 누르는 것 = 새 대화 시작 → 항상 클린 슬레이트
+          // (사이드바에서 직접 방에 들어갈 때는 getOrCreateDmRoom을 거치지 않으므로 히스토리 보존됨)
           const msgsRef     = collection(db, 'rooms', roomId, 'messages')
           const allMsgsSnap = await getDocs(msgsRef)
           const batch       = writeBatch(db)
           allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-          // left 완전 초기화
           batch.update(dmRef, { left: [], createdBy: currentUser.id })
-          // 상대에게 알림
+          // left에 있던 상대에게만 알림 (또는 최초 이후 재시작이면 알림)
+          const notifyText = hadLeft
+            ? `💬 ${currentUser.name}님이 대화를 다시 시작했어요`
+            : `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`
           batch.set(doc(collection(db, 'notifications')), {
             targetUserId: otherUserId, type: 'dm',
-            text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
+            text: notifyText,
             link: `/project/${projectId}/chat/${roomId}`,
             read: false, createdAt: serverTimestamp(),
           })
