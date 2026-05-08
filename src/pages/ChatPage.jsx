@@ -205,6 +205,13 @@ export default function ChatPage() {
     }
   }
 
+  const handleReinvite = async () => {
+    const newRoom = await reinviteToDm(roomId)
+    if (newRoom) {
+      navigate(`/project/${newRoom.projectId || projectId}/chat/${newRoom.id}`)
+    }
+  }
+
   const handleLeaveDm = async () => {
     const linkedProject = projects.find((p) => p.id === (dmRoom?.projectId || projectId))
     const destination = linkedProject?.status === 'active' ? `/project/${linkedProject.id}` : '/home'
@@ -387,7 +394,7 @@ export default function ChatPage() {
                 <div className={styles.systemMsg}>
                   <span>{msg.text}</span>
                   {isLeaveMsg && (
-                    <button className={styles.reinviteBtn} onClick={() => reinviteToDm(roomId, otherUserName)}>
+                    <button className={styles.reinviteBtn} onClick={handleReinvite}>
                       다시 초대하기
                     </button>
                   )}
@@ -547,7 +554,7 @@ export default function ChatPage() {
       ) : otherLeft ? (
         <div className={styles.chatBlockedBar}>
           <span>{otherUserName}님이 대화를 나갔어요.</span>
-          <button className={styles.reinviteBarBtn} onClick={() => reinviteToDm(roomId, otherUserName)}>다시 초대하기</button>
+          <button className={styles.reinviteBarBtn} onClick={handleReinvite}>다시 초대하기</button>
         </div>
       ) : (
         <div className={styles.inputArea}>

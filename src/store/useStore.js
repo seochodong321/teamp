@@ -518,24 +518,51 @@ export const useStore = create(
         })
       },
 
-      reinviteToDm: async (roomId, otherUserName) => {
+      reinviteToDm: async (roomId) => {
         const { currentUser } = get()
         const dmRef = doc(db, 'dmRooms', roomId)
         const dmSnap = await getDoc(dmRef)
-        if (!dmSnap.exists()) return
+        if (!dmSnap.exists()) return null
         const data = dmSnap.data()
-        const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
-        const newLeft = (data.left || []).filter((id) => id !== otherUserId)
-        const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
+        const dmKey = data.dmKey || [currentUser.id, ...((data.participants || []).filter((id) => id !== currentUser.id))].sort().join('_')
+
+        // 기존 방의 모든 메시지 + 방 문서 삭제
+        const msgsRef = collection(db, 'rooms', roomId, 'messages')
+        const allMsgsSnap = await getDocs(msgsRef)
         const batch = writeBatch(db)
-        batch.update(dmRef, { left: newLeft })
-        batch.set(sysRef, {
-          senderId: 'system', type: 'notify',
-          text: `${currentUser.name}님이 ${otherUserName}님을 다시 초대했어요`,
-          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-          createdAt: serverTimestamp(),
-        })
+        allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+        batch.delete(dmRef)
         await batch.commit()
+
+        // 로컬 캐시에서 구버전 방 제거
+        set((s) => {
+          const newDmRooms = { ...s.dmRooms }
+          const key = Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
+          if (key) delete newDmRooms[key]
+          const newMessages = { ...s.messages }
+          delete newMessages[roomId]
+          return { dmRooms: newDmRooms, messages: newMessages }
+        })
+
+        // 새 방 생성 (timestamp ID → 진정한 새 채팅방)
+        const newRoomId = `dm_${dmKey}_${Date.now()}`
+        const newRoom = {
+          id: newRoomId, dmKey,
+          projectId: data.projectId,
+          participants: data.participants,
+          participantNames: data.participantNames,
+          isDirect: true,
+          createdBy: currentUser.id,
+          left: [],
+          lastMessage: '',
+        }
+        await setDoc(doc(db, 'dmRooms', newRoomId), { ...newRoom, createdAt: serverTimestamp() })
+        set((s) => ({
+          dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
+          messages: { ...s.messages, [newRoomId]: [] },
+        }))
+        return newRoom
+        // App.jsx의 dmRooms onSnapshot이 new doc 감지 → 상대방에게 자동 알림 발송
       },
 
       blockUser: async (targetId) => {
@@ -558,21 +585,31 @@ export const useStore = create(
       },
 
       getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {
-        const { currentUser, dmRooms } = get()
+        const { currentUser, dmRooms, dmRoomList } = get()
         const dmKey = [currentUser.id, otherUserId].sort().join('_')
-        const roomId = `dm_${dmKey}`
-        if (dmRooms[dmKey]) return dmRooms[dmKey]
+
+        // dmRoomList (Firestore 구독 결과)에서 활성 방 검색
+        const activeInList = dmRoomList.find(
+          (r) => r.dmKey === dmKey && !(r.left || []).includes(currentUser.id)
+        )
+        if (activeInList) return activeInList
+
+        // 로컬 캐시 확인
+        if (dmRooms[dmKey] && !(dmRooms[dmKey].left || []).includes(currentUser.id)) return dmRooms[dmKey]
+
+        // 새 방 생성 (timestamp ID)
+        const newRoomId = `dm_${dmKey}_${Date.now()}`
         const newRoom = {
-          id: roomId, dmKey, projectId,
+          id: newRoomId, dmKey, projectId,
           participants: [currentUser.id, otherUserId],
           participantNames: { [currentUser.id]: currentUser.name, [otherUserId]: otherUserName },
           isDirect: true, createdBy: currentUser.id,
-          lastMessage: '', createdAt: new Date().toISOString(),
+          left: [], lastMessage: '',
         }
-        await setDoc(doc(db, 'dmRooms', roomId), { ...newRoom, createdAt: serverTimestamp() })
+        await setDoc(doc(db, 'dmRooms', newRoomId), { ...newRoom, createdAt: serverTimestamp() })
         set((s) => ({
           dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
-          messages: { ...s.messages, [roomId]: [] },
+          messages: { ...s.messages, [newRoomId]: [] },
         }))
         return newRoom
       },

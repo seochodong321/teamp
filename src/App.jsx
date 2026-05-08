@@ -172,8 +172,8 @@ export default function App() {
                     const senderName = room.participantNames?.[room.createdBy] || '누군가'
                     addNotification({
                       type: 'dm',
-                      text: `${senderName} 님이 1:1 대화를 시작했어요`,
-                      projectId: room.projectId,
+                      text: `💬 ${senderName}님이 1:1 대화를 시작했어요`,
+                      link: `/project/${room.projectId}/chat/${room.id}`,
                     })
                   }
                 }
