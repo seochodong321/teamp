@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
-  const [flowers, setFlowers] = useState(0)
+  const [flowerSenders, setFlowerSenders] = useState(0)
   const [flowerTags, setFlowerTags] = useState({})
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
@@ -28,7 +28,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchFlowers = async () => {
       const archivedWithWrapup = myProjects.filter((p) => p.status === 'archived' && p.wrapupId && !p.isTutorial)
-      let count = 0
+      const senderIds = new Set()
       const tagCounts = {}
       await Promise.all(archivedWithWrapup.map(async (p) => {
         try {
@@ -36,8 +36,8 @@ export default function ProfilePage() {
           if (snap.exists()) {
             const data = snap.data()
             const myFeedbacks = (data.feedbacks || []).filter((f) => f.toUserId === currentUser?.id)
-            count += myFeedbacks.length
             myFeedbacks.forEach((f) => {
+              senderIds.add(f.fromUserId)
               ;(f.tags || []).forEach((tag) => {
                 tagCounts[tag.id] = (tagCounts[tag.id] || 0) + 1
               })
@@ -45,7 +45,7 @@ export default function ProfilePage() {
           }
         } catch {}
       }))
-      setFlowers(count)
+      setFlowerSenders(senderIds.size)
       setFlowerTags(tagCounts)
     }
     fetchFlowers()
@@ -84,7 +84,7 @@ export default function ProfilePage() {
       await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
       updateProfile({ photoURL: url })
     } catch {
-      alert('업로드 실패. Firebase Storage(Blaze 플랜)가 필요해요.')
+      alert('업로드에 실패했어요. Firebase Storage가 활성화되지 않았거나 네트워크 오류예요.')
     } finally {
       setPhotoUploading(false)
       e.target.value = ''
@@ -243,8 +243,8 @@ export default function ProfilePage() {
           </div>
           <div className={styles.journeyItem}>
             <span className={styles.journeyIcon}>🌸</span>
-            <span className={styles.journeyCount}>{flowers}</span>
-            <span className={styles.journeyLabel}>받은 꽃다발</span>
+            <span className={styles.journeyCount}>{flowerSenders}</span>
+            <span className={styles.journeyLabel}>꽃다발을 보낸 팀원</span>
           </div>
           <div className={styles.journeyItem}>
             <span className={styles.journeyIcon}>👑</span>
