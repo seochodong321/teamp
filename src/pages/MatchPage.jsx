@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { collection, getDocs, addDoc, updateDoc, doc, getDoc, orderBy, query, serverTimestamp, arrayUnion } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, serverTimestamp, arrayUnion } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './MatchPage.module.css'
@@ -26,6 +26,7 @@ export default function MatchPage() {
   const [formDesc, setFormDesc]       = useState('')
   const [formSkills, setFormSkills]   = useState([])
   const [formCustomSkill, setFormCustomSkill] = useState('')
+  const [formDeadline, setFormDeadline]       = useState('')
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formError, setFormError]           = useState('')
 
@@ -41,10 +42,22 @@ export default function MatchPage() {
   const fetchPosts = async () => {
     setLoading(true)
     try {
-      const snap = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
-      const all  = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      const snap    = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
+      const today   = new Date().toISOString().split('T')[0]
       const blocked = useStore.getState().blockedUsers || []
-      setPosts(all.filter((p) => p.status === 'open' && !blocked.includes(p.leaderId)))
+      const valid   = []
+
+      await Promise.all(snap.docs.map(async (d) => {
+        const data = { id: d.id, ...d.data() }
+        // 기한 없는 레거시 글, 또는 기한 만료된 글 자동 삭제
+        if (!data.deadline || data.deadline < today) {
+          try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
+          return
+        }
+        if (data.status === 'open' && !blocked.includes(data.leaderId)) valid.push(data)
+      }))
+
+      setPosts(valid.sort((a, b) => (b.deadline > a.deadline ? 1 : -1)))
     } catch (e) {
       console.error('matchPosts 로드 실패:', e)
     } finally {
@@ -53,7 +66,7 @@ export default function MatchPage() {
   }
 
   const handleCreatePost = async () => {
-    if (!formTitle.trim() || !formProject) return
+    if (!formTitle.trim() || !formProject || !formDeadline) return
     const project = projects.find((p) => p.id === formProject)
     if (!project) return
     setFormSubmitting(true)
@@ -69,12 +82,13 @@ export default function MatchPage() {
         title: formTitle.trim(),
         description: formDesc.trim(),
         skills: formSkills,
+        deadline: formDeadline,
         applicants: [],
         status: 'open',
         createdAt: serverTimestamp(),
       })
       setShowForm(false)
-      setFormTitle(''); setFormDesc(''); setFormSkills([]); setFormProject('')
+      setFormTitle(''); setFormDesc(''); setFormSkills([]); setFormProject(''); setFormDeadline('')
       fetchPosts()
     } catch (e) {
       console.error('matchPosts 작성 실패:', e)
@@ -184,7 +198,15 @@ export default function MatchPage() {
                   <span className={styles.postEmoji}>{post.projectEmoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p className={styles.postTitle}>{post.title}</p>
-                    <p className={styles.postMeta}>{post.projectName} · {post.leaderName}</p>
+                    <p className={styles.postMeta}>
+                      {post.projectName} · {post.leaderName}
+                      {post.deadline && (() => {
+                        const diff = Math.round((new Date(post.deadline + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000)
+                        return <span style={{ marginLeft: 6, color: diff <= 3 ? 'var(--coral)' : 'var(--text-tertiary)' }}>
+                          · {diff === 0 ? '오늘 마감' : `D-${diff}`}
+                        </span>
+                      })()}
+                    </p>
                   </div>
                   <span className={styles.applicantCount}>{(post.applicants || []).length}명 지원</span>
                 </div>
@@ -215,6 +237,12 @@ export default function MatchPage() {
                   </div>
                   <h2 className={styles.detailTitle}>{selected.title}</h2>
                   <p className={styles.detailLeader}>리더: {selected.leaderName}</p>
+                  {selected.deadline && (() => {
+                    const diff = Math.round((new Date(selected.deadline + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000)
+                    const label = diff < 0 ? '마감됨' : diff === 0 ? '오늘 마감' : `D-${diff}`
+                    const color = diff <= 3 ? 'var(--coral)' : 'var(--text-secondary)'
+                    return <p style={{ fontSize: 12, color, marginTop: 2 }}>모집 기한 {selected.deadline} ({label})</p>
+                  })()}
                 </div>
                 {isMyPost && (
                   <button className={styles.closePostBtn} onClick={() => handleClosePost(selected.id)}>마감하기</button>
@@ -316,6 +344,13 @@ export default function MatchPage() {
                 <textarea className={styles.formTextarea} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="프로젝트 소개, 원하는 팀원 유형 등을 자유롭게 적어주세요" rows={4} />
               </div>
               <div className={styles.formField}>
+                <label className={styles.formLabel}>모집 기한 *</label>
+                <input className={styles.formInput} type="date"
+                  value={formDeadline}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setFormDeadline(e.target.value)} />
+              </div>
+              <div className={styles.formField}>
                 <label className={styles.formLabel}>필요 스킬</label>
                 <div className={styles.skillPresets}>
                   {SKILL_PRESETS.map((s) => (
@@ -352,7 +387,7 @@ export default function MatchPage() {
             <div className={styles.formFooter}>
               <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>취소</button>
               <button className={styles.submitBtn} onClick={handleCreatePost}
-                disabled={!formTitle.trim() || !formProject || formSubmitting}>
+                disabled={!formTitle.trim() || !formProject || !formDeadline || formSubmitting}>
                 {formSubmitting ? '등록 중...' : '모집글 등록'}
               </button>
             </div>
