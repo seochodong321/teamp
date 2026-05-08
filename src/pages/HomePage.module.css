@@ -397,6 +397,28 @@
 .cardArchived::before { background: var(--text-quaternary); }
 .cardExpired::before    { background: var(--coral); }
 .cardCollecting::before { background: var(--amber); }
+
+/* 커버 이미지 썸네일 */
+.cardCover {
+  height: 82px;
+  border-radius: 12px 12px 0 0;
+  /* 카드 padding을 벗어나 edge-to-edge 표시 */
+  margin: -14px -14px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1; /* ::before 좌측 바를 가림 */
+  flex-shrink: 0;
+}
+.cardCoverEmoji {
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+/* 커버 있는 카드는 좌측 accent 바 제거 (커버가 시각적 역할 대체) */
+.cardHasCover::before { display: none; }
 .collectingBadge {
   font-size: 11px;
   font-weight: 600;
@@ -428,8 +450,12 @@
 .cardCategory { font-size: 9.5px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.14em; display: block; margin-bottom: 4px; }
 .cardName { font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.2; }
 .dday { font-size: 10.5px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 5px 8px; border-radius: 7px; white-space: nowrap; letter-spacing: -0.01em; }
-.ddayUrgent { background: var(--amber-light); color: var(--amber); }
-.ddayOver { background: var(--coral-light); color: var(--coral); }
+.ddayBefore  { background: var(--primary-light); color: var(--primary); }
+.ddayStart   { background: #D1FAE5; color: #059669; }
+.ddayNormal  { background: var(--bg-secondary); color: var(--text-secondary); }
+.ddayWarning { background: #FEE2E2; color: #DC2626; }
+.ddayUrgent  { background: var(--amber-light); color: var(--amber); }
+.ddayOver    { background: var(--coral-light); color: var(--coral); }
 .archivedBadge { font-size: 10.5px; font-weight: 600; background: var(--bg-tertiary); color: var(--text-tertiary); padding: 5px 8px; border-radius: 7px; }
 
 .cardPurpose { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

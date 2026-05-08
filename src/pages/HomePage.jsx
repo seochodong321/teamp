@@ -1,9 +1,29 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { getCoverStyle } from '../constants.js'
 import styles from './HomePage.module.css'
 
 const CATEGORIES = ['학교', '회사', '스터디', '기타']
+
+function getCardBadge(p) {
+  const now   = new Date()
+  const today = now.toISOString().split('T')[0]
+  const { startDate, endDate } = p
+
+  if (startDate && today < startDate) {
+    const diff = Math.round((new Date(startDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
+    return { text: `D-${diff}`, cls: 'ddayBefore' }
+  }
+  if (startDate && today === startDate) return { text: 'D-DAY', cls: 'ddayStart' }
+  if (endDate && today > endDate)        return { text: '기한 초과', cls: 'ddayOver' }
+  if (endDate) {
+    const diff = Math.round((new Date(endDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
+    if (diff === 0) return { text: 'D-DAY', cls: 'ddayUrgent' }
+    if (diff <= 7)  return { text: `D-${diff}`, cls: 'ddayWarning' }
+  }
+  return { text: '진행중', cls: 'ddayNormal' }
+}
 const STEPS = ['기본 정보', '팀 구성']
 const EMOJI_OPTIONS = [
   '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
@@ -17,7 +37,7 @@ export default function HomePage() {
   const {
     projects, currentUser, invites,
     acceptInvite, declineInvite,
-    getProgress, getDday, isExpired,
+    getProgress, isExpired,
     archiveProject, extendProject, createProject,
     hiddenProjects, hideProject,
   } = useStore()
@@ -449,7 +469,7 @@ export default function HomePage() {
 
         const renderCard = (p) => {
           const progress = getProgress(p)
-          const dday     = getDday(p.endDate)
+          const badge    = getCardBadge(p)
           const expired  = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
           const todayStr = new Date().toISOString().split('T')[0]
@@ -468,8 +488,14 @@ export default function HomePage() {
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 
           return (
-            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''}`}
+            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''}`}
               onClick={() => navigate(`/project/${p.id}`)} style={{ cursor: 'pointer' }}>
+              {/* 커버 이미지 썸네일 — 설정된 경우만 표시 */}
+              {p.coverImage && (
+                <div className={styles.cardCover} style={getCoverStyle(p)}>
+                  <span className={styles.cardCoverEmoji}>{p.emoji || '📁'}</span>
+                </div>
+              )}
               {expired && isLeader && (
                 <div className={styles.expiredBanner} onClick={(e) => e.stopPropagation()}>
                   <span>기한이 만료됐어요</span>
@@ -485,14 +511,13 @@ export default function HomePage() {
                 <div>
                   <span className={styles.cardCategory}>{p.category}</span>
                   <h3 className={styles.cardName}>
-                    {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                    {/* 커버가 없을 때만 이모지를 이름 앞에 표시 */}
+                    {!p.coverImage && p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
                     {p.name}
                   </h3>
                 </div>
-                <span className={`${styles.dday}
-                  ${dday === 'D-day' ? styles.ddayUrgent : ''}
-                  ${dday === '기한 초과' ? styles.ddayOver : ''}`}>
-                  {dday}
+                <span className={`${styles.dday} ${styles[badge.cls] || ''}`}>
+                  {badge.text}
                 </span>
               </div>
               {p.purpose && <p className={styles.cardPurpose}>{p.purpose}</p>}

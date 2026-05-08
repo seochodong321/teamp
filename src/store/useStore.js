@@ -202,6 +202,7 @@ export const useStore = create(
           email: email || '',
           affiliation: extra.affiliation || '',
           phone: extra.phone || '',
+          photoURL: extra.photoURL || null, // 프로필 사진 URL
         }
         // projects는 Firestore onSnapshot이 채워줌 — 여기선 사용자 정보만 세팅
         set({ isLoggedIn: true, currentUser: user })
@@ -961,6 +962,13 @@ export const useStore = create(
         await updateDoc(doc(db, 'projects', projectId), { endDate: newEndDate })
       },
 
+      updateProjectInfo: async (projectId, updates) => {
+        set((s) => ({
+          projects: s.projects.map((p) => p.id === projectId ? { ...p, ...updates } : p),
+        }))
+        await updateDoc(doc(db, 'projects', projectId), updates)
+      },
+
       togglePublic: async (projectId) => {
         await txProject(projectId, (data) => ({ isPublic: !data.isPublic }))
       },
@@ -1167,6 +1175,17 @@ export const useStore = create(
         if (new Date() > deadline) {
           await updateDoc(doc(db, 'projects', projectId), { status: 'archived' })
         }
+      },
+
+      // ─── 커버 이미지 ───────────────────────────────────────
+      setCoverImage: async (projectId, coverValue) => {
+        // coverValue: COVER_PRESETS id 문자열 또는 Storage URL, null이면 초기화
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId ? { ...p, coverImage: coverValue } : p
+          ),
+        }))
+        await updateDoc(doc(db, 'projects', projectId), { coverImage: coverValue || null })
       },
 
       // ─── 프로필 ───────────────────────────────────────────

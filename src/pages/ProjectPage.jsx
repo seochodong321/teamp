@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { getCoverStyle, COVER_PRESETS } from '../constants.js'
 import CalendarInline from '../components/CalendarInline.jsx'
 import TodoBoard from '../components/TodoBoard.jsx'
 import styles from './ProjectPage.module.css'
@@ -20,7 +23,7 @@ export default function ProjectPage() {
     reorderRooms, archiveProject, extendProject, endProject,
     formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
     kickMember, setWeeklyGoalSchedule, addWeeklyGoal,
-    sendProjectInvite,
+    sendProjectInvite, setCoverImage, updateProjectInfo,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -67,6 +70,20 @@ export default function ProjectPage() {
   const [endSubmitting, setEndSubmitting]       = useState(false)
   const [endError, setEndError]                 = useState('')
 
+  // 커버 이미지 피커
+  const [showCoverPicker, setShowCoverPicker]   = useState(false)
+  const [coverUploading, setCoverUploading]     = useState(false)
+  const coverFileRef = useRef(null)
+
+  // 프로젝트 설정 모달
+  const [showSettings, setShowSettings]   = useState(false)
+  const [settingEmoji, setSettingEmoji]   = useState('')
+  const [settingName, setSettingName]     = useState('')
+  const [settingPurpose, setSettingPurpose] = useState('')
+  const [settingStart, setSettingStart]   = useState('')
+  const [settingEnd, setSettingEnd]       = useState('')
+  const [settingSaving, setSettingSaving] = useState(false)
+
   useEffect(() => {
     if (tabParam) setTab(tabParam)
   }, [tabParam])
@@ -83,6 +100,53 @@ export default function ProjectPage() {
   const visibleRooms = getVisibleRooms(project, currentUser.id)
   const today        = new Date().toISOString().split('T')[0]
   const inviteLink   = `${import.meta.env.VITE_APP_URL || window.location.origin}/join/${project.inviteCode || project.id}`
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setCoverUploading(true)
+    try {
+      const sRef = storageRef(storage, `projects/${projectId}/cover.jpg`)
+      await uploadBytes(sRef, file)
+      const url = await getDownloadURL(sRef)
+      await setCoverImage(projectId, url)
+      setShowCoverPicker(false)
+    } catch {
+      alert('업로드에 실패했어요. Firebase Storage가 활성화되지 않았거나 네트워크 오류예요.')
+    } finally {
+      setCoverUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const openSettings = () => {
+    setSettingEmoji(project.emoji || '')
+    setSettingName(project.name || '')
+    setSettingPurpose(project.purpose || '')
+    setSettingStart(project.startDate || '')
+    setSettingEnd(project.endDate || '')
+    setShowSettings(true)
+  }
+
+  const handleSaveSettings = async () => {
+    if (!settingName.trim()) { alert('프로젝트 이름은 비울 수 없어요.'); return }
+    if (settingStart && settingEnd && settingEnd < settingStart) { alert('종료일이 시작일보다 빠를 수 없어요.'); return }
+    setSettingSaving(true)
+    try {
+      await updateProjectInfo(projectId, {
+        emoji: settingEmoji,
+        name: settingName.trim(),
+        purpose: settingPurpose.trim(),
+        startDate: settingStart,
+        endDate: settingEnd,
+      })
+      setShowSettings(false)
+    } catch {
+      alert('저장에 실패했어요. 다시 시도해주세요.')
+    } finally {
+      setSettingSaving(false)
+    }
+  }
 
   const handleCopyInvite = async () => {
     try {
@@ -329,18 +393,135 @@ export default function ProjectPage() {
         </div>
       )}
 
+      {/* 커버 이미지 피커 모달 */}
+      {showCoverPicker && (
+        <div className={styles.backdrop} onClick={() => setShowCoverPicker(false)}>
+          <div className={styles.coverPickerModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.coverPickerHeader}>
+              <span className={styles.modalTitle}>커버 이미지</span>
+              <button className={styles.profileClose} onClick={() => setShowCoverPicker(false)}>✕</button>
+            </div>
+            <p className={styles.modalDesc}>그라데이션 프리셋을 고르거나 직접 이미지를 업로드하세요</p>
+            <div className={styles.coverPresetGrid}>
+              {COVER_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  className={`${styles.coverPresetSwatch} ${project.coverImage === p.id ? styles.coverPresetActive : ''}`}
+                  style={{ background: p.gradient }}
+                  onClick={() => { setCoverImage(projectId, p.id); setShowCoverPicker(false) }}
+                  title={p.label}
+                />
+              ))}
+            </div>
+            <div className={styles.coverPickerActions}>
+              <button
+                className={styles.modalCancel}
+                onClick={() => coverFileRef.current.click()}
+                disabled={coverUploading}
+              >
+                {coverUploading ? '업로드 중...' : '📁 이미지 업로드'}
+              </button>
+              {project.coverImage && (
+                <button
+                  className={styles.modalCancel}
+                  onClick={() => { setCoverImage(projectId, null); setShowCoverPicker(false) }}
+                >
+                  🗑 제거
+                </button>
+              )}
+            </div>
+            <input ref={coverFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleCoverUpload} />
+          </div>
+        </div>
+      )}
+
+      {/* 프로젝트 설정 모달 */}
+      {showSettings && (
+        <div className={styles.backdrop} onClick={() => !settingSaving && setShowSettings(false)}>
+          <div className={styles.settingsModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>프로젝트 설정</h2>
+              <button className={styles.closeBtn} onClick={() => !settingSaving && setShowSettings(false)}>✕</button>
+            </div>
+            <div className={styles.settingsBody}>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>이모지</label>
+                <div className={styles.emojiGrid}>
+                  {['📁','📚','💼','🎓','🏫','💡','🚀','🎯','🎨','🎬','🎵','⚽','🏀','🏃','✈️','🌱','🍕','☕','🐶','🌸','🌟','🔥','💎','🎮','📱','💻','🛠️','📝','📊','🗓️','🎉','🐱'].map((e) => (
+                    <button key={e} className={`${styles.emojiBtn} ${settingEmoji === e ? styles.emojiBtnActive : ''}`}
+                      onClick={() => setSettingEmoji(e)}>{e}</button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>프로젝트 이름 *</label>
+                <input className={styles.settingsInput} value={settingName}
+                  onChange={(e) => setSettingName(e.target.value)} placeholder="프로젝트 이름" />
+              </div>
+              <div className={styles.settingsField}>
+                <label className={styles.settingsLabel}>소개</label>
+                <input className={styles.settingsInput} value={settingPurpose}
+                  onChange={(e) => setSettingPurpose(e.target.value)} placeholder="한 줄 소개" />
+              </div>
+              <div className={styles.settingsDateRow}>
+                <div className={styles.settingsField}>
+                  <label className={styles.settingsLabel}>시작일</label>
+                  <input className={styles.settingsInput} type="date" value={settingStart}
+                    onChange={(e) => setSettingStart(e.target.value)} />
+                </div>
+                <div className={styles.settingsField}>
+                  <label className={styles.settingsLabel}>종료일</label>
+                  <input className={styles.settingsInput} type="date" value={settingEnd}
+                    onChange={(e) => setSettingEnd(e.target.value)} />
+                </div>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.modalCancel} onClick={() => setShowSettings(false)} disabled={settingSaving}>취소</button>
+              <button className={styles.modalSave} onClick={handleSaveSettings} disabled={settingSaving}>
+                {settingSaving ? '저장 중...' : '저장하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={styles.headerCard}>
+        {/* 커버 이미지 스트립 — 설정된 경우만 표시 */}
+        {project.coverImage && (
+          <div className={styles.headerCover} style={getCoverStyle(project)}>
+            <span className={styles.headerCoverEmoji}>{project.emoji || '📁'}</span>
+            {isLeader && (
+              <button className={styles.coverEditBtn} onClick={() => setShowCoverPicker(true)} title="커버 이미지 변경">
+                ✏️ 변경
+              </button>
+            )}
+          </div>
+        )}
         <div className={styles.headerTop}>
           <div className={styles.headerLeft}>
             <span className={styles.categoryBadge}>{project.category}</span>
+            {/* 커버 없을 때만 이름 표시 (커버에 이모지가 있으므로) */}
             <h1 className={styles.projectName}>
-              {project.emoji && <span style={{ marginRight: 8 }}>{project.emoji}</span>}
+              {!project.coverImage && project.emoji && <span style={{ marginRight: 8 }}>{project.emoji}</span>}
               {project.name}
             </h1>
             <p className={styles.projectPurpose}>{project.purpose}</p>
           </div>
           <div className={styles.headerRight}>
-            <span className={`${styles.ddayBadge} ${dday === '기한 초과' ? styles.ddayExpired : dday === 'D-day' ? styles.ddayToday : ''}`}>{dday}</span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {isLeader && !project.coverImage && (
+                <button className={styles.addCoverBtn} onClick={() => setShowCoverPicker(true)} title="커버 이미지 추가">
+                  🖼
+                </button>
+              )}
+              {isLeader && (
+                <button className={styles.addCoverBtn} onClick={openSettings} title="프로젝트 설정">
+                  ⚙️
+                </button>
+              )}
+              <span className={`${styles.ddayBadge} ${dday === '기한 초과' ? styles.ddayExpired : dday === 'D-day' ? styles.ddayToday : ''}`}>{dday}</span>
+            </div>
             <div className={styles.progressWrap}>
               <div className={styles.progressInfo}>
                 <span className={styles.progressLabel}>기간 진행률</span>
