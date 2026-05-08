@@ -1,22 +1,25 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Timestamp, collection, doc, getDoc, onSnapshot, orderBy, query, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
-import LoginPage         from './pages/LoginPage.jsx'
-import JoinPage          from './pages/JoinPage.jsx'
-import Layout            from './components/Layout.jsx'
-import HomePage          from './pages/HomePage.jsx'
-import ProjectPage       from './pages/ProjectPage.jsx'
-import ChatPage          from './pages/ChatPage.jsx'
-import ProfilePage       from './pages/ProfilePage.jsx'
-import ConnectPage       from './pages/ConnectPage.jsx'
-import CreateProjectPage from './pages/CreateProjectPage.jsx'
-import WrapupPage        from './pages/WrapupPage.jsx'
-import MatchPage         from './pages/MatchPage.jsx'
-import HelpPage          from './pages/HelpPage.jsx'
+// 인증 전 페이지는 즉시 로드 (로그인/가입 화면은 빠르게 보여야 함)
+import LoginPage from './pages/LoginPage.jsx'
+import JoinPage  from './pages/JoinPage.jsx'
+import Layout    from './components/Layout.jsx'
+
+// 인증 후 페이지는 lazy load — 초기 번들에서 분리
+const HomePage          = lazy(() => import('./pages/HomePage.jsx'))
+const ProjectPage       = lazy(() => import('./pages/ProjectPage.jsx'))
+const ChatPage          = lazy(() => import('./pages/ChatPage.jsx'))
+const ProfilePage       = lazy(() => import('./pages/ProfilePage.jsx'))
+const ConnectPage       = lazy(() => import('./pages/ConnectPage.jsx'))
+const CreateProjectPage = lazy(() => import('./pages/CreateProjectPage.jsx'))
+const WrapupPage        = lazy(() => import('./pages/WrapupPage.jsx'))
+const MatchPage         = lazy(() => import('./pages/MatchPage.jsx'))
+const HelpPage          = lazy(() => import('./pages/HelpPage.jsx'))
 
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
@@ -312,22 +315,29 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/join/:code" element={<JoinPage />} />
-        <Route path="/" element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
-          <Route index element={<Navigate to="/home" replace />} />
-          <Route path="home"                            element={<HomePage />} />
-          <Route path="project/:projectId"              element={<ProjectPage />} />
-          <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
-          <Route path="project/:projectId/wrapup"      element={<WrapupPage />} />
-          <Route path="create"                          element={<CreateProjectPage />} />
-          <Route path="profile"                         element={<ProfilePage />} />
-          <Route path="connect"                         element={<ConnectPage />} />
-          <Route path="match"                           element={<MatchPage />} />
-          <Route path="help"                            element={<HelpPage />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      }>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/join/:code" element={<JoinPage />} />
+          <Route path="/" element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
+            <Route index element={<Navigate to="/home" replace />} />
+            <Route path="home"                            element={<HomePage />} />
+            <Route path="project/:projectId"              element={<ProjectPage />} />
+            <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
+            <Route path="project/:projectId/wrapup"       element={<WrapupPage />} />
+            <Route path="create"                          element={<CreateProjectPage />} />
+            <Route path="profile"                         element={<ProfilePage />} />
+            <Route path="connect"                         element={<ConnectPage />} />
+            <Route path="match"                           element={<MatchPage />} />
+            <Route path="help"                            element={<HelpPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

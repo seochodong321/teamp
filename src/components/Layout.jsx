@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -8,6 +8,7 @@ import NotificationPanel from './NotificationPanel.jsx'
 import SearchModal from './SearchModal.jsx'
 import CreateProjectModal from './CreateProjectModal.jsx'
 import ChatToastContainer from './ChatToastContainer.jsx'
+import ErrorToastContainer from './ErrorToastContainer.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
@@ -52,8 +53,8 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const active       = projects.filter((p) => p.status === 'active')
-  const unreadCount  = (notifications || []).filter((n) => !n.read).length
+  const active      = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
+  const unreadCount = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
 
   const handleLogout = async () => {
     try { await signOut(auth) } catch {}
@@ -280,6 +281,7 @@ export default function Layout() {
       <SearchModal open={showSearch} onClose={() => setShowSearch(false)} />
       {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} />}
       <ChatToastContainer />
+      <ErrorToastContainer />
     </div>
   )
 }

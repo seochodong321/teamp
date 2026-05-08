@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import styles from './HomePage.module.css'
@@ -22,9 +22,9 @@ export default function HomePage() {
     hiddenProjects, hideProject,
   } = useStore()
 
-  const active     = projects.filter((p) => p.status === 'active')
-  const collecting = projects.filter((p) => p.status === 'collecting')
-  const archived   = projects.filter((p) => p.status === 'archived')
+  const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
+  const collecting = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
+  const archived   = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
 
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)

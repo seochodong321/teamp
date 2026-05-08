@@ -133,6 +133,7 @@ export const useStore = create(
       connects: [],
       notifications: [],
       chatToasts: [],
+      errorToasts: [],
       dmUnreadCounts: {},
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
@@ -289,10 +290,14 @@ export const useStore = create(
             const project = { id: docSnap.id, ...docSnap.data() }
             if (!project.members.find((m) => m.id === currentUser.id)) {
               const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
-              const personalDmId = `room_dm_${currentUser.id}_${Date.now()}`
-              const personalDm = { id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id, lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4] }
+              // 결정론적 ID — 유저 ID 기반으로 중복 생성 방지
+              const personalDmId = `room_dm_${project.id}_${currentUser.id}`
+              const alreadyHasDm = project.rooms.find((r) => r.id === personalDmId)
+              const personalDm = alreadyHasDm ? null : { id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id, lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4] }
               const newMember = { id: currentUser.id, name: currentUser.name, role: 'member', roomIds: [personalDmId, allRoomId].filter(Boolean), memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '' }
-              await updateDoc(doc(db, 'projects', project.id), { rooms: arrayUnion(personalDm), members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) })
+              const updatePayload = { members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) }
+              if (personalDm) updatePayload.rooms = arrayUnion(personalDm)
+              await updateDoc(doc(db, 'projects', project.id), updatePayload)
               if (allRoomId) {
                 await addDoc(collection(db, 'rooms', allRoomId, 'messages'), { senderId: 'teampbot', senderName: '팀프봇', type: 'notify', text: `👋 ${currentUser.name}님이 팀에 합류했어요!`, time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }), createdAt: serverTimestamp() })
               }
@@ -303,12 +308,20 @@ export const useStore = create(
         } catch (e) { console.error('초대 수락 오류:', e) }
 
         // Firestore 초대 상태 업데이트
-        try { await updateDoc(doc(db, 'projectInvites', id), { status: 'accepted' }) } catch {}
+        try {
+          await updateDoc(doc(db, 'projectInvites', id), { status: 'accepted' })
+        } catch (e) {
+          console.error('[acceptInvite] 초대 상태 업데이트 실패:', e)
+        }
         set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
       },
 
       declineInvite: async (id) => {
-        try { await updateDoc(doc(db, 'projectInvites', id), { status: 'declined' }) } catch {}
+        try {
+          await updateDoc(doc(db, 'projectInvites', id), { status: 'declined' })
+        } catch (e) {
+          console.error('[declineInvite] 초대 상태 업데이트 실패:', e)
+        }
         set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
       },
 
@@ -323,7 +336,9 @@ export const useStore = create(
           const q = query(collection(db, 'projectInvites'), where('projectId', '==', projectId), where('inviteeId', '==', invitee.id), where('status', '==', 'pending'))
           const snap = await getDocs(q)
           if (!snap.empty) return { alreadySent: true }
-        } catch {}
+        } catch (e) {
+          console.error('[sendProjectInvite] 중복 체크 실패:', e)
+        }
 
         const inviteDoc = {
           projectId,
@@ -396,9 +411,10 @@ export const useStore = create(
         }
 
         const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
-        // 참여자 전용 개인 DM 방 생성 (기존 isDm 방은 프로젝트 생성자 소유)
-        const personalDmId = `room_dm_${currentUser.id}_${Date.now()}`
-        const personalDm = {
+        // 결정론적 ID — 프로젝트+유저 조합으로 중복 생성 방지
+        const personalDmId = `room_dm_${project.id}_${currentUser.id}`
+        const alreadyHasDm = project.rooms.find((r) => r.id === personalDmId)
+        const personalDm = alreadyHasDm ? null : {
           id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id,
           lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4],
         }
@@ -409,11 +425,9 @@ export const useStore = create(
           memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '',
         }
 
-        await updateDoc(doc(db, 'projects', project.id), {
-          rooms: arrayUnion(personalDm),
-          members: arrayUnion(newMember),
-          memberIds: arrayUnion(currentUser.id),
-        })
+        const joinPayload = { members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) }
+        if (personalDm) joinPayload.rooms = arrayUnion(personalDm)
+        await updateDoc(doc(db, 'projects', project.id), joinPayload)
 
         // 전체방에 환영 메시지 전송 (팀프봇)
         if (allRoomId) {
@@ -594,21 +608,10 @@ export const useStore = create(
       },
 
       votePoll: async (roomId, msgId, optionId) => {
-        const { currentUser } = get()
-        await txMessage(roomId, msgId, (data) => {
-          const alreadyVoted = data.options.find(o => o.id === optionId)?.votes.includes(currentUser.id)
-          return {
-            options: data.options.map(o => {
-              if (o.id === optionId) {
-                // 같은 선택지 재클릭 시 취소 (toggle)
-                return { ...o, votes: alreadyVoted ? o.votes.filter(v => v !== currentUser.id) : [...o.votes, currentUser.id] }
-              }
-              // 단일 선택 — 다른 선택지에서 본인 표 제거
-              return { ...o, votes: o.votes.filter(v => v !== currentUser.id) }
-            }),
-          }
-        })
-        // 로컬 메시지 상태도 즉시 반영 (onSnapshot 전 UX 개선)
+        const { currentUser, showError } = get()
+
+        // 낙관적 업데이트 — 이전 상태 저장
+        const prevMessages = get().messages
         set((s) => ({
           messages: {
             ...s.messages,
@@ -626,6 +629,23 @@ export const useStore = create(
             }),
           },
         }))
+
+        try {
+          await txMessage(roomId, msgId, (data) => {
+            const alreadyVoted = data.options.find(o => o.id === optionId)?.votes.includes(currentUser.id)
+            return {
+              options: data.options.map(o => {
+                if (o.id === optionId)
+                  return { ...o, votes: alreadyVoted ? o.votes.filter(v => v !== currentUser.id) : [...o.votes, currentUser.id] }
+                return { ...o, votes: o.votes.filter(v => v !== currentUser.id) }
+              }),
+            }
+          })
+        } catch (e) {
+          set({ messages: prevMessages })
+          showError('투표 저장에 실패했어요.')
+          console.error('[votePoll]', e)
+        }
       },
 
       markAsRead: (roomId) =>
@@ -730,7 +750,7 @@ export const useStore = create(
       },
 
       updateTodo: async (projectId, todoId, updates) => {
-        const { currentUser, projects } = get()
+        const { currentUser, projects, showError } = get()
         const project = projects.find((p) => p.id === projectId)
         const todo = project?.todos?.find((t) => t.id === todoId)
         if (!todo) return
@@ -738,7 +758,8 @@ export const useStore = create(
         const isLeaderOrSub = me?.role === 'leader' || me?.role === 'sub-leader'
         if (todo.createdBy !== currentUser.id && todo.assignee !== currentUser.id && !isLeaderOrSub) return
 
-        // 낙관적 업데이트 — Firestore 응답 전 UX 개선
+        // 낙관적 업데이트 — 이전 상태 저장 후 선 반영
+        const prevProjects = get().projects
         set((s) => ({
           projects: s.projects.map((p) =>
             p.id !== projectId ? p : {
@@ -747,9 +768,15 @@ export const useStore = create(
           ),
         }))
 
-        await txProject(projectId, (data) => ({
-          todos: data.todos.map((t) => t.id === todoId ? { ...t, ...updates } : t),
-        }))
+        try {
+          await txProject(projectId, (data) => ({
+            todos: data.todos.map((t) => t.id === todoId ? { ...t, ...updates } : t),
+          }))
+        } catch (e) {
+          set({ projects: prevProjects })
+          showError('할 일 저장에 실패했어요. 다시 시도해주세요.')
+          console.error('[updateTodo]', e)
+        }
       },
 
       deleteTodo: async (projectId, todoId) => {
@@ -1079,8 +1106,9 @@ export const useStore = create(
         if (!project) return { success: false }
         if (project.members.find((m) => m.id === userId)) return { success: false, message: '이미 멤버예요' }
         const allRoomId = project.rooms.find((r) => r.name === '전체')?.id
-        const personalDmId = `room_dm_${userId}_${Date.now()}`
-        const personalDm = {
+        const personalDmId = `room_dm_${projectId}_${userId}`
+        const alreadyHasDm = project.rooms.find((r) => r.id === personalDmId)
+        const personalDm = alreadyHasDm ? null : {
           id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: userId,
           lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4],
         }
@@ -1089,11 +1117,9 @@ export const useStore = create(
           roomIds: [personalDmId, allRoomId].filter(Boolean),
           memo: '', affiliation: '', email: '',
         }
-        await updateDoc(doc(db, 'projects', projectId), {
-          rooms: arrayUnion(personalDm),
-          members: arrayUnion(newMember),
-          memberIds: arrayUnion(userId),
-        })
+        const addPayload = { members: arrayUnion(newMember), memberIds: arrayUnion(userId) }
+        if (personalDm) addPayload.rooms = arrayUnion(personalDm)
+        await updateDoc(doc(db, 'projects', projectId), addPayload)
 
         // 전체방에 환영 메시지 전송 (팀프봇)
         if (allRoomId) {
@@ -1189,6 +1215,17 @@ export const useStore = create(
       removeChatToast: (id) =>
         set((s) => ({ chatToasts: s.chatToasts.filter((t) => t.id !== id) })),
       clearChatToasts: () => set({ chatToasts: [] }),
+
+      // ─── 전역 에러 토스트 ──────────────────────────────────
+      showError: (message) => {
+        const id = `err_${Date.now()}`
+        set((s) => ({ errorToasts: [...s.errorToasts, { id, message }].slice(-3) }))
+        setTimeout(() => {
+          set((s) => ({ errorToasts: s.errorToasts.filter((e) => e.id !== id) }))
+        }, 4000)
+      },
+      dismissError: (id) =>
+        set((s) => ({ errorToasts: s.errorToasts.filter((e) => e.id !== id) })),
 
       // ─── 다크 모드 ────────────────────────────────────────
       theme: (typeof window !== 'undefined' && localStorage.getItem('teamp-theme')) || 'light',
