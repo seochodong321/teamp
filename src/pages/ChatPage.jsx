@@ -39,6 +39,7 @@ export default function ChatPage() {
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [showToolbar, setShowToolbar] = useState(false)
   const [lightbox, setLightbox]   = useState(null)
+  const [profilePopup, setProfilePopup] = useState(null) // { userId, name, avStyle, x, y }
 
   const isComposing  = useRef(false)
   const bottomRef    = useRef(null)
@@ -62,6 +63,20 @@ export default function ChatPage() {
   useEffect(() => {
     isInitialRef.current = true
   }, [roomId])
+
+  // 프로필 팝업 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!profilePopup) return
+    const close = () => setProfilePopup(null)
+    document.addEventListener('click', close)
+    return () => document.removeEventListener('click', close)
+  }, [profilePopup])
+
+  const handleAvatarClick = (e, userId, name, avStyle) => {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    setProfilePopup({ userId, name, avStyle, x: rect.right + 10, y: rect.top })
+  }
 
   // 새 메시지 도착 시 스크롤 + 읽음 처리
   useEffect(() => {
@@ -169,6 +184,30 @@ export default function ChatPage() {
           </div>
         </div>
       )}
+      {/* 아바타 클릭 프로필 팝업 */}
+      {profilePopup && profilePopup.userId !== currentUser.id && (
+        <div
+          className={styles.profilePopup}
+          style={{ top: profilePopup.y, left: profilePopup.x }}
+          onClick={(e) => e.stopPropagation()}>
+          <div className={styles.profilePopupAvatar}
+            style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
+            {profilePopup.name.charAt(0)}
+          </div>
+          <span className={styles.profilePopupName}>{profilePopup.name}</span>
+          {(blockedUsers || []).includes(profilePopup.userId)
+            ? <button className={styles.profilePopupUnblock}
+                onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>
+                차단 해제
+              </button>
+            : <button className={styles.profilePopupBlock}
+                onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>
+                차단
+              </button>
+          }
+        </div>
+      )}
+
       {/* DM 나가기 확인 모달 */}
       {showLeave && (
         <div className={styles.leaveBackdrop} onClick={() => setShowLeave(false)}>
@@ -200,15 +239,7 @@ export default function ChatPage() {
           )}
         </div>
         {isDm
-          ? <div className={styles.dmHeaderActions}>
-              <button
-                className={`${styles.blockBtn} ${iBlocked ? styles.blockBtnActive : ''}`}
-                onClick={() => iBlocked ? unblockUser(otherUserId) : blockUser(otherUserId)}
-                title={iBlocked ? '차단 해제' : '차단하기'}>
-                {iBlocked ? '차단 해제' : '차단'}
-              </button>
-              <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
-            </div>
+          ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
           : <div style={{ width: 80 }} />
         }
       </div>
@@ -244,7 +275,10 @@ export default function ChatPage() {
           const avatarEl = isMine ? null : isGrouped
             ? <div className={styles.avatarGap} />
             : (
-              <div className={styles.avatar} style={{ background: avStyle.bg, color: avStyle.text }}>
+              <div
+                className={`${styles.avatar} ${styles.avatarClickable}`}
+                style={{ background: avStyle.bg, color: avStyle.text }}
+                onClick={(e) => handleAvatarClick(e, msg.senderId, senderName, avStyle)}>
                 {senderName.charAt(0)}
               </div>
             )
