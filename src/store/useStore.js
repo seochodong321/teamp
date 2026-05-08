@@ -316,6 +316,7 @@ export const useStore = create(
           console.error('[acceptInvite] 초대 상태 업데이트 실패:', e)
         }
         set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
+        return invite.projectId  // 호출 측에서 navigate에 활용
       },
 
       declineInvite: async (id) => {

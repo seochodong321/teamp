@@ -479,7 +479,10 @@ export default function HomePage() {
             </div>
           </div>
           <div className={styles.inviteBtns}>
-            <button className={styles.btnAccept} onClick={() => acceptInvite(invite.id)}>참여하기</button>
+            <button className={styles.btnAccept} onClick={async () => {
+              const projectId = await acceptInvite(invite.id)
+              if (projectId) navigate(`/project/${projectId}`)
+            }}>참여하기</button>
             <button className={styles.btnDecline} onClick={() => declineInvite(invite.id)}>거절하기</button>
           </div>
         </div>

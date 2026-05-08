@@ -27,6 +27,7 @@ export default function MatchPage() {
   const [formSkills, setFormSkills]   = useState([])
   const [formCustomSkill, setFormCustomSkill] = useState('')
   const [formSubmitting, setFormSubmitting] = useState(false)
+  const [formError, setFormError]           = useState('')
 
   // 지원자 프로필 모달
   const [viewApplicant, setViewApplicant]     = useState(null)
@@ -56,6 +57,7 @@ export default function MatchPage() {
     const project = projects.find((p) => p.id === formProject)
     if (!project) return
     setFormSubmitting(true)
+    setFormError('')
     try {
       await addDoc(collection(db, 'matchPosts'), {
         projectId: formProject,
@@ -74,6 +76,9 @@ export default function MatchPage() {
       setShowForm(false)
       setFormTitle(''); setFormDesc(''); setFormSkills([]); setFormProject('')
       fetchPosts()
+    } catch (e) {
+      console.error('matchPosts 작성 실패:', e)
+      setFormError('등록에 실패했어요. Firebase 콘솔에서 matchPosts 컬렉션 읽기/쓰기 규칙을 확인해주세요.')
     } finally {
       setFormSubmitting(false)
     }
@@ -343,6 +348,7 @@ export default function MatchPage() {
                 )}
               </div>
             </div>
+            {formError && <p style={{ color: 'var(--coral)', fontSize: 12, padding: '0 20px 8px', margin: 0 }}>{formError}</p>}
             <div className={styles.formFooter}>
               <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>취소</button>
               <button className={styles.submitBtn} onClick={handleCreatePost}

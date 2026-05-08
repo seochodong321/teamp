@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ConnectPage.module.css'
@@ -34,15 +34,22 @@ export default function ConnectPage() {
     setPubProjects([])
     setLoadingProfile(true)
     try {
-      const [userSnap, projSnap] = await Promise.all([
-        getDoc(doc(db, 'users', contact.id)),
-        getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id))),
-      ])
-      const oneliner = userSnap.exists() ? (userSnap.data().oneliner || '') : ''
-      setProfile({ ...contact, oneliner })
-      const pubs = projSnap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((p) => p.isPublic)
+      // Firestore에서 최신 프로필 정보 (소속·원라이너) 읽기
+      const userSnap = await getDoc(doc(db, 'users', contact.id))
+      const userData = userSnap.exists() ? userSnap.data() : {}
+      setProfile({
+        ...contact,
+        affiliation: userData.affiliation || contact.affiliation || '',
+        oneliner:    userData.oneliner    || '',
+      })
+      // 공개 프로젝트 — Firestore 보안규칙 우회, 내가 접근 가능한 공유 프로젝트만
+      const pubs = projects.filter(
+        (p) => p.memberIds?.includes(contact.id) && p.isPublic && !p.isTutorial
+      )
       setPubProjects(pubs)
-    } catch {}
+    } catch (e) {
+      console.error('[openProfile] 프로필 로드 실패:', e)
+    }
     setLoadingProfile(false)
   }
 
