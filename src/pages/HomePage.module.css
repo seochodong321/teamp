@@ -418,22 +418,11 @@
 
 /* 커버 이미지 썸네일 */
 .cardCover {
-  height: 82px;
+  height: 6px;
   border-radius: 12px 12px 0 0;
-  /* 카드 padding을 벗어나 edge-to-edge 표시 */
-  margin: -14px -14px 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  z-index: 1; /* ::before 좌측 바를 가림 */
+  margin: -14px -14px 10px;
   flex-shrink: 0;
-}
-.cardCoverEmoji {
-  font-size: 34px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+  z-index: 1;
 }
 /* 커버 있는 카드는 좌측 accent 바 제거 (커버가 시각적 역할 대체) */
 .cardHasCover::before { display: none; }
