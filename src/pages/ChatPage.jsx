@@ -206,10 +206,8 @@ export default function ChatPage() {
   }
 
   const handleReinvite = async () => {
-    const newRoom = await reinviteToDm(roomId)
-    if (newRoom) {
-      navigate(`/project/${newRoom.projectId || projectId}/chat/${newRoom.id}`)
-    }
+    // 같은 방에 상대방을 다시 초대 — 새 방이 아닌 기존 방 재활성화
+    await reinviteToDm(roomId)
   }
 
   const handleLeaveDm = async () => {

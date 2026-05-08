@@ -524,45 +524,41 @@ export const useStore = create(
         const dmSnap = await getDoc(dmRef)
         if (!dmSnap.exists()) return null
         const data = dmSnap.data()
-        const dmKey = data.dmKey || [currentUser.id, ...((data.participants || []).filter((id) => id !== currentUser.id))].sort().join('_')
+        const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
+        const otherUserName = data.participantNames?.[otherUserId] || '상대방'
+        const dmKey = data.dmKey
 
-        // 기존 방의 모든 메시지 + 방 문서 삭제
-        const msgsRef = collection(db, 'rooms', roomId, 'messages')
-        const allMsgsSnap = await getDocs(msgsRef)
+        // left 배열에서 상대방 제거 + 시스템 메시지
+        const newLeft = (data.left || []).filter((id) => id !== otherUserId)
+        const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
         const batch = writeBatch(db)
-        allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-        batch.delete(dmRef)
+        batch.update(dmRef, { left: newLeft })
+        batch.set(sysRef, {
+          senderId: 'system', type: 'notify',
+          text: `${currentUser.name}님이 ${otherUserName}님을 다시 초대했어요`,
+          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          createdAt: serverTimestamp(),
+        })
+        // 상대방에게 Firestore 알림 전송 (App.jsx의 notifications 구독이 수신)
+        const notiRef = doc(collection(db, 'notifications'))
+        batch.set(notiRef, {
+          targetUserId: otherUserId,
+          type: 'dm',
+          text: `💬 ${currentUser.name}님이 다시 대화를 시작했어요`,
+          link: `/project/${data.projectId}/chat/${roomId}`,
+          read: false,
+          createdAt: serverTimestamp(),
+        })
         await batch.commit()
 
-        // 로컬 캐시에서 구버전 방 제거
+        // 로컬 dmRooms 캐시도 즉시 업데이트 (UI가 바로 반영되도록)
         set((s) => {
           const newDmRooms = { ...s.dmRooms }
-          const key = Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
-          if (key) delete newDmRooms[key]
-          const newMessages = { ...s.messages }
-          delete newMessages[roomId]
-          return { dmRooms: newDmRooms, messages: newMessages }
+          const key = dmKey || Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
+          if (key && newDmRooms[key]) newDmRooms[key] = { ...newDmRooms[key], left: newLeft }
+          return { dmRooms: newDmRooms }
         })
-
-        // 새 방 생성 (timestamp ID → 진정한 새 채팅방)
-        const newRoomId = `dm_${dmKey}_${Date.now()}`
-        const newRoom = {
-          id: newRoomId, dmKey,
-          projectId: data.projectId,
-          participants: data.participants,
-          participantNames: data.participantNames,
-          isDirect: true,
-          createdBy: currentUser.id,
-          left: [],
-          lastMessage: '',
-        }
-        await setDoc(doc(db, 'dmRooms', newRoomId), { ...newRoom, createdAt: serverTimestamp() })
-        set((s) => ({
-          dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
-          messages: { ...s.messages, [newRoomId]: [] },
-        }))
-        return newRoom
-        // App.jsx의 dmRooms onSnapshot이 new doc 감지 → 상대방에게 자동 알림 발송
+        return { id: roomId, ...data, left: newLeft }
       },
 
       blockUser: async (targetId) => {
@@ -587,29 +583,29 @@ export const useStore = create(
       getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {
         const { currentUser, dmRooms, dmRoomList } = get()
         const dmKey = [currentUser.id, otherUserId].sort().join('_')
+        const roomId = `dm_${dmKey}`
 
-        // dmRoomList (Firestore 구독 결과)에서 활성 방 검색
+        // 1) Firestore 구독 목록에서 활성 방 검색 (left에 내가 없어야 함)
         const activeInList = dmRoomList.find(
-          (r) => r.dmKey === dmKey && !(r.left || []).includes(currentUser.id)
+          (r) => r.id === roomId && !(r.left || []).includes(currentUser.id)
         )
         if (activeInList) return activeInList
 
-        // 로컬 캐시 확인
+        // 2) 로컬 캐시 확인
         if (dmRooms[dmKey] && !(dmRooms[dmKey].left || []).includes(currentUser.id)) return dmRooms[dmKey]
 
-        // 새 방 생성 (timestamp ID)
-        const newRoomId = `dm_${dmKey}_${Date.now()}`
+        // 3) 신규 생성 (A-B 사이 방은 항상 하나 — dm_A_B 고정 ID)
         const newRoom = {
-          id: newRoomId, dmKey, projectId,
+          id: roomId, dmKey, projectId,
           participants: [currentUser.id, otherUserId],
           participantNames: { [currentUser.id]: currentUser.name, [otherUserId]: otherUserName },
           isDirect: true, createdBy: currentUser.id,
           left: [], lastMessage: '',
         }
-        await setDoc(doc(db, 'dmRooms', newRoomId), { ...newRoom, createdAt: serverTimestamp() })
+        await setDoc(doc(db, 'dmRooms', roomId), { ...newRoom, createdAt: serverTimestamp() })
         set((s) => ({
           dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
-          messages: { ...s.messages, [newRoomId]: [] },
+          messages: { ...s.messages, [roomId]: [] },
         }))
         return newRoom
       },
