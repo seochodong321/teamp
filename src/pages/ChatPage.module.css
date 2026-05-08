@@ -179,25 +179,42 @@
 /* DM 나가기 */
 .dmLeaveBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
 .dmLeaveBtn:hover { border-color: #E24B4A; color: #E24B4A; }
-/* 아바타 클릭 → 미니 프로필 팝업 */
+/* 아바타 클릭 → 미니 프로필 카드 */
 .avatarClickable { cursor: pointer; transition: opacity 0.12s; }
 .avatarClickable:hover { opacity: 0.8; }
+
 .profilePopup {
   position: fixed; z-index: 500;
   background: var(--bg); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 14px;
-  display: flex; align-items: center; gap: 10px;
+  border-radius: 16px; padding: 16px;
+  width: 220px;
   box-shadow: var(--shadow-lg);
-  min-width: 160px;
-  animation: fadeInPop 0.12s ease;
+  display: flex; flex-direction: column; gap: 10px;
+  animation: fadeInPop 0.13s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
-@keyframes fadeInPop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-.profilePopupAvatar { width: 32px; height: 32px; border-radius: 9px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.profilePopupName { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.profilePopupBlock { font-size: 11px; color: var(--text-tertiary); border: 1px solid var(--border); border-radius: var(--radius-full); padding: 4px 10px; background: transparent; white-space: nowrap; transition: all 0.15s; }
-.profilePopupBlock:hover { border-color: #E24B4A; color: #E24B4A; }
-.profilePopupUnblock { font-size: 11px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 4px 10px; white-space: nowrap; transition: all 0.15s; }
-.profilePopupUnblock:hover { background: #FDEDED; }
+@keyframes fadeInPop { from { opacity: 0; transform: scale(0.94) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+.ppHeader { display: flex; align-items: center; gap: 10px; }
+.ppAvatar {
+  width: 44px; height: 44px; border-radius: 12px;
+  font-size: 17px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
+}
+.ppAvatarImg { width: 100%; height: 100%; object-fit: cover; }
+.ppInfo { flex: 1; min-width: 0; }
+.ppName { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ppAffiliation { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.ppOneliner { font-size: 12px; color: var(--text-secondary); line-height: 1.55; font-style: italic; border-left: 2px solid var(--border); padding-left: 8px; }
+.ppLoading { font-size: 12px; color: var(--text-tertiary); }
+.ppShared { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: 6px; padding: 4px 8px; }
+
+.ppFooter { display: flex; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 8px; margin-top: 2px; }
+.ppBlockBtn { font-size: 11px; color: var(--text-tertiary); background: transparent; border: none; padding: 2px 4px; border-radius: 4px; transition: color 0.12s; }
+.ppBlockBtn:hover { color: #E24B4A; }
+.ppUnblockBtn { font-size: 11px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 3px 10px; transition: background 0.12s; }
+.ppUnblockBtn:hover { background: #FDEDED; }
 /* 하단 상태 바 (나갔을 때 / 차단했을 때) */
 .chatBlockedBar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-light); background: var(--bg-secondary); font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
 .reinviteBarBtn { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid #C9C4F0; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { arrayUnion, collection, doc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
@@ -39,7 +39,7 @@ export default function ChatPage() {
   const [pollOptions, setPollOptions] = useState(['', ''])
   const [showToolbar, setShowToolbar] = useState(false)
   const [lightbox, setLightbox]   = useState(null)
-  const [profilePopup, setProfilePopup] = useState(null) // { userId, name, avStyle, x, y }
+  const [profilePopup, setProfilePopup] = useState(null) // { userId, name, avStyle, x, y, loading, data }
 
   const isComposing  = useRef(false)
   const bottomRef    = useRef(null)
@@ -72,10 +72,20 @@ export default function ChatPage() {
     return () => document.removeEventListener('click', close)
   }, [profilePopup])
 
-  const handleAvatarClick = (e, userId, name, avStyle) => {
+  const handleAvatarClick = async (e, userId, name, avStyle) => {
     e.stopPropagation()
     const rect = e.currentTarget.getBoundingClientRect()
-    setProfilePopup({ userId, name, avStyle, x: rect.right + 10, y: rect.top })
+    // 뷰포트 오른쪽 넘치면 왼쪽에 표시
+    const x = rect.right + 220 > window.innerWidth ? rect.left - 230 : rect.right + 10
+    const y = Math.min(rect.top, window.innerHeight - 260)
+    setProfilePopup({ userId, name, avStyle, x, y, loading: true, data: null })
+    try {
+      const snap = await getDoc(doc(db, 'users', userId))
+      const data = snap.exists() ? snap.data() : {}
+      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data } : prev)
+    } catch {
+      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data: {} } : prev)
+    }
   }
 
   // 새 메시지 도착 시 스크롤 + 읽음 처리
@@ -184,29 +194,63 @@ export default function ChatPage() {
           </div>
         </div>
       )}
-      {/* 아바타 클릭 프로필 팝업 */}
-      {profilePopup && profilePopup.userId !== currentUser.id && (
-        <div
-          className={styles.profilePopup}
-          style={{ top: profilePopup.y, left: profilePopup.x }}
-          onClick={(e) => e.stopPropagation()}>
-          <div className={styles.profilePopupAvatar}
-            style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
-            {profilePopup.name.charAt(0)}
+      {/* 아바타 클릭 → 미니 프로필 카드 */}
+      {profilePopup && profilePopup.userId !== currentUser.id && (() => {
+        const pd = profilePopup.data || {}
+        const sharedProjects = projects.filter((p) =>
+          p.members.some((m) => m.id === currentUser.id) &&
+          p.members.some((m) => m.id === profilePopup.userId) &&
+          !p.isTutorial
+        )
+        const isBlocked = (blockedUsers || []).includes(profilePopup.userId)
+        return (
+          <div
+            className={styles.profilePopup}
+            style={{ top: profilePopup.y, left: profilePopup.x }}
+            onClick={(e) => e.stopPropagation()}>
+            {/* 상단: 아바타 + 이름 + 소속 */}
+            <div className={styles.ppHeader}>
+              <div className={styles.ppAvatar}
+                style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
+                {pd.photoURL
+                  ? <img src={pd.photoURL} alt={profilePopup.name} className={styles.ppAvatarImg} />
+                  : profilePopup.name.charAt(0)
+                }
+              </div>
+              <div className={styles.ppInfo}>
+                <p className={styles.ppName}>{profilePopup.name}</p>
+                {pd.affiliation && <p className={styles.ppAffiliation}>🏢 {pd.affiliation}</p>}
+              </div>
+            </div>
+            {/* 원라이너 */}
+            {profilePopup.loading
+              ? <p className={styles.ppLoading}>불러오는 중...</p>
+              : pd.oneliner
+                ? <p className={styles.ppOneliner}>"{pd.oneliner}"</p>
+                : null
+            }
+            {/* 함께한 프로젝트 */}
+            {sharedProjects.length > 0 && (
+              <p className={styles.ppShared}>
+                함께한 프로젝트 {sharedProjects.length}개
+              </p>
+            )}
+            {/* 차단 버튼 (아주 작게) */}
+            <div className={styles.ppFooter}>
+              {isBlocked
+                ? <button className={styles.ppUnblockBtn}
+                    onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>
+                    차단 해제
+                  </button>
+                : <button className={styles.ppBlockBtn}
+                    onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>
+                    차단하기
+                  </button>
+              }
+            </div>
           </div>
-          <span className={styles.profilePopupName}>{profilePopup.name}</span>
-          {(blockedUsers || []).includes(profilePopup.userId)
-            ? <button className={styles.profilePopupUnblock}
-                onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>
-                차단 해제
-              </button>
-            : <button className={styles.profilePopupBlock}
-                onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>
-                차단
-              </button>
-          }
-        </div>
-      )}
+        )
+      })()}
 
       {/* DM 나가기 확인 모달 */}
       {showLeave && (
