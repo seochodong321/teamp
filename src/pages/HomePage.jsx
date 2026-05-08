@@ -61,6 +61,17 @@ export default function HomePage() {
   const [roomNames, setRoomNames] = useState(['개발팀'])
   const [newRoom, setNewRoom]     = useState('')
   const [dateError, setDateError] = useState('')
+
+  // 대표 프로젝트 (localStorage 저장)
+  const [pinnedId, setPinnedId] = useState(() => localStorage.getItem('teamp-pinned') || null)
+  const [showPinPicker, setShowPinPicker] = useState(false)
+
+  const setPinned = (id) => {
+    setPinnedId(id)
+    if (id) localStorage.setItem('teamp-pinned', id)
+    else localStorage.removeItem('teamp-pinned')
+    setShowPinPicker(false)
+  }
   const [created, setCreated]     = useState(null)
   const [loading, setLoading]     = useState(false)
 
@@ -358,11 +369,8 @@ export default function HomePage() {
       {(() => {
         const totalActive = active.length
         const totalCollecting = collecting.length
-        // D-day가 가장 임박한 프로젝트 (진행 중에서)
-        const upcoming = [...active]
-          .filter((p) => p.deadline)
-          .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))[0]
-        const upcomingDday = upcoming ? calcDday(upcoming.deadline) : null
+        const pinned = active.find((p) => p.id === pinnedId) || null
+        const pinnedBadge = pinned ? getCardBadge(pinned) : null
         const today = new Date()
         const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
         const weekday = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()]
@@ -379,10 +387,10 @@ export default function HomePage() {
                   <span><b>{totalActive}개</b> 진행 중</span>
                   <span className={styles.dot}>·</span>
                   <span><b>{totalCollecting}개</b> 수집 중</span>
-                  {upcoming && (
+                  {pinned && (
                     <>
                       <span className={styles.dot}>·</span>
-                      <span>가장 가까운 마감 <b>{upcomingDday}</b></span>
+                      <span>대표 <b>{pinned.name}</b></span>
                     </>
                   )}
                 </p>
@@ -393,21 +401,38 @@ export default function HomePage() {
             {active.length > 0 && (
               <div className={styles.todayStrip}>
                 <div className={`${styles.todayCell} ${styles.todayCellFeature}`}>
-                  <span className={styles.todayLabel}>가장 임박</span>
-                  {upcoming ? (
+                  <div className={styles.todayLabelRow}>
+                    <span className={styles.todayLabel}>대표 프로젝트</span>
+                    <button className={styles.pinSetBtn} onClick={() => setShowPinPicker((v) => !v)}>⚙</button>
+                  </div>
+                  {showPinPicker && (
+                    <div className={styles.pinPicker}>
+                      {active.length === 0
+                        ? <span className={styles.pinPickerEmpty}>진행 중인 프로젝트 없음</span>
+                        : active.map((p) => (
+                          <button key={p.id} className={`${styles.pinPickerItem} ${p.id === pinnedId ? styles.pinPickerActive : ''}`}
+                            onClick={() => setPinned(p.id)}>
+                            {p.emoji && <span>{p.emoji}</span>}
+                            <span>{p.name}</span>
+                          </button>
+                        ))
+                      }
+                      {pinnedId && <button className={styles.pinPickerClear} onClick={() => setPinned(null)}>설정 해제</button>}
+                    </div>
+                  )}
+                  {!showPinPicker && (pinned ? (
                     <div className={styles.todayFeature}>
-                      <div className={styles.todayFeatureEmoji}>{upcoming.emoji || '📌'}</div>
+                      {pinned.emoji && <div className={styles.todayFeatureEmoji}>{pinned.emoji}</div>}
                       <div className={styles.todayFeatureBody}>
-                        <div className={styles.todayFeatureName}>{upcoming.name}</div>
-                        <div className={styles.todayFeatureMeta}>
-                          {upcoming.deadline && new Date(upcoming.deadline).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 마감
-                        </div>
+                        <div className={styles.todayFeatureName}>{pinned.name}</div>
+                        <div className={styles.todayFeatureMeta}>~ {pinned.endDate}</div>
                       </div>
-                      <span className={styles.todayPill}>{upcomingDday}</span>
+                      <span className={`${styles.todayPill} ${styles[pinnedBadge.cls] || ''}`}>{pinnedBadge.text}</span>
                     </div>
                   ) : (
-                    <div className={styles.todayFeatureMeta}>임박한 마감 없음</div>
-                  )}
+                    <button className={styles.todayFeatureMeta} style={{ textDecoration: 'underline', cursor: 'pointer' }}
+                      onClick={() => setShowPinPicker(true)}>⚙ 대표 프로젝트 설정하기</button>
+                  ))}
                 </div>
                 <div className={styles.todayCell}>
                   <span className={styles.todayLabel}>진행 중</span>

@@ -99,6 +99,9 @@ export default function Layout() {
             <span className={styles.navIcon}>⊞</span>
             <span>홈</span>
           </NavLink>
+          <NavLink to="/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+            <span className={styles.navIcon}>👤</span><span>내 프로필</span>
+          </NavLink>
 
           {active.length > 0 && (
             <>
@@ -107,7 +110,7 @@ export default function Layout() {
                 const muted = mutedProjects.includes(p.id)
                 const chatRooms = p.rooms.filter((r) => !r.isDm)
                 const totalUnread = chatRooms.reduce((s, r) => s + (r.unread || 0), 0)
-                const isCollapsed = collapsedProjects[p.id] ?? false
+                const isCollapsed = collapsedProjects[p.id] ?? true
                 return (
                   <div key={p.id}>
                     <div className={styles.projectNavRow}>
@@ -191,9 +194,6 @@ export default function Layout() {
           </NavLink>
           <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
-          </NavLink>
-          <NavLink to="/profile" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>👤</span><span>프로필</span>
           </NavLink>
           <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>❓</span><span>도움말</span>
