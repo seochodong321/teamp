@@ -493,7 +493,6 @@ export default function HomePage() {
               {/* 커버 이미지 썸네일 — 설정된 경우만 표시 */}
               {p.coverImage && (
                 <div className={styles.cardCover} style={getCoverStyle(p)}>
-                  <span className={styles.cardCoverEmoji}>{p.emoji || '📁'}</span>
                 </div>
               )}
               {expired && isLeader && (

@@ -490,7 +490,6 @@ export default function ProjectPage() {
         {/* 커버 이미지 스트립 — 설정된 경우만 표시 */}
         {project.coverImage && (
           <div className={styles.headerCover} style={getCoverStyle(project)}>
-            <span className={styles.headerCoverEmoji}>{project.emoji || '📁'}</span>
             {isLeader && (
               <button className={styles.coverEditBtn} onClick={() => setShowCoverPicker(true)} title="커버 이미지 변경">
                 ✏️ 변경
