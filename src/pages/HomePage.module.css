@@ -155,14 +155,14 @@
   gap: 8px;
   height: 38px;
   padding: 0 16px 0 12px;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--primary);
+  color: white;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(20,14,60,.15), 0 4px 10px -2px rgba(20,14,60,.12);
+  box-shadow: 0 2px 8px rgba(83,74,183,.3);
   transition: all var(--transition);
 }
 .createBtn::before {
@@ -170,8 +170,8 @@
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  background: var(--bg);
-  color: var(--text);
+  background: rgba(255,255,255,0.25);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -91,6 +91,7 @@ export default function Layout() {
               ✦
               {unreadCount > 0 && <span className={styles.notiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
             </button>
+            <button className={styles.logoutBtn} onClick={handleLogout} title="로그아웃">↩</button>
           </div>
         </div>
 
@@ -202,7 +203,7 @@ export default function Layout() {
 
         <button className={styles.createBtn} onClick={openCreate}>+ 새 프로젝트</button>
 
-        <div className={styles.userArea}>
+        <div className={styles.userArea} onClick={() => { navigate('/profile'); close() }} title="내 프로필">
           {currentUser?.photoURL
             ? <img className={styles.userAvatarImg} src={currentUser.photoURL} alt={currentUser.name} />
             : <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
@@ -211,7 +212,6 @@ export default function Layout() {
             <p className={styles.userName}>{currentUser?.name}</p>
             <p className={styles.userHandle}>{currentUser?.affiliation || currentUser?.username}</p>
           </div>
-          <button className={styles.logoutBtn} onClick={handleLogout} title="로그아웃">↩</button>
         </div>
       </aside>
 

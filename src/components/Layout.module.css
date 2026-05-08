@@ -250,7 +250,11 @@
   padding: 12px 8px 4px;
   border-top: 1px solid var(--border);
   margin-top: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s;
 }
+.userArea:hover { background: var(--bg-tertiary); }
 
 .userAvatar {
   width: 32px;
@@ -421,6 +425,16 @@
   gap: 4px;
   flex-shrink: 0;
 }
+
+/* 로그아웃 버튼 (상단 logoActions 안) */
+.logoutBtn {
+  width: 28px; height: 28px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; background: transparent;
+  color: var(--text-tertiary); border: 1px solid transparent;
+  transition: all var(--transition-fast);
+}
+.logoutBtn:hover { background: #FEE2E2; color: #DC2626; border-color: #FECACA; }
 
 /* 검색 버튼 */
 .searchBtn {
