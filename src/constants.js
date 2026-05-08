@@ -13,12 +13,12 @@ export const FLOWER_TAGS = [
 
 // 프로젝트 커버 이미지 프리셋 — CSS gradient 기반 (Storage 불필요)
 export const COVER_PRESETS = [
-  { id: 'purple', label: '보라',  gradient: 'linear-gradient(135deg, #3C3489 0%, #7B6FD4 100%)' },
-  { id: 'teal',   label: '청록',  gradient: 'linear-gradient(135deg, #0D7C6B 0%, #34D399 100%)' },
-  { id: 'amber',  label: '호박',  gradient: 'linear-gradient(135deg, #92400E 0%, #F59E0B 100%)' },
-  { id: 'coral',  label: '코랄',  gradient: 'linear-gradient(135deg, #9F1239 0%, #FB7185 100%)' },
-  { id: 'night',  label: '심야',  gradient: 'linear-gradient(135deg, #1E1B4B 0%, #6366F1 100%)' },
-  { id: 'rose',   label: '로즈',  gradient: 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)' },
+  { id: 'purple', label: '보라',  gradient: 'linear-gradient(135deg, #C4BFEE 0%, #E8E5FA 100%)' },
+  { id: 'teal',   label: '청록',  gradient: 'linear-gradient(135deg, #99D6CC 0%, #D1F5EF 100%)' },
+  { id: 'amber',  label: '호박',  gradient: 'linear-gradient(135deg, #F5CFA0 0%, #FDE9C9 100%)' },
+  { id: 'coral',  label: '코랄',  gradient: 'linear-gradient(135deg, #F5A8B0 0%, #FDCDD2 100%)' },
+  { id: 'night',  label: '슬레이트', gradient: 'linear-gradient(135deg, #A5B4D4 0%, #D4DCF0 100%)' },
+  { id: 'rose',   label: '라벤더', gradient: 'linear-gradient(135deg, #C9B8EE 0%, #E8DCFA 100%)' },
 ]
 
 /** project.coverImage 값(프리셋 id 또는 URL)을 style 객체로 변환 */

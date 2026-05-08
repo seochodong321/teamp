@@ -503,7 +503,7 @@ export default function ProjectPage() {
             <span className={styles.categoryBadge}>{project.category}</span>
             {/* 커버 없을 때만 이름 표시 (커버에 이모지가 있으므로) */}
             <h1 className={styles.projectName}>
-              {!project.coverImage && project.emoji && <span style={{ marginRight: 8 }}>{project.emoji}</span>}
+              {project.emoji && <span style={{ marginRight: 8 }}>{project.emoji}</span>}
               {project.name}
             </h1>
             <p className={styles.projectPurpose}>{project.purpose}</p>

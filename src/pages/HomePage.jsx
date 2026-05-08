@@ -512,7 +512,7 @@ export default function HomePage() {
                   <span className={styles.cardCategory}>{p.category}</span>
                   <h3 className={styles.cardName}>
                     {/* 커버가 없을 때만 이모지를 이름 앞에 표시 */}
-                    {!p.coverImage && p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                    {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
                     {p.name}
                   </h3>
                 </div>
