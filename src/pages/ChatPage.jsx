@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -19,52 +19,89 @@ function avatarStyle(userId) {
   return USER_COLORS[Math.abs(h) % USER_COLORS.length]
 }
 
+function getMsgDate(msg) {
+  if (!msg.createdAt) return new Date().toISOString().split('T')[0]
+  try {
+    const d = msg.createdAt.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt)
+    return d.toISOString().split('T')[0]
+  } catch {
+    return new Date().toISOString().split('T')[0]
+  }
+}
+
+function formatDateLabel(dateStr) {
+  const today     = new Date().toISOString().split('T')[0]
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  if (dateStr === today) return '오늘'
+  if (dateStr === yesterday) return '어제'
+  const [, m, d] = dateStr.split('-')
+  return `${parseInt(m)}월 ${parseInt(d)}일`
+}
+
+function linkify(text) {
+  if (!text || typeof text !== 'string') return text
+  const parts = text.split(/(https?:\/\/[^\s]+)/)
+  if (parts.length === 1) return text
+  return parts.map((part, i) =>
+    i % 2 === 1
+      ? <a key={i} href={part} target="_blank" rel="noreferrer noopener" className={styles.msgLink}>{part}</a>
+      : part
+  )
+}
+
+const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
+
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages, leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers } = useStore()
+  const {
+    projects, messages, currentUser,
+    sendMessage, sendFile, sendPoll, votePoll, markAsRead,
+    dmRooms, dmRoomList, setRoomMessages,
+    leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers,
+  } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
-
-  // 일반 채팅방 or DM 방 (dmRooms 캐시 → dmRoomList Firestore 순서로 탐색)
-  const dmRoom = Object.values(dmRooms).find((r) => r.id === roomId)
-    || dmRoomList.find((r) => r.id === roomId)
-    || null
+  const dmRoom  = Object.values(dmRooms).find((r) => r.id === roomId)
+    || dmRoomList.find((r) => r.id === roomId) || null
   const room = project?.rooms.find((r) => r.id === roomId) || dmRoom
-
   const roomMessages = messages[roomId] || []
-  const [text, setText]           = useState('')
-  const [mode, setMode]           = useState('text') // 'text' | 'poll'
-  const [pollQ, setPollQ]         = useState('')
-  const [pollOptions, setPollOptions] = useState(['', ''])
-  const [showToolbar, setShowToolbar] = useState(false)
-  const [lightbox, setLightbox]   = useState(null)
-  const [profilePopup, setProfilePopup] = useState(null) // { userId, name, avStyle, x, y, loading, data }
 
-  const isComposing  = useRef(false)
-  const bottomRef    = useRef(null)
-  const fileRef      = useRef(null)
-  const isInitialRef = useRef(true) // 방 진입 시 첫 로드 여부
+  // ─── state ─────────────────────────────────────────────────────
+  const [text, setText]                   = useState('')
+  const [mode, setMode]                   = useState('text')
+  const [pollQ, setPollQ]                 = useState('')
+  const [pollOptions, setPollOptions]     = useState(['', ''])
+  const [showToolbar, setShowToolbar]     = useState(false)
+  const [lightbox, setLightbox]           = useState(null)
+  const [profilePopup, setProfilePopup]   = useState(null)
+  const [sendPulseActive, setSendPulse]   = useState(false)
+  const [showLeave, setShowLeave]         = useState(false)
+  const [leaving, setLeaving]             = useState(false)
+  const [showScrollBtn, setShowScrollBtn] = useState(false)
 
-  // 채팅방 진입 시 Firestore 메시지 실시간 구독
+  // ─── refs ──────────────────────────────────────────────────────
+  const isComposing   = useRef(false)
+  const bottomRef     = useRef(null)
+  const fileRef       = useRef(null)
+  const textareaRef   = useRef(null)
+  const messagesRef   = useRef(null)
+  const isInitialRef  = useRef(true)
+  const nearBottomRef = useRef(true)
+
+  // ─── Firestore 메시지 실시간 구독 ─────────────────────────────
   useEffect(() => {
-    const q = query(
-      collection(db, 'rooms', roomId, 'messages'),
-      orderBy('createdAt', 'asc')
-    )
-    const unsub = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
-      setRoomMessages(roomId, msgs)
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('createdAt', 'asc'))
+    const unsub = onSnapshot(q, (snap) => {
+      setRoomMessages(roomId, snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     })
     return () => unsub()
   }, [roomId, setRoomMessages])
 
   // 방 전환 시 초기 플래그 리셋
-  useEffect(() => {
-    isInitialRef.current = true
-  }, [roomId])
+  useEffect(() => { isInitialRef.current = true }, [roomId])
 
-  // 프로필 팝업 외부 클릭 시 닫기
+  // 프로필 팝업 외부 클릭 닫기
   useEffect(() => {
     if (!profilePopup) return
     const close = () => setProfilePopup(null)
@@ -72,37 +109,20 @@ export default function ChatPage() {
     return () => document.removeEventListener('click', close)
   }, [profilePopup])
 
-  const handleAvatarClick = async (e, userId, name, avStyle) => {
-    e.stopPropagation()
-    const rect = e.currentTarget.getBoundingClientRect()
-    // 뷰포트 오른쪽 넘치면 왼쪽에 표시
-    const x = rect.right + 220 > window.innerWidth ? rect.left - 230 : rect.right + 10
-    const y = Math.min(rect.top, window.innerHeight - 260)
-    setProfilePopup({ userId, name, avStyle, x, y, loading: true, data: null })
-    try {
-      const snap = await getDoc(doc(db, 'users', userId))
-      const data = snap.exists() ? snap.data() : {}
-      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data } : prev)
-    } catch {
-      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data: {} } : prev)
-    }
-  }
-
-  // 새 메시지 도착 시 스크롤 + 읽음 처리
+  // 새 메시지 → 스크롤 (nearBottom일 때만) + 읽음 처리
   useEffect(() => {
     if (!bottomRef.current) return
     if (isInitialRef.current) {
-      // 진입 시 애니메이션 없이 즉시 맨 아래로
       bottomRef.current.scrollIntoView({ behavior: 'instant' })
       isInitialRef.current = false
-    } else {
-      // 이후 새 메시지는 부드럽게
+      markAsRead(roomId)
+    } else if (nearBottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+      markAsRead(roomId)
     }
-    markAsRead(roomId)
   }, [roomMessages.length, roomId, markAsRead])
 
-  // 내가 읽지 않은 메시지에 readBy 추가 (배치 처리)
+  // 읽지 않은 메시지에 readBy 추가 (배치)
   useEffect(() => {
     if (!currentUser?.id) return
     const unread = roomMessages.filter(
@@ -116,46 +136,36 @@ export default function ChatPage() {
     batch.commit().catch(() => {})
   }, [roomMessages, roomId, currentUser?.id])
 
-  if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
+  // ─── 핸들러 ────────────────────────────────────────────────────
+  const handleMessagesScroll = useCallback(() => {
+    const el = messagesRef.current
+    if (!el) return
+    const dist = el.scrollHeight - el.scrollTop - el.clientHeight
+    nearBottomRef.current = dist < 150
+    setShowScrollBtn(dist > 220)
+  }, [])
 
-  const isDm = !!dmRoom
-  const otherUserId   = isDm ? (dmRoom?.participants || []).find((id) => id !== currentUser.id) : null
-  const otherUserName = isDm ? (dmRoom?.participantNames?.[otherUserId] || '상대방') : null
-  const roomName      = isDm ? (otherUserName || '1:1 대화') : room?.name
-  const otherLeft     = isDm && (dmRoom?.left || []).includes(otherUserId)
-  const iBlocked      = isDm && (blockedUsers || []).includes(otherUserId)
-  const canSend       = !otherLeft && !iBlocked
-  const backLabel = isDm ? '← 홈' : `← ${project?.name || ''}`
-  const backPath  = isDm ? '/home' : `/project/${projectId}`
+  const scrollToBottom = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    setShowScrollBtn(false)
+  }, [])
+
+  const handleTextChange = (e) => {
+    setText(e.target.value)
+    const ta = textareaRef.current
+    if (ta) {
+      ta.style.height = 'auto'
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
+    }
+  }
 
   const handleSend = () => {
     if (!text.trim()) return
     sendMessage(roomId, text.trim())
     setText('')
-    // 전송 버튼 펄스 효과
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setSendPulse(true)
     setTimeout(() => setSendPulse(false), 400)
-  }
-
-  const [sendPulseActive, setSendPulse] = useState(false)
-  const [showLeave, setShowLeave]       = useState(false)
-  const [leaving, setLeaving]           = useState(false)
-
-  const handleLeaveDm = async () => {
-    // 상태 변경 전에 목적지 결정 — 마무리된 프로젝트면 홈으로
-    const linkedProject = projects.find((p) => p.id === (dmRoom?.projectId || projectId))
-    const destination = linkedProject?.status === 'active'
-      ? `/project/${linkedProject.id}`
-      : '/home'
-
-    // 먼저 이동 후 정리 — 타이밍 문제(흰 화면) 방지
-    navigate(destination)
-    setShowLeave(false)
-    try {
-      await leaveDmRoom(roomId)
-    } catch (e) {
-      console.error('DM 나가기 오류:', e)
-    }
   }
 
   const handleKey = (e) => {
@@ -180,10 +190,46 @@ export default function ChatPage() {
     setPollQ(''); setPollOptions(['', '']); setMode('text'); setShowToolbar(false)
   }
 
-  const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
+  const handleAvatarClick = async (e, userId, name, avStyle) => {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = rect.right + 220 > window.innerWidth ? rect.left - 230 : rect.right + 10
+    const y = Math.min(rect.top, window.innerHeight - 260)
+    setProfilePopup({ userId, name, avStyle, x, y, loading: true, data: null })
+    try {
+      const snap = await getDoc(doc(db, 'users', userId))
+      const data = snap.exists() ? snap.data() : {}
+      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data } : prev)
+    } catch {
+      setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data: {} } : prev)
+    }
+  }
+
+  const handleLeaveDm = async () => {
+    const linkedProject = projects.find((p) => p.id === (dmRoom?.projectId || projectId))
+    const destination = linkedProject?.status === 'active' ? `/project/${linkedProject.id}` : '/home'
+    navigate(destination)
+    setShowLeave(false)
+    setLeaving(false)
+    try { await leaveDmRoom(roomId) } catch (e) { console.error('DM 나가기 오류:', e) }
+  }
+
+  // ─── 가드 ──────────────────────────────────────────────────────
+  if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
+
+  // ─── DM 메타 ──────────────────────────────────────────────────
+  const isDm          = !!dmRoom
+  const otherUserId   = isDm ? (dmRoom?.participants || []).find((id) => id !== currentUser.id) : null
+  const otherUserName = isDm ? (dmRoom?.participantNames?.[otherUserId] || '상대방') : null
+  const roomName      = isDm ? (otherUserName || '1:1 대화') : room?.name
+  const otherLeft     = isDm && (dmRoom?.left || []).includes(otherUserId)
+  const iBlocked      = isDm && (blockedUsers || []).includes(otherUserId)
+  const backLabel     = isDm ? '← 홈' : `← ${project?.name || ''}`
+  const backPath      = isDm ? '/home' : `/project/${projectId}`
 
   return (
     <div className={styles.page}>
+      {/* 라이트박스 */}
       {lightbox && (
         <div className={styles.lightbox} onClick={() => setLightbox(null)}>
           <img src={lightbox.url} alt={lightbox.name} className={styles.lightboxImg} onClick={(e) => e.stopPropagation()} />
@@ -194,7 +240,8 @@ export default function ChatPage() {
           </div>
         </div>
       )}
-      {/* 아바타 클릭 → 미니 프로필 카드 */}
+
+      {/* 미니 프로필 카드 */}
       {profilePopup && profilePopup.userId !== currentUser.id && (() => {
         const pd = profilePopup.data || {}
         const sharedProjects = projects.filter((p) =>
@@ -204,14 +251,11 @@ export default function ChatPage() {
         )
         const isBlocked = (blockedUsers || []).includes(profilePopup.userId)
         return (
-          <div
-            className={styles.profilePopup}
+          <div className={styles.profilePopup}
             style={{ top: profilePopup.y, left: profilePopup.x }}
             onClick={(e) => e.stopPropagation()}>
-            {/* 상단: 아바타 + 이름 + 소속 */}
             <div className={styles.ppHeader}>
-              <div className={styles.ppAvatar}
-                style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
+              <div className={styles.ppAvatar} style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
                 {pd.photoURL
                   ? <img src={pd.photoURL} alt={profilePopup.name} className={styles.ppAvatarImg} />
                   : profilePopup.name.charAt(0)
@@ -222,30 +266,17 @@ export default function ChatPage() {
                 {pd.affiliation && <p className={styles.ppAffiliation}>🏢 {pd.affiliation}</p>}
               </div>
             </div>
-            {/* 원라이너 */}
             {profilePopup.loading
               ? <p className={styles.ppLoading}>불러오는 중...</p>
-              : pd.oneliner
-                ? <p className={styles.ppOneliner}>"{pd.oneliner}"</p>
-                : null
+              : pd.oneliner ? <p className={styles.ppOneliner}>"{pd.oneliner}"</p> : null
             }
-            {/* 함께한 프로젝트 */}
             {sharedProjects.length > 0 && (
-              <p className={styles.ppShared}>
-                함께한 프로젝트 {sharedProjects.length}개
-              </p>
+              <p className={styles.ppShared}>함께한 프로젝트 {sharedProjects.length}개</p>
             )}
-            {/* 차단 버튼 (아주 작게) */}
             <div className={styles.ppFooter}>
               {isBlocked
-                ? <button className={styles.ppUnblockBtn}
-                    onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>
-                    차단 해제
-                  </button>
-                : <button className={styles.ppBlockBtn}
-                    onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>
-                    차단하기
-                  </button>
+                ? <button className={styles.ppUnblockBtn} onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>차단 해제</button>
+                : <button className={styles.ppBlockBtn} onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>차단하기</button>
               }
             </div>
           </div>
@@ -276,8 +307,7 @@ export default function ChatPage() {
           {!isDm && project && (
             <span className={styles.roomMeta}>
               {project.members.filter((m) =>
-                m.role === 'leader' || m.role === 'sub-leader' ||
-                m.roomIds.includes(roomId)
+                m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId)
               ).length}명
             </span>
           )}
@@ -289,33 +319,45 @@ export default function ChatPage() {
       </div>
 
       {/* 메시지 목록 */}
-      <div className={styles.messages}>
-        {roomMessages.length === 0 ? (
+      <div className={styles.messages} ref={messagesRef} onScroll={handleMessagesScroll}>
+        {roomMessages.length === 0 && (
           <div className={styles.emptyMessages}>
             <div className={styles.emptyIcon}>{isDm ? '💬' : '#'}</div>
             <p className={styles.emptyTitle}>{isDm ? `${roomName}와의 대화` : `# ${roomName}`}</p>
             <p className={styles.emptySub}>아직 메시지가 없어요. 첫 번째 메시지를 보내보세요!</p>
           </div>
-        ) : (
-          <div className={styles.dateDivider}><span>오늘</span></div>
         )}
 
         {roomMessages.map((msg, index) => {
-          const isMine   = msg.senderId === currentUser.id
-          const isSystem = msg.senderId === 'system'
-          const member   = project?.members.find((m) => m.id === msg.senderId)
+          const isMine     = msg.senderId === currentUser.id
+          const isSystem   = msg.senderId === 'system'
+          const member     = project?.members.find((m) => m.id === msg.senderId)
           const senderName = msg.senderName || '알 수 없음'
 
-          // 같은 사람이 연속으로 보낸 메시지면 아바타/이름 생략
           const prevMsg  = index > 0 ? roomMessages[index - 1] : null
-          const isGrouped = !isDm && !isMine && prevMsg
+          const nextMsg  = index < roomMessages.length - 1 ? roomMessages[index + 1] : null
+          const msgDate  = getMsgDate(msg)
+          const prevDate = prevMsg ? getMsgDate(prevMsg) : null
+          const nextDate = nextMsg ? getMsgDate(nextMsg) : null
+
+          const showDateDivider = msgDate !== prevDate
+
+          // 연속 메시지 그루핑: DM 포함, 날짜 경계·시스템 메시지 제외
+          const isGrouped = !isMine && !isSystem && prevMsg
+            && !showDateDivider
             && prevMsg.senderId === msg.senderId
             && prevMsg.senderId !== 'system'
             && msg.type !== 'notify' && prevMsg.type !== 'notify'
 
+          // 같은 발신자·날짜의 마지막 메시지일 때만 시간 표시
+          const isLastInGroup = !nextMsg
+            || nextMsg.senderId !== msg.senderId
+            || nextDate !== msgDate
+            || nextMsg.type === 'notify'
+            || nextMsg.senderId === 'system'
+
           const avStyle = avatarStyle(msg.senderId)
 
-          // 아바타 요소 (그루핑이면 빈 공간으로 정렬 유지)
           const avatarEl = isMine ? null : isGrouped
             ? <div className={styles.avatarGap} />
             : (
@@ -327,70 +369,80 @@ export default function ChatPage() {
               </div>
             )
 
-          // 이름 행 (그루핑이면 생략, DM이면 생략)
-          const nameEl = (!isMine && !isDm && !isGrouped) ? (
+          const nameEl = (!isMine && !isDm && !isGrouped && !isSystem) ? (
             <span className={styles.sender}>
               <span style={{ color: avStyle.text, fontWeight: 700 }}>{senderName}</span>
               {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
             </span>
           ) : null
 
+          const timeEl = isLastInGroup ? <span className={styles.time}>{msg.time}</span> : null
+
           // 시스템 알림
           if (isSystem || msg.type === 'notify') {
             const isLeaveMsg = isDm && otherLeft && msg.text?.includes('퇴장')
             return (
-              <div key={msg.id} className={styles.systemMsg}>
-                <span>{msg.text}</span>
-                {isLeaveMsg && (
-                  <button className={styles.reinviteBtn}
-                    onClick={() => reinviteToDm(roomId, otherUserName)}>
-                    다시 초대하기
-                  </button>
-                )}
-              </div>
+              <React.Fragment key={msg.id}>
+                {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
+                <div className={styles.systemMsg}>
+                  <span>{msg.text}</span>
+                  {isLeaveMsg && (
+                    <button className={styles.reinviteBtn} onClick={() => reinviteToDm(roomId, otherUserName)}>
+                      다시 초대하기
+                    </button>
+                  )}
+                </div>
+              </React.Fragment>
             )
           }
 
+          const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
+
           // 이미지
           if (msg.type === 'image') {
-            const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
             return (
-              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
-                {avatarEl}
-                <div className={styles.bubbleWrap}>
-                  {nameEl}
-                  <img
-                    src={msg.fileUrl} alt={msg.text}
-                    className={styles.chatImg}
-                    onClick={() => setLightbox({ url: msg.fileUrl, name: msg.text })}
-                  />
-                  <div className={styles.timeRow}>
-                    {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
-                    <span className={styles.time}>{msg.time}</span>
+              <React.Fragment key={msg.id}>
+                {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
+                <div className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+                  {avatarEl}
+                  <div className={styles.bubbleWrap}>
+                    {nameEl}
+                    <img src={msg.fileUrl} alt={msg.text} className={styles.chatImg}
+                      onClick={() => setLightbox({ url: msg.fileUrl, name: msg.text })} />
+                    {(timeEl || (isMine && readCount > 0)) && (
+                      <div className={styles.timeRow}>
+                        {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                        {timeEl}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             )
           }
 
           // 파일
           if (msg.type === 'file') {
-            const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
             return (
-              <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
-                {avatarEl}
-                <div className={styles.bubbleWrap}>
-                  {nameEl}
-                  <div className={`${styles.fileBubble} ${isMine ? styles.fileBubbleMine : ''}`}>
-                    <span>📎</span>
-                    <span className={styles.fileName}>{msg.text}</span>
-                  </div>
-                  <div className={styles.timeRow}>
-                    {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
-                    <span className={styles.time}>{msg.time}</span>
+              <React.Fragment key={msg.id}>
+                {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
+                <div className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+                  {avatarEl}
+                  <div className={styles.bubbleWrap}>
+                    {nameEl}
+                    <div className={`${styles.fileBubble} ${isMine ? styles.fileBubbleMine : ''}`}>
+                      <span>📎</span>
+                      <span className={styles.fileName}>{msg.text}</span>
+                    </div>
+                    {(timeEl || (isMine && readCount > 0)) && (
+                      <div className={styles.timeRow}>
+                        {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                        {timeEl}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              </React.Fragment>
             )
           }
 
@@ -398,54 +450,66 @@ export default function ChatPage() {
           if (msg.type === 'poll') {
             const total = msg.options.reduce((s, o) => s + o.votes.length, 0)
             return (
-              <div key={msg.id} className={`${styles.pollWrap} ${isGrouped ? styles.rowGrouped : ''}`}>
-                {avatarEl}
-                <div className={styles.pollCard}>
-                  <div className={styles.pollHeader}>
-                    {!isMine && !isDm && <span className={styles.pollAuthor} style={{ color: avStyle.text }}>{senderName}</span>}
-                    <span className={styles.pollBadge}>📊 투표</span>
+              <React.Fragment key={msg.id}>
+                {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
+                <div className={`${styles.pollWrap} ${isGrouped ? styles.rowGrouped : ''}`}>
+                  {avatarEl}
+                  <div className={styles.pollCard}>
+                    <div className={styles.pollHeader}>
+                      {!isMine && !isDm && <span className={styles.pollAuthor} style={{ color: avStyle.text }}>{senderName}</span>}
+                      <span className={styles.pollBadge}>📊 투표</span>
+                    </div>
+                    <p className={styles.pollQuestion}>{msg.text}</p>
+                    <div className={styles.pollOptions}>
+                      {msg.options.map((opt) => {
+                        const pct   = total === 0 ? 0 : Math.round((opt.votes.length / total) * 100)
+                        const voted = opt.votes.includes(currentUser.id)
+                        return (
+                          <button key={opt.id}
+                            className={`${styles.pollOption} ${voted ? styles.pollOptionVoted : ''}`}
+                            onClick={() => votePoll(roomId, msg.id, opt.id)}>
+                            <div className={styles.pollBar} style={{ width: `${pct}%` }} />
+                            <span className={styles.pollOptLabel}>{opt.label}</span>
+                            <span className={styles.pollOptPct}>{pct}%</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <p className={styles.pollTotal}>총 {total}명 참여</p>
                   </div>
-                  <p className={styles.pollQuestion}>{msg.text}</p>
-                  <div className={styles.pollOptions}>
-                    {msg.options.map((opt) => {
-                      const pct   = total === 0 ? 0 : Math.round((opt.votes.length / total) * 100)
-                      const voted = opt.votes.includes(currentUser.id)
-                      return (
-                        <button key={opt.id}
-                          className={`${styles.pollOption} ${voted ? styles.pollOptionVoted : ''}`}
-                          onClick={() => votePoll(roomId, msg.id, opt.id)}>
-                          <div className={styles.pollBar} style={{ width: `${pct}%` }} />
-                          <span className={styles.pollOptLabel}>{opt.label}</span>
-                          <span className={styles.pollOptPct}>{pct}%</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                  <p className={styles.pollTotal}>총 {total}명 참여</p>
                 </div>
-              </div>
+              </React.Fragment>
             )
           }
 
           // 일반 텍스트
-          const readCount = (msg.readBy || []).filter((id) => id !== msg.senderId).length
           return (
-            <div key={msg.id} className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
-              {avatarEl}
-              <div className={styles.bubbleWrap}>
-                {nameEl}
-                <div className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}>
-                  {msg.text}
-                </div>
-                <div className={styles.timeRow}>
-                  {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
-                  <span className={styles.time}>{msg.time}</span>
+            <React.Fragment key={msg.id}>
+              {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
+              <div className={`${styles.row} ${isMine ? styles.rowMine : ''} ${isGrouped ? styles.rowGrouped : ''}`}>
+                {avatarEl}
+                <div className={styles.bubbleWrap}>
+                  {nameEl}
+                  <div className={`${styles.bubble} ${isMine ? styles.bubbleMine : styles.bubbleOther}`}>
+                    {linkify(msg.text)}
+                  </div>
+                  {(timeEl || (isMine && readCount > 0)) && (
+                    <div className={styles.timeRow}>
+                      {isMine && readCount > 0 && <span className={styles.readReceipt}>읽음 {readCount}</span>}
+                      {timeEl}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            </React.Fragment>
           )
         })}
         <div ref={bottomRef} />
+
+        {/* 스크롤 아래로 버튼 */}
+        {showScrollBtn && (
+          <button className={styles.scrollBottomBtn} onClick={scrollToBottom}>↓</button>
+        )}
       </div>
 
       {/* 투표 만들기 */}
@@ -503,9 +567,10 @@ export default function ChatPage() {
             )}
           </div>
           <textarea
+            ref={textareaRef}
             className={styles.input}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTextChange}
             onKeyDown={handleKey}
             onCompositionStart={() => { isComposing.current = true }}
             onCompositionEnd={() => { isComposing.current = false }}
