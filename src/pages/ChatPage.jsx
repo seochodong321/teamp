@@ -59,6 +59,7 @@ export default function ChatPage() {
     sendMessage, sendFile, sendPoll, votePoll, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
     leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers,
+    removeChatToastsByRoom,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -97,6 +98,9 @@ export default function ChatPage() {
     })
     return () => unsub()
   }, [roomId, setRoomMessages])
+
+  // 방 진입 시 해당 방 토스트 즉시 제거
+  useEffect(() => { removeChatToastsByRoom(roomId) }, [roomId, removeChatToastsByRoom])
 
   // 방 전환 시 초기 플래그 리셋
   useEffect(() => { isInitialRef.current = true }, [roomId])

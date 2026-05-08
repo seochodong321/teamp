@@ -1343,6 +1343,8 @@ export const useStore = create(
       },
       removeChatToast: (id) =>
         set((s) => ({ chatToasts: s.chatToasts.filter((t) => t.id !== id) })),
+      removeChatToastsByRoom: (roomId) =>
+        set((s) => ({ chatToasts: s.chatToasts.filter((t) => t.roomId !== roomId) })),
       clearChatToasts: () => set({ chatToasts: [] }),
 
       // ─── 전역 에러 토스트 ──────────────────────────────────

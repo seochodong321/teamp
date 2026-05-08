@@ -10,16 +10,16 @@
 .container {
   position: fixed;
   bottom: 24px;
-  left: 16px;
+  right: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   z-index: 800;
   pointer-events: none;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
-/* 모바일: 탭바(56px) + 여백 위, 오른쪽 정렬로 */
+/* 모바일: 탭바(56px) + 여백 위 */
 @media (max-width: 768px) {
   .container {
     bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px);
@@ -41,7 +41,7 @@
   padding: 4px 12px;
   cursor: pointer;
   transition: all 0.15s;
-  align-self: flex-start;
+  align-self: flex-end;
 }
 .clearAll:hover { border-color: var(--coral); color: var(--coral); }
 
