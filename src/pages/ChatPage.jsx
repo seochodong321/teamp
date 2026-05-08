@@ -62,8 +62,8 @@ export default function ChatPage() {
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
-  const dmRoom  = Object.values(dmRooms).find((r) => r.id === roomId)
-    || dmRoomList.find((r) => r.id === roomId) || null
+  const dmRoom  = dmRoomList.find((r) => r.id === roomId)
+    || Object.values(dmRooms).find((r) => r.id === roomId) || null
   const room = project?.rooms.find((r) => r.id === roomId) || dmRoom
   const roomMessages = messages[roomId] || []
 

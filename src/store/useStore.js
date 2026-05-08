@@ -527,11 +527,11 @@ export const useStore = create(
         const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
         const dmKey = data.dmKey
 
-        // 시스템 메시지(퇴장 알림) 전부 삭제 — 재개 시 이전 흔적 없애기
+        // 모든 메시지 삭제 — 재개 시 클린 슬레이트
         const msgsRef = collection(db, 'rooms', roomId, 'messages')
-        const sysSnap = await getDocs(query(msgsRef, where('senderId', '==', 'system')))
+        const allMsgsSnap = await getDocs(msgsRef)
         const batch = writeBatch(db)
-        sysSnap.docs.forEach((d) => batch.delete(d.ref))
+        allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
 
         // left 배열 초기화 (상대방 재입장 허용)
         batch.update(dmRef, { left: [] })
@@ -548,12 +548,12 @@ export const useStore = create(
         })
         await batch.commit()
 
-        // 로컬 캐시 즉시 업데이트
+        // 로컬 캐시 즉시 업데이트 (메시지 비우기 + left 초기화)
         set((s) => {
           const newDmRooms = { ...s.dmRooms }
           const key = dmKey || Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
           if (key && newDmRooms[key]) newDmRooms[key] = { ...newDmRooms[key], left: [] }
-          return { dmRooms: newDmRooms }
+          return { dmRooms: newDmRooms, messages: { ...s.messages, [roomId]: [] } }
         })
         return { id: roomId, ...data, left: [] }
       },
@@ -578,20 +578,47 @@ export const useStore = create(
       },
 
       getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {
-        const { currentUser, dmRooms, dmRoomList } = get()
+        const { currentUser } = get()
         const dmKey = [currentUser.id, otherUserId].sort().join('_')
         const roomId = `dm_${dmKey}`
+        const dmRef = doc(db, 'dmRooms', roomId)
 
-        // 1) Firestore 구독 목록에서 활성 방 검색 (left에 내가 없어야 함)
-        const activeInList = dmRoomList.find(
-          (r) => r.id === roomId && !(r.left || []).includes(currentUser.id)
-        )
-        if (activeInList) return activeInList
+        // Firestore를 직접 확인 — dmRoomList 타이밍 이슈 방지
+        const dmSnap = await getDoc(dmRef)
 
-        // 2) 로컬 캐시 확인
-        if (dmRooms[dmKey] && !(dmRooms[dmKey].left || []).includes(currentUser.id)) return dmRooms[dmKey]
+        if (dmSnap.exists()) {
+          const data = { id: roomId, ...dmSnap.data() }
+          const leftArr = data.left || []
 
-        // 3) 신규 생성 (A-B 사이 방은 항상 하나 — dm_A_B 고정 ID)
+          if (!leftArr.includes(currentUser.id)) {
+            // 방이 존재하고 내가 나간 적 없음 — 그대로 반환
+            return data
+          }
+
+          // 내가 left에 있음 — 재입장 처리 (클린 슬레이트)
+          const msgsRef = collection(db, 'rooms', roomId, 'messages')
+          const allMsgsSnap = await getDocs(msgsRef)
+          const batch = writeBatch(db)
+          allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+          const newLeft = leftArr.filter((id) => id !== currentUser.id)
+          batch.update(dmRef, { left: newLeft })
+          const notiRef = doc(collection(db, 'notifications'))
+          batch.set(notiRef, {
+            targetUserId: otherUserId, type: 'dm',
+            text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
+            link: `/project/${projectId}/chat/${roomId}`,
+            read: false, createdAt: serverTimestamp(),
+          })
+          await batch.commit()
+          const updatedRoom = { ...data, left: newLeft }
+          set((s) => ({
+            dmRooms: { ...s.dmRooms, [dmKey]: updatedRoom },
+            messages: { ...s.messages, [roomId]: [] },
+          }))
+          return updatedRoom
+        }
+
+        // 방 없음 — 신규 생성
         const newRoom = {
           id: roomId, dmKey, projectId,
           participants: [currentUser.id, otherUserId],
@@ -599,7 +626,16 @@ export const useStore = create(
           isDirect: true, createdBy: currentUser.id,
           left: [], lastMessage: '',
         }
-        await setDoc(doc(db, 'dmRooms', roomId), { ...newRoom, createdAt: serverTimestamp() })
+        const batch = writeBatch(db)
+        batch.set(dmRef, { ...newRoom, createdAt: serverTimestamp() })
+        const notiRef = doc(collection(db, 'notifications'))
+        batch.set(notiRef, {
+          targetUserId: otherUserId, type: 'dm',
+          text: `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`,
+          link: `/project/${projectId}/chat/${roomId}`,
+          read: false, createdAt: serverTimestamp(),
+        })
+        await batch.commit()
         set((s) => ({
           dmRooms: { ...s.dmRooms, [dmKey]: newRoom },
           messages: { ...s.messages, [roomId]: [] },
