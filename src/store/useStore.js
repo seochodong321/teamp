@@ -868,7 +868,17 @@ export const useStore = create(
               createdAt: serverTimestamp(),
             })
           }
-          // 알림은 배정받은 사람 기기에서만 의미 있음 — 배정한 사람에게 보내지 않음
+          // 배정받은 사람에게 알림 + 토스트
+          await addDoc(collection(db, 'notifications'), {
+            targetUserId: assignee,
+            type: 'todo',
+            text: `"${title}" 할 일이 배정됐어요`,
+            projectId,
+            projectName: project?.name || '',
+            link: `/project/${projectId}?tab=todo`,
+            read: false,
+            createdAt: serverTimestamp(),
+          })
         }
 
         await txProject(projectId, (data) => ({

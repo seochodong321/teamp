@@ -19,7 +19,8 @@ export default function ChatToastContainer() {
 
   const handleClick = (toast) => {
     removeChatToast(toast.id)
-    navigate(`/project/${toast.projectId}/chat/${toast.roomId}`)
+    if (toast.link) navigate(toast.link)
+    else navigate(`/project/${toast.projectId}/chat/${toast.roomId}`)
   }
 
   const handleClearAll = () => {
@@ -49,7 +50,7 @@ export default function ChatToastContainer() {
           tabIndex={0}
         >
           <div className={styles.toastInner}>
-            <span className={styles.toastIcon}>💬</span>
+            <span className={styles.toastIcon}>{toast.icon || '💬'}</span>
             <div className={styles.toastBody}>
               <p className={styles.toastSender}>{toast.senderName}
                 {toast.roomName && <span className={styles.toastRoom}> · {toast.roomName}</span>}

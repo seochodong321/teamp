@@ -118,6 +118,19 @@ export default function App() {
                   projectId: noti.projectId,
                   link: noti.link,
                 })
+                // 할 일 배정 알림은 토스트로도 표시
+                if (noti.type === 'todo') {
+                  addChatToast({
+                    id: `ct_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    icon: '✅',
+                    senderName: noti.projectName || '할 일 알림',
+                    text: noti.text,
+                    roomId: null,
+                    projectId: noti.projectId,
+                    roomName: null,
+                    link: noti.link,
+                  })
+                }
                 updateDoc(doc(db, 'notifications', change.doc.id), { read: true }).catch(() => {})
               }
             })
