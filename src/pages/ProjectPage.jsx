@@ -205,9 +205,13 @@ export default function ProjectPage() {
   }
 
   const handleDm = async (member) => {
-    const room = await getOrCreateDmRoom(project.id, member.id, member.name)
-    setProfileMember(null)
-    navigate(`/project/${projectId}/chat/${room.id}`)
+    try {
+      const room = await getOrCreateDmRoom(project.id, member.id, member.name)
+      setProfileMember(null)
+      navigate(`/project/${projectId}/chat/${room.id}`)
+    } catch (e) {
+      console.error('[DM] 열기 실패:', e)
+    }
   }
 
   const handleDragStart = (i) => { setDragIdx(i); setDragOrder(visibleRooms) }

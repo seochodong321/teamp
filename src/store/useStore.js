@@ -583,7 +583,6 @@ export const useStore = create(
         const roomId = `dm_${dmKey}`
         const dmRef  = doc(db, 'dmRooms', roomId)
 
-        // 항상 Firestore 직접 확인 — Zustand 캐시 타이밍 이슈 방지
         const dmSnap = await getDoc(dmRef)
 
         if (dmSnap.exists()) {
@@ -591,24 +590,28 @@ export const useStore = create(
           const leftArr = data.left || []
           const hadLeft = leftArr.length > 0
 
-          // DM 버튼을 누르는 것 = 새 대화 시작 → 항상 클린 슬레이트
-          // (사이드바에서 직접 방에 들어갈 때는 getOrCreateDmRoom을 거치지 않으므로 히스토리 보존됨)
-          const msgsRef     = collection(db, 'rooms', roomId, 'messages')
-          const allMsgsSnap = await getDocs(msgsRef)
-          const batch       = writeBatch(db)
-          allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-          batch.update(dmRef, { left: [], createdBy: currentUser.id })
-          // left에 있던 상대에게만 알림 (또는 최초 이후 재시작이면 알림)
-          const notifyText = hadLeft
-            ? `💬 ${currentUser.name}님이 대화를 다시 시작했어요`
-            : `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`
-          batch.set(doc(collection(db, 'notifications')), {
-            targetUserId: otherUserId, type: 'dm',
-            text: notifyText,
-            link: `/project/${projectId}/chat/${roomId}`,
-            read: false, createdAt: serverTimestamp(),
-          })
-          await batch.commit()
+          // 메시지 삭제 + left 초기화 (실패해도 방 진입은 허용)
+          try {
+            const msgsRef     = collection(db, 'rooms', roomId, 'messages')
+            const allMsgsSnap = await getDocs(msgsRef)
+            const batch       = writeBatch(db)
+            allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+            batch.update(dmRef, { left: [], createdBy: currentUser.id })
+            await batch.commit()
+          } catch (e) {
+            console.error('[DM] 메시지 초기화 오류:', e)
+          }
+
+          // 알림은 별도로 — 실패해도 방 진입 무관
+          if (hadLeft) {
+            addDoc(collection(db, 'notifications'), {
+              targetUserId: otherUserId, type: 'dm',
+              text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
+              link: `/project/${projectId}/chat/${roomId}`,
+              read: false, createdAt: serverTimestamp(),
+            }).catch(() => {})
+          }
+
           const freshRoom = { ...data, left: [], createdBy: currentUser.id }
           set((s) => ({
             dmRooms:  { ...s.dmRooms,  [dmKey]: freshRoom },
@@ -625,15 +628,18 @@ export const useStore = create(
           isDirect: true, createdBy: currentUser.id,
           left: [], lastMessage: '',
         }
-        const batch = writeBatch(db)
-        batch.set(dmRef, { ...newRoom, createdAt: serverTimestamp() })
-        batch.set(doc(collection(db, 'notifications')), {
+        try {
+          await setDoc(dmRef, { ...newRoom, createdAt: serverTimestamp() })
+        } catch (e) {
+          console.error('[DM] 방 생성 오류:', e)
+          throw e  // 방 생성은 필수 — 실패 시 상위로 전파
+        }
+        addDoc(collection(db, 'notifications'), {
           targetUserId: otherUserId, type: 'dm',
           text: `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`,
           link: `/project/${projectId}/chat/${roomId}`,
           read: false, createdAt: serverTimestamp(),
-        })
-        await batch.commit()
+        }).catch(() => {})
         set((s) => ({
           dmRooms:  { ...s.dmRooms,  [dmKey]: newRoom },
           messages: { ...s.messages, [roomId]: [] },

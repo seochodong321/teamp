@@ -59,9 +59,13 @@ export default function ConnectPage() {
     if (!profile) return
     const shared = projects.find((p) => p.memberIds?.includes(profile.id))
     if (!shared) return
-    const room = await getOrCreateDmRoom(shared.id, profile.id, profile.name)
-    setProfile(null)
-    navigate(`/project/${shared.id}/chat/${room.id}`)
+    try {
+      const room = await getOrCreateDmRoom(shared.id, profile.id, profile.name)
+      setProfile(null)
+      navigate(`/project/${shared.id}/chat/${room.id}`)
+    } catch (e) {
+      console.error('[DM] 열기 실패:', e)
+    }
   }
 
   return (
