@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase.js'
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { FLOWER_TAGS } from '../constants.js'
 import styles from './ProfilePage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
@@ -15,6 +17,10 @@ export default function ProfilePage() {
 
   // 나의 여정 통계
   const [flowers, setFlowers] = useState(0)
+  const [flowerTags, setFlowerTags] = useState({})
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const photoFileRef = useRef(null)
+
   const completedProjects = myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length
   const doneTodos = myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length
   const leaderProjects = myProjects.filter((p) => !p.isTutorial && p.members.find((m) => m.id === currentUser?.id)?.role === 'leader').length
@@ -23,16 +29,24 @@ export default function ProfilePage() {
     const fetchFlowers = async () => {
       const archivedWithWrapup = myProjects.filter((p) => p.status === 'archived' && p.wrapupId && !p.isTutorial)
       let count = 0
+      const tagCounts = {}
       await Promise.all(archivedWithWrapup.map(async (p) => {
         try {
           const snap = await getDoc(doc(db, 'wrapups', p.wrapupId))
           if (snap.exists()) {
             const data = snap.data()
-            count += (data.feedbacks || []).filter((f) => f.toUserId === currentUser?.id).length
+            const myFeedbacks = (data.feedbacks || []).filter((f) => f.toUserId === currentUser?.id)
+            count += myFeedbacks.length
+            myFeedbacks.forEach((f) => {
+              ;(f.tags || []).forEach((tag) => {
+                tagCounts[tag.id] = (tagCounts[tag.id] || 0) + 1
+              })
+            })
           }
         } catch {}
       }))
       setFlowers(count)
+      setFlowerTags(tagCounts)
     }
     fetchFlowers()
   }, [myProjects.map((p) => p.wrapupId).join(',')])
@@ -57,6 +71,24 @@ export default function ProfilePage() {
   const saveMemo = (projectId) => {
     updateMemberMemo(projectId, currentUser.id, memoText)
     setEditingMemo(null)
+  }
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setPhotoUploading(true)
+    try {
+      const sRef = storageRef(storage, `users/${currentUser.id}/avatar.jpg`)
+      await uploadBytes(sRef, file)
+      const url = await getDownloadURL(sRef)
+      await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
+      updateProfile({ photoURL: url })
+    } catch {
+      alert('업로드 실패. Firebase Storage(Blaze 플랜)가 필요해요.')
+    } finally {
+      setPhotoUploading(false)
+      e.target.value = ''
+    }
   }
 
   const openEditModal = () => {
@@ -170,8 +202,13 @@ export default function ProfilePage() {
 
       {/* 프로필 카드 */}
       <div className={styles.profileCard}>
-        <div className={styles.avatarWrap}>
-          <div className={styles.avatar}>{currentUser.name.charAt(0)}</div>
+        <div className={styles.avatarWrap} onClick={() => !photoUploading && photoFileRef.current?.click()} title="프로필 사진 변경">
+          {currentUser.photoURL
+            ? <img className={styles.avatarImg} src={currentUser.photoURL} alt={currentUser.name} />
+            : <div className={styles.avatar}>{currentUser.name.charAt(0)}</div>
+          }
+          <div className={styles.avatarEditOverlay}>{photoUploading ? '⏳' : '📷'}</div>
+          <input type="file" accept="image/*" ref={photoFileRef} style={{ display: 'none' }} onChange={handlePhotoUpload} />
         </div>
         <div className={styles.info}>
           <h2 className={styles.name}>{currentUser.name}</h2>
@@ -220,6 +257,18 @@ export default function ProfilePage() {
             <span className={styles.journeyLabel}>완료한 할 일</span>
           </div>
         </div>
+        {Object.keys(flowerTags).length > 0 && (
+          <div className={styles.flowerTagsRow}>
+            {FLOWER_TAGS
+              .filter((t) => flowerTags[t.id])
+              .sort((a, b) => (flowerTags[b.id] || 0) - (flowerTags[a.id] || 0))
+              .map((t) => (
+                <span key={t.id} className={styles.flowerTag}>
+                  {t.emoji} {t.label} <strong>{flowerTags[t.id]}</strong>
+                </span>
+              ))}
+          </div>
+        )}
       </div>
 
       {/* 공개된 프로젝트 */}

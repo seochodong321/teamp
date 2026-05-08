@@ -3,18 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { FLOWER_TAGS } from '../constants.js'
 import styles from './WrapupPage.module.css'
-
-const FLOWER_TAGS = [
-  { id: 'reliable',  emoji: '🌹', label: '믿음직한' },
-  { id: 'energetic', emoji: '🌻', label: '에너지 넘치는' },
-  { id: 'detailed',  emoji: '🌷', label: '섬세한' },
-  { id: 'creative',  emoji: '🌼', label: '아이디어 부자' },
-  { id: 'pillar',    emoji: '💐', label: '팀의 기둥' },
-  { id: 'diligent',  emoji: '🍀', label: '묵묵히 해내는' },
-  { id: 'fast',      emoji: '⚡', label: '빠른 실행력' },
-  { id: 'focused',   emoji: '🎯', label: '목표에 집중하는' },
-]
 
 export default function WrapupPage() {
   const { projectId } = useParams()

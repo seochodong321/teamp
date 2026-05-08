@@ -266,6 +266,7 @@
   flex-shrink: 0;
 }
 
+.userAvatarImg { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .userName  { font-size: 13px; font-weight: 600; color: var(--text); }
 .userHandle{ font-size: 11px; color: var(--text-tertiary); }
 

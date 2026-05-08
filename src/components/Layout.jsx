@@ -203,7 +203,10 @@ export default function Layout() {
         <button className={styles.createBtn} onClick={openCreate}>+ 새 프로젝트</button>
 
         <div className={styles.userArea}>
-          <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
+          {currentUser?.photoURL
+            ? <img className={styles.userAvatarImg} src={currentUser.photoURL} alt={currentUser.name} />
+            : <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
+          }
           <div className={styles.userInfo}>
             <p className={styles.userName}>{currentUser?.name}</p>
             <p className={styles.userHandle}>{currentUser?.affiliation || currentUser?.username}</p>
