@@ -525,40 +525,37 @@ export const useStore = create(
         if (!dmSnap.exists()) return null
         const data = dmSnap.data()
         const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
-        const otherUserName = data.participantNames?.[otherUserId] || '상대방'
         const dmKey = data.dmKey
 
-        // left 배열에서 상대방 제거 + 시스템 메시지
-        const newLeft = (data.left || []).filter((id) => id !== otherUserId)
-        const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
+        // 시스템 메시지(퇴장 알림) 전부 삭제 — 재개 시 이전 흔적 없애기
+        const msgsRef = collection(db, 'rooms', roomId, 'messages')
+        const sysSnap = await getDocs(query(msgsRef, where('senderId', '==', 'system')))
         const batch = writeBatch(db)
-        batch.update(dmRef, { left: newLeft })
-        batch.set(sysRef, {
-          senderId: 'system', type: 'notify',
-          text: `${currentUser.name}님이 ${otherUserName}님을 다시 초대했어요`,
-          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-          createdAt: serverTimestamp(),
-        })
-        // 상대방에게 Firestore 알림 전송 (App.jsx의 notifications 구독이 수신)
+        sysSnap.docs.forEach((d) => batch.delete(d.ref))
+
+        // left 배열 초기화 (상대방 재입장 허용)
+        batch.update(dmRef, { left: [] })
+
+        // 상대방에게 Firestore 알림 전송
         const notiRef = doc(collection(db, 'notifications'))
         batch.set(notiRef, {
           targetUserId: otherUserId,
           type: 'dm',
-          text: `💬 ${currentUser.name}님이 다시 대화를 시작했어요`,
+          text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
           link: `/project/${data.projectId}/chat/${roomId}`,
           read: false,
           createdAt: serverTimestamp(),
         })
         await batch.commit()
 
-        // 로컬 dmRooms 캐시도 즉시 업데이트 (UI가 바로 반영되도록)
+        // 로컬 캐시 즉시 업데이트
         set((s) => {
           const newDmRooms = { ...s.dmRooms }
           const key = dmKey || Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
-          if (key && newDmRooms[key]) newDmRooms[key] = { ...newDmRooms[key], left: newLeft }
+          if (key && newDmRooms[key]) newDmRooms[key] = { ...newDmRooms[key], left: [] }
           return { dmRooms: newDmRooms }
         })
-        return { id: roomId, ...data, left: newLeft }
+        return { id: roomId, ...data, left: [] }
       },
 
       blockUser: async (targetId) => {

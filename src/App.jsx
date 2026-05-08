@@ -305,6 +305,18 @@ export default function App() {
             if (msg.senderId === 'system' || msg.type === 'notify') return
             if (window.location.pathname.includes(`/chat/${room.id}`)) return
             incrementUnread(room.id)
+            const preview = msg.type === 'image' ? '📷 사진'
+              : msg.type === 'file' ? '📎 파일'
+              : msg.type === 'poll' ? '📊 투표'
+              : (msg.text || '').slice(0, 60)
+            addChatToast({
+              id: `ct_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+              senderName: msg.senderName || '누군가',
+              text: preview,
+              roomId: room.id,
+              projectId: room.projectId,
+              roomName: msg.senderName || 'DM',
+            })
           })
         },
         (error) => console.error(`[dm-toast] room ${room.id} 구독 오류:`, error)
