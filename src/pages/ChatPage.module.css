@@ -44,7 +44,9 @@
 .dateDivider { text-align: center; margin: 4px 0; }
 .dateDivider span { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); padding: 3px 12px; border-radius: var(--radius-full); }
 
-.systemMsg { text-align: center; font-size: 12px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: var(--radius-full); padding: 5px 16px; align-self: center; max-width: 80%; }
+.systemMsg { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; font-size: 12px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: var(--radius-md); padding: 8px 16px; align-self: center; max-width: 80%; }
+.reinviteBtn { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid #C9C4F0; border-radius: var(--radius-full); padding: 4px 14px; transition: all 0.15s; }
+.reinviteBtn:hover { background: var(--primary); color: white; }
 
 .row { display: flex; align-items: flex-end; gap: 8px; }
 .rowMine { flex-direction: row-reverse; }
@@ -177,6 +179,17 @@
 /* DM 나가기 */
 .dmLeaveBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
 .dmLeaveBtn:hover { border-color: #E24B4A; color: #E24B4A; }
+.dmHeaderActions { display: flex; align-items: center; gap: 6px; }
+.blockBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
+.blockBtn:hover { border-color: #E24B4A; color: #E24B4A; }
+.blockBtnActive { border-color: #E24B4A; color: #E24B4A; background: #FEF2F2; }
+.blockBtnActive:hover { background: #FDEDED; }
+/* 하단 상태 바 (나갔을 때 / 차단했을 때) */
+.chatBlockedBar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-light); background: var(--bg-secondary); font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
+.reinviteBarBtn { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid #C9C4F0; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
+.reinviteBarBtn:hover { background: var(--primary); color: white; }
+.unblockBtn { font-size: 12px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
+.unblockBtn:hover { background: #FDEDED; }
 .leaveBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .leaveModal { background: var(--bg); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-xl); }
 .leaveTitle { font-size: 15px; font-weight: 700; color: var(--text); }

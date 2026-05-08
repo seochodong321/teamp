@@ -22,7 +22,7 @@ function avatarStyle(userId) {
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
-  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages, leaveDmRoom } = useStore()
+  const { projects, messages, currentUser, sendMessage, sendFile, sendPoll, votePoll, markAsRead, dmRooms, dmRoomList, setRoomMessages, leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
 
@@ -94,12 +94,12 @@ export default function ChatPage() {
   if (!room) return <div className={styles.notFound}>채팅방을 찾을 수 없어요</div>
 
   const isDm = !!dmRoom
-  const roomName = isDm
-    ? (() => {
-        const otherId = (dmRoom?.participants || []).find((id) => id !== currentUser.id)
-        return dmRoom?.participantNames?.[otherId] || '1:1 대화'
-      })()
-    : room?.name
+  const otherUserId   = isDm ? (dmRoom?.participants || []).find((id) => id !== currentUser.id) : null
+  const otherUserName = isDm ? (dmRoom?.participantNames?.[otherUserId] || '상대방') : null
+  const roomName      = isDm ? (otherUserName || '1:1 대화') : room?.name
+  const otherLeft     = isDm && (dmRoom?.left || []).includes(otherUserId)
+  const iBlocked      = isDm && (blockedUsers || []).includes(otherUserId)
+  const canSend       = !otherLeft && !iBlocked
   const backLabel = isDm ? '← 홈' : `← ${project?.name || ''}`
   const backPath  = isDm ? '/home' : `/project/${projectId}`
 
@@ -200,7 +200,15 @@ export default function ChatPage() {
           )}
         </div>
         {isDm
-          ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
+          ? <div className={styles.dmHeaderActions}>
+              <button
+                className={`${styles.blockBtn} ${iBlocked ? styles.blockBtnActive : ''}`}
+                onClick={() => iBlocked ? unblockUser(otherUserId) : blockUser(otherUserId)}
+                title={iBlocked ? '차단 해제' : '차단하기'}>
+                {iBlocked ? '차단 해제' : '차단'}
+              </button>
+              <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
+            </div>
           : <div style={{ width: 80 }} />
         }
       </div>
@@ -251,9 +259,16 @@ export default function ChatPage() {
 
           // 시스템 알림
           if (isSystem || msg.type === 'notify') {
+            const isLeaveMsg = isDm && otherLeft && msg.text?.includes('퇴장')
             return (
               <div key={msg.id} className={styles.systemMsg}>
                 <span>{msg.text}</span>
+                {isLeaveMsg && (
+                  <button className={styles.reinviteBtn}
+                    onClick={() => reinviteToDm(roomId, otherUserName)}>
+                    다시 초대하기
+                  </button>
+                )}
               </div>
             )
           }
@@ -382,37 +397,49 @@ export default function ChatPage() {
       )}
 
       {/* 입력창 */}
-      <div className={styles.inputArea}>
-        <div className={styles.toolbarWrap}>
-          <button
-            className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
-            onClick={() => setShowToolbar(!showToolbar)}>+</button>
-          {showToolbar && (
-            <div className={styles.toolMenu}>
-              <button className={styles.toolItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
-                📎 파일 공유
-              </button>
-              <button className={styles.toolItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
-                📊 투표 만들기
-              </button>
-            </div>
-          )}
+      {iBlocked ? (
+        <div className={styles.chatBlockedBar}>
+          <span>차단한 사용자예요.</span>
+          <button className={styles.unblockBtn} onClick={() => unblockUser(otherUserId)}>차단 해제</button>
         </div>
-        <textarea
-          className={styles.input}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKey}
-          onCompositionStart={() => { isComposing.current = true }}
-          onCompositionEnd={() => { isComposing.current = false }}
-          placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"
-          rows={1}
-        />
-        <button
-          className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
-          onClick={handleSend} disabled={!text.trim()}>↑</button>
-        <input ref={fileRef} type="file" accept="image/*,*/*" style={{ display: 'none' }} onChange={handleFile} />
-      </div>
+      ) : otherLeft ? (
+        <div className={styles.chatBlockedBar}>
+          <span>{otherUserName}님이 대화를 나갔어요.</span>
+          <button className={styles.reinviteBarBtn} onClick={() => reinviteToDm(roomId, otherUserName)}>다시 초대하기</button>
+        </div>
+      ) : (
+        <div className={styles.inputArea}>
+          <div className={styles.toolbarWrap}>
+            <button
+              className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
+              onClick={() => setShowToolbar(!showToolbar)}>+</button>
+            {showToolbar && (
+              <div className={styles.toolMenu}>
+                <button className={styles.toolItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
+                  📎 파일 공유
+                </button>
+                <button className={styles.toolItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
+                  📊 투표 만들기
+                </button>
+              </div>
+            )}
+          </div>
+          <textarea
+            className={styles.input}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKey}
+            onCompositionStart={() => { isComposing.current = true }}
+            onCompositionEnd={() => { isComposing.current = false }}
+            placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"
+            rows={1}
+          />
+          <button
+            className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
+            onClick={handleSend} disabled={!text.trim()}>↑</button>
+          <input ref={fileRef} type="file" accept="image/*,*/*" style={{ display: 'none' }} onChange={handleFile} />
+        </div>
+      )}
     </div>
   )
 }

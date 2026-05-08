@@ -135,6 +135,7 @@ export const useStore = create(
       chatToasts: [],
       errorToasts: [],
       dmUnreadCounts: {},
+      blockedUsers: [],
 
       // ─── Firestore → Zustand 동기화 setters ─────────────
       setProjects: (firestoreProjects) => {
@@ -205,12 +206,12 @@ export const useStore = create(
           photoURL: extra.photoURL || null, // 프로필 사진 URL
         }
         // projects는 Firestore onSnapshot이 채워줌 — 여기선 사용자 정보만 세팅
-        set({ isLoggedIn: true, currentUser: user })
+        set({ isLoggedIn: true, currentUser: user, blockedUsers: extra.blockedUsers || [] })
       },
 
       logout: () => set({
         isLoggedIn: false, currentUser: null,
-        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [], dmUnreadCounts: {},
+        projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [], dmUnreadCounts: {}, blockedUsers: [],
       }),
 
       // ─── 튜토리얼 프로젝트 Firestore 생성 ───────────────
@@ -515,6 +516,45 @@ export const useStore = create(
           if (key) delete newDmRooms[key]
           return { dmRooms: newDmRooms }
         })
+      },
+
+      reinviteToDm: async (roomId, otherUserName) => {
+        const { currentUser } = get()
+        const dmRef = doc(db, 'dmRooms', roomId)
+        const dmSnap = await getDoc(dmRef)
+        if (!dmSnap.exists()) return
+        const data = dmSnap.data()
+        const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
+        const newLeft = (data.left || []).filter((id) => id !== otherUserId)
+        const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
+        const batch = writeBatch(db)
+        batch.update(dmRef, { left: newLeft })
+        batch.set(sysRef, {
+          senderId: 'system', type: 'notify',
+          text: `${currentUser.name}님이 ${otherUserName}님을 다시 초대했어요`,
+          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          createdAt: serverTimestamp(),
+        })
+        await batch.commit()
+      },
+
+      blockUser: async (targetId) => {
+        const { currentUser, blockedUsers } = get()
+        if (!targetId || blockedUsers.includes(targetId)) return
+        const updated = [...blockedUsers, targetId]
+        set({ blockedUsers: updated })
+        if (currentUser?.id) {
+          await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: updated })
+        }
+      },
+
+      unblockUser: async (targetId) => {
+        const { currentUser, blockedUsers } = get()
+        const updated = blockedUsers.filter((id) => id !== targetId)
+        set({ blockedUsers: updated })
+        if (currentUser?.id) {
+          await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: updated })
+        }
       },
 
       getOrCreateDmRoom: async (projectId, otherUserId, otherUserName) => {

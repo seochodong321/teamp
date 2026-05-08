@@ -23,7 +23,7 @@ export default function ProjectPage() {
     reorderRooms, archiveProject, extendProject, endProject,
     formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
     kickMember, setWeeklyGoalSchedule, addWeeklyGoal,
-    sendProjectInvite, setCoverImage, updateProjectInfo,
+    sendProjectInvite, setCoverImage, updateProjectInfo, blockedUsers,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -890,7 +890,7 @@ export default function ProjectPage() {
             {/* 커넥트 직접 초대 */}
             {(() => {
               const memberIds = new Set(project.members.map((m) => m.id))
-              const invitable = connects.filter((c) => !memberIds.has(c.id))
+              const invitable = connects.filter((c) => !memberIds.has(c.id) && !(blockedUsers || []).includes(c.id))
               if (invitable.length === 0) return null
               return (
                 <div className={styles.inviteBlock}>

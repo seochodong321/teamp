@@ -13,7 +13,7 @@ import styles from './MatchPage.module.css'
 const SKILL_PRESETS = ['React', 'Vue', 'Node.js', 'Python', 'Java', 'Spring', 'Flutter', 'iOS', 'Android', 'UI/UX', '기획', '마케팅']
 
 export default function MatchPage() {
-  const { projects, currentUser, addMemberToProject } = useStore()
+  const { projects, currentUser, addMemberToProject, blockedUsers } = useStore()
 
   const [posts, setPosts]             = useState([])
   const [loading, setLoading]         = useState(true)
@@ -42,7 +42,8 @@ export default function MatchPage() {
     try {
       const snap = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
       const all  = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      setPosts(all.filter((p) => p.status === 'open'))
+      const blocked = useStore.getState().blockedUsers || []
+      setPosts(all.filter((p) => p.status === 'open' && !blocked.includes(p.leaderId)))
     } catch (e) {
       console.error('matchPosts 로드 실패:', e)
     } finally {
