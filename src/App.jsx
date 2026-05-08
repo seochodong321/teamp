@@ -21,8 +21,15 @@ import HelpPage          from './pages/HelpPage.jsx'
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
   if (!ready) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontSize: '14px', color: '#6B6B6B' }}>
-      불러오는 중...
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: '50%',
+        border: '3px solid #E8E6F8',
+        borderTopColor: '#534AB7',
+        animation: 'spin 0.75s linear infinite',
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      <span style={{ fontSize: 13, color: '#9B97C5', fontWeight: 500 }}>팀프 불러오는 중…</span>
     </div>
   )
   return isLoggedIn ? children : <Navigate to="/login" replace />
@@ -44,14 +51,17 @@ export default function App() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // 유저 정보 Firestore에서 로드
-        try {
-          const snap = await getDoc(doc(db, 'users', user.uid))
-          const d = snap.exists() ? snap.data() : {}
-          login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
-        } catch {
-          login(user.displayName || '사용자', user.email, user.uid)
-        }
+        // 1. Firebase Auth 복원 즉시 기본 정보로 로그인 → UI 즉시 표시
+        login(user.displayName || '사용자', user.email, user.uid)
+        setReady(true)
+
+        // 2. Firestore 프로필 백그라운드 로드 (UI 블로킹 없음)
+        getDoc(doc(db, 'users', user.uid)).then((snap) => {
+          if (snap.exists()) {
+            const d = snap.data()
+            login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
+          }
+        }).catch(() => {})
 
         // 이전 구독 해제 후 재구독 (계정 전환 대비)
         if (projectsUnsubRef.current) projectsUnsubRef.current()
@@ -177,8 +187,8 @@ export default function App() {
         if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
         if (inviteUnsubRef.current) { inviteUnsubRef.current(); inviteUnsubRef.current = null }
         logout()
+        setReady(true)
       }
-      setReady(true)
     })
 
     return () => {
