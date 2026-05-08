@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
     "checkJs": false,
     "allowJs": true,
     "moduleResolution": "bundler",
