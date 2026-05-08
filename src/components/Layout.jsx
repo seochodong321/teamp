@@ -84,14 +84,10 @@ export default function Layout() {
           </div>
           <div className={styles.logoActions}>
             <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">🔍</button>
-            <button className={styles.themeBtn} onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
-              {theme === 'dark' ? '☀︎' : '◑'}
-            </button>
             <button className={styles.notiBtn} onClick={() => setShowNotifications(true)} title="알림">
               ✦
               {unreadCount > 0 && <span className={styles.notiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
             </button>
-            <button className={styles.logoutBtn} onClick={handleLogout} title="로그아웃">↩</button>
           </div>
         </div>
 
@@ -203,14 +199,22 @@ export default function Layout() {
 
         <button className={styles.createBtn} onClick={openCreate}>+ 새 프로젝트</button>
 
-        <div className={styles.userArea} onClick={() => { navigate('/profile'); close() }} title="내 프로필">
-          {currentUser?.photoURL
-            ? <img className={styles.userAvatarImg} src={currentUser.photoURL} alt={currentUser.name} />
-            : <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
-          }
-          <div className={styles.userInfo}>
-            <p className={styles.userName}>{currentUser?.name}</p>
-            <p className={styles.userHandle}>{currentUser?.affiliation || currentUser?.username}</p>
+        <div className={styles.userArea}>
+          <div className={styles.userAreaLeft} onClick={() => { navigate('/profile'); close() }} title="내 프로필">
+            {currentUser?.photoURL
+              ? <img className={styles.userAvatarImg} src={currentUser.photoURL} alt={currentUser.name} />
+              : <div className={styles.userAvatar}>{currentUser?.name?.charAt(0) || '?'}</div>
+            }
+            <div className={styles.userInfo}>
+              <p className={styles.userName}>{currentUser?.name}</p>
+              <p className={styles.userHandle}>{currentUser?.affiliation || currentUser?.username}</p>
+            </div>
+          </div>
+          <div className={styles.userAreaActions}>
+            <button className={styles.themeBtn} onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
+              {theme === 'dark' ? '☀︎' : '◑'}
+            </button>
+            <button className={styles.logoutBtn} onClick={handleLogout} title="로그아웃">↩</button>
           </div>
         </div>
       </aside>

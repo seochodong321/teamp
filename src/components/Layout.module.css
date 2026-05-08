@@ -246,15 +246,30 @@
 .userArea {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 8px 4px;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 8px 6px;
   border-top: 1px solid var(--border);
   margin-top: 8px;
+}
+.userAreaLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
   cursor: pointer;
   border-radius: 8px;
+  padding: 4px 6px;
   transition: background 0.15s;
 }
-.userArea:hover { background: var(--bg-tertiary); }
+.userAreaLeft:hover { background: var(--bg-tertiary); }
+.userAreaActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
 
 .userAvatar {
   width: 32px;
