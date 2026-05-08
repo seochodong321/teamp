@@ -31,6 +31,8 @@ export default function Layout() {
       && !localStorage.getItem('teamp-noti-dismissed')
   )
   const handleAllowNoti = async () => {
+    // 허용·거부 어느 쪽이든 다시 묻지 않도록 먼저 기록
+    localStorage.setItem('teamp-noti-dismissed', '1')
     setShowNotiPrompt(false)
     const token = await requestNotificationPermission()
     if (token && currentUser?.id) {

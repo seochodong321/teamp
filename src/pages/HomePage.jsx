@@ -546,7 +546,7 @@ export default function HomePage() {
                   )}
                 </div>
                 <button className={styles.enterBtn} onClick={() => navigate(`/project/${p.id}`)}>
-                  입장하기 →
+                  입장하기
                 </button>
               </div>
             </div>
