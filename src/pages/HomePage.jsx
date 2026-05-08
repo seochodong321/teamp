@@ -653,7 +653,7 @@ export default function HomePage() {
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>🚀</div>
           <p className={styles.emptyTitle}>첫 번째 프로젝트를 시작해보세요</p>
-          <p className={styles.emptySub}>팀원을 초대하고 함께 목표를 향해 달려가요</p>
+          <p className={styles.emptySub}>관계와 기여의 기록, 지금 시작해보세요</p>
           <button className={styles.emptyBtn} onClick={openModal}>+ 새 프로젝트 만들기</button>
         </div>
       )}

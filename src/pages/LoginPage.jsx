@@ -109,7 +109,10 @@ export default function LoginPage() {
         <div className={styles.leftInner}>
           <div className={styles.brand}>
             <div className={styles.brandMark}>T</div>
-            <span className={styles.brandName}>Teamp</span>
+            <div>
+              <span className={styles.brandName}>Teamp</span>
+              <span className={styles.brandTagline}>관계와 기여의 기록</span>
+            </div>
           </div>
 
           <div className={styles.copy}>
@@ -122,7 +125,7 @@ export default function LoginPage() {
               흩어지는 할 일,<br />
               끝나고 사라지는 기억.<br />
               <br />
-              <strong>팀프에선 다 남아요.</strong>
+              <strong>관계와 기여의 기록이 남아요.</strong>
             </p>
           </div>
 

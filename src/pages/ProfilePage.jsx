@@ -192,7 +192,10 @@ export default function ProfilePage() {
       {/* 나의 여정 */}
       <div className={styles.journeySection}>
         <div className={styles.journeyHeader}>
-          <span className={styles.journeyTitle}>나의 여정</span>
+          <div>
+            <span className={styles.journeyTitle}>나의 여정</span>
+            <span className={styles.journeySubtitle}>관계와 기여의 기록</span>
+          </div>
           <span className={styles.journeyEmoji}>✨</span>
         </div>
         <div className={styles.journeyGrid}>
