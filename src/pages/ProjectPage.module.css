@@ -386,3 +386,42 @@
 .modalSave { flex: 1; height: 44px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; }
 .modalSave:hover:not(:disabled) { background: var(--primary-hover); }
 .modalSave:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 운영 방법 가이드 */
+.guideHeader { margin-bottom: 4px; }
+.guideTitle { font-size: 17px; font-weight: 700; color: var(--text); }
+.guideSubtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+
+.guideCard {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.guideCardTitle {
+  font-size: 14px; font-weight: 700; color: var(--text);
+}
+.guideCardBody {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+}
+.guideShortcut {
+  align-self: flex-start;
+  font-size: 12px; font-weight: 600; color: var(--primary);
+  background: var(--primary-light); border-radius: var(--radius-sm);
+  padding: 5px 12px; transition: opacity 0.15s;
+}
+.guideShortcut:hover { opacity: 0.8; }
+
+.guideRoleTable { display: flex; flex-direction: column; gap: 10px; margin-top: 2px; }
+.guideRoleRow { display: flex; flex-direction: column; gap: 6px; }
+.guideRoleLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.guideRoleTags { display: flex; flex-wrap: wrap; gap: 5px; }
+.guideTagCan {
+  font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: var(--radius-full);
+  background: #E6F4EC; color: #1A7A45;
+}
+.guideTagCant {
+  font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: var(--radius-full);
+  background: var(--primary-light); color: var(--primary);
+}

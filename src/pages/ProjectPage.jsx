@@ -237,6 +237,7 @@ export default function ProjectPage() {
     ['calendar', '📅 캘린더'],
     ['members',  '👥 멤버'],
     ...(iCanManage ? [['manage', '⚙️ 권한 관리']] : []),
+    ...(isLeader  ? [['guide',  '📖 운영 방법']] : []),
   ]
 
   return (
@@ -929,6 +930,87 @@ export default function ProjectPage() {
               프로젝트 나가기
             </button>
           )}
+        </div>
+      )}
+
+      {tab === 'guide' && isLeader && (
+        <div className={styles.section}>
+          <div className={styles.guideHeader}>
+            <h2 className={styles.guideTitle}>리더 운영 가이드</h2>
+            <p className={styles.guideSubtitle}>리더만 볼 수 있어요. 처음 운영이라면 여기서 시작하세요.</p>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>📢 공지하기</div>
+            <p className={styles.guideCardBody}>
+              게시판 탭 → 글쓰기 → <b>전체 공지</b> 선택<br />
+              등록하면 모든 채팅방에 알림 메시지가 자동으로 전송돼요.
+            </p>
+            <button className={styles.guideShortcut} onClick={() => { setBoardView('write'); setAnnIsGlobal(true); setTab('board') }}>
+              지금 공지 작성하기 →
+            </button>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>👥 팀원 초대 & 방출</div>
+            <p className={styles.guideCardBody}>
+              <b>초대</b> — 멤버 탭 → '팀원 초대' 섹션에서 링크를 복사하거나, 커넥트에 있는 사람을 직접 초대할 수 있어요.<br />
+              <b>방출</b> — 권한 관리 탭 → 해당 멤버 카드의 방출 버튼. 방출된 멤버는 다시 초대를 받아야 참여할 수 있어요.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className={styles.guideShortcut} onClick={() => setTab('members')}>초대하러 가기 →</button>
+              <button className={styles.guideShortcut} onClick={() => { initManage(); setTab('manage') }}>권한 관리로 가기 →</button>
+            </div>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>⭐ 부리더 임명하기</div>
+            <p className={styles.guideCardBody}>
+              권한 관리 탭 → 역할 선택란에서 <b>부리더</b>로 변경 → 저장하기
+            </p>
+            <div className={styles.guideRoleTable}>
+              <div className={styles.guideRoleRow}>
+                <span className={styles.guideRoleLabel}>부리더가 할 수 있는 것</span>
+                <div className={styles.guideRoleTags}>
+                  {['팀원 초대', '채팅방 추가', '게시판 글 작성', '할 일 생성·수정·삭제'].map((t) => (
+                    <span key={t} className={styles.guideTagCan}>{t}</span>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.guideRoleRow}>
+                <span className={styles.guideRoleLabel}>리더만 할 수 있는 것</span>
+                <div className={styles.guideRoleTags}>
+                  {['전체 공지', '팀원 방출', '역할 변경', '리더 양도', '프로젝트 마무리'].map((t) => (
+                    <span key={t} className={styles.guideTagCant}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>🔒 채팅방 접근 권한 설정</div>
+            <p className={styles.guideCardBody}>
+              권한 관리 탭 → 멤버 카드 하단 <b>접근 가능한 채팅방</b> 체크박스로 채팅방별 접근을 제어할 수 있어요.<br />
+              부리더는 모든 채팅방에 자동으로 접근돼요.
+            </p>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>🎖 리더 양도하기</div>
+            <p className={styles.guideCardBody}>
+              권한 관리 탭 → 해당 멤버 카드 → <b>리더 양도</b> 버튼<br />
+              양도 후엔 내가 일반 팀원 역할이 돼요. 신중하게 결정해주세요.
+            </p>
+          </div>
+
+          <div className={styles.guideCard}>
+            <div className={styles.guideCardTitle}>🏁 프로젝트 마무리</div>
+            <p className={styles.guideCardBody}>
+              상단 헤더의 <b>프로젝트 마치기</b>를 누르면 랩업(회고·피드백)을 진행할 수 있어요.<br />
+              팀원들이 피드백을 작성할 기간을 설정하고, 기한이 지나면 자동으로 아카이브돼요.
+            </p>
+          </div>
         </div>
       )}
 
