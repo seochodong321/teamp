@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
-import { Timestamp, collection, doc, getDoc, onSnapshot, orderBy, query, startAfter, updateDoc, where } from 'firebase/firestore'
+import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
 
@@ -20,6 +20,81 @@ const CreateProjectPage = lazy(() => import('./pages/CreateProjectPage.jsx'))
 const WrapupPage        = lazy(() => import('./pages/WrapupPage.jsx'))
 const MatchPage         = lazy(() => import('./pages/MatchPage.jsx'))
 const HelpPage          = lazy(() => import('./pages/HelpPage.jsx'))
+
+// 오늘 생일인 팀원 감지 → 전체방 케이크 메시지 + Firestore 알림 전송
+// birthdayLogs/{YYYY}_{memberId}_{projectId} 로 중복 방지
+async function checkBirthdays(projects, myUid) {
+  const now     = new Date()
+  const todayMD = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const todayKey = `${now.getFullYear()}-${todayMD}`
+
+  // 하루에 한 번만 — localStorage로 빠른 중복 방지
+  const lastCheck = localStorage.getItem('teamp-birthday-check')
+  if (lastCheck === todayKey) return
+  localStorage.setItem('teamp-birthday-check', todayKey)
+
+  // 현재 유저가 속한 활성 프로젝트의 다른 멤버 ID 수집
+  const memberIdSet = new Set()
+  projects.forEach((p) => {
+    if (p.status === 'active' && !p.isTutorial) {
+      p.members?.forEach((m) => { if (m.id !== myUid) memberIdSet.add(m.id) })
+    }
+  })
+  if (memberIdSet.size === 0) return
+
+  // 멤버 생일 조회
+  const birthdayMembers = []
+  await Promise.all([...memberIdSet].map(async (uid) => {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid))
+      if (snap.exists()) {
+        const d = snap.data()
+        if (d.birthday === todayMD) birthdayMembers.push({ id: uid, name: d.name || '팀원' })
+      }
+    } catch {}
+  }))
+  if (birthdayMembers.length === 0) return
+
+  for (const member of birthdayMembers) {
+    const sharedProjects = projects.filter(
+      (p) => p.status === 'active' && !p.isTutorial && p.memberIds?.includes(member.id)
+    )
+    for (const project of sharedProjects) {
+      // Firestore에서 중복 체크 (다른 팀원이 이미 보냈을 경우 방지)
+      const logId  = `${now.getFullYear()}_${member.id}_${project.id}`
+      const logRef = doc(db, 'birthdayLogs', logId)
+      try {
+        const logSnap = await getDoc(logRef)
+        if (logSnap.exists()) continue
+        await setDoc(logRef, { sentAt: serverTimestamp(), sentBy: myUid })
+      } catch { continue }
+
+      const allRoom = project.rooms?.find((r) => r.name === '전체' && !r.isDm)
+      if (allRoom) {
+        // 전체 채팅방에 케이크 메시지
+        addDoc(collection(db, 'rooms', allRoom.id, 'messages'), {
+          senderId: 'system', senderName: '🎂 생일 축하', type: 'notify',
+          text: `🎂 오늘은 ${member.name} 님의 생일이에요! 케이크를 보내볼까요? 🎉`,
+          time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+          createdAt: serverTimestamp(),
+        }).catch(() => {})
+      }
+
+      // 프로젝트 모든 멤버에게 알림 (생일인 본인 포함)
+      const link = allRoom ? `/project/${project.id}/chat/${allRoom.id}` : `/project/${project.id}`
+      project.members?.forEach((m) => {
+        addDoc(collection(db, 'notifications'), {
+          targetUserId: m.id, type: 'birthday',
+          text: `🎂 ${member.name} 님의 생일이에요! 축하해주세요`,
+          projectId: project.id,
+          projectName: project.name,
+          link, read: false,
+          createdAt: serverTimestamp(),
+        }).catch(() => {})
+      })
+    }
+  }
+}
 
 function PrivateRoute({ children, ready }) {
   const isLoggedIn = useStore((s) => s.isLoggedIn)
@@ -98,6 +173,11 @@ export default function App() {
                   console.error('튜토리얼 프로젝트 생성 실패:', e)
                 }
               }
+            }
+
+            // 생일 체크 — 오늘 처음 로드할 때만 실행
+            if (!snapshot.metadata.fromCache) {
+              checkBirthdays(projects, user.uid).catch(() => {})
             }
           }
         )

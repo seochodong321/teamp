@@ -28,6 +28,8 @@ export default function LoginPage() {
   const [password, setPassword]       = useState('')
   const [affiliation, setAffiliation] = useState('')
   const [phone, setPhone]             = useState('')
+  const [birthMonth, setBirthMonth]   = useState('')
+  const [birthDay, setBirthDay]       = useState('')
   const [error, setError]             = useState('')
   const [loading, setLoading]         = useState(false)
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
@@ -52,13 +54,17 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
+        const birthday = (birthMonth && birthDay)
+          ? `${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
+          : ''
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid: cred.user.uid, name: name.trim(),
           username: `@${email.split('@')[0]}`, email: email.trim(),
           affiliation: affiliation.trim(), phone: phone.trim(), bio: '',
+          birthday,
           createdAt: new Date().toISOString(),
         })
-        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim() })
+        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim(), birthday })
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
         const snap = await getDoc(doc(db, 'users', cred.user.uid))
@@ -176,6 +182,25 @@ export default function LoginPage() {
                   <label className={styles.label}>핸드폰 번호 <span className={styles.labelHint}>(선택)</span></label>
                   <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)}
                     placeholder="010-0000-0000" type="tel" disabled={loading} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>생일 <span className={styles.labelHint}>(선택 · 팀원에게 생일 알림이 가요 🎂)</span></label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <select className={styles.input} style={{ flex: 1 }} value={birthMonth}
+                      onChange={(e) => setBirthMonth(e.target.value)} disabled={loading}>
+                      <option value="">월</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>
+                      ))}
+                    </select>
+                    <select className={styles.input} style={{ flex: 1 }} value={birthDay}
+                      onChange={(e) => setBirthDay(e.target.value)} disabled={loading || !birthMonth}>
+                      <option value="">일</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={String(d).padStart(2, '0')}>{d}일</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className={styles.divider}><span>계정 정보</span></div>
               </>

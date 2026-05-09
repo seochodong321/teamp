@@ -204,7 +204,8 @@ export const useStore = create(
           email: email || '',
           affiliation: extra.affiliation || '',
           phone: extra.phone || '',
-          photoURL: extra.photoURL || null, // 프로필 사진 URL
+          birthday: extra.birthday || '',
+          photoURL: extra.photoURL || null,
         }
         // projects는 Firestore onSnapshot이 채워줌 — 여기선 사용자 정보만 세팅
         set({ isLoggedIn: true, currentUser: user, blockedUsers: extra.blockedUsers || [] })
