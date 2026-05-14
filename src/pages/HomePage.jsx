@@ -143,7 +143,7 @@ export default function HomePage() {
   const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
 
   return (
-    <div className={styles.page}>
+    <>
 
       {/* ── 새 프로젝트 팝업 모달 ── */}
       {showModal && (
@@ -477,6 +477,8 @@ export default function HomePage() {
         )
       })()}
 
+      <div className={styles.page}>
+
       {/* ── 초대 배너 ── */}
       {invites.map((invite) => (
         <div key={invite.id} className={styles.inviteBanner}>
@@ -730,6 +732,7 @@ export default function HomePage() {
           <button className={styles.emptyBtn} onClick={openModal}>+ 새 프로젝트 만들기</button>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }

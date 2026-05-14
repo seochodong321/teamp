@@ -104,7 +104,15 @@ export default function LoginPage() {
         navigate('/setup-username', { replace: true })
       }
     } catch (e) {
-      if (e.code !== 'auth/popup-closed-by-user') {
+      if (e.code === 'auth/unauthorized-domain') {
+        const host = window.location.hostname
+        if (host !== 'teamp.vercel.app' && host !== 'localhost') {
+          // preview URL → 안정 주소로 자동 이동
+          window.location.replace('https://teamp.vercel.app' + window.location.pathname + window.location.search)
+          return
+        }
+        setError(`이 주소(${host})는 Google 로그인이 허용되지 않아요. teamp.vercel.app 에서 시도해주세요.`)
+      } else if (e.code !== 'auth/popup-closed-by-user') {
         setError(`소셜 로그인 실패: ${e.code || e.message}`)
       }
     } finally {
