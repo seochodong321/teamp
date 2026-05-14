@@ -143,11 +143,8 @@ export default function App() {
           if (snap.exists()) {
             const d = snap.data()
             login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
-            // 소셜 로그인 후 username 미설정 감지
-            if (!d.username) setNeedsUsernameSetup(true)
           } else {
-            // Firestore 문서 없음 → 소셜 로그인 신규 유저
-            setNeedsUsernameSetup(true)
+            login(user.displayName || '사용자', user.email, user.uid)
           }
         }).catch(() => {})
 
