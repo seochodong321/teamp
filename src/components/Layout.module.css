@@ -309,7 +309,7 @@
   /* standalone PWA: black-translucent 상태바 아래로 내용이 침범하지 않도록 */
   padding-top: env(safe-area-inset-top, 0px);
   height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
-  background: var(--bg);
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
