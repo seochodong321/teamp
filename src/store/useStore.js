@@ -982,6 +982,47 @@ export const useStore = create(
         }))
       },
 
+      // ─── 마일스톤 ─────────────────────────────────────────
+      addMilestone: async (projectId, { title, description, targetDate }) => {
+        const { currentUser } = get()
+        const now = new Date().toISOString()
+        const ms = {
+          id: `ms_${Date.now()}`,
+          title,
+          description: description || '',
+          targetDate: targetDate || '',
+          status: 'pending',
+          completedAt: null,
+          createdAt: now,
+          createdBy: currentUser.id,
+          history: [{ action: 'created', at: now, by: currentUser.id, byName: currentUser.name, note: '' }],
+        }
+        await txProject(projectId, (data) => ({
+          milestones: [...(data.milestones || []), ms],
+        }))
+      },
+
+      updateMilestone: async (projectId, milestoneId, { action, note, ...changes }) => {
+        const { currentUser } = get()
+        const now = new Date().toISOString()
+        const entry = { action: action || 'modified', at: now, by: currentUser.id, byName: currentUser.name, note: note || '' }
+        await txProject(projectId, (data) => ({
+          milestones: (data.milestones || []).map((m) =>
+            m.id !== milestoneId ? m : { ...m, ...changes, history: [...(m.history || []), entry] }
+          ),
+        }))
+      },
+
+      deleteMilestone: async (projectId, milestoneId) => {
+        await txProject(projectId, (data) => ({
+          milestones: (data.milestones || []).filter((m) => m.id !== milestoneId),
+        }))
+      },
+
+      saveWrapupNote: async (projectId, note) => {
+        await txProject(projectId, () => ({ wrapupNote: note }))
+      },
+
       // ─── 프로젝트 생성 ────────────────────────────────────
       createProject: async (data) => {
         const { currentUser } = get()

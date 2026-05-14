@@ -24,6 +24,7 @@ export default function ProjectPage() {
     formatUnread, isExpired, getOrCreateDmRoom, addRoom, leaveProject,
     kickMember, setWeeklyGoalSchedule, addWeeklyGoal,
     sendProjectInvite, setCoverImage, updateProjectInfo, blockedUsers,
+    addMilestone, updateMilestone, deleteMilestone, saveWrapupNote,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -69,6 +70,15 @@ export default function ProjectPage() {
   const [endFeedbackDuration, setEndFeedbackDuration] = useState(7)
   const [endSubmitting, setEndSubmitting]       = useState(false)
   const [endError, setEndError]                 = useState('')
+
+  // 마일스톤
+  const [showMsForm, setShowMsForm]       = useState(false)
+  const [msTitle, setMsTitle]             = useState('')
+  const [msDesc, setMsDesc]               = useState('')
+  const [msDate, setMsDate]               = useState('')
+  const [showWrapup, setShowWrapup]       = useState(false)
+  const [wrapupNote, setWrapupNote]       = useState('')
+  const [wrapupSaving, setWrapupSaving]   = useState(false)
 
   // 커버 이미지 피커
   const [showCoverPicker, setShowCoverPicker]   = useState(false)
@@ -231,14 +241,45 @@ export default function ProjectPage() {
   }
 
   const TABS = [
-    ['rooms',    '💬 채팅방'],
-    ['board',    '📋 게시판'],
-    ['todo',     '✅ 할 일'],
-    ['calendar', '📅 캘린더'],
-    ['members',  '👥 멤버'],
+    ['rooms',     '💬 채팅방'],
+    ['board',     '📋 게시판'],
+    ['todo',      '✅ 할 일'],
+    ['calendar',  '📅 캘린더'],
+    ['milestone', '🏁 마일스톤'],
+    ['members',   '👥 멤버'],
     ...(iCanManage ? [['manage', '⚙️ 권한 관리']] : []),
     ...(isLeader  ? [['guide',  '📖 운영 방법']] : []),
   ]
+
+  const milestones = project.milestones || []
+  const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' }
+  const MS_HISTORY_LABEL = { created: '생성', completed: '완료', reopened: '재개', delayed: '연기', modified: '수정' }
+
+  const handleAddMilestone = async () => {
+    if (!msTitle.trim()) return
+    await addMilestone(project.id, { title: msTitle.trim(), description: msDesc.trim(), targetDate: msDate })
+    setMsTitle(''); setMsDesc(''); setMsDate(''); setShowMsForm(false)
+  }
+
+  const handleCompleteMilestone = (msId) =>
+    updateMilestone(project.id, msId, { action: 'completed', status: 'done', completedAt: new Date().toISOString() })
+
+  const handleReopenMilestone = (msId) =>
+    updateMilestone(project.id, msId, { action: 'reopened', status: 'pending', completedAt: null })
+
+  const handleDelayMilestone = (msId) =>
+    updateMilestone(project.id, msId, { action: 'delayed', status: 'delayed' })
+
+  const handleDeleteMilestone = (msId) => {
+    if (window.confirm('이 마일스톤을 삭제할까요?')) deleteMilestone(project.id, msId)
+  }
+
+  const handleSaveWrapup = async () => {
+    setWrapupSaving(true)
+    await saveWrapupNote(project.id, wrapupNote)
+    setWrapupSaving(false)
+    setShowWrapup(false)
+  }
 
   return (
     <div className={styles.page}>
@@ -849,6 +890,193 @@ export default function ProjectPage() {
       {tab === 'calendar' && (
         <div className={styles.section}>
           <CalendarInline project={project} currentUser={currentUser} />
+        </div>
+      )}
+
+      {tab === 'milestone' && (
+        <div className={styles.section}>
+          {/* Wrap-up 회고 바 */}
+          {canInvite && (
+            <div className={styles.msWrapupBar}>
+              <div>
+                <p className={styles.msWrapupBarTitle}>🏁 Wrap-up 회고</p>
+                <p className={styles.msWrapupBarSub}>마일스톤을 기반으로 프로젝트 여정을 되돌아보세요</p>
+              </div>
+              <button className={styles.msWrapupBtn} onClick={() => { setWrapupNote(project.wrapupNote || ''); setShowWrapup(true) }}>
+                회고 작성 →
+              </button>
+            </div>
+          )}
+
+          {/* 마일스톤 추가 폼 */}
+          {canInvite && (
+            <div className={styles.msAddWrap}>
+              {!showMsForm ? (
+                <button className={styles.msAddTrigger} onClick={() => setShowMsForm(true)}>
+                  + 마일스톤 추가
+                </button>
+              ) : (
+                <div className={styles.msFormCard}>
+                  <input
+                    className={styles.msFormInput}
+                    placeholder="마일스톤 제목 (예: MVP 로그인 완료)"
+                    value={msTitle}
+                    onChange={(e) => setMsTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddMilestone()}
+                    autoFocus
+                  />
+                  <div className={styles.msFormRow}>
+                    <input className={styles.msFormDate} type="date" value={msDate} onChange={(e) => setMsDate(e.target.value)} />
+                    <textarea className={styles.msFormDesc} placeholder="설명 (선택사항)" value={msDesc} onChange={(e) => setMsDesc(e.target.value)} rows={2} />
+                  </div>
+                  <div className={styles.msExamples}>
+                    <span className={styles.msExLabel}>예시:</span>
+                    {['MVP 로그인 완료', '디자인 1차 완료', '발표 자료 제출', '베타 테스트 완료'].map((ex) => (
+                      <button key={ex} className={styles.msExBtn} onClick={() => setMsTitle(ex)}>{ex}</button>
+                    ))}
+                  </div>
+                  <div className={styles.msFormBtns}>
+                    <button className={styles.msFormCancel} onClick={() => { setShowMsForm(false); setMsTitle(''); setMsDesc(''); setMsDate('') }}>취소</button>
+                    <button className={styles.msFormSubmit} disabled={!msTitle.trim()} onClick={handleAddMilestone}>추가</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 타임라인 */}
+          {milestones.length === 0 ? (
+            <div className={styles.msEmpty}>
+              <span className={styles.msEmptyIcon}>🌱</span>
+              <p className={styles.msEmptyTitle}>아직 마일스톤이 없어요</p>
+              <p className={styles.msEmptySub}>프로젝트의 주요 목표를 마일스톤으로 기록하면<br/>성장 과정을 한눈에 돌아볼 수 있어요</p>
+            </div>
+          ) : (
+            <div className={styles.timeline}>
+              <div className={styles.timelineLine} />
+              {milestones.map((ms, i) => {
+                const isLeft = i % 2 === 0
+                const doneCount = milestones.filter((m) => m.status === 'done').length
+                return (
+                  <div key={ms.id} className={`${styles.timelineItem} ${isLeft ? styles.timelineLeft : styles.timelineRight}`}>
+                    <div className={`${styles.msCard} ${ms.status === 'done' ? styles.msCardDone : ms.status === 'delayed' ? styles.msCardDelayed : ''}`}>
+                      <div className={styles.msCardTop}>
+                        <span className={`${styles.msStatusDot} ${styles[`msStatus_${ms.status}`]}`} />
+                        <span className={styles.msCardTitle}>{ms.title}</span>
+                        <span className={`${styles.msStatusBadge} ${styles[`msBadge_${ms.status}`]}`}>{MS_STATUS[ms.status] || ms.status}</span>
+                        {canInvite && (
+                          <div className={styles.msCardActions}>
+                            {ms.status === 'pending' && (
+                              <>
+                                <button className={styles.msCompleteBtn} onClick={() => handleCompleteMilestone(ms.id)} title="완료 처리">✓</button>
+                                <button className={styles.msDelayBtn} onClick={() => handleDelayMilestone(ms.id)} title="연기">⏸</button>
+                              </>
+                            )}
+                            {ms.status === 'delayed' && (
+                              <button className={styles.msReopenBtn} onClick={() => handleReopenMilestone(ms.id)} title="재개">▶</button>
+                            )}
+                            {ms.status === 'done' && (
+                              <button className={styles.msReopenBtn} onClick={() => handleReopenMilestone(ms.id)} title="재개">↩</button>
+                            )}
+                            <button className={styles.msDeleteBtn} onClick={() => handleDeleteMilestone(ms.id)} title="삭제">×</button>
+                          </div>
+                        )}
+                      </div>
+                      {ms.targetDate && (
+                        <span className={styles.msDate}>
+                          {ms.completedAt ? `완료: ${ms.completedAt.slice(0, 10)}` : `목표: ${ms.targetDate}`}
+                        </span>
+                      )}
+                      {ms.description && <p className={styles.msDescription}>{ms.description}</p>}
+                      {ms.history && ms.history.length > 1 && (
+                        <div className={styles.msHistory}>
+                          {ms.history.slice(1).map((h, j) => (
+                            <div key={j} className={styles.msHistoryItem}>
+                              <span className={styles.msHistoryTag}>{MS_HISTORY_LABEL[h.action] || h.action}</span>
+                              <span className={styles.msHistoryBy}>{h.byName}</span>
+                              {h.note && <span className={styles.msHistoryNote}>· {h.note}</span>}
+                              <span className={styles.msHistoryAt}>{h.at.slice(0, 10)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className={`${styles.timelineDot} ${ms.status === 'done' ? styles.timelineDotDone : ms.status === 'delayed' ? styles.timelineDotDelayed : ''}`} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Wrap-up 회고 모달 */}
+      {showWrapup && (
+        <div className={styles.backdrop} onClick={() => setShowWrapup(false)}>
+          <div className={styles.wrapupModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.wrapupModalHeader}>
+              <div>
+                <h3 className={styles.wrapupModalTitle}>🏁 Wrap-up 회고</h3>
+                <p className={styles.wrapupModalSub}>{project.name} · 마일스톤 {milestones.length}개</p>
+              </div>
+              <button className={styles.profileClose} onClick={() => setShowWrapup(false)}>✕</button>
+            </div>
+
+            {/* 통계 */}
+            <div className={styles.wrapupStats}>
+              {[
+                { label: '전체', count: milestones.length, color: 'var(--text)' },
+                { label: '완료', count: milestones.filter((m) => m.status === 'done').length, color: 'var(--teal)' },
+                { label: '진행 중', count: milestones.filter((m) => m.status === 'pending').length, color: 'var(--primary)' },
+                { label: '연기됨', count: milestones.filter((m) => m.status === 'delayed').length, color: 'var(--amber)' },
+              ].map((s) => (
+                <div key={s.label} className={styles.wrapupStat}>
+                  <span className={styles.wrapupStatCount} style={{ color: s.color }}>{s.count}</span>
+                  <span className={styles.wrapupStatLabel}>{s.label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* 역순 타임라인 (아래→위 회고) */}
+            <p className={styles.wrapupHint}>↑ 위로 올라가며 프로젝트 성장 여정을 돌아보세요</p>
+            <div className={styles.wrapupTimeline}>
+              {[...milestones].reverse().map((ms) => (
+                <div key={ms.id} className={`${styles.wrapupMsItem} ${ms.status === 'done' ? styles.wrapupMsDone : ms.status === 'delayed' ? styles.wrapupMsDelayed : ''}`}>
+                  <span className={`${styles.msStatusDot} ${styles[`msStatus_${ms.status}`]}`} />
+                  <div>
+                    <p className={styles.wrapupMsTitle}>{ms.title}</p>
+                    {ms.targetDate && (
+                      <p className={styles.wrapupMsDate}>
+                        {ms.completedAt ? `완료: ${ms.completedAt.slice(0, 10)}` : `목표: ${ms.targetDate}`}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`${styles.msStatusBadge} ${styles[`msBadge_${ms.status}`]}`}>{MS_STATUS[ms.status]}</span>
+                </div>
+              ))}
+              {milestones.length === 0 && (
+                <p className={styles.wrapupEmpty}>아직 기록된 마일스톤이 없어요</p>
+              )}
+            </div>
+
+            {/* 회고 노트 */}
+            <div className={styles.wrapupNoteWrap}>
+              <p className={styles.wrapupNoteLabel}>팀 회고 노트</p>
+              <textarea
+                className={styles.wrapupNoteInput}
+                placeholder="이번 프로젝트에서 잘한 점, 아쉬운 점, 다음에 개선할 점을 자유롭게 남겨보세요"
+                value={wrapupNote}
+                onChange={(e) => setWrapupNote(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className={styles.wrapupFooter}>
+              <button className={styles.modalCancel} onClick={() => setShowWrapup(false)}>닫기</button>
+              <button className={styles.modalConfirm} disabled={wrapupSaving} onClick={handleSaveWrapup}>
+                {wrapupSaving ? '저장 중...' : '회고 저장'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

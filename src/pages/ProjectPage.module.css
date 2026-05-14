@@ -425,3 +425,117 @@
   font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: var(--radius-full);
   background: var(--primary-light); color: var(--primary);
 }
+
+/* ── 마일스톤 ───────────────────────────────────────── */
+.msWrapupBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: linear-gradient(135deg, var(--primary-light), var(--bg-secondary)); border: 1px solid var(--primary-light); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 16px; flex-wrap: wrap; }
+.msWrapupBarTitle { font-size: 14px; font-weight: 700; color: var(--text); }
+.msWrapupBarSub   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.msWrapupBtn { padding: 8px 16px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; white-space: nowrap; transition: all var(--transition-fast); }
+.msWrapupBtn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+.msAddWrap { margin-bottom: 8px; }
+.msAddTrigger { padding: 9px 18px; border: 1.5px dashed var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--text-secondary); background: var(--bg); width: 100%; text-align: center; transition: all var(--transition-fast); }
+.msAddTrigger:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
+.msFormCard { background: var(--bg); border: 1.5px solid var(--primary); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-sm); }
+.msFormInput { height: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 14px; font-size: 14px; color: var(--text); width: 100%; }
+.msFormInput:focus { border-color: var(--primary); background: var(--bg); }
+.msFormRow { display: flex; gap: 10px; align-items: flex-start; }
+.msFormDate { height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 0 10px; font-size: 13px; color: var(--text); flex-shrink: 0; }
+.msFormDesc { flex: 1; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 12px; font-size: 13px; color: var(--text); resize: none; font-family: inherit; line-height: 1.5; }
+.msFormDesc:focus { border-color: var(--primary); }
+.msExamples { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.msExLabel { font-size: 11px; color: var(--text-tertiary); font-weight: 600; }
+.msExBtn { padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-full); font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary); transition: all 0.12s; }
+.msExBtn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+.msFormBtns { display: flex; justify-content: flex-end; gap: 8px; }
+.msFormCancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
+.msFormSubmit { padding: 8px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.msFormSubmit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.msEmpty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 56px 20px; text-align: center; }
+.msEmptyIcon  { font-size: 42px; }
+.msEmptyTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.msEmptySub   { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* 타임라인 */
+.timeline { position: relative; padding: 8px 0 32px; }
+.timelineLine { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); background: linear-gradient(to bottom, var(--primary-light), var(--border), var(--primary-light)); border-radius: 2px; }
+
+.timelineItem { position: relative; width: 50%; padding-bottom: 28px; }
+.timelineLeft  { left: 0; padding-right: 48px; }
+.timelineRight { left: 50%; padding-left: 48px; }
+
+.timelineDot { position: absolute; top: 16px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary-light); border: 3px solid var(--primary); }
+.timelineLeft  .timelineDot { right: -7px; }
+.timelineRight .timelineDot { left: -7px; }
+.timelineDotDone    { background: var(--teal); border-color: var(--teal); }
+.timelineDotDelayed { background: var(--amber); border-color: var(--amber); }
+
+.msCard { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-xs); transition: box-shadow 0.15s; }
+.msCard:hover { box-shadow: var(--shadow-sm); }
+.msCardDone    { border-left: 3px solid var(--teal); background: var(--teal-light); }
+.msCardDelayed { border-left: 3px solid var(--amber); background: var(--amber-soft); }
+
+.msCardTop { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.msStatusDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.msStatus_pending { background: var(--primary); }
+.msStatus_done    { background: var(--teal); }
+.msStatus_delayed { background: var(--amber); }
+.msCardTitle { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.msStatusBadge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); white-space: nowrap; }
+.msBadge_pending { background: var(--primary-light); color: var(--primary); }
+.msBadge_done    { background: var(--teal-light); color: var(--teal); }
+.msBadge_delayed { background: var(--amber-light); color: var(--amber); }
+
+.msCardActions { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+.msCompleteBtn { width: 26px; height: 26px; border-radius: 50%; background: var(--teal-light); color: var(--teal); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.msCompleteBtn:hover { background: var(--teal); color: white; }
+.msDelayBtn    { width: 26px; height: 26px; border-radius: 50%; background: var(--amber-light); color: var(--amber); font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.msDelayBtn:hover { background: var(--amber); color: white; }
+.msReopenBtn   { width: 26px; height: 26px; border-radius: 50%; background: var(--bg-secondary); color: var(--text-secondary); font-size: 11px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.msReopenBtn:hover { background: var(--primary-light); color: var(--primary); }
+.msDeleteBtn   { width: 26px; height: 26px; border-radius: 50%; background: transparent; color: var(--text-tertiary); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+.msDeleteBtn:hover { background: var(--coral-soft); color: var(--coral); }
+
+.msDate { font-size: 11px; color: var(--text-tertiary); }
+.msDescription { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
+
+.msHistory { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--border-light); }
+.msHistoryItem { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.msHistoryTag  { font-size: 10px; font-weight: 600; background: var(--bg-secondary); color: var(--text-tertiary); padding: 1px 5px; border-radius: var(--radius-full); }
+.msHistoryBy   { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.msHistoryNote { font-size: 11px; color: var(--text-secondary); }
+.msHistoryAt   { font-size: 10px; color: var(--text-tertiary); margin-left: auto; }
+
+/* Wrap-up 모달 */
+.wrapupModal { background: var(--bg); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; gap: 0; box-shadow: var(--shadow-xl); overflow: hidden; }
+.wrapupModalHeader { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.wrapupModalTitle  { font-size: 17px; font-weight: 700; color: var(--text); }
+.wrapupModalSub    { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+.wrapupStats { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+.wrapupStat  { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px; border-right: 1px solid var(--border); }
+.wrapupStat:last-child { border-right: none; }
+.wrapupStatCount { font-size: 22px; font-weight: 800; }
+.wrapupStatLabel { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+.wrapupHint { font-size: 11px; color: var(--text-tertiary); text-align: center; padding: 8px 24px 0; }
+.wrapupTimeline { flex: 1; overflow-y: auto; padding: 12px 24px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; }
+.wrapupMsItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); }
+.wrapupMsDone    { background: var(--teal-light); border-color: var(--teal-light); }
+.wrapupMsDelayed { background: var(--amber-light); border-color: var(--amber-light); }
+.wrapupMsTitle { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+.wrapupMsDate  { font-size: 11px; color: var(--text-tertiary); }
+.wrapupEmpty   { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 20px; }
+.wrapupNoteWrap { padding: 12px 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+.wrapupNoteLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.wrapupNoteInput { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; color: var(--text); resize: none; line-height: 1.6; font-family: inherit; }
+.wrapupNoteInput:focus { border-color: var(--primary); background: var(--bg); }
+.wrapupFooter { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--border); }
+
+@media (max-width: 768px) {
+  .timeline { padding: 8px 0 16px; }
+  .timelineItem { width: 100%; left: 0 !important; padding-right: 0; padding-left: 0; }
+  .timelineLine { display: none; }
+  .timelineDot  { display: none; }
+  .msCard { margin-bottom: 0; }
+}
