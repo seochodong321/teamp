@@ -72,28 +72,27 @@ async function checkBirthdays(projects, myUid) {
       } catch { continue }
 
       const allRoom = project.rooms?.find((r) => r.name === '전체' && !r.isDm)
+      const link = allRoom ? `/project/${project.id}/chat/${allRoom.id}` : `/project/${project.id}`
+
       if (allRoom) {
-        // 전체 채팅방에 케이크 메시지
+        // 전체 채팅방에 작은 시스템 알림 — 팀원들이 조용히 인지하는 용도
         addDoc(collection(db, 'rooms', allRoom.id, 'messages'), {
-          senderId: 'system', senderName: '🎂 생일 축하', type: 'notify',
-          text: `🎂 오늘은 ${member.name} 님의 생일이에요! 케이크를 보내볼까요? 🎉`,
+          senderId: 'system', senderName: '팀프', type: 'notify',
+          text: `🎂 오늘은 ${member.name} 님의 생일이에요`,
           time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
           createdAt: serverTimestamp(),
         }).catch(() => {})
       }
 
-      // 프로젝트 모든 멤버에게 알림 (생일인 본인 포함)
-      const link = allRoom ? `/project/${project.id}/chat/${allRoom.id}` : `/project/${project.id}`
-      project.members?.forEach((m) => {
-        addDoc(collection(db, 'notifications'), {
-          targetUserId: m.id, type: 'birthday',
-          text: `🎂 ${member.name} 님의 생일이에요! 축하해주세요`,
-          projectId: project.id,
-          projectName: project.name,
-          link, read: false,
-          createdAt: serverTimestamp(),
-        }).catch(() => {})
-      })
+      // 생일인 본인에게만 축하 알림 — 팀원들은 채팅방 메시지로만 인지
+      addDoc(collection(db, 'notifications'), {
+        targetUserId: member.id, type: 'birthday',
+        text: `🎂 ${member.name} 님, 생일 축하해요! 오늘 팀원들이 응원하고 있어요 🎉`,
+        projectId: project.id,
+        projectName: project.name,
+        link, read: false,
+        createdAt: serverTimestamp(),
+      }).catch(() => {})
     }
   }
 }

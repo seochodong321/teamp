@@ -59,7 +59,8 @@ export default function LoginPage() {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
       const uname = username.trim().toLowerCase().replace(/^@/, '')
       if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) { setError('@아이디는 영문·숫자·_만 사용, 3~20자로 입력해주세요.'); return }
-      if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
+      if (usernameStatus === 'checking') { setError('아이디 중복 확인 중이에요. 잠시만 기다려주세요.'); return }
+      if (usernameStatus === 'taken')    { setError('이미 사용 중인 아이디예요.'); return }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
       if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
     }
@@ -69,6 +70,15 @@ export default function LoginPage() {
       await setPersistence(auth, autoLogin ? browserLocalPersistence : browserSessionPersistence)
 
       if (mode === 'signup') {
+        // 제출 직전 최종 중복 확인 — 타이밍 레이스 방지
+        const uname = username.trim().toLowerCase().replace(/^@/, '')
+        const finalCheck = await getDocs(query(collection(db, 'users'), where('username', '==', `@${uname}`)))
+        if (!finalCheck.empty) {
+          setUsernameStatus('taken')
+          setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
+          setLoading(false)
+          return
+        }
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
         const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
