@@ -305,6 +305,45 @@
   cursor: pointer;
 }
 
+/* ── 소셜 로그인 ── */
+.dividerOr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 12px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.dividerOr::before,
+.dividerOr::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.socialBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition);
+  margin-bottom: 4px;
+}
+.socialBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.socialBtn:disabled { opacity: 0.6; }
+
 .switchText {
   text-align: center;
   font-size: 13px;

@@ -6,10 +6,11 @@ import { auth, db, messaging, requestNotificationPermission, onMessage } from '.
 import { useStore } from './store/useStore.js'
 
 // 인증 전 페이지는 즉시 로드 (로그인/가입 화면은 빠르게 보여야 함)
-import LoginPage   from './pages/LoginPage.jsx'
-import JoinPage    from './pages/JoinPage.jsx'
-import Layout      from './components/Layout.jsx'
-import LandingPage from './pages/LandingPage.jsx'
+import LoginPage          from './pages/LoginPage.jsx'
+import JoinPage           from './pages/JoinPage.jsx'
+import Layout             from './components/Layout.jsx'
+import LandingPage        from './pages/LandingPage.jsx'
+import SetupUsernamePage  from './pages/SetupUsernamePage.jsx'
 
 // 인증 후 페이지는 lazy load — 초기 번들에서 분리
 const HomePage          = lazy(() => import('./pages/HomePage.jsx'))
@@ -98,7 +99,8 @@ async function checkBirthdays(projects, myUid) {
 }
 
 function PrivateRoute({ children, ready }) {
-  const isLoggedIn = useStore((s) => s.isLoggedIn)
+  const isLoggedIn          = useStore((s) => s.isLoggedIn)
+  const needsUsernameSetup  = useStore((s) => s.needsUsernameSetup)
   if (!ready) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
       <div style={{
@@ -111,11 +113,13 @@ function PrivateRoute({ children, ready }) {
       <span style={{ fontSize: 13, color: '#9B97C5', fontWeight: 500 }}>팀프 불러오는 중…</span>
     </div>
   )
-  return isLoggedIn ? children : <Navigate to="/login" replace />
+  if (!isLoggedIn) return <Navigate to="/login" replace />
+  if (needsUsernameSetup)  return <Navigate to="/setup-username" replace />
+  return children
 }
 
 export default function App() {
-  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread, setInvites } = useStore()
+  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread, setInvites, setNeedsUsernameSetup } = useStore()
   const isLoggedIn  = useStore((s) => s.isLoggedIn)
   const projects    = useStore((s) => s.projects)
   const dmRoomList  = useStore((s) => s.dmRoomList)
@@ -139,6 +143,11 @@ export default function App() {
           if (snap.exists()) {
             const d = snap.data()
             login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
+            // 소셜 로그인 후 username 미설정 감지
+            if (!d.username) setNeedsUsernameSetup(true)
+          } else {
+            // Firestore 문서 없음 → 소셜 로그인 신규 유저
+            setNeedsUsernameSetup(true)
           }
         }).catch(() => {})
 
@@ -293,7 +302,7 @@ export default function App() {
       if (notifUnsubRef.current) notifUnsubRef.current()
       if (inviteUnsubRef.current) inviteUnsubRef.current()
     }
-  }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, setInvites])
+  }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, setInvites, setNeedsUsernameSetup])
 
   // 백그라운드 메시지 감시 — 열려있지 않은 채팅방에 새 메시지 오면 토스트
   useEffect(() => {
@@ -428,6 +437,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join/:code" element={<JoinPage />} />
+          <Route path="/setup-username" element={<SetupUsernamePage />} />
 
           {/* 루트: 비로그인 → 랜딩, 로그인 → /home 리다이렉트 */}
           <Route path="/" element={

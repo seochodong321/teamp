@@ -154,6 +154,7 @@ export const useStore = create(
     (set, get) => ({
       isLoggedIn: false,
       currentUser: null,
+      needsUsernameSetup: false,
       projects: [],
       messages: {},
       invites: [],
@@ -246,8 +247,10 @@ export const useStore = create(
         set({ isLoggedIn: true, currentUser: user, blockedUsers: extra.blockedUsers || [] })
       },
 
+      setNeedsUsernameSetup: (v) => set({ needsUsernameSetup: v }),
+
       logout: () => set({
-        isLoggedIn: false, currentUser: null,
+        isLoggedIn: false, currentUser: null, needsUsernameSetup: false,
         projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [], connects: [], invites: [], notifications: [], chatToasts: [], dmUnreadCounts: {}, blockedUsers: [],
       }),
 
