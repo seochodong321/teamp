@@ -306,25 +306,24 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  height: var(--header-height);
+  /* standalone PWA: black-translucent 상태바 아래로 내용이 침범하지 않도록 */
+  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
 .menuBtn {
+  font-size: 20px;
   color: var(--text);
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: transparent;
-  transition: background var(--transition-fast);
   flex-shrink: 0;
 }
-.menuBtn:hover { background: var(--bg-secondary); }
 
 .mobileLogo {
   font-size: 17px;
