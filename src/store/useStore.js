@@ -228,7 +228,6 @@ export const useStore = create(
 
       // ─── 인증 ────────────────────────────────────────────
       login: (name, email, uid, extra = {}) => {
-        // username: Firestore 값 우선, 없으면 이메일 앞부분 자동 생성
         const rawUsername = extra.username || `@${(email || 'user').split('@')[0]}`
         const username = rawUsername.startsWith('@') ? rawUsername : `@${rawUsername}`
         const user = {
@@ -243,8 +242,18 @@ export const useStore = create(
           birthday: extra.birthday || '',
           photoURL: extra.photoURL || null,
         }
-        // projects는 Firestore onSnapshot이 채워줌 — 여기선 사용자 정보만 세팅
-        set({ isLoggedIn: true, currentUser: user, blockedUsers: extra.blockedUsers || [] })
+        // 다른 유저가 로그인하면 이전 유저 데이터 초기화
+        const prevUid = get().currentUser?.id
+        const userChanged = prevUid && prevUid !== uid
+        set({
+          isLoggedIn: true,
+          currentUser: user,
+          blockedUsers: extra.blockedUsers || [],
+          ...(userChanged ? {
+            projects: [], invites: [], notifications: [], connects: [],
+            messages: {}, dmRooms: {}, dmRoomList: [], dmUnreadCounts: {},
+          } : {}),
+        })
       },
 
       setNeedsUsernameSetup: (v) => set({ needsUsernameSetup: v }),
