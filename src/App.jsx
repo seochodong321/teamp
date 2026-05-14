@@ -6,9 +6,10 @@ import { auth, db, messaging, requestNotificationPermission, onMessage } from '.
 import { useStore } from './store/useStore.js'
 
 // 인증 전 페이지는 즉시 로드 (로그인/가입 화면은 빠르게 보여야 함)
-import LoginPage from './pages/LoginPage.jsx'
-import JoinPage  from './pages/JoinPage.jsx'
-import Layout    from './components/Layout.jsx'
+import LoginPage   from './pages/LoginPage.jsx'
+import JoinPage    from './pages/JoinPage.jsx'
+import Layout      from './components/Layout.jsx'
+import LandingPage from './pages/LandingPage.jsx'
 
 // 인증 후 페이지는 lazy load — 초기 번들에서 분리
 const HomePage          = lazy(() => import('./pages/HomePage.jsx'))
@@ -428,18 +429,28 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join/:code" element={<JoinPage />} />
-          <Route path="/" element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
-            <Route index element={<Navigate to="/home" replace />} />
-            <Route path="home"                            element={<HomePage />} />
-            <Route path="project/:projectId"              element={<ProjectPage />} />
-            <Route path="project/:projectId/chat/:roomId" element={<ChatPage />} />
-            <Route path="project/:projectId/wrapup"       element={<WrapupPage />} />
-            <Route path="create"                          element={<CreateProjectPage />} />
-            <Route path="profile"                         element={<ProfilePage />} />
-            <Route path="connect"                         element={<ConnectPage />} />
-            <Route path="match"                           element={<MatchPage />} />
-            <Route path="messages"                        element={<MessagesPage />} />
-            <Route path="help"                            element={<HelpPage />} />
+
+          {/* 루트: 비로그인 → 랜딩, 로그인 → /home 리다이렉트 */}
+          <Route path="/" element={
+            !ready
+              ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}><div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} /><style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style></div>
+              : isLoggedIn
+                ? <Navigate to="/home" replace />
+                : <LandingPage />
+          } />
+
+          {/* 인증된 레이아웃 (pathless) */}
+          <Route element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
+            <Route path="/home"                            element={<HomePage />} />
+            <Route path="/project/:projectId"              element={<ProjectPage />} />
+            <Route path="/project/:projectId/chat/:roomId" element={<ChatPage />} />
+            <Route path="/project/:projectId/wrapup"       element={<WrapupPage />} />
+            <Route path="/create"                          element={<CreateProjectPage />} />
+            <Route path="/profile"                         element={<ProfilePage />} />
+            <Route path="/connect"                         element={<ConnectPage />} />
+            <Route path="/match"                           element={<MatchPage />} />
+            <Route path="/messages"                        element={<MessagesPage />} />
+            <Route path="/help"                            element={<HelpPage />} />
           </Route>
         </Routes>
       </Suspense>
