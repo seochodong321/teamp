@@ -104,12 +104,20 @@
 .stickyHeader {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: var(--bg);
-  padding-bottom: 4px;
+  z-index: 50;
+  background: var(--bg-secondary);
+  margin: 0 -24px;
+  padding: 0 24px 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .stickyHeader {
+    margin: 0 -16px;
+    padding: 0 16px 12px;
+  }
 }
 
 /* ── 페이지 헤더 (Hero) ── */
