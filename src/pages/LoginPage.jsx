@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
-  GoogleAuthProvider, signInWithPopup,
+  GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -38,6 +38,13 @@ export default function LoginPage() {
   const [loading, setLoading]         = useState(false)
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
+  const [authReady, setAuthReady]         = useState(false)
+
+  // Firebase Auth 초기화 대기 — 기존 세션 복원 전에 로그인 폼이 깜빡이는 현상 방지
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, () => { setAuthReady(true) })
+    return () => unsub()
+  }, [])
 
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
@@ -49,12 +56,41 @@ export default function LoginPage() {
     } catch { setUsernameStatus('idle') }
   }
 
+  // Firebase 초기화 전엔 스피너 — 기존 세션 자동 복원 대기
+  if (!authReady) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
+  )
+
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
 
   // ── 소셜 로그인 공통 핸들러 (Google / Apple / Kakao 등 재사용)
   const handleSocialLogin = async (provider) => {
     setLoading(true)
     setError('')
+
+    // Firebase Auth 세션이 이미 있으면 팝업 없이 바로 처리 (멀티탭 케이스)
+    const existingUser = auth.currentUser
+    if (existingUser) {
+      try {
+        const snap = await getDoc(doc(db, 'users', existingUser.uid))
+        if (snap.exists() && snap.data().username) {
+          const d = snap.data()
+          login(d.name, d.email || existingUser.email, existingUser.uid, d)
+        } else {
+          login(existingUser.displayName || '사용자', existingUser.email, existingUser.uid)
+        }
+        navigate(redirectTo, { replace: true })
+      } catch {
+        navigate(redirectTo, { replace: true })
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     try {
       const cred = await signInWithPopup(auth, provider)
       const user  = cred.user
