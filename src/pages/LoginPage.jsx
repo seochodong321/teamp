@@ -3,7 +3,7 @@ import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
-  GoogleAuthProvider, signInWithRedirect,
+  GoogleAuthProvider, signInWithPopup,
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -51,15 +51,27 @@ export default function LoginPage() {
 
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
 
-  // ── 소셜 로그인 공통 핸들러 — 리다이렉트 방식 (팝업은 모바일/PWA에서 차단됨)
+  // ── 소셜 로그인 공통 핸들러 (Google / Apple / Kakao 등 재사용)
   const handleSocialLogin = async (provider) => {
     setLoading(true)
     setError('')
     try {
-      await signInWithRedirect(auth, provider)
-      // 페이지가 Google로 이동함 — 이후는 onAuthStateChanged에서 처리
+      const cred = await signInWithPopup(auth, provider)
+      const user  = cred.user
+      const snap  = await getDoc(doc(db, 'users', user.uid))
+      if (snap.exists() && snap.data().username) {
+        const d = snap.data()
+        login(d.name, d.email || user.email, user.uid, d)
+        navigate(redirectTo, { replace: true })
+      } else {
+        setNeedsUsernameSetup(true)
+        navigate('/setup-username', { replace: true })
+      }
     } catch (e) {
-      setError(`소셜 로그인 실패: ${e.code || e.message}`)
+      if (e.code !== 'auth/popup-closed-by-user') {
+        setError(`소셜 로그인 실패: ${e.code || e.message}`)
+      }
+    } finally {
       setLoading(false)
     }
   }
