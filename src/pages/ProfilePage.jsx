@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -54,6 +54,8 @@ export default function ProfilePage() {
   // 편집 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)
   const [editName, setEditName]                 = useState('')
+  const [editUsername, setEditUsername]         = useState('')
+  const [usernameStatus, setUsernameStatus]     = useState('idle') // idle | checking | ok | taken
   const [editAffiliation, setEditAffiliation]   = useState('')
   const [editPhone, setEditPhone]               = useState('')
   const [editOneliner, setEditOneliner]         = useState('')
@@ -94,8 +96,23 @@ export default function ProfilePage() {
     }
   }
 
+  const checkUsername = async (raw) => {
+    const val = raw.toLowerCase().replace(/^@/, '')
+    const current = (currentUser.username || '').replace(/^@/, '')
+    if (val === current) { setUsernameStatus('ok'); return }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return }
+    setUsernameStatus('checking')
+    try {
+      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
+      setUsernameStatus(snap.empty ? 'ok' : 'taken')
+    } catch { setUsernameStatus('idle') }
+  }
+
   const openEditModal = () => {
     setEditName(currentUser.name || '')
+    const rawU = (currentUser.username || '').replace(/^@/, '')
+    setEditUsername(rawU)
+    setUsernameStatus(rawU ? 'ok' : 'idle')
     setEditAffiliation(currentUser.affiliation || '')
     setEditPhone(currentUser.phone || '')
     setEditOneliner(currentUser.oneliner || '')
@@ -121,11 +138,14 @@ export default function ProfilePage() {
     const newBirthday = editBirthYear && editBirthMonth && editBirthDay
       ? `${editBirthYear}-${editBirthMonth}-${editBirthDay}`
       : (editBirthMonth && editBirthDay ? `${editBirthMonth}-${editBirthDay}` : '')
+    const newUsername = editUsername.trim() ? `@${editUsername.trim().toLowerCase().replace(/^@/, '')}` : currentUser.username
+    if (usernameStatus === 'taken') { alert('이미 사용 중인 아이디예요.'); return }
     try {
       // Firestore에 저장
       if (currentUser.id) {
         await updateDoc(doc(db, 'users', currentUser.id), {
           name: editName.trim(),
+          username: newUsername,
           affiliation: editAffiliation.trim(),
           phone: editPhone.trim(),
           oneliner: editOneliner.trim(),
@@ -135,6 +155,7 @@ export default function ProfilePage() {
       // 로컬 상태 업데이트
       updateProfile({
         name: editName.trim(),
+        username: newUsername,
         affiliation: editAffiliation.trim(),
         phone: editPhone.trim(),
         oneliner: editOneliner.trim(),
@@ -174,6 +195,20 @@ export default function ProfilePage() {
                 <input className={styles.editInput} value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   placeholder="실명 또는 닉네임" />
+              </div>
+
+              <div className={styles.editField}>
+                <label className={styles.editLabel}>@아이디 <span className={styles.editLabelHint}>영문·숫자·_ 3~20자</span></label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>@</span>
+                  <input className={styles.editInput} style={{ paddingLeft: 28 }}
+                    value={editUsername}
+                    onChange={(e) => { setEditUsername(e.target.value); checkUsername(e.target.value) }}
+                    placeholder="나만의 아이디" maxLength={20} />
+                  {usernameStatus === 'ok'       && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--teal)', fontSize: 12, fontWeight: 600 }}>✓ 사용 가능</span>}
+                  {usernameStatus === 'taken'    && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--coral)', fontSize: 12, fontWeight: 600 }}>✗ 이미 사용 중</span>}
+                  {usernameStatus === 'checking' && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', fontSize: 12 }}>확인 중…</span>}
+                </div>
               </div>
 
               <div className={styles.editField}>

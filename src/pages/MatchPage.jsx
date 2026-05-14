@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, serverTimestamp, arrayUnion } from 'firebase/firestore'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './MatchPage.module.css'
@@ -14,6 +15,7 @@ const SKILL_PRESETS = ['React', 'Vue', 'Node.js', 'Python', 'Java', 'Spring', 'F
 
 export default function MatchPage() {
   const { projects, currentUser, addMemberToProject, blockedUsers } = useStore()
+  const navigate = useNavigate()
 
   const [posts, setPosts]             = useState([])
   const [loading, setLoading]         = useState(true)
@@ -79,6 +81,7 @@ export default function MatchPage() {
         projectCategory: project.category,
         leaderId: currentUser.id,
         leaderName: currentUser.name,
+        leaderUsername: currentUser.username || '',
         title: formTitle.trim(),
         description: formDesc.trim(),
         skills: formSkills,
@@ -262,7 +265,7 @@ export default function MatchPage() {
                 </div>
               )}
 
-              {/* 지원하기 (내 글 아닌 경우) */}
+              {/* 지원하기 + 문의하기 (내 글 아닌 경우) */}
               {!isMyPost && !myProject && (
                 <div className={styles.applySection}>
                   {myApplied ? (
@@ -274,6 +277,18 @@ export default function MatchPage() {
                       지원하기
                     </button>
                   )}
+                  <button className={styles.inquiryBtn}
+                    onClick={() => {
+                      const to = selected.leaderUsername || `@${selected.leaderName}`
+                      const params = new URLSearchParams({
+                        compose: '1', to,
+                        matchId: selected.id,
+                        matchTitle: selected.title,
+                      })
+                      navigate(`/messages?${params}`)
+                    }}>
+                    ✉️ 문의하기
+                  </button>
                 </div>
               )}
 

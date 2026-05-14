@@ -14,11 +14,13 @@ const PRIORITY = {
   low:    { label: '낮음', color: '#0F6E56', bg: '#E1F5EE', dot: '🟢' },
 }
 
-function getDueDateInfo(dueDate, today) {
+function getDueDateInfo(dueDate, today, status) {
   if (!dueDate) return null
   const diff = Math.round((new Date(dueDate) - new Date(today)) / 86400000)
-  if (diff === 0) return { label: '오늘 마감', overdue: false, urgent: true }
-  if (diff > 0)   return { label: `D-${diff}`, overdue: false, urgent: diff <= 3 }
+  const done = status === 'done'
+  if (diff === 0) return { label: '오늘 마감', overdue: false, urgent: !done }
+  if (diff > 0)   return { label: `D-${diff}`, overdue: false, urgent: diff <= 3 && !done }
+  if (done)       return { label: `D+${-diff}`, overdue: false, urgent: false }
   return { label: `D+${-diff} 초과`, overdue: true, urgent: true }
 }
 
@@ -147,7 +149,7 @@ export default function TodoBoard({ project, currentUser }) {
                   colTodos.map((todo) => {
                     const todoAssignees = getAssignees(todo)
                     const pri = PRIORITY[todo.priority] || PRIORITY.medium
-                    const dueDateInfo = getDueDateInfo(todo.dueDate, today)
+                    const dueDateInfo = getDueDateInfo(todo.dueDate, today, todo.status)
                     return (
                       <div key={todo.id}
                         className={`${styles.card} ${dueDateInfo?.overdue ? styles.cardOverdue : ''}`}

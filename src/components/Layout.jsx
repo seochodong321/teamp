@@ -189,6 +189,9 @@ export default function Layout() {
           <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>🤝</span><span>팀프 매치</span>
           </NavLink>
+          <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+            <span className={styles.navIcon}>✉️</span><span>쪽지함</span>
+          </NavLink>
           <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
           </NavLink>

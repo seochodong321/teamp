@@ -195,10 +195,13 @@ export const useStore = create(
 
       // ─── 인증 ────────────────────────────────────────────
       login: (name, email, uid, extra = {}) => {
+        // username: Firestore 값 우선, 없으면 이메일 앞부분 자동 생성
+        const rawUsername = extra.username || `@${(email || 'user').split('@')[0]}`
+        const username = rawUsername.startsWith('@') ? rawUsername : `@${rawUsername}`
         const user = {
           id: uid || 'user_me',
           name: name || '사용자',
-          username: `@${(email || 'user').split('@')[0]}`,
+          username,
           bio: '',
           oneliner: extra.oneliner || '',
           email: email || '',

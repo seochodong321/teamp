@@ -4,7 +4,7 @@ import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
 } from 'firebase/auth'
-import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
@@ -24,6 +24,8 @@ export default function LoginPage() {
 
   const [mode, setMode]               = useState(defaultMode)
   const [name, setName]               = useState('')
+  const [username, setUsername]       = useState('')
+  const [usernameStatus, setUsernameStatus] = useState('idle') // idle | checking | ok | taken
   const [email, setEmail]             = useState(() => localStorage.getItem('teamp-saved-email') || '')
   const [password, setPassword]       = useState('')
   const [affiliation, setAffiliation] = useState('')
@@ -36,6 +38,16 @@ export default function LoginPage() {
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
 
+  const checkUsername = async (raw) => {
+    const val = raw.toLowerCase().replace(/^@/, '')
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return }
+    setUsernameStatus('checking')
+    try {
+      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
+      setUsernameStatus(snap.empty ? 'ok' : 'taken')
+    } catch { setUsernameStatus('idle') }
+  }
+
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
 
   const handleSubmit = async (e) => {
@@ -45,6 +57,9 @@ export default function LoginPage() {
     if (password.length < 6) { setError('비밀번호는 6자리 이상이어야 해요.'); return }
     if (mode === 'signup') {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
+      const uname = username.trim().toLowerCase().replace(/^@/, '')
+      if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) { setError('@아이디는 영문·숫자·_만 사용, 3~20자로 입력해주세요.'); return }
+      if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
       if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
     }
@@ -57,14 +72,15 @@ export default function LoginPage() {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
         const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
+        const finalUsername = `@${username.trim().toLowerCase().replace(/^@/, '')}`
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid: cred.user.uid, name: name.trim(),
-          username: `@${email.split('@')[0]}`, email: email.trim(),
+          username: finalUsername, email: email.trim(),
           affiliation: affiliation.trim(), phone: phone.trim(), bio: '',
           birthday,
           createdAt: new Date().toISOString(),
         })
-        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim(), birthday })
+        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim(), birthday, username: finalUsername })
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
         const snap = await getDoc(doc(db, 'users', cred.user.uid))
@@ -172,6 +188,18 @@ export default function LoginPage() {
                   <label className={styles.label}>이름 *</label>
                   <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
                     placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>@아이디 * <span className={styles.labelHint}>(영문·숫자·_ , 3~20자, 변경 가능)</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>@</span>
+                    <input className={styles.input} style={{ paddingLeft: 24 }} value={username}
+                      onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value) }}
+                      placeholder="예) teampuser123" disabled={loading} maxLength={20} />
+                    {usernameStatus === 'ok'      && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--teal)', fontSize: 12, fontWeight: 600 }}>✓ 사용 가능</span>}
+                    {usernameStatus === 'taken'   && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--coral)', fontSize: 12, fontWeight: 600 }}>✗ 이미 사용 중</span>}
+                    {usernameStatus === 'checking'&& <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', fontSize: 12 }}>확인 중…</span>}
+                  </div>
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>소속 * <span className={styles.labelHint}>(학교, 회사, 단체 등)</span></label>
