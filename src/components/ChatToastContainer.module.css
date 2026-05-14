@@ -19,10 +19,10 @@
   align-items: flex-end;
 }
 
-/* 모바일: 탭바(56px) + 여백 위 */
+/* 모바일: 탭바(60px) + 여백 위 */
 @media (max-width: 768px) {
   .container {
-    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px);
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
     left: 12px;
     right: 12px;
     align-items: stretch;

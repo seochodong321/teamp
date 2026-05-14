@@ -90,6 +90,22 @@ export default function ChatPage() {
   const messagesRef   = useRef(null)
   const isInitialRef  = useRef(true)
   const nearBottomRef = useRef(true)
+  const pageRef       = useRef(null)
+
+  // ─── iOS PWA 키보드 대응: visualViewport 변화 시 채팅 영역 재조정 ──
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv || !pageRef.current) return
+    const onResize = () => {
+      const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      pageRef.current.style.bottom = kbHeight > 0
+        ? `${kbHeight}px`
+        : ''
+      if (kbHeight > 0) bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+    }
+    vv.addEventListener('resize', onResize)
+    return () => vv.removeEventListener('resize', onResize)
+  }, [])
 
   // ─── Firestore 메시지 실시간 구독 ─────────────────────────────
   useEffect(() => {
@@ -242,7 +258,7 @@ export default function ChatPage() {
   const backPath      = isDm ? '/home' : `/project/${projectId}`
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={pageRef}>
       {/* 라이트박스 */}
       {lightbox && (
         <div className={styles.lightbox} onClick={() => setLightbox(null)}>

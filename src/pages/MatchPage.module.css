@@ -74,7 +74,7 @@
 
 /* 모집글 작성 모달 */
 .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.formModal { background: var(--bg); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-xl); overflow: hidden; }
+.formModal { background: var(--bg); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 90dvh; display: flex; flex-direction: column; box-shadow: var(--shadow-xl); overflow: hidden; }
 .formModalHeader { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
 .formModalTitle { font-size: 16px; font-weight: 700; color: var(--text); }
 .formClose { font-size: 16px; color: var(--text-tertiary); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }

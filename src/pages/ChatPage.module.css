@@ -13,9 +13,9 @@
   /* 헤더 아래~탭바 위 공간을 뷰포트 기준으로 정확히 채움 */
   .page {
     position: fixed;
-    top: var(--header-height);
+    top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     left: 0; right: 0;
-    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    bottom: 60px; /* 탭바 높이 */
     height: auto;
     border-radius: 0;
     border: none;
@@ -25,7 +25,11 @@
   .messages { padding: 10px 14px; }
   .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
-  .inputArea { padding: 8px 10px; }
+  /* inputArea: 홈 인디케이터 위로 여백 */
+  .inputArea {
+    padding: 8px 10px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
   .input { font-size: 16px; } /* iOS zoom 방지 */
   .roomName { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
 }

@@ -362,7 +362,7 @@
 /* 프로젝트 설정 모달 */
 .settingsModal {
   background: var(--bg); border-radius: var(--radius-xl);
-  width: 100%; max-width: 480px; max-height: 90vh;
+  width: 100%; max-width: 480px; max-height: 90dvh;
   display: flex; flex-direction: column;
   box-shadow: var(--shadow-xl); overflow: hidden;
 }
