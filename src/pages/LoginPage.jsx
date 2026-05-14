@@ -129,11 +129,16 @@ export default function LoginPage() {
         login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim(), birthday, username: finalUsername })
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
-        const snap = await getDoc(doc(db, 'users', cred.user.uid))
-        if (snap.exists()) {
-          const d = snap.data()
-          login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
-        } else {
+        // Firestore 프로필 로드 실패해도 로그인 자체는 성공 처리
+        try {
+          const snap = await getDoc(doc(db, 'users', cred.user.uid))
+          if (snap.exists()) {
+            const d = snap.data()
+            login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
+          } else {
+            login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
+          }
+        } catch {
           login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
         }
       }
