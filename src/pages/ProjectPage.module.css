@@ -427,11 +427,6 @@
 }
 
 /* ── 마일스톤 ───────────────────────────────────────── */
-.msWrapupBar { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: linear-gradient(135deg, var(--primary-light), var(--bg-secondary)); border: 1px solid var(--primary-light); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 16px; flex-wrap: wrap; }
-.msWrapupBarTitle { font-size: 14px; font-weight: 700; color: var(--text); }
-.msWrapupBarSub   { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-.msWrapupBtn { padding: 8px 16px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; white-space: nowrap; transition: all var(--transition-fast); }
-.msWrapupBtn:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
 .msAddWrap { margin-bottom: 8px; }
 .msAddTrigger { padding: 9px 18px; border: 1.5px dashed var(--border); border-radius: var(--radius-md); font-size: 13px; color: var(--text-secondary); background: var(--bg); width: 100%; text-align: center; transition: all var(--transition-fast); }
@@ -445,9 +440,7 @@
 .msFormDesc { flex: 1; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 12px; font-size: 13px; color: var(--text); resize: none; font-family: inherit; line-height: 1.5; }
 .msFormDesc:focus { border-color: var(--primary); }
 .msExamples { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.msExLabel { font-size: 11px; color: var(--text-tertiary); font-weight: 600; }
-.msExBtn { padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-full); font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary); transition: all 0.12s; }
-.msExBtn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-soft); }
+
 .msFormBtns { display: flex; justify-content: flex-end; gap: 8px; }
 .msFormCancel { padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
 .msFormSubmit { padding: 8px 20px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
@@ -508,29 +501,6 @@
 .msHistoryNote { font-size: 11px; color: var(--text-secondary); }
 .msHistoryAt   { font-size: 10px; color: var(--text-tertiary); margin-left: auto; }
 
-/* Wrap-up 모달 */
-.wrapupModal { background: var(--bg); border-radius: var(--radius-xl); width: 100%; max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; gap: 0; box-shadow: var(--shadow-xl); overflow: hidden; }
-.wrapupModalHeader { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
-.wrapupModalTitle  { font-size: 17px; font-weight: 700; color: var(--text); }
-.wrapupModalSub    { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
-.wrapupStats { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
-.wrapupStat  { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px; border-right: 1px solid var(--border); }
-.wrapupStat:last-child { border-right: none; }
-.wrapupStatCount { font-size: 22px; font-weight: 800; }
-.wrapupStatLabel { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
-.wrapupHint { font-size: 11px; color: var(--text-tertiary); text-align: center; padding: 8px 24px 0; }
-.wrapupTimeline { flex: 1; overflow-y: auto; padding: 12px 24px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; }
-.wrapupMsItem { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); }
-.wrapupMsDone    { background: var(--teal-light); border-color: var(--teal-light); }
-.wrapupMsDelayed { background: var(--amber-light); border-color: var(--amber-light); }
-.wrapupMsTitle { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-.wrapupMsDate  { font-size: 11px; color: var(--text-tertiary); }
-.wrapupEmpty   { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 20px; }
-.wrapupNoteWrap { padding: 12px 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-.wrapupNoteLabel { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
-.wrapupNoteInput { width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; color: var(--text); resize: none; line-height: 1.6; font-family: inherit; }
-.wrapupNoteInput:focus { border-color: var(--primary); background: var(--bg); }
-.wrapupFooter { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--border); }
 
 @media (max-width: 768px) {
   .timeline { padding: 8px 0 16px; }

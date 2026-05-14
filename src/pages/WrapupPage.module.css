@@ -620,6 +620,48 @@
 .submitBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 .submitBtn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform: none; }
 
+/* ── 마일스톤 여정 (요약 탭) ── */
+.milestoneSection {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+.msStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.msStatItem   { font-size: 13px; color: var(--text-secondary); }
+.msStatItem strong { color: var(--text); font-weight: 700; }
+.msStatDone strong { color: var(--teal); }
+.msStatDelayed strong { color: var(--amber); }
+.msStatDivider { color: var(--border-strong); font-size: 12px; }
+
+.msList { display: flex; flex-direction: column; gap: 6px; }
+
+.msRow { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
+.msRow_done    { background: var(--teal-light); border-color: transparent; }
+.msRow_delayed { background: var(--amber-light); border-color: transparent; }
+.msRow_pending { background: var(--bg-secondary); }
+
+.msDot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.msDot_pending { background: var(--primary); }
+.msDot_done    { background: var(--teal); }
+.msDot_delayed { background: var(--amber); }
+
+.msRowInfo { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.msRowTitle { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msRowDate  { font-size: 11px; color: var(--text-tertiary); }
+
+.msBadge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); white-space: nowrap; flex-shrink: 0; }
+.msBadge_pending { background: var(--primary-light); color: var(--primary); }
+.msBadge_done    { background: var(--teal-light); color: var(--teal); }
+.msBadge_delayed { background: var(--amber-light); color: var(--amber); }
+
 @media (max-width: 600px) {
   .tagGrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .banner { flex-wrap: wrap; gap: 10px; }

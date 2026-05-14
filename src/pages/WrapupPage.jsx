@@ -203,6 +203,45 @@ export default function WrapupPage() {
                   </div>
                 )}
 
+                {/* 마일스톤 여정 */}
+                {(() => {
+                  const milestones = project.milestones || []
+                  const msDone    = milestones.filter((m) => m.status === 'done').length
+                  const msDelayed = milestones.filter((m) => m.status === 'delayed').length
+                  const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' }
+                  if (milestones.length === 0) return null
+                  return (
+                    <div className={styles.milestoneSection}>
+                      <h3 className={styles.sectionTitle}>🏁 마일스톤 여정</h3>
+                      <div className={styles.msStats}>
+                        <span className={styles.msStatItem}><strong>{milestones.length}</strong> 전체</span>
+                        <span className={styles.msStatDivider}>·</span>
+                        <span className={`${styles.msStatItem} ${styles.msStatDone}`}><strong>{msDone}</strong> 완료</span>
+                        <span className={styles.msStatDivider}>·</span>
+                        <span className={`${styles.msStatItem} ${styles.msStatDelayed}`}><strong>{msDelayed}</strong> 연기</span>
+                      </div>
+                      <div className={styles.msList}>
+                        {milestones.map((ms) => (
+                          <div key={ms.id} className={`${styles.msRow} ${styles[`msRow_${ms.status}`]}`}>
+                            <span className={`${styles.msDot} ${styles[`msDot_${ms.status}`]}`} />
+                            <div className={styles.msRowInfo}>
+                              <span className={styles.msRowTitle}>{ms.title}</span>
+                              {ms.targetDate && (
+                                <span className={styles.msRowDate}>
+                                  {ms.completedAt ? `완료 ${ms.completedAt.slice(0, 10)}` : `목표 ${ms.targetDate}`}
+                                </span>
+                              )}
+                            </div>
+                            <span className={`${styles.msBadge} ${styles[`msBadge_${ms.status}`]}`}>
+                              {MS_STATUS[ms.status] || ms.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 <div className={styles.memberSection}>
                   <h3 className={styles.sectionTitle}>팀원</h3>
                   {wrapup.members.map((m) => (
