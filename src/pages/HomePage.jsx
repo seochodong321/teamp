@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
@@ -57,6 +57,14 @@ export default function HomePage() {
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
   const collecting = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
   const archived   = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
+
+  // 홈에서만 .content padding-top 제거 → sticky 헤더가 최상단에 바로 붙게
+  useLayoutEffect(() => {
+    const el = document.getElementById('page-content')
+    if (!el) return
+    el.style.paddingTop = '0px'
+    return () => { el.style.paddingTop = '' }
+  }, [])
 
   // ── 새 프로젝트 모달 상태 ──
   const [showModal, setShowModal] = useState(false)

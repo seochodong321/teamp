@@ -271,7 +271,7 @@ export default function Layout() {
           </div>
         )}
 
-        <div className={styles.content}>
+        <div id="page-content" className={styles.content}>
           <Outlet />
         </div>
 
