@@ -691,7 +691,7 @@ export const useStore = create(
           try {
             await txProject(project.id, (data) => ({
               rooms: data.rooms.map(r => r.id === roomId
-                ? { ...r, lastMessage: `${currentUser.name}: ${lastText}`, time: '방금' }
+                ? { ...r, lastMessage: `${currentUser.name}: ${lastText}`, time: '방금', lastMessageAt: new Date().toISOString() }
                 : r),
             }))
           } catch (e) {
@@ -848,38 +848,41 @@ export const useStore = create(
       },
 
       // ─── 할 일 ────────────────────────────────────────────
-      addTodo: async (projectId, { title, assignee, dueDate, priority }) => {
+      addTodo: async (projectId, { title, assignees = [], dueDate, priority }) => {
         const { currentUser } = get()
         const todo = {
           id: `todo_${Date.now()}`,
-          title, assignee: assignee || null, dueDate: dueDate || null,
+          title, assignees, dueDate: dueDate || null,
           priority: priority || 'medium', status: 'todo',
           createdBy: currentUser.id, createdAt: todayStr(),
         }
 
-        if (assignee && assignee !== currentUser.id) {
+        // 나 이외의 담당자들에게 알림 전송
+        const otherAssignees = assignees.filter((id) => id !== currentUser.id)
+        if (otherAssignees.length > 0) {
           const project = get().projects.find((p) => p.id === projectId)
-          const assigneeMember = project?.members.find((m) => m.id === assignee)
           const allRoom = project?.rooms.find((r) => r.name === '전체')
-          if (assigneeMember && allRoom) {
+          const names = otherAssignees.map((id) => project?.members.find((m) => m.id === id)?.name).filter(Boolean)
+          if (names.length > 0 && allRoom) {
             await addDoc(collection(db, 'rooms', allRoom.id, 'messages'), {
               senderId: 'system', senderName: '✅ 할 일 알림', type: 'notify',
-              text: `${assigneeMember.name} 님에게 할 일이 배정됐어요: "${title}"`,
+              text: `${names.join(', ')} 님에게 할 일이 배정됐어요: "${title}"`,
               time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
               createdAt: serverTimestamp(),
             })
           }
-          // 배정받은 사람에게 알림 + 토스트
-          await addDoc(collection(db, 'notifications'), {
-            targetUserId: assignee,
-            type: 'todo',
-            text: `"${title}" 할 일이 배정됐어요`,
-            projectId,
-            projectName: project?.name || '',
-            link: `/project/${projectId}?tab=todo`,
-            read: false,
-            createdAt: serverTimestamp(),
-          })
+          for (const targetUserId of otherAssignees) {
+            await addDoc(collection(db, 'notifications'), {
+              targetUserId,
+              type: 'todo',
+              text: `"${title}" 할 일이 배정됐어요`,
+              projectId,
+              projectName: project?.name || '',
+              link: `/project/${projectId}?tab=todo`,
+              read: false,
+              createdAt: serverTimestamp(),
+            })
+          }
         }
 
         await txProject(projectId, (data) => ({
@@ -894,7 +897,8 @@ export const useStore = create(
         if (!todo) return
         const me = project.members.find((m) => m.id === currentUser.id)
         const isLeaderOrSub = me?.role === 'leader' || me?.role === 'sub-leader'
-        if (todo.createdBy !== currentUser.id && todo.assignee !== currentUser.id && !isLeaderOrSub) return
+        const isAssignee = todo.assignees?.includes(currentUser.id) || todo.assignee === currentUser.id
+        if (todo.createdBy !== currentUser.id && !isAssignee && !isLeaderOrSub) return
 
         // 낙관적 업데이트 — 이전 상태 저장 후 선 반영
         const prevProjects = get().projects

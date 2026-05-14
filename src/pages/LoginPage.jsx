@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [password, setPassword]       = useState('')
   const [affiliation, setAffiliation] = useState('')
   const [phone, setPhone]             = useState('')
+  const [birthYear, setBirthYear]     = useState('')
   const [birthMonth, setBirthMonth]   = useState('')
   const [birthDay, setBirthDay]       = useState('')
   const [error, setError]             = useState('')
@@ -45,6 +46,7 @@ export default function LoginPage() {
     if (mode === 'signup') {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
+      if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
     }
     setLoading(true)
     try {
@@ -54,9 +56,7 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
-        const birthday = (birthMonth && birthDay)
-          ? `${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
-          : ''
+        const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
         await setDoc(doc(db, 'users', cred.user.uid), {
           uid: cred.user.uid, name: name.trim(),
           username: `@${email.split('@')[0]}`, email: email.trim(),
@@ -184,10 +184,17 @@ export default function LoginPage() {
                     placeholder="010-0000-0000" type="tel" disabled={loading} />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>생일 <span className={styles.labelHint}>(선택 · 팀원에게 생일 알림이 가요 🎂)</span></label>
+                  <label className={styles.label}>생일 *</label>
                   <div style={{ display: 'flex', gap: 8 }}>
+                    <select className={styles.input} style={{ flex: 1.2 }} value={birthYear}
+                      onChange={(e) => setBirthYear(e.target.value)} disabled={loading}>
+                      <option value="">년도</option>
+                      {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
+                        <option key={y} value={String(y)}>{y}년</option>
+                      ))}
+                    </select>
                     <select className={styles.input} style={{ flex: 1 }} value={birthMonth}
-                      onChange={(e) => setBirthMonth(e.target.value)} disabled={loading}>
+                      onChange={(e) => { setBirthMonth(e.target.value); setBirthDay('') }} disabled={loading}>
                       <option value="">월</option>
                       {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                         <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>

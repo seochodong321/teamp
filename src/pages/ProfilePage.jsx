@@ -57,6 +57,9 @@ export default function ProfilePage() {
   const [editAffiliation, setEditAffiliation]   = useState('')
   const [editPhone, setEditPhone]               = useState('')
   const [editOneliner, setEditOneliner]         = useState('')
+  const [editBirthYear, setEditBirthYear]       = useState('')
+  const [editBirthMonth, setEditBirthMonth]     = useState('')
+  const [editBirthDay, setEditBirthDay]         = useState('')
   const [saving, setSaving]                     = useState(false)
 
   const [editingMemo, setEditingMemo] = useState(null)
@@ -96,6 +99,16 @@ export default function ProfilePage() {
     setEditAffiliation(currentUser.affiliation || '')
     setEditPhone(currentUser.phone || '')
     setEditOneliner(currentUser.oneliner || '')
+    const bd = currentUser.birthday || ''
+    if (bd.length === 10) {
+      const [y, m, d] = bd.split('-')
+      setEditBirthYear(y); setEditBirthMonth(m); setEditBirthDay(d)
+    } else if (bd.length === 5) {
+      const [m, d] = bd.split('-')
+      setEditBirthYear(''); setEditBirthMonth(m); setEditBirthDay(d)
+    } else {
+      setEditBirthYear(''); setEditBirthMonth(''); setEditBirthDay('')
+    }
     setShowEditModal(true)
   }
 
@@ -105,6 +118,9 @@ export default function ProfilePage() {
       return
     }
     setSaving(true)
+    const newBirthday = editBirthYear && editBirthMonth && editBirthDay
+      ? `${editBirthYear}-${editBirthMonth}-${editBirthDay}`
+      : (editBirthMonth && editBirthDay ? `${editBirthMonth}-${editBirthDay}` : '')
     try {
       // Firestore에 저장
       if (currentUser.id) {
@@ -113,6 +129,7 @@ export default function ProfilePage() {
           affiliation: editAffiliation.trim(),
           phone: editPhone.trim(),
           oneliner: editOneliner.trim(),
+          birthday: newBirthday,
         })
       }
       // 로컬 상태 업데이트
@@ -121,6 +138,7 @@ export default function ProfilePage() {
         affiliation: editAffiliation.trim(),
         phone: editPhone.trim(),
         oneliner: editOneliner.trim(),
+        birthday: newBirthday,
       })
       setShowEditModal(false)
     } catch (err) {
@@ -183,6 +201,33 @@ export default function ProfilePage() {
                   placeholder="010-0000-0000" type="tel" />
               </div>
 
+              <div className={styles.editField}>
+                <label className={styles.editLabel}>생일</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select className={styles.editInput} style={{ flex: 1.2 }} value={editBirthYear}
+                    onChange={(e) => setEditBirthYear(e.target.value)}>
+                    <option value="">년도</option>
+                    {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
+                      <option key={y} value={String(y)}>{y}년</option>
+                    ))}
+                  </select>
+                  <select className={styles.editInput} style={{ flex: 1 }} value={editBirthMonth}
+                    onChange={(e) => { setEditBirthMonth(e.target.value); setEditBirthDay('') }}>
+                    <option value="">월</option>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                      <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>
+                    ))}
+                  </select>
+                  <select className={styles.editInput} style={{ flex: 1 }} value={editBirthDay}
+                    onChange={(e) => setEditBirthDay(e.target.value)} disabled={!editBirthMonth}>
+                    <option value="">일</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={String(d).padStart(2, '0')}>{d}일</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <p className={styles.editHint}>
                 💡 이메일은 로그인 정보라 변경할 수 없어요
               </p>
@@ -219,6 +264,13 @@ export default function ProfilePage() {
           {currentUser.affiliation && <p className={styles.detail}>🏢 {currentUser.affiliation}</p>}
           {currentUser.email && <p className={styles.detail}>✉️ {currentUser.email}</p>}
           {currentUser.phone && <p className={styles.detail}>📱 {currentUser.phone}</p>}
+          {currentUser.birthday && (() => {
+            const bd = currentUser.birthday
+            const parts = bd.length === 10 ? bd.split('-') : ['', ...bd.split('-')]
+            const [y, m, d] = parts
+            const label = y ? `${y}년 ${parseInt(m)}월 ${parseInt(d)}일` : `${parseInt(m)}월 ${parseInt(d)}일`
+            return <p className={styles.detail}>🎂 {label}</p>
+          })()}
         </div>
         <div className={styles.profileActions}>
           <button className={styles.editBtn} onClick={openEditModal}>편집</button>

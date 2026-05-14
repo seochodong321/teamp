@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
+import { getGreeting } from '../greetings.js'
 import styles from './HomePage.module.css'
 
 const CATEGORIES = ['학교', '회사', '스터디', '기타']
@@ -24,6 +25,16 @@ function getCardBadge(p) {
   }
   return { text: '진행중', cls: 'ddayNormal' }
 }
+function relativeTime(iso) {
+  if (!iso) return ''
+  const diff = Date.now() - new Date(iso).getTime()
+  if (diff < 60000)        return '방금'
+  if (diff < 3600000)      return `${Math.floor(diff / 60000)}분 전`
+  if (diff < 86400000)     return `${Math.floor(diff / 3600000)}시간 전`
+  if (diff < 172800000)    return '어제'
+  return `${Math.floor(diff / 86400000)}일 전`
+}
+
 const STEPS = ['기본 정보', '팀 구성']
 const EMOJI_OPTIONS = [
   '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
@@ -363,7 +374,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── 페이지 헤더 ── */}
+      {/* ── 페이지 헤더 (sticky) ── */}
       {(() => {
         const totalActive = active.length
         const totalCollecting = collecting.length
@@ -372,14 +383,15 @@ export default function HomePage() {
         const today = new Date()
         const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
         const weekday = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()]
+        const greeting = getGreeting(currentUser?.birthday)
 
         return (
-          <>
+          <div className={styles.stickyHeader}>
             <div className={styles.pageHeader}>
               <div>
                 <div className={styles.heroEyebrow}>{dateStr} · {weekday}요일</div>
                 <h1 className={styles.title}>
-                  안녕하세요, <em>{currentUser?.name || '게스트'}</em>님
+                  {greeting.before}<em>{currentUser?.name || '게스트'}</em>{greeting.after}
                 </h1>
                 <p className={styles.subtitle}>
                   <span><b>{totalActive}개</b> 진행 중</span>
@@ -419,7 +431,8 @@ export default function HomePage() {
                     </div>
                   )}
                   {!showPinPicker && (pinned ? (
-                    <div className={styles.todayFeature}>
+                    <div className={styles.todayFeature} style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/project/${pinned.id}`)}>
                       {pinned.emoji && <div className={styles.todayFeatureEmoji}>{pinned.emoji}</div>}
                       <div className={styles.todayFeatureBody}>
                         <div className={styles.todayFeatureName}>{pinned.name}</div>
@@ -460,7 +473,7 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )
       })()}
 
@@ -503,18 +516,29 @@ export default function HomePage() {
           const activeRoom = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
             || p.rooms?.find((r) => !r.isDm && r.lastMessage)
           const lastMsg  = activeRoom?.lastMessage || ''
-          const lastTime = activeRoom?.time || ''
+          const lastTime = activeRoom?.lastMessageAt
+            ? relativeTime(activeRoom.lastMessageAt)
+            : (activeRoom?.time || '')
 
-          const todayTodoCount = (p.todos || []).filter(
-            (t) => t.dueDate === todayStr && t.status !== 'done'
-          ).length
+          // 7일 이내 메시지가 있으면 active
+          const isRecentlyActive = activeRoom?.lastMessageAt
+            && Date.now() - new Date(activeRoom.lastMessageAt).getTime() < 7 * 86400000
+
+          const myId = currentUser?.id
+          const pendingTodos = (p.todos || []).filter((t) => {
+            if (t.status === 'done') return false
+            // 내가 담당인 것만 (assignees 배열 또는 구 assignee 필드 모두 지원)
+            const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
+            return assignees.length === 0 || assignees.includes(myId)
+          })
+          const todayTodoCount = pendingTodos.length
 
           const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
           const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 
           return (
-            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''}`}
+            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''} ${isRecentlyActive ? styles.cardActive : styles.cardInactive}`}
               onClick={() => navigate(`/project/${p.id}`)} style={{ cursor: 'pointer' }}>
               {/* 커버 이미지 썸네일 — 설정된 경우만 표시 */}
               {p.coverImage && (
@@ -561,7 +585,7 @@ export default function HomePage() {
                     <div className={styles.cardPreviewTodo}
                       onClick={() => navigate(`/project/${p.id}?tab=todo`)}>
                       <span className={styles.cardPreviewIcon}>✅</span>
-                      <span className={styles.cardPreviewText}>오늘 마감 할 일 {todayTodoCount}개</span>
+                      <span className={styles.cardPreviewText}>남은 할 일 {todayTodoCount}개</span>
                     </div>
                   )}
                   {tomorrowEvent && (

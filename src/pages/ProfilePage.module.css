@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 24px; max-width: 720px; }
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 860px; }
 .pageTitle { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
 
 /* ── 편집 모달 ── */

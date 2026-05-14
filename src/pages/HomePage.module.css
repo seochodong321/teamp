@@ -100,6 +100,18 @@
 .doneTitle { font-size: 16px; font-weight: 700; color: var(--text); }
 .doneName { font-size: 13px; color: var(--text-secondary); }
 
+/* ── Sticky 헤더 ── */
+.stickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* ── 페이지 헤더 (Hero) ── */
 .pageHeader {
   display: flex;
@@ -415,6 +427,9 @@
 .cardArchived::before { background: var(--text-quaternary); }
 .cardExpired::before    { background: var(--coral); }
 .cardCollecting::before { background: var(--amber); }
+/* 최근 활동 여부에 따른 좌측 accent bar 색상 */
+.cardActive::before   { background: var(--primary-dark); }
+.cardInactive::before { background: var(--primary-light); }
 
 /* 커버 이미지 썸네일 */
 .cardCover {

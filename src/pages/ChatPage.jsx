@@ -80,6 +80,7 @@ export default function ChatPage() {
   const [showLeave, setShowLeave]         = useState(false)
   const [leaving, setLeaving]             = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
+  const [showMembersModal, setShowMembersModal] = useState(false)
 
   // ─── refs ──────────────────────────────────────────────────────
   const isComposing   = useRef(false)
@@ -312,18 +313,54 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* 참여자 목록 모달 */}
+      {showMembersModal && !isDm && project && (
+        <div className={styles.membersBackdrop} onClick={() => setShowMembersModal(false)}>
+          <div className={styles.membersModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.membersHeader}>
+              <span className={styles.membersTitle}># {roomName} 참여자</span>
+              <button className={styles.membersClose} onClick={() => setShowMembersModal(false)}>✕</button>
+            </div>
+            <div className={styles.membersList}>
+              {project.members
+                .filter((m) => m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId))
+                .map((m) => {
+                  const avStyle = avatarStyle(m.id)
+                  return (
+                    <div key={m.id} className={styles.memberRow}>
+                      <div className={styles.memberAvatar} style={{ background: avStyle.bg, color: avStyle.text }}>
+                        {m.name.charAt(0)}
+                      </div>
+                      <div className={styles.memberInfo}>
+                        <span className={styles.memberName}>{m.name}</span>
+                        {m.affiliation && <span className={styles.memberAffil}>{m.affiliation}</span>}
+                      </div>
+                      {ROLE_LABEL[m.role] && (
+                        <span className={styles.memberRole}>{ROLE_LABEL[m.role]}</span>
+                      )}
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className={styles.header}>
         <button className={styles.back} onClick={() => navigate(backPath)}>{backLabel}</button>
         <div className={styles.headerCenter}>
           <span className={styles.roomName}>{isDm ? `💬 ${roomName}` : `# ${roomName}`}</span>
-          {!isDm && project && (
-            <span className={styles.roomMeta}>
-              {project.members.filter((m) =>
-                m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId)
-              ).length}명
-            </span>
-          )}
+          {!isDm && project && (() => {
+            const roomMembers = project.members.filter((m) =>
+              m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId)
+            )
+            return (
+              <button className={styles.roomMetaBtn} onClick={() => setShowMembersModal(true)}>
+                {roomMembers.length}명
+              </button>
+            )
+          })()}
         </div>
         {isDm
           ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
@@ -337,7 +374,8 @@ export default function ChatPage() {
           <div className={styles.emptyMessages}>
             <div className={styles.emptyIcon}>{isDm ? '💬' : '#'}</div>
             <p className={styles.emptyTitle}>{isDm ? `${roomName}와의 대화` : `# ${roomName}`}</p>
-            <p className={styles.emptySub}>아직 메시지가 없어요. 첫 번째 메시지를 보내보세요!</p>
+            <p className={styles.emptySub}>아직 메시지가 없어요.</p>
+            <p className={styles.emptySub}>첫 번째 메시지를 보내보세요!</p>
           </div>
         )}
 
