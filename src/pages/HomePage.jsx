@@ -524,12 +524,11 @@ export default function HomePage() {
           const isRecentlyActive = activeRoom?.lastMessageAt
             && Date.now() - new Date(activeRoom.lastMessageAt).getTime() < 7 * 86400000
 
-          const myId = currentUser?.id
           const pendingTodos = (p.todos || []).filter((t) => {
             if (t.status === 'done') return false
             // 내가 담당인 것만 (assignees 배열 또는 구 assignee 필드 모두 지원)
-            const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
-            return assignees.length === 0 || assignees.includes(myId)
+            const tAssignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
+            return tAssignees.length === 0 || tAssignees.includes(myId)
           })
           const todayTodoCount = pendingTodos.length
 
