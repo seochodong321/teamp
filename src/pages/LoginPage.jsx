@@ -59,8 +59,14 @@ export default function LoginPage() {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
       const uname = username.trim().toLowerCase().replace(/^@/, '')
       if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) { setError('@아이디는 영문·숫자·_만 사용, 3~20자로 입력해주세요.'); return }
-      if (usernameStatus === 'checking') { setError('아이디 중복 확인 중이에요. 잠시만 기다려주세요.'); return }
       if (usernameStatus === 'taken')    { setError('이미 사용 중인 아이디예요.'); return }
+      if (usernameStatus === 'checking') { setError('아이디 확인 중이에요. 잠시 후 다시 눌러주세요.'); return }
+      // idle 상태면 아직 중복 확인이 안 된 것 — 검사 직접 수행
+      if (usernameStatus === 'idle') {
+        setError('아이디 중복 확인을 해주세요. 잠시 후 다시 눌러주세요.')
+        checkUsername(uname)
+        return
+      }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
       if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
     }
@@ -70,15 +76,17 @@ export default function LoginPage() {
       await setPersistence(auth, autoLogin ? browserLocalPersistence : browserSessionPersistence)
 
       if (mode === 'signup') {
-        // 제출 직전 최종 중복 확인 — 타이밍 레이스 방지
-        const uname = username.trim().toLowerCase().replace(/^@/, '')
-        const finalCheck = await getDocs(query(collection(db, 'users'), where('username', '==', `@${uname}`)))
-        if (!finalCheck.empty) {
-          setUsernameStatus('taken')
-          setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
-          setLoading(false)
-          return
-        }
+        // 제출 직전 최종 중복 확인 — 타이밍 레이스 방지 (Firestore 실패 시 graceful 진행)
+        try {
+          const uname2 = username.trim().toLowerCase().replace(/^@/, '')
+          const finalCheck = await getDocs(query(collection(db, 'users'), where('username', '==', `@${uname2}`)))
+          if (!finalCheck.empty) {
+            setUsernameStatus('taken')
+            setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
+            setLoading(false)
+            return
+          }
+        } catch { /* Firestore 에러 시 1차 검증(onChange) 결과를 신뢰하고 진행 */ }
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
         const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
@@ -206,9 +214,25 @@ export default function LoginPage() {
                     <input className={styles.input} style={{ paddingLeft: 24 }} value={username}
                       onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value) }}
                       placeholder="예) teampuser123" disabled={loading} maxLength={20} />
-                    {usernameStatus === 'ok'      && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--teal)', fontSize: 12, fontWeight: 600 }}>✓ 사용 가능</span>}
-                    {usernameStatus === 'taken'   && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--coral)', fontSize: 12, fontWeight: 600 }}>✗ 이미 사용 중</span>}
-                    {usernameStatus === 'checking'&& <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', fontSize: 12 }}>확인 중…</span>}
+                    {usernameStatus === 'ok' && (
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.5 10L11 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 700 }}>사용 가능</span>
+                      </span>
+                    )}
+                    {usernameStatus === 'taken' && (
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--coral)', fontWeight: 700 }}>이미 사용 중</span>
+                      </span>
+                    )}
+                    {usernameStatus === 'checking' && (
+                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--primary)', animation: 'spin 0.7s linear infinite' }} />
+                    )}
                   </div>
                 </div>
                 <div className={styles.field}>

@@ -190,6 +190,10 @@ a {
 }
 
 /* ── 글로벌 애니메이션 ── */
+@keyframes spin {
+  to { transform: rotate(360deg) }
+}
+
 @keyframes fadeIn {
   from { opacity: 0 }
   to   { opacity: 1 }
