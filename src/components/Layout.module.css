@@ -313,14 +313,18 @@
 }
 
 .menuBtn {
-  font-size: 20px;
   color: var(--text);
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 10px;
+  background: transparent;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
 }
+.menuBtn:hover { background: var(--bg-secondary); }
 
 .mobileLogo {
   font-size: 17px;
@@ -351,50 +355,73 @@
   .mobileHeader { display: flex; }
   .mobileTabBar { display: flex; }
 
-  .content { padding: 10px 10px 0; padding-bottom: calc(56px + 16px + env(safe-area-inset-bottom, 0px)); }
-  .mobileLogo { font-size: 16px; }
+  .content { padding: 10px 12px 0; padding-bottom: calc(60px + 20px + env(safe-area-inset-bottom, 0px)); }
+  .mobileLogo { font-size: 17px; }
 }
 
 /* ── 모바일 하단 탭바 ── */
 .mobileTabBar {
-  display: none; /* 모바일에서만 표시 */
+  display: none;
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: calc(56px + env(safe-area-inset-bottom, 0px));
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--bg);
   border-top: 1px solid var(--border);
   align-items: center;
   justify-content: space-around;
   z-index: 150;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
 }
 
 .mobileTab {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   flex: 1;
-  height: 56px;
+  height: 60px;
   justify-content: center;
-  color: var(--text-tertiary);
+  color: var(--text-quaternary);
   transition: color 0.15s;
   text-decoration: none;
   position: relative;
   background: transparent;
   border: none;
   cursor: pointer;
+  padding-top: 6px;
 }
-.mobileTab:hover { color: var(--text-secondary); }
+.mobileTab:active { opacity: 0.7; }
 .mobileTabActive { color: var(--primary) !important; }
 
-.mobileTabIcon { font-size: 20px; line-height: 1; }
-.mobileTabLabel { font-size: 11px; font-weight: 500; }
+/* active 탭 상단 인디케이터 */
+.mobileTabActive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--primary);
+}
+
+.mobileTabIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.mobileTabLabel {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
 
 .mobileTabBadge {
   position: absolute;
-  top: 8px;
+  top: 6px;
   right: calc(50% - 20px);
   min-width: 16px;
   height: 16px;
@@ -408,24 +435,30 @@
   justify-content: center;
   padding: 0 4px;
   border: 1.5px solid var(--bg);
+  pointer-events: none;
 }
 
-/* 가운데 + 버튼 */
-.mobileTabCreate {
-  flex: 0 0 52px;
-  width: 52px; height: 52px;
-  border-radius: 50%;
+/* 가운데 FAB (+) */
+.mobileTabFab {
+  flex: 0 0 50px;
+  width: 50px;
+  height: 50px;
+  border-radius: 15px;
   background: var(--primary);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
-  box-shadow: 0 3px 12px rgba(83,74,183,0.4);
+  box-shadow: 0 4px 16px rgba(83,74,183,0.45);
   transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 2px;
+  flex-shrink: 0;
 }
-.mobileTabCreate:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(83,74,183,0.5); }
-.mobileTabCreateIcon { font-size: 26px; line-height: 1; font-weight: 300; }
+.mobileTabFab:active {
+  transform: scale(0.93);
+  box-shadow: 0 2px 8px rgba(83,74,183,0.3);
+}
 /* 로고 행 */
 .logoRow {
   display: flex;
@@ -520,25 +553,46 @@
   border: 2px solid var(--bg);
 }
 
+/* 모바일 뒤로가기 버튼 */
+.backBtn {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); background: transparent;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.backBtn:hover { background: var(--bg-secondary); }
+
+/* 모바일 헤더 페이지 타이틀 */
+.mobilePageTitle {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 8px;
+}
+
 /* 모바일 검색 버튼 */
 .mobileSearchBtn {
   width: 40px; height: 40px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; background: transparent;
+  color: var(--text); background: transparent;
+  transition: background var(--transition-fast);
 }
 .mobileSearchBtn:hover { background: var(--bg-secondary); }
 
 /* 모바일 알림 버튼 */
 .mobileNotiBtn {
   position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  background: transparent;
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text); background: transparent;
+  transition: background var(--transition-fast);
 }
 .mobileNotiBtn:hover { background: var(--bg-secondary); }
 

@@ -58,6 +58,27 @@ export default function Layout() {
   const active      = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
   const unreadCount = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
 
+  // 모바일 헤더 페이지 타이틀
+  const pageTitle = useMemo(() => {
+    const p = location.pathname
+    if (p === '/home')     return null
+    if (p === '/profile')  return '내 프로필'
+    if (p === '/match')    return '팀프 매치'
+    if (p === '/messages') return '쪽지함'
+    if (p === '/connect')  return '팀프 커넥트'
+    if (p === '/help')     return '도움말'
+    if (p === '/create')   return '새 프로젝트'
+    const chatMatch = p.match(/^\/project\/([^/]+)\/chat\/([^/]+)/)
+    if (chatMatch) {
+      const proj = projects.find((x) => x.id === chatMatch[1])
+      const room = proj?.rooms?.find((r) => r.id === chatMatch[2])
+      return room?.name || proj?.name || '채팅'
+    }
+    const projMatch = p.match(/^\/project\/([^/]+)/)
+    if (projMatch) return projects.find((x) => x.id === projMatch[1])?.name || '프로젝트'
+    return null
+  }, [location.pathname, projects])
+
   const handleLogout = async () => {
     try { await signOut(auth) } catch {}
     logout()
@@ -225,17 +246,46 @@ export default function Layout() {
       {/* ── 메인 컨텐츠 ── */}
       <main className={styles.main}>
         <div className={styles.mobileHeader}>
-          <button className={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
-          <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button className={styles.mobileSearchBtn} onClick={() => setShowSearch(true)}>🔍</button>
-            <button className={styles.mobileSearchBtn} onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
-              {theme === 'dark' ? '☀︎' : '◑'}
+          {pageTitle ? (
+            <button className={styles.backBtn} onClick={() => navigate(-1)} aria-label="뒤로">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/>
+              </svg>
             </button>
-            <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
-              ✦
-              {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          ) : (
+            <button className={styles.menuBtn} onClick={() => setMobileOpen(true)} aria-label="메뉴">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
             </button>
+          )}
+
+          {pageTitle
+            ? <span className={styles.mobilePageTitle}>{pageTitle}</span>
+            : <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
+          }
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button className={styles.mobileSearchBtn} onClick={() => setShowSearch(true)} aria-label="검색">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+            </button>
+            <button className={styles.mobileSearchBtn} onClick={toggleTheme} aria-label="테마 변경">
+              {theme === 'dark'
+                ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              }
+            </button>
+            {!pageTitle && (
+              <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)} aria-label="알림">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+            )}
           </div>
         </div>
 
@@ -254,37 +304,49 @@ export default function Layout() {
 
         {/* ── 모바일 하단 탭바 ── */}
         <nav className={styles.mobileTabBar}>
-          <NavLink to="/home" className={`${styles.mobileTab} ${isAt('/home') ? styles.mobileTabActive : ''}`}>
-            <span className={styles.mobileTabIcon}>🏠</span>
+          {/* 홈 */}
+          <NavLink to="/home" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
             <span className={styles.mobileTabLabel}>홈</span>
           </NavLink>
-          <button
-            className={`${styles.mobileTab} ${(isAt('/project') && location.pathname.includes('/chat')) ? styles.mobileTabActive : ''}`}
-            onClick={() => {
-              const first = dmRoomList[0]
-              if (first) navigate(`/project/${first.projectId}/chat/${first.id}`)
-              else setMobileOpen(true)
-            }}
-          >
-            <span className={styles.mobileTabIcon}>💬</span>
-            {(() => {
-              const totalDmUnread = Object.values(dmUnreadCounts || {}).reduce((s, n) => s + n, 0)
-              return totalDmUnread > 0 ? (
-                <span className={styles.mobileTabBadge}>{totalDmUnread > 9 ? '9+' : totalDmUnread}</span>
-              ) : null
-            })()}
-            <span className={styles.mobileTabLabel}>채팅</span>
+
+          {/* 매치 */}
+          <NavLink to="/match" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span className={styles.mobileTabLabel}>매치</span>
+          </NavLink>
+
+          {/* + FAB */}
+          <button className={styles.mobileTabFab} onClick={openCreate} aria-label="새 프로젝트">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
           </button>
-          <button className={`${styles.mobileTab}`} onClick={() => setShowNotifications(true)}>
-            <span className={styles.mobileTabIcon}>🔔</span>
-            {unreadCount > 0 && (
-              <span className={styles.mobileTabBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>
-            )}
+
+          {/* 알림 */}
+          <button className={styles.mobileTab} onClick={() => setShowNotifications(true)}>
+            {unreadCount > 0 && <span className={styles.mobileTabBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
             <span className={styles.mobileTabLabel}>알림</span>
           </button>
-          <NavLink to="/profile" className={`${styles.mobileTab} ${isAt('/profile') ? styles.mobileTabActive : ''}`}>
-            <span className={styles.mobileTabIcon}>👤</span>
-            <span className={styles.mobileTabLabel}>프로필</span>
+
+          {/* 나 */}
+          <NavLink to="/profile" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span className={styles.mobileTabLabel}>나</span>
           </NavLink>
         </nav>
       </main>
