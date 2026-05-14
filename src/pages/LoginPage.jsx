@@ -167,8 +167,10 @@ export default function LoginPage() {
         'auth/invalid-credential':     '이메일 또는 비밀번호가 올바르지 않아요.',
         'auth/too-many-requests':      '잠시 후 다시 시도해주세요.',
         'auth/network-request-failed': '네트워크 연결을 확인해주세요.',
+        'auth/unauthorized-domain':    '이 도메인은 Firebase에서 허용되지 않았어요. 관리자에게 문의하세요.',
+        'auth/operation-not-allowed':  '이 로그인 방식이 비활성화되어 있어요. 관리자에게 문의하세요.',
       }
-      setError(map[err.code] || '오류가 발생했어요. 다시 시도해주세요.')
+      setError(map[err.code] || `오류가 발생했어요. (${err.code})`)
     } finally {
       setLoading(false)
     }
