@@ -59,7 +59,7 @@ export default function LoginPage() {
       await signInWithRedirect(auth, provider)
       // 페이지가 Google로 이동함 — 이후는 onAuthStateChanged에서 처리
     } catch (e) {
-      setError('소셜 로그인에 실패했어요. 다시 시도해주세요.')
+      setError(`소셜 로그인 실패: ${e.code || e.message}`)
       setLoading(false)
     }
   }
