@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teamp-v2'
+const CACHE_NAME = 'teamp-v3'
 
 // 앱 셸 — 오프라인에서도 빈 화면 대신 앱 프레임을 보여주기 위해 캐시
 const APP_SHELL = ['/index.html', '/']

@@ -69,6 +69,12 @@
   --transition-fast: 0.12s ease;
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── iOS safe-area ── */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
 }
 
 /* ── 다크 모드 ── */
@@ -120,6 +126,7 @@ html.dark {
 
 html, body, #root {
   height: 100%;
+  min-height: 100dvh;
   font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   color: var(--text);
   background: var(--bg);
