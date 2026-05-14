@@ -37,12 +37,14 @@ const ROOM_COLORS = [
 const todayStr = () => new Date().toISOString().split('T')[0]
 
 // 튜토리얼 프로젝트 — userId별 고유 ID 사용 (다중 사용자 충돌 방지)
-const makeTutorialProject = (myId, myName) => {
+const makeTutorialProject = (myId, myName, myUsername) => {
   const today = todayStr()
+  const now   = new Date().toISOString()
   const projId = `proj_tutorial_${myId}`
   const dmId   = `tut_dm_${myId}`
   const allId  = `tut_all_${myId}`
   const devId  = `tut_dev_${myId}`
+  const handle = myUsername || `@${myName}`
   return {
     id: projId,
     name: '📖 Teamp 사용방법',
@@ -79,6 +81,36 @@ const makeTutorialProject = (myId, myName) => {
     ],
     events: [
       { id: 'tut_ev_1', title: 'Teamp 첫 접속!', date: today, time: '00:00', createdBy: 'teamp_bot', scope: 'all', roomIds: [], isPersonal: false },
+    ],
+    milestones: [
+      {
+        id: 'tut_ms_1',
+        title: `${handle} 팀프 가입`,
+        description: 'Teamp 서비스에 처음 가입했어요. 기여와 관계의 기록이 시작됩니다.',
+        targetDate: today,
+        status: 'done',
+        completedAt: now,
+        createdAt: now,
+        createdBy: 'teamp_bot',
+        history: [
+          { action: 'created',   at: now, by: 'teamp_bot', byName: 'Teamp 봇', note: '' },
+          { action: 'completed', at: now, by: 'teamp_bot', byName: 'Teamp 봇', note: '첫 가입 완료 🎉' },
+        ],
+      },
+      {
+        id: 'tut_ms_2',
+        title: `${handle} '📖 Teamp 사용방법' 프로젝트 참여`,
+        description: '첫 프로젝트에 참여했어요. 채팅·할 일·마일스톤을 직접 체험해보세요!',
+        targetDate: today,
+        status: 'done',
+        completedAt: now,
+        createdAt: now,
+        createdBy: 'teamp_bot',
+        history: [
+          { action: 'created',   at: now, by: 'teamp_bot', byName: 'Teamp 봇', note: '' },
+          { action: 'completed', at: now, by: 'teamp_bot', byName: 'Teamp 봇', note: '프로젝트 첫 참여 완료 🚀' },
+        ],
+      },
     ],
     isPublic: false,
   }
@@ -221,7 +253,9 @@ export const useStore = create(
 
       // ─── 튜토리얼 프로젝트 Firestore 생성 ───────────────
       createTutorialProject: async (userId, userName) => {
-        const proj = makeTutorialProject(userId, userName)
+        const { currentUser } = get()
+        const myUsername = currentUser?.username || null
+        const proj = makeTutorialProject(userId, userName, myUsername)
         const msgs = makeTutorialMessages(userId)
         const batch = writeBatch(db)
         // 프로젝트 문서 생성
