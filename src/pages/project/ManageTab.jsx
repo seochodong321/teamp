@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore.js'
 import styles from '../ProjectPage.module.css'
 
 export default function ManageTab({ project, currentUser, isLeader }) {
-  const { updateMemberRole, setMemberRooms, transferLeader, kickMember } = useStore()
+  const { updateMemberRole, setMemberRooms, addCoLeader, kickMember } = useStore()
 
   const [pendingRoles, setPendingRoles] = useState({})
   const [pendingRooms, setPendingRooms] = useState({})
@@ -55,15 +55,19 @@ export default function ManageTab({ project, currentUser, isLeader }) {
                   {m.affiliation && <p className={styles.memberAffil}>{m.affiliation}</p>}
                 </div>
                 <div className={styles.manageRight}>
-                  <select className={styles.roleSelect} value={curRole}
-                    onChange={(e) => setPendingRoles((prev) => ({ ...prev, [m.id]: e.target.value }))}>
-                    <option value="sub-leader">⭐ 부리더</option>
-                    <option value="member">팀원</option>
-                  </select>
-                  {isLeader && (
+                  {m.role === 'leader' ? (
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', padding: '6px 10px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-sm)' }}>🌟 공동리더</span>
+                  ) : (
+                    <select className={styles.roleSelect} value={curRole}
+                      onChange={(e) => setPendingRoles((prev) => ({ ...prev, [m.id]: e.target.value }))}>
+                      <option value="sub-leader">⭐ 부리더</option>
+                      <option value="member">팀원</option>
+                    </select>
+                  )}
+                  {isLeader && m.role !== 'leader' && (
                     <button className={styles.transferBtn}
-                      onClick={() => { if (window.confirm(`${m.name} 님에게 리더를 양도할까요?`)) transferLeader(project.id, m.id) }}>
-                      리더 양도
+                      onClick={() => { if (window.confirm(`${m.name} 님을 공동리더로 추가할까요?`)) addCoLeader(project.id, m.id) }}>
+                      공동리더 추가
                     </button>
                   )}
                   {isLeader && (

@@ -68,8 +68,8 @@ export default function ProjectPage() {
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
 
-  const isLeader     = project.leaderId === currentUser.id
   const myRole       = project.members.find((m) => m.id === currentUser.id)?.role
+  const isLeader     = myRole === 'leader'
   const canInvite    = isLeader || myRole === 'sub-leader'
   const iCanManage   = canManage(project, currentUser.id)
   const progress     = getProgress(project)

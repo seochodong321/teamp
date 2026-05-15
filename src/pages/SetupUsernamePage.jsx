@@ -4,6 +4,7 @@ import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firesto
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
+import { getYearRange } from '../utils/dateUtils.js'
 import styles from './SetupUsernamePage.module.css'
 
 export default function SetupUsernamePage() {
@@ -170,7 +171,7 @@ export default function SetupUsernamePage() {
               <select className={styles.input} style={{ flex: 1.2 }} value={birthYear}
                 onChange={(e) => setBirthYear(e.target.value)} disabled={loading}>
                 <option value="">년도</option>
-                {Array.from({ length: new Date().getFullYear() - 1939 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                {getYearRange().map((y) => (
                   <option key={y} value={String(y)}>{y}년</option>
                 ))}
               </select>

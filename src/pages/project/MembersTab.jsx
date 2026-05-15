@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store/useStore.js'
 import styles from '../ProjectPage.module.css'
 
-const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
-
 export default function MembersTab({ project, currentUser, isLeader, canInvite, connects, blockedUsers, inviteLink }) {
+  const leaderCount = project.members.filter((m) => m.role === 'leader').length
+  const ROLE_LABEL = {
+    leader: leaderCount > 1 ? '🌟 공동리더' : '👑 리더',
+    'sub-leader': '⭐ 부리더',
+    member: '팀원',
+  }
   const navigate = useNavigate()
   const { sendProjectInvite, getOrCreateDmRoom, leaveProject } = useStore()
 

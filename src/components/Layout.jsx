@@ -129,6 +129,11 @@ export default function Layout() {
                 const chatRooms = p.rooms.filter((r) => !r.isDm)
                 const totalUnread = chatRooms.reduce((s, r) => s + (r.unread || 0), 0)
                 const isCollapsed = collapsedProjects[p.id] ?? true
+                const myProjRole = p.members?.find((m) => m.id === currentUser?.id)?.role
+                const leaderCount = p.members?.filter((m) => m.role === 'leader').length || 0
+                const roleIcon = myProjRole === 'leader'
+                  ? (leaderCount > 1 ? '🌟' : '👑')
+                  : myProjRole === 'sub-leader' ? '⭐' : null
                 return (
                   <div key={p.id}>
                     <div className={styles.projectNavRow}>
@@ -145,6 +150,7 @@ export default function Layout() {
                         <span className={styles.navProjectName}>
                           {p.emoji && <span style={{ marginRight: 4 }}>{p.emoji}</span>}
                           {p.name}
+                          {roleIcon && <span style={{ marginLeft: 4, fontSize: 10, opacity: 0.75 }}>{roleIcon}</span>}
                         </span>
                         {/* 접혔을 때만 총 미읽음 표시 */}
                         {isCollapsed && totalUnread > 0 && !muted && (

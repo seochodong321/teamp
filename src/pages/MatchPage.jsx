@@ -32,6 +32,12 @@ export default function MatchPage() {
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formError, setFormError]           = useState('')
 
+  // 지원하기 모달
+  const [showApplyModal, setShowApplyModal] = useState(false)
+  const [applyTarget, setApplyTarget]       = useState(null)
+  const [applyNote, setApplyNote]           = useState('')
+  const [applying, setApplying]             = useState(false)
+
   // 지원자 프로필 모달
   const [viewApplicant, setViewApplicant]     = useState(null)
   const [applicantProfile, setApplicantProfile] = useState(null)
@@ -101,23 +107,29 @@ export default function MatchPage() {
     }
   }
 
-  const handleApply = async (post) => {
+  const handleApply = async (post, note = '') => {
     if (!currentUser) return
     const already = (post.applicants || []).find((a) => a.userId === currentUser.id)
     if (already) return
 
-    await updateDoc(doc(db, 'matchPosts', post.id), {
-      applicants: arrayUnion({
-        userId: currentUser.id,
-        userName: currentUser.name,
-        appliedAt: new Date().toISOString(),
-        status: 'pending',
-      }),
-    })
-    fetchPosts()
-    if (selected?.id === post.id) {
-      const fresh = await getDoc(doc(db, 'matchPosts', post.id))
-      if (fresh.exists()) setSelected({ id: fresh.id, ...fresh.data() })
+    setApplying(true)
+    try {
+      await updateDoc(doc(db, 'matchPosts', post.id), {
+        applicants: arrayUnion({
+          userId: currentUser.id,
+          userName: currentUser.name,
+          appliedAt: new Date().toISOString(),
+          status: 'pending',
+          note: note.trim(),
+        }),
+      })
+      fetchPosts()
+      if (selected?.id === post.id) {
+        const fresh = await getDoc(doc(db, 'matchPosts', post.id))
+        if (fresh.exists()) setSelected({ id: fresh.id, ...fresh.data() })
+      }
+    } finally {
+      setApplying(false)
     }
   }
 
@@ -273,7 +285,7 @@ export default function MatchPage() {
                       {myApplied.status === 'accepted' ? '✅ 합류 완료' : '✓ 지원 완료'}
                     </div>
                   ) : (
-                    <button className={styles.applyBtn} onClick={() => handleApply(selected)}>
+                    <button className={styles.applyBtn} onClick={() => { setApplyTarget(selected); setApplyNote(''); setShowApplyModal(true) }}>
                       지원하기
                     </button>
                   )}
@@ -309,6 +321,7 @@ export default function MatchPage() {
                           <div className={styles.applicantAvatar}>{a.userName.charAt(0)}</div>
                           <div style={{ flex: 1 }}>
                             <p className={styles.applicantName}>{a.userName}</p>
+                            {a.note && <p className={styles.applicantNote}>"{a.note}"</p>}
                             <p className={styles.applicantDate}>{a.appliedAt?.slice(0, 10)}</p>
                           </div>
                           <div style={{ display: 'flex', gap: 6 }}>
@@ -404,6 +417,44 @@ export default function MatchPage() {
               <button className={styles.submitBtn} onClick={handleCreatePost}
                 disabled={!formTitle.trim() || !formProject || !formDeadline || formSubmitting}>
                 {formSubmitting ? '등록 중...' : '모집글 등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 지원하기 모달 */}
+      {showApplyModal && applyTarget && (
+        <div className={styles.backdrop} onClick={() => setShowApplyModal(false)}>
+          <div className={styles.applyModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.formModalHeader}>
+              <h3 className={styles.formModalTitle}>지원하기</h3>
+              <button className={styles.formClose} onClick={() => setShowApplyModal(false)}>✕</button>
+            </div>
+            <div className={styles.applyModalBody}>
+              <p className={styles.applyModalProject}>{applyTarget.projectEmoji} {applyTarget.projectName}</p>
+              <p className={styles.applyModalPostTitle}>{applyTarget.title}</p>
+              <div className={styles.formField} style={{ marginTop: 16 }}>
+                <label className={styles.formLabel}>한 줄 자기소개 <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(선택 · 최대 100자)</span></label>
+                <textarea
+                  className={styles.formTextarea}
+                  rows={3}
+                  maxLength={100}
+                  value={applyNote}
+                  onChange={(e) => setApplyNote(e.target.value)}
+                  placeholder="간단한 자기소개나 지원 동기를 적어주세요"
+                />
+                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'right', marginTop: 4 }}>{applyNote.length}/100</p>
+              </div>
+            </div>
+            <div className={styles.formFooter}>
+              <button className={styles.cancelBtn} onClick={() => setShowApplyModal(false)}>취소</button>
+              <button className={styles.submitBtn} disabled={applying}
+                onClick={async () => {
+                  await handleApply(applyTarget, applyNote)
+                  setShowApplyModal(false)
+                }}>
+                {applying ? '지원 중...' : '지원하기'}
               </button>
             </div>
           </div>

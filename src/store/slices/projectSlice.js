@@ -96,7 +96,7 @@ export const createProjectSlice = (set, get) => ({
 
   canManage: (project, userId) => {
     const me = project.members.find((m) => m.id === userId)
-    return me?.role === 'leader' || me?.role === 'sub-leader'
+    return me?.role === 'leader'
   },
 
   getVisibleRooms: (project, userId) => {
@@ -209,17 +209,18 @@ export const createProjectSlice = (set, get) => ({
     }))
   },
 
-  transferLeader: async (projectId, newLeaderId) => {
+  addCoLeader: async (projectId, memberId) => {
     const { currentUser } = get()
     const project = get().projects.find((p) => p.id === projectId)
-    if (!project || project.leaderId !== currentUser.id) return
+    if (!project) return
+    const myRole = project.members.find((m) => m.id === currentUser.id)?.role
+    if (myRole !== 'leader') return
     await txProject(projectId, (data) => ({
-      leaderId: newLeaderId,
-      members: data.members.map((m) => {
-        if (m.id === currentUser.id) return { ...m, role: 'member' }
-        if (m.id === newLeaderId) return { ...m, role: 'leader', roomIds: data.rooms.map((r) => r.id) }
-        return m
-      }),
+      members: data.members.map((m) =>
+        m.id === memberId
+          ? { ...m, role: 'leader', roomIds: data.rooms.map((r) => r.id) }
+          : m
+      ),
     }))
   },
 
@@ -238,6 +239,11 @@ export const createProjectSlice = (set, get) => ({
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
     const isLeader = project.members.find((m) => m.id === currentUser.id)?.role === 'leader'
+    const otherLeaders = project.members.filter((m) => m.id !== currentUser.id && m.role === 'leader')
+    if (isLeader && otherLeaders.length === 0 && project.members.length > 1) {
+      alert('리더가 혼자면 프로젝트를 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.')
+      return
+    }
     if (isLeader) {
       await deleteDoc(doc(db, 'projects', projectId))
     } else {
