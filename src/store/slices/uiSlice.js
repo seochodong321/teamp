@@ -3,6 +3,16 @@ export const createUiSlice = (set, get) => ({
   errorToasts: [],
   chatToasts: [],
 
+  // 팀프 매치 새 게시글 감지 — matchPostCount: 실시간 count, matchSeenCount: 마지막으로 본 count
+  matchPostCount: 0,
+  matchSeenCount: typeof window !== 'undefined' ? parseInt(localStorage.getItem('teamp-match-seen') || '0', 10) : 0,
+  setMatchPostCount: (n) => set({ matchPostCount: n }),
+  markMatchSeen: () => {
+    const n = get().matchPostCount
+    if (typeof window !== 'undefined') localStorage.setItem('teamp-match-seen', String(n))
+    set({ matchSeenCount: n })
+  },
+
   setTheme: (theme) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('teamp-theme', theme)

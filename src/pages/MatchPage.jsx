@@ -14,7 +14,7 @@ import styles from './MatchPage.module.css'
 const SKILL_PRESETS = ['React', 'Vue', 'Node.js', 'Python', 'Java', 'Spring', 'Flutter', 'iOS', 'Android', 'UI/UX', '기획', '마케팅']
 
 export default function MatchPage() {
-  const { projects, currentUser, addMemberToProject, blockedUsers } = useStore()
+  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen } = useStore()
   const navigate = useNavigate()
 
   const [posts, setPosts]             = useState([])
@@ -43,9 +43,12 @@ export default function MatchPage() {
   const [applicantProfile, setApplicantProfile] = useState(null)
   const [profileLoading, setProfileLoading]   = useState(false)
 
-  const myLeaderProjects = projects.filter((p) => p.leaderId === currentUser?.id && p.status === 'active')
+  const myLeaderProjects = projects.filter((p) =>
+    p.status === 'active' &&
+    p.members?.find((m) => m.id === currentUser?.id)?.role === 'leader'
+  )
 
-  useEffect(() => { fetchPosts() }, [])
+  useEffect(() => { fetchPosts(); markMatchSeen() }, [])
 
   const fetchPosts = async () => {
     setLoading(true)

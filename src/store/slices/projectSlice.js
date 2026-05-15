@@ -139,10 +139,10 @@ export const createProjectSlice = (set, get) => ({
     const { currentUser } = get()
     const projectId = `proj_${Date.now()}`
     const rooms = [
-      { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true, ownerId: currentUser.id },
-      { id: `room_all_${Date.now()}`, name: '전체',        lastMessage: '채팅방이 생성됐어요',       unread: 0, time: '방금', ...ROOM_COLORS[0], isDm: false },
+      { id: `room_dm_${Date.now()}`,  name: '나와의 채팅', lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', lastMessageAt: null, ...ROOM_COLORS[4], isDm: true, ownerId: currentUser.id },
+      { id: `room_all_${Date.now()}`, name: '전체',        lastMessage: '채팅방이 생성됐어요',       unread: 0, time: '방금', lastMessageAt: new Date().toISOString(), ...ROOM_COLORS[0], isDm: false },
       ...data.roomNames.filter((n) => n && n.trim() && n !== '전체' && n !== '나와의 채팅').map((name, i) => ({
-        id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금',
+        id: `room_${Date.now()}_${i}`, name, lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금', lastMessageAt: new Date().toISOString(),
         ...ROOM_COLORS[(i + 1) % ROOM_COLORS.length], isDm: false,
       })),
     ]
@@ -170,7 +170,7 @@ export const createProjectSlice = (set, get) => ({
     const colorIdx = project.rooms.filter((r) => !r.isDm).length % ROOM_COLORS.length
     const newRoom = {
       id: `room_${Date.now()}`, name: roomName.trim(),
-      lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금',
+      lastMessage: '채팅방이 생성됐어요', unread: 0, time: '방금', lastMessageAt: new Date().toISOString(),
       ...ROOM_COLORS[colorIdx], isDm: false,
     }
     await txProject(projectId, (data) => ({
@@ -238,19 +238,23 @@ export const createProjectSlice = (set, get) => ({
     const { currentUser, projects } = get()
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
-    const isLeader = project.members.find((m) => m.id === currentUser.id)?.role === 'leader'
+    const me = project.members.find((m) => m.id === currentUser.id)
+    const isLeader = me?.role === 'leader'
     const otherLeaders = project.members.filter((m) => m.id !== currentUser.id && m.role === 'leader')
-    if (isLeader && otherLeaders.length === 0 && project.members.length > 1) {
+    const otherMembers = project.members.filter((m) => m.id !== currentUser.id)
+
+    if (isLeader && otherLeaders.length === 0 && otherMembers.length > 0) {
       alert('리더가 혼자면 프로젝트를 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.')
       return
     }
-    if (isLeader) {
+    if (isLeader && otherMembers.length === 0) {
+      // 혼자 남은 경우 프로젝트 삭제
       await deleteDoc(doc(db, 'projects', projectId))
     } else {
-      const member = project.members.find((m) => m.id === currentUser.id)
+      // 공동리더 포함 일반 퇴장
       await updateDoc(doc(db, 'projects', projectId), {
         memberIds: arrayRemove(currentUser.id),
-        members: arrayRemove(member),
+        members: arrayRemove(me),
       })
     }
   },

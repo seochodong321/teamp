@@ -12,7 +12,7 @@ import ErrorToastContainer from './ErrorToastContainer.jsx'
 import styles from './Layout.module.css'
 
 export default function Layout() {
-  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme } = useStore()
+  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme, matchPostCount, matchSeenCount } = useStore()
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen]           = useState(false)
@@ -212,16 +212,30 @@ export default function Layout() {
             </>
           )}
 
-          <p className={styles.navSection}>메뉴</p>
-          <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>🤝</span><span>팀프 매치</span>
-          </NavLink>
-          <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>✉️</span><span>쪽지함</span>
-          </NavLink>
-          <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-            <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
-          </NavLink>
+          {(() => {
+            const totalDmUnread = Object.values(dmUnreadCounts || {}).reduce((a, b) => a + b, 0)
+            const matchHasNew   = matchPostCount > matchSeenCount
+            return (
+              <>
+                <p className={styles.navSection}>메뉴</p>
+                <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+                  <span className={styles.navIcon}>🤝</span>
+                  <span style={{ flex: 1 }}>팀프 매치</span>
+                  {matchHasNew && <span className={styles.navMenuBadge}>N</span>}
+                </NavLink>
+                <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+                  <span className={styles.navIcon}>✉️</span>
+                  <span style={{ flex: 1 }}>쪽지함</span>
+                  {totalDmUnread > 0 && (
+                    <span className={styles.navBadge}>{totalDmUnread > 99 ? 99 : totalDmUnread}</span>
+                  )}
+                </NavLink>
+                <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+                  <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
+                </NavLink>
+              </>
+            )
+          })()}
           <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>❓</span><span>도움말</span>
           </NavLink>

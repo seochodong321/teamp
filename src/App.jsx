@@ -155,7 +155,7 @@ function PrivateRoute({ children, ready }) {
 }
 
 export default function App() {
-  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread, setInvites, setNeedsUsernameSetup } = useStore()
+  const { login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, addChatToast, incrementUnread, setInvites, setNeedsUsernameSetup, setMatchPostCount } = useStore()
   const isLoggedIn  = useStore((s) => s.isLoggedIn)
   const projects    = useStore((s) => s.projects)
   const dmRoomList  = useStore((s) => s.dmRoomList)
@@ -166,6 +166,7 @@ export default function App() {
   const inviteUnsubRef    = useRef(null)
   const msgWatchersRef    = useRef({}) // roomId → unsub
   const dmMsgWatchersRef  = useRef({}) // dmRoomId → unsub
+  const matchUnsubRef     = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -192,6 +193,14 @@ export default function App() {
         if (dmUnsubRef.current) dmUnsubRef.current()
         if (notifUnsubRef.current) notifUnsubRef.current()
         if (inviteUnsubRef.current) inviteUnsubRef.current()
+        if (matchUnsubRef.current) matchUnsubRef.current()
+
+        // 팀프 매치 오픈 게시글 수 실시간 구독 (N 배지용)
+        matchUnsubRef.current = onSnapshot(
+          query(collection(db, 'matchPosts'), where('status', '==', 'open')),
+          (snap) => setMatchPostCount(snap.size),
+          () => {}
+        )
 
         // 사용자가 속한 프로젝트 실시간 구독
         projectsUnsubRef.current = onSnapshot(
@@ -326,6 +335,8 @@ export default function App() {
         if (dmUnsubRef.current) { dmUnsubRef.current(); dmUnsubRef.current = null }
         if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
         if (inviteUnsubRef.current) { inviteUnsubRef.current(); inviteUnsubRef.current = null }
+        if (matchUnsubRef.current) { matchUnsubRef.current(); matchUnsubRef.current = null }
+        setMatchPostCount(0)
         // 채팅방 메시지 감시 구독도 해제 (permission 오류 방지)
         Object.values(msgWatchersRef.current).forEach((unsub) => unsub())
         msgWatchersRef.current = {}

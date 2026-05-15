@@ -69,9 +69,9 @@ export const makeTutorialProject = (myId, myName, myUsername) => {
       { id: 'teamp_bot', name: 'Teamp 봇', role: 'member', roomIds: [allId, devId], memo: '', affiliation: 'Teamp', email: 'hello@teamp.app' },
     ],
     rooms: [
-      { id: dmId,  name: '나와의 채팅', lastMessage: '메모처럼 혼자 쓸 수 있어요', unread: 0, time: '', ...ROOM_COLORS[4], isDm: true, ownerId: myId },
-      { id: allId, name: '전체',        lastMessage: 'Teamp에 오신 걸 환영해요 👋', unread: 2, time: '방금', ...ROOM_COLORS[0] },
-      { id: devId, name: '개발팀',      lastMessage: '팀별 채팅방 예시예요',          unread: 0, time: '', ...ROOM_COLORS[1] },
+      { id: dmId,  name: '나와의 채팅', lastMessage: '메모처럼 혼자 쓸 수 있어요', unread: 0, time: '', lastMessageAt: null, ...ROOM_COLORS[4], isDm: true, ownerId: myId },
+      { id: allId, name: '전체',        lastMessage: 'Teamp에 오신 걸 환영해요 👋', unread: 2, time: '방금', lastMessageAt: new Date().toISOString(), ...ROOM_COLORS[0] },
+      { id: devId, name: '개발팀',      lastMessage: '팀별 채팅방 예시예요',          unread: 0, time: '', lastMessageAt: null, ...ROOM_COLORS[1] },
     ],
     announcements: [
       {
