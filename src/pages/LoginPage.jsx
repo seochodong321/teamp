@@ -48,12 +48,18 @@ export default function LoginPage() {
 
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return 'idle' }
     setUsernameStatus('checking')
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      setUsernameStatus(snap.empty ? 'ok' : 'taken')
-    } catch { setUsernameStatus('idle') }
+      const status = snap.empty ? 'ok' : 'taken'
+      setUsernameStatus(status)
+      return status
+    } catch {
+      // Firestore 권한 오류(비인증) 시 — 가입 진행 허용, 쓰기 시점에서 최종 검증
+      setUsernameStatus('idle')
+      return 'idle'
+    }
   }
 
   // Firebase 초기화 전엔 스피너 — 기존 세션 자동 복원 대기
@@ -124,18 +130,17 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     if (!email.trim())       { setError('이메일을 입력해주세요.'); return }
-    if (password.length < 6) { setError('비밀번호는 6자리 이상이어야 해요.'); return }
+    if (password.length < 8) { setError('비밀번호는 8자 이상이어야 해요.'); return }
     if (mode === 'signup') {
       if (!name.trim())        { setError('이름을 입력해주세요.'); return }
       const uname = username.trim().toLowerCase().replace(/^@/, '')
       if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) { setError('@아이디는 영문·숫자·_만 사용, 3~20자로 입력해주세요.'); return }
-      if (usernameStatus === 'taken')    { setError('이미 사용 중인 아이디예요.'); return }
-      if (usernameStatus === 'checking') { setError('아이디 확인 중이에요. 잠시 후 다시 눌러주세요.'); return }
-      // idle 상태면 아직 중복 확인이 안 된 것 — 검사 직접 수행
-      if (usernameStatus === 'idle') {
-        setError('아이디 중복 확인을 해주세요. 잠시 후 다시 눌러주세요.')
-        checkUsername(uname)
-        return
+      if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
+      // checking 또는 idle — 직접 await해서 결과 확인 후 진행
+      if (usernameStatus === 'checking' || usernameStatus === 'idle') {
+        const result = await checkUsername(uname)
+        if (result === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
+        // 'ok' 또는 Firestore 오류로 'idle' — 진행 (쓰기 시점 최종 확인)
       }
       if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
       if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
@@ -203,7 +208,7 @@ export default function LoginPage() {
       const map = {
         'auth/email-already-in-use':   '이미 사용 중인 이메일이에요.',
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
-        'auth/weak-password':          '비밀번호는 6자리 이상 입력해주세요.',
+        'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
         'auth/user-not-found':         '등록되지 않은 이메일이에요.',
         'auth/wrong-password':         '비밀번호가 틀렸어요.',
         'auth/invalid-credential':     '이메일 또는 비밀번호가 올바르지 않아요.',
@@ -289,7 +294,7 @@ export default function LoginPage() {
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>@</span>
                     <input className={styles.input} style={{ paddingLeft: 24 }} value={username}
-                      onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value) }}
+                      onChange={(e) => { setUsername(e.target.value); setError(''); checkUsername(e.target.value) }}
                       placeholder="예) teampuser123" disabled={loading} maxLength={20} />
                     {usernameStatus === 'ok' && (
                       <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -328,7 +333,7 @@ export default function LoginPage() {
                     <select className={styles.input} style={{ flex: 1.2 }} value={birthYear}
                       onChange={(e) => setBirthYear(e.target.value)} disabled={loading}>
                       <option value="">년도</option>
-                      {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
+                      {Array.from({ length: new Date().getFullYear() - 1939 }, (_, i) => new Date().getFullYear() - i).map((y) => (
                         <option key={y} value={String(y)}>{y}년</option>
                       ))}
                     </select>
@@ -360,7 +365,7 @@ export default function LoginPage() {
             <div className={styles.field}>
               <label className={styles.label}>비밀번호 *</label>
               <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="6자리 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
+                placeholder="8자 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
             </div>
 
             {/* 로그인 옵션 (로그인 모드 전용) */}

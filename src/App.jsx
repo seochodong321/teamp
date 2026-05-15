@@ -326,6 +326,11 @@ export default function App() {
         if (dmUnsubRef.current) { dmUnsubRef.current(); dmUnsubRef.current = null }
         if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
         if (inviteUnsubRef.current) { inviteUnsubRef.current(); inviteUnsubRef.current = null }
+        // 채팅방 메시지 감시 구독도 해제 (permission 오류 방지)
+        Object.values(msgWatchersRef.current).forEach((unsub) => unsub())
+        msgWatchersRef.current = {}
+        Object.values(dmMsgWatchersRef.current).forEach((unsub) => unsub())
+        dmMsgWatchersRef.current = {}
         logout()
         setReady(true)
       }

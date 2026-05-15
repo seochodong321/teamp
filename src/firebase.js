@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, browserLocalPersistence, setPersistence } from 'firebase/auth'
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
+import { initializeFirestore, persistentLocalCache } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 import { getMessaging, getToken, onMessage } from 'firebase/messaging'
 
@@ -17,17 +17,9 @@ const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 // 브라우저 재시작 후에도 로그인 유지 (기본값 명시)
 setPersistence(auth, browserLocalPersistence).catch(() => {})
-export const db = getFirestore(app)
+// persistentLocalCache = IndexedDB 오프라인 캐시 (enableIndexedDbPersistence deprecated 대체)
+export const db = initializeFirestore(app, { localCache: persistentLocalCache() })
 export const storage = getStorage(app)
-
-// 오프라인 캐시 — 네트워크 끊겨도 마지막 데이터 유지
-enableIndexedDbPersistence(db).catch((e) => {
-  if (e.code === 'failed-precondition') {
-    // 탭 여러 개 열려있을 때 — 무시해도 됨
-  } else if (e.code === 'unimplemented') {
-    // 브라우저가 IndexedDB 미지원 — 무시
-  }
-})
 
 // FCM은 서비스워커가 있는 브라우저에서만 초기화
 export const messaging = typeof window !== 'undefined' && 'serviceWorker' in navigator
