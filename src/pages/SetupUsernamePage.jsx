@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { containsProfanity } from '../utils/profanityFilter.js'
 import styles from './SetupUsernamePage.module.css'
 
 export default function SetupUsernamePage() {
@@ -26,6 +27,7 @@ export default function SetupUsernamePage() {
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
     if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return 'idle' }
+    if (containsProfanity(val)) { setUsernameStatus('taken'); return 'taken' }
     setUsernameStatus('checking')
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
@@ -41,6 +43,10 @@ export default function SetupUsernamePage() {
     const uname = username.trim().toLowerCase().replace(/^@/, '')
     if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) {
       setError('@아이디는 영문·숫자·_ 만 사용, 3~20자로 입력해주세요.')
+      return
+    }
+    if (containsProfanity(uname)) {
+      setError('사용할 수 없는 단어가 포함된 아이디예요.')
       return
     }
     if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
