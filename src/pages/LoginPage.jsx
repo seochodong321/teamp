@@ -5,7 +5,7 @@ import {
   setPersistence, browserLocalPersistence, browserSessionPersistence,
   GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, query, collection, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
@@ -24,17 +24,10 @@ export default function LoginPage() {
   const { login, setNeedsUsernameSetup, isLoggedIn } = useStore()
 
   const [mode, setMode]               = useState(defaultMode)
-  const [name, setName]               = useState('')
-  const [username, setUsername]       = useState('')
-  const [usernameStatus, setUsernameStatus] = useState('idle') // idle | checking | ok | taken
-  const [email, setEmail]             = useState(() => localStorage.getItem('teamp-saved-email') || '')
-  const [password, setPassword]       = useState('')
-  const [affiliation, setAffiliation] = useState('')
-  const [phone, setPhone]             = useState('')
-  const [birthYear, setBirthYear]     = useState('')
-  const [birthMonth, setBirthMonth]   = useState('')
-  const [birthDay, setBirthDay]       = useState('')
-  const [error, setError]             = useState('')
+  const [name, setName]   = useState('')
+  const [email, setEmail] = useState(() => localStorage.getItem('teamp-saved-email') || '')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading]         = useState(false)
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
@@ -45,22 +38,6 @@ export default function LoginPage() {
     const unsub = onAuthStateChanged(auth, () => { setAuthReady(true) })
     return () => unsub()
   }, [])
-
-  const checkUsername = async (raw) => {
-    const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return 'idle' }
-    setUsernameStatus('checking')
-    try {
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      const status = snap.empty ? 'ok' : 'taken'
-      setUsernameStatus(status)
-      return status
-    } catch {
-      // Firestore 권한 오류(비인증) 시 — 가입 진행 허용, 쓰기 시점에서 최종 검증
-      setUsernameStatus('idle')
-      return 'idle'
-    }
-  }
 
   // Firebase 초기화 전엔 스피너 — 기존 세션 자동 복원 대기
   if (!authReady) return (
@@ -132,18 +109,7 @@ export default function LoginPage() {
     if (!email.trim())       { setError('이메일을 입력해주세요.'); return }
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 해요.'); return }
     if (mode === 'signup') {
-      if (!name.trim())        { setError('이름을 입력해주세요.'); return }
-      const uname = username.trim().toLowerCase().replace(/^@/, '')
-      if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) { setError('@아이디는 영문·숫자·_만 사용, 3~20자로 입력해주세요.'); return }
-      if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
-      // checking 또는 idle — 직접 await해서 결과 확인 후 진행
-      if (usernameStatus === 'checking' || usernameStatus === 'idle') {
-        const result = await checkUsername(uname)
-        if (result === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
-        // 'ok' 또는 Firestore 오류로 'idle' — 진행 (쓰기 시점 최종 확인)
-      }
-      if (!affiliation.trim()) { setError('소속을 입력해주세요.'); return }
-      if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
+      if (!name.trim()) { setError('이름을 입력해주세요.'); return }
     }
     setLoading(true)
     try {
@@ -151,29 +117,16 @@ export default function LoginPage() {
       await setPersistence(auth, autoLogin ? browserLocalPersistence : browserSessionPersistence)
 
       if (mode === 'signup') {
-        // 제출 직전 최종 중복 확인 — 타이밍 레이스 방지 (Firestore 실패 시 graceful 진행)
-        try {
-          const uname2 = username.trim().toLowerCase().replace(/^@/, '')
-          const finalCheck = await getDocs(query(collection(db, 'users'), where('username', '==', `@${uname2}`)))
-          if (!finalCheck.empty) {
-            setUsernameStatus('taken')
-            setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
-            setLoading(false)
-            return
-          }
-        } catch { /* Firestore 에러 시 1차 검증(onChange) 결과를 신뢰하고 진행 */ }
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
-        const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
-        const finalUsername = `@${username.trim().toLowerCase().replace(/^@/, '')}`
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          uid: cred.user.uid, name: name.trim(),
-          username: finalUsername, email: email.trim(),
-          affiliation: affiliation.trim(), phone: phone.trim(), bio: '',
-          birthday,
-          createdAt: new Date().toISOString(),
-        })
-        login(name.trim(), email.trim(), cred.user.uid, { affiliation: affiliation.trim(), phone: phone.trim(), birthday, username: finalUsername })
+        login(name.trim(), email.trim(), cred.user.uid)
+        setNeedsUsernameSetup(true)
+        if (rememberEmail) localStorage.setItem('teamp-saved-email', email.trim())
+        else localStorage.removeItem('teamp-saved-email')
+        if (!autoLogin) localStorage.setItem('teamp-auto-login', 'false')
+        else localStorage.removeItem('teamp-auto-login')
+        navigate('/setup-username', { replace: true })
+        return
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
         // Firestore 프로필 로드 실패해도 로그인 자체는 성공 처리
@@ -283,78 +236,11 @@ export default function LoginPage() {
 
           <form className={styles.form} onSubmit={handleSubmit}>
             {mode === 'signup' && (
-              <>
-                <div className={styles.field}>
-                  <label className={styles.label}>이름 *</label>
-                  <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>@아이디 * <span className={styles.labelHint}>(영문·숫자·_ , 3~20자, 변경 가능)</span></label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>@</span>
-                    <input className={styles.input} style={{ paddingLeft: 24 }} value={username}
-                      onChange={(e) => { setUsername(e.target.value); setError(''); checkUsername(e.target.value) }}
-                      placeholder="예) teampuser123" disabled={loading} maxLength={20} />
-                    {usernameStatus === 'ok' && (
-                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.5 10L11 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 700 }}>사용 가능</span>
-                      </span>
-                    )}
-                    {usernameStatus === 'taken' && (
-                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                        </span>
-                        <span style={{ fontSize: 11, color: 'var(--coral)', fontWeight: 700 }}>이미 사용 중</span>
-                      </span>
-                    )}
-                    {usernameStatus === 'checking' && (
-                      <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--primary)', animation: 'spin 0.7s linear infinite' }} />
-                    )}
-                  </div>
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>소속 * <span className={styles.labelHint}>(학교, 회사, 단체 등)</span></label>
-                  <input className={styles.input} value={affiliation} onChange={(e) => setAffiliation(e.target.value)}
-                    placeholder="예) OO대학교 컴퓨터공학과, OO회사" disabled={loading} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>핸드폰 번호 <span className={styles.labelHint}>(선택)</span></label>
-                  <input className={styles.input} value={phone} onChange={(e) => setPhone(e.target.value)}
-                    placeholder="010-0000-0000" type="tel" disabled={loading} />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>생일 *</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <select className={styles.input} style={{ flex: 1.2 }} value={birthYear}
-                      onChange={(e) => setBirthYear(e.target.value)} disabled={loading}>
-                      <option value="">년도</option>
-                      {Array.from({ length: new Date().getFullYear() - 1939 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                        <option key={y} value={String(y)}>{y}년</option>
-                      ))}
-                    </select>
-                    <select className={styles.input} style={{ flex: 1 }} value={birthMonth}
-                      onChange={(e) => { setBirthMonth(e.target.value); setBirthDay('') }} disabled={loading}>
-                      <option value="">월</option>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                        <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>
-                      ))}
-                    </select>
-                    <select className={styles.input} style={{ flex: 1 }} value={birthDay}
-                      onChange={(e) => setBirthDay(e.target.value)} disabled={loading || !birthMonth}>
-                      <option value="">일</option>
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                        <option key={d} value={String(d).padStart(2, '0')}>{d}일</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className={styles.divider}><span>계정 정보</span></div>
-              </>
+              <div className={styles.field}>
+                <label className={styles.label}>이름 *</label>
+                <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)}
+                  placeholder="실명 또는 닉네임" autoFocus disabled={loading} />
+              </div>
             )}
 
             <div className={styles.field}>

@@ -25,12 +25,14 @@ export default function SetupUsernamePage() {
 
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return 'idle' }
     setUsernameStatus('checking')
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      setUsernameStatus(snap.empty ? 'ok' : 'taken')
-    } catch { setUsernameStatus('idle') }
+      const status = snap.empty ? 'ok' : 'taken'
+      setUsernameStatus(status)
+      return status
+    } catch { setUsernameStatus('idle'); return 'idle' }
   }
 
   const handleSubmit = async (e) => {
@@ -41,9 +43,11 @@ export default function SetupUsernamePage() {
       setError('@아이디는 영문·숫자·_ 만 사용, 3~20자로 입력해주세요.')
       return
     }
-    if (usernameStatus === 'taken')    { setError('이미 사용 중인 아이디예요.'); return }
-    if (usernameStatus === 'checking') { setError('아이디 확인 중이에요. 잠시 후 다시 눌러주세요.'); return }
-    if (usernameStatus === 'idle')     { setError('아이디 중복 확인을 해주세요.'); checkUsername(uname); return }
+    if (usernameStatus === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
+    if (usernameStatus === 'checking' || usernameStatus === 'idle') {
+      const result = await checkUsername(uname)
+      if (result === 'taken') { setError('이미 사용 중인 아이디예요.'); return }
+    }
     if (!affiliation.trim())           { setError('소속을 입력해주세요.'); return }
     if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
 
@@ -113,7 +117,7 @@ export default function SetupUsernamePage() {
                 className={styles.input}
                 style={{ paddingLeft: 24 }}
                 value={username}
-                onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value) }}
+                onChange={(e) => { setUsername(e.target.value); setError(''); checkUsername(e.target.value) }}
                 placeholder="예) teampuser123"
                 disabled={loading}
                 maxLength={20}
@@ -160,7 +164,7 @@ export default function SetupUsernamePage() {
               <select className={styles.input} style={{ flex: 1.2 }} value={birthYear}
                 onChange={(e) => setBirthYear(e.target.value)} disabled={loading}>
                 <option value="">년도</option>
-                {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
+                {Array.from({ length: new Date().getFullYear() - 1939 }, (_, i) => new Date().getFullYear() - i).map((y) => (
                   <option key={y} value={String(y)}>{y}년</option>
                 ))}
               </select>

@@ -339,26 +339,18 @@ export default function ProfilePage() {
           <span className={styles.journeyEmoji}>✨</span>
         </div>
         <div className={styles.journeyGrid}>
-          <div className={styles.journeyItem}>
-            <span className={styles.journeyIcon}>🎓</span>
-            <span className={styles.journeyCount}>{completedProjects}</span>
-            <span className={styles.journeyLabel}>완료한 프로젝트</span>
-          </div>
-          <div className={styles.journeyItem}>
-            <span className={styles.journeyIcon}>🌸</span>
-            <span className={styles.journeyCount}>{flowerSenders}</span>
-            <span className={styles.journeyLabel}>꽃다발을 보낸 팀원</span>
-          </div>
-          <div className={styles.journeyItem}>
-            <span className={styles.journeyIcon}>👑</span>
-            <span className={styles.journeyCount}>{leaderProjects}</span>
-            <span className={styles.journeyLabel}>리더 프로젝트</span>
-          </div>
-          <div className={styles.journeyItem}>
-            <span className={styles.journeyIcon}>✅</span>
-            <span className={styles.journeyCount}>{doneTodos}</span>
-            <span className={styles.journeyLabel}>완료한 할 일</span>
-          </div>
+          {[
+            { icon: '🎓', count: completedProjects, label: '완료한 프로젝트' },
+            { icon: '🌸', count: flowerSenders,     label: '나에게 꽃다발을 보낸 팀원' },
+            { icon: '👑', count: leaderProjects,    label: '리더 프로젝트' },
+            { icon: '✅', count: doneTodos,         label: '완료한 할 일' },
+          ].map(({ icon, count, label }) => (
+            <div key={label} className={styles.journeyItem}>
+              <span className={styles.journeyIcon} style={count === 0 ? { opacity: 0.4 } : {}}>{icon}</span>
+              <span className={styles.journeyCount} style={count === 0 ? { color: 'var(--text-tertiary)' } : {}}>{count}</span>
+              <span className={styles.journeyLabel}>{label}</span>
+            </div>
+          ))}
         </div>
         {Object.keys(flowerTags).length > 0 && (
           <div className={styles.flowerTagsRow}>

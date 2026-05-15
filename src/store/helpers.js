@@ -60,7 +60,7 @@ export const makeTutorialProject = (myId, myName, myUsername) => {
     name: '📖 Teamp 사용방법',
     purpose: 'Teamp의 주요 기능을 직접 체험해보세요!',
     category: '튜토리얼',
-    startDate: today, endDate: today, status: 'active',
+    startDate: today, endDate: (() => { const d = new Date(); d.setDate(d.getDate() + 14); return d.toISOString().slice(0, 10) })(), status: 'active',
     leaderId: myId, isTutorial: true,
     inviteCode: `tutorial_${myId}`,
     memberIds: [myId],

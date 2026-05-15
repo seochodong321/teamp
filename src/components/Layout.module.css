@@ -286,8 +286,9 @@
 }
 
 .userAvatarImg { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.userName  { font-size: 13px; font-weight: 600; color: var(--text); }
-.userHandle{ font-size: 11px; color: var(--text-tertiary); }
+.userInfo  { min-width: 0; overflow: hidden; }
+.userName  { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.userHandle{ font-size: 11px; color: var(--text-tertiary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 .main {
   flex: 1;
