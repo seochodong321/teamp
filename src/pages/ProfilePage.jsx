@@ -171,7 +171,7 @@ export default function ProfilePage() {
   }
 
   const handleLogout = async () => {
-    try { await signOut(auth) } catch {}
+    try { await signOut(auth) } catch { try { await signOut(auth) } catch {} }
     logout()
     navigate('/login')
   }

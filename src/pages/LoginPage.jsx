@@ -3,7 +3,7 @@ import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
-  GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
+  GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -55,24 +55,9 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    // Firebase Auth 세션이 이미 있으면 팝업 없이 바로 처리 (멀티탭 케이스)
-    const existingUser = auth.currentUser
-    if (existingUser) {
-      try {
-        const snap = await getDoc(doc(db, 'users', existingUser.uid))
-        if (snap.exists() && snap.data().username) {
-          const d = snap.data()
-          login(d.name, d.email || existingUser.email, existingUser.uid, d)
-        } else {
-          login(existingUser.displayName || '사용자', existingUser.email, existingUser.uid)
-        }
-        navigate(redirectTo, { replace: true })
-      } catch {
-        navigate(redirectTo, { replace: true })
-      } finally {
-        setLoading(false)
-      }
-      return
+    // 로그아웃 후 stale한 Firebase 세션이 남아있을 수 있으므로 강제 클리어
+    if (auth.currentUser) {
+      try { await signOut(auth) } catch { /* signOut 실패해도 팝업으로 진행 */ }
     }
 
     try {

@@ -81,7 +81,8 @@ export default function Layout() {
   }, [location.pathname, projects])
 
   const handleLogout = async () => {
-    try { await signOut(auth) } catch {}
+    // signOut 실패 시 한 번 재시도 — stale 세션이 남으면 Google 로그인 오작동
+    try { await signOut(auth) } catch { try { await signOut(auth) } catch {} }
     logout()
     navigate('/login')
   }
