@@ -16,8 +16,7 @@ function getCardBadge(p) {
     const diff = Math.round((new Date(startDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
     return { text: `D-${diff}`, cls: 'ddayBefore' }
   }
-  if (startDate && today === startDate) return { text: 'D-DAY', cls: 'ddayStart' }
-  if (endDate && today > endDate)        return { text: '기한 초과', cls: 'ddayOver' }
+  if (endDate && today > endDate) return { text: '기한 초과', cls: 'ddayOver' }
   if (endDate) {
     const diff = Math.round((new Date(endDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
     if (diff === 0) return { text: 'D-DAY', cls: 'ddayUrgent' }

@@ -52,8 +52,8 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
         <div className={styles.backdrop} onClick={() => setProfileMember(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
             <button className={styles.profileClose} onClick={() => setProfileMember(null)}>✕</button>
-            <div className={styles.profileAvatar}>{profileMember.name.charAt(0)}</div>
-            <h3 className={styles.profileName}>{profileMember.name}</h3>
+            <div className={styles.profileAvatar}>{(profileMember.id === currentUser.id ? (currentUser.name || profileMember.name) : profileMember.name).charAt(0)}</div>
+            <h3 className={styles.profileName}>{profileMember.id === currentUser.id ? (currentUser.name || profileMember.name) : profileMember.name}</h3>
             <span className={styles.profileRole}>{ROLE_LABEL[profileMember.role]}</span>
             <div className={styles.profileInfo}>
               {profileMember.affiliation && (
@@ -120,7 +120,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
             <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
             <div className={styles.memberInfo}>
               <p className={styles.memberName}>
-                {m.name}
+                {m.id === currentUser.id ? (currentUser.name || m.name) : m.name}
                 {m.id === currentUser.id && <span className={styles.meTag}>나</span>}
               </p>
               <p className={styles.memberRole}>{ROLE_LABEL[m.role]}</p>

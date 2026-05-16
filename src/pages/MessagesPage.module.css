@@ -79,6 +79,7 @@
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 768px) {
+  .title { display: none; }
   .layout { grid-template-columns: 1fr; }
   .listPanel { max-height: 280px; overflow-y: auto; }
 }
