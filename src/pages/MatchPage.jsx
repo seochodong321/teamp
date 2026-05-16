@@ -27,6 +27,9 @@ export default function MatchPage() {
   const [selected, setSelected]       = useState(null)
   const [showForm, setShowForm]       = useState(false)
 
+  // 검색
+  const [searchQuery, setSearchQuery] = useState('')
+
   // 모집글 작성 폼
   const [formProject, setFormProject] = useState('')
   const [formTitle, setFormTitle]     = useState('')
@@ -34,6 +37,9 @@ export default function MatchPage() {
   const [formSkills, setFormSkills]   = useState([])
   const [formCustomSkill, setFormCustomSkill] = useState('')
   const [formDeadline, setFormDeadline]       = useState('')
+  const [formVisibility, setFormVisibility]   = useState('public')
+  const [formKeywords, setFormKeywords]       = useState([])
+  const [formCustomKeyword, setFormCustomKeyword] = useState('')
   const [formSubmitting, setFormSubmitting] = useState(false)
   const [formError, setFormError]           = useState('')
 
@@ -102,12 +108,15 @@ export default function MatchPage() {
         description: formDesc.trim(),
         skills: formSkills,
         deadline: formDeadline,
+        visibility: formVisibility,
+        keywords: formVisibility === 'keyword' ? formKeywords : [],
         applicants: [],
         status: 'open',
         createdAt: serverTimestamp(),
       })
       setShowForm(false)
       setFormTitle(''); setFormDesc(''); setFormSkills([]); setFormProject(''); setFormDeadline('')
+      setFormVisibility('public'); setFormKeywords([]); setFormCustomKeyword('')
       fetchPosts()
     } catch (e) {
       console.error('matchPosts 작성 실패:', e)
@@ -187,6 +196,15 @@ export default function MatchPage() {
     setFormSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
   }
 
+  const q = searchQuery.trim().toLowerCase()
+  const isSearching = q.length > 0
+  const filteredPosts = isSearching
+    ? posts.filter((p) => {
+        const haystack = [p.title, p.description || '', p.projectName, ...(p.skills || []), ...(p.keywords || [])].join(' ').toLowerCase()
+        return haystack.includes(q)
+      })
+    : posts.filter((p) => p.visibility !== 'keyword')
+
   const isMyPost  = selected && selected.leaderId === currentUser?.id
   const myApplied = selected && (selected.applicants || []).find((a) => a.userId === currentUser?.id)
   const myProject = selected && projects.find((p) => p.id === selected.projectId)
@@ -206,16 +224,34 @@ export default function MatchPage() {
       <div className={styles.layout}>
         {/* 목록 */}
         <div className={styles.listPanel}>
+          <div className={styles.searchRow}>
+            <span className={styles.searchIcon}>🔍</span>
+            <input
+              className={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="제목, 스킬, 키워드 검색..."
+            />
+            {searchQuery && (
+              <button className={styles.searchClear} onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
+
+          {!isSearching && <p className={styles.poolLabel}>오픈 풀 · 전체공개 모집글</p>}
+          {isSearching && filteredPosts.length > 0 && (
+            <p className={styles.poolLabel}>검색 결과 {filteredPosts.length}개</p>
+          )}
+
           {loading ? (
             <div className={styles.loading}>불러오는 중...</div>
-          ) : posts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <div className={styles.empty}>
-              <p className={styles.emptyIcon}>🤝</p>
-              <p className={styles.emptyTitle}>아직 모집 중인 팀이 없어요</p>
-              <p className={styles.emptySub}>프로젝트 리더라면 팀원을 모집해보세요</p>
+              <p className={styles.emptyIcon}>{isSearching ? '🔍' : '🤝'}</p>
+              <p className={styles.emptyTitle}>{isSearching ? '검색 결과가 없어요' : '아직 모집 중인 팀이 없어요'}</p>
+              <p className={styles.emptySub}>{isSearching ? '다른 키워드로 검색해보세요' : '프로젝트 리더라면 팀원을 모집해보세요'}</p>
             </div>
           ) : (
-            posts.map((post) => (
+            filteredPosts.map((post) => (
               <div key={post.id}
                 className={`${styles.postCard} ${selected?.id === post.id ? styles.postCardActive : ''}`}
                 onClick={() => setSelected(post)}>
@@ -387,6 +423,49 @@ export default function MatchPage() {
                   value={formDeadline}
                   min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setFormDeadline(e.target.value)} />
+              </div>
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>공개 설정</label>
+                <div className={styles.visibilityBtns}>
+                  <button type="button"
+                    className={`${styles.visBtn} ${formVisibility === 'public' ? styles.visBtnActive : ''}`}
+                    onClick={() => setFormVisibility('public')}>
+                    🌍 전체공개
+                  </button>
+                  <button type="button"
+                    className={`${styles.visBtn} ${formVisibility === 'keyword' ? styles.visBtnActive : ''}`}
+                    onClick={() => setFormVisibility('keyword')}>
+                    🔍 부분공개
+                  </button>
+                </div>
+                {formVisibility === 'keyword' && (
+                  <div className={styles.keywordSection}>
+                    <p className={styles.visNotice}>오픈 풀에는 반영되지 않아요. 키워드 검색 시에만 노출돼요.</p>
+                    <input
+                      className={styles.formInput}
+                      value={formCustomKeyword}
+                      onChange={(e) => setFormCustomKeyword(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.nativeEvent.isComposing && formCustomKeyword.trim()) {
+                          e.preventDefault()
+                          setFormKeywords((prev) => [...new Set([...prev, formCustomKeyword.trim()])])
+                          setFormCustomKeyword('')
+                        }
+                      }}
+                      placeholder="키워드 입력 후 Enter (예: 영화, 스크립터)"
+                    />
+                    {formKeywords.length > 0 && (
+                      <div className={styles.skillTags} style={{ marginTop: 6 }}>
+                        {formKeywords.map((k) => (
+                          <button key={k} className={`${styles.skillTag} ${styles.skillTagRemove}`}
+                            onClick={() => setFormKeywords((prev) => prev.filter((x) => x !== k))}>
+                            {k} ✕
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <div className={styles.formField}>
                 <label className={styles.formLabel}>필요 스킬</label>
