@@ -42,6 +42,14 @@ export default function TodoBoard({ project, currentUser }) {
   const [priority, setPriority]       = useState('medium')
   const [draggedId, setDraggedId]     = useState(null)
 
+  // 상세 팝업
+  const [selectedTodo, setSelectedTodo] = useState(null)
+  const [editing, setEditing]           = useState(false)
+  const [editTitle, setEditTitle]       = useState('')
+  const [editAssignees, setEditAssignees] = useState([])
+  const [editDueDate, setEditDueDate]   = useState('')
+  const [editPriority, setEditPriority] = useState('medium')
+
   const today = new Date().toISOString().split('T')[0]
 
   const toggleAssignee = (id) =>
@@ -67,8 +75,171 @@ export default function TodoBoard({ project, currentUser }) {
 
   const getMember = (id) => project.members.find((m) => m.id === id)
 
+  const openDetail = (todo) => {
+    setSelectedTodo(todo)
+    setEditing(false)
+  }
+
+  const openEdit = () => {
+    setEditTitle(selectedTodo.title)
+    setEditAssignees(getAssignees(selectedTodo))
+    setEditDueDate(selectedTodo.dueDate || '')
+    setEditPriority(selectedTodo.priority || 'medium')
+    setEditing(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editTitle.trim()) return
+    await updateTodo(project.id, selectedTodo.id, {
+      title: editTitle.trim(),
+      assignees: editAssignees,
+      dueDate: editDueDate || null,
+      priority: editPriority,
+    })
+    setSelectedTodo((t) => ({ ...t, title: editTitle.trim(), assignees: editAssignees, dueDate: editDueDate || null, priority: editPriority }))
+    setEditing(false)
+  }
+
+  const handleDeleteFromModal = async () => {
+    await deleteTodo(project.id, selectedTodo.id)
+    setSelectedTodo(null)
+  }
+
+  const toggleEditAssignee = (id) =>
+    setEditAssignees((prev) => prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id])
+
+  const me = project.members.find((m) => m.id === currentUser.id)
+  const isLeaderOrSub = me?.role === 'leader' || me?.role === 'sub-leader'
+
   return (
     <div className={styles.wrap}>
+      {/* 할 일 상세 팝업 */}
+      {selectedTodo && (() => {
+        const t = selectedTodo
+        const tAssignees = getAssignees(t)
+        const pri = PRIORITY[t.priority] || PRIORITY.medium
+        const dueDateInfo = getDueDateInfo(t.dueDate, today, t.status)
+        const colInfo = COLUMNS.find((c) => c.key === t.status) || COLUMNS[0]
+        const canEdit = t.createdBy === currentUser.id || isLeaderOrSub
+        const canDelete = t.createdBy === currentUser.id || me?.role === 'leader'
+        const creator = getMember(t.createdBy)
+
+        return (
+          <div className={styles.backdrop} onClick={() => { setSelectedTodo(null); setEditing(false) }}>
+            <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.detailHeader}>
+                <span className={styles.detailColBadge} style={{ color: colInfo.color }}>
+                  {colInfo.emoji} {colInfo.label}
+                </span>
+                <button className={styles.detailClose} onClick={() => { setSelectedTodo(null); setEditing(false) }}>✕</button>
+              </div>
+
+              {editing ? (
+                <div className={styles.editForm}>
+                  <input
+                    className={styles.editTitleInput}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSaveEdit() }}
+                  />
+
+                  <div className={styles.editSection}>
+                    <span className={styles.editLabel}>담당자</span>
+                    <div className={styles.assigneeChips}>
+                      {project.members.map((m) => {
+                        const active = editAssignees.includes(m.id)
+                        return (
+                          <button key={m.id} type="button"
+                            className={`${styles.assigneeChip} ${active ? styles.assigneeChipActive : ''}`}
+                            onClick={() => toggleEditAssignee(m.id)}>
+                            <div className={`${styles.chipAvatar} ${active ? styles.chipAvatarActive : ''}`}>{m.name.charAt(0)}</div>
+                            <span>{m.name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formField}>
+                      <span className={styles.formFieldLabel}>마감일</span>
+                      <input className={styles.formSelect} type="date" value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)} />
+                    </div>
+                    <div className={styles.formField}>
+                      <span className={styles.formFieldLabel}>우선순위</span>
+                      <select className={styles.formSelect} value={editPriority}
+                        onChange={(e) => setEditPriority(e.target.value)}>
+                        <option value="low">🟢 낮음</option>
+                        <option value="medium">🟡 보통</option>
+                        <option value="high">🔴 높음</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={styles.editActions}>
+                    <button className={styles.editCancel} onClick={() => setEditing(false)}>취소</button>
+                    <button className={styles.editSave} onClick={handleSaveEdit} disabled={!editTitle.trim()}>저장</button>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.detailBody}>
+                  <p className={styles.detailTitle}>{t.title}</p>
+
+                  <div className={styles.detailMeta}>
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailKey}>우선순위</span>
+                      <span className={styles.priority} style={{ background: pri.bg, color: pri.color }}>{pri.dot} {pri.label}</span>
+                    </div>
+                    {dueDateInfo && (
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailKey}>마감일</span>
+                        <span className={`${styles.dueDate} ${dueDateInfo.overdue ? styles.dueDateOver : ''} ${dueDateInfo.urgent && !dueDateInfo.overdue ? styles.dueDateUrgent : ''}`}>
+                          📅 {t.dueDate} ({dueDateInfo.label})
+                        </span>
+                      </div>
+                    )}
+                    {tAssignees.length > 0 && (
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailKey}>담당자</span>
+                        <div className={styles.detailAssignees}>
+                          {tAssignees.map((id) => {
+                            const m = getMember(id)
+                            if (!m) return null
+                            return (
+                              <div key={id} className={styles.detailAssigneeItem}>
+                                <div className={styles.avatar}>{m.name.charAt(0)}</div>
+                                <span className={styles.assigneeName}>{m.name}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {creator && (
+                      <div className={styles.detailRow}>
+                        <span className={styles.detailKey}>등록자</span>
+                        <span className={styles.detailVal}>{creator.name} · {t.createdAt}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.detailFooter}>
+                    {canDelete && (
+                      <button className={styles.detailDelete} onClick={handleDeleteFromModal}>삭제</button>
+                    )}
+                    {canEdit && (
+                      <button className={styles.detailEdit} onClick={openEdit}>✏️ 수정</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
+
       <div className={styles.header}>
         <p className={styles.desc}>드래그해서 상태를 바꿀 수 있어요</p>
         <button className={styles.addBtn} onClick={() => setShowForm(!showForm)}>
@@ -155,13 +326,14 @@ export default function TodoBoard({ project, currentUser }) {
                         className={`${styles.card} ${dueDateInfo?.overdue ? styles.cardOverdue : ''}`}
                         style={{ borderTop: `2px solid ${pri.color}` }}
                         draggable
-                        onDragStart={() => handleDragStart(todo.id)}>
+                        onDragStart={() => handleDragStart(todo.id)}
+                        onClick={() => openDetail(todo)}>
                         <div className={styles.cardTop}>
                           <span className={styles.priority} style={{ background: pri.bg, color: pri.color }}>
                             {pri.dot} {pri.label}
                           </span>
                           <button className={styles.delete}
-                            onClick={() => deleteTodo(project.id, todo.id)}>✕</button>
+                            onClick={(e) => { e.stopPropagation(); deleteTodo(project.id, todo.id) }}>✕</button>
                         </div>
                         <p className={styles.title}>{todo.title}</p>
                         <div className={styles.cardBottom}>

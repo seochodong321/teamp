@@ -119,6 +119,106 @@
 }
 .emptyCardIcon { font-size: 22px; opacity: 0.6; }
 
+/* ── 상세 팝업 ── */
+.backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+  padding: 16px;
+}
+
+.detailModal {
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 460px;
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column;
+  max-height: 90vh; overflow-y: auto;
+  animation: popIn 0.18s ease;
+}
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.detailHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.detailColBadge { font-size: 13px; font-weight: 700; }
+.detailClose {
+  width: 28px; height: 28px; border-radius: 50%;
+  font-size: 13px; color: var(--text-tertiary);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.detailClose:hover { background: var(--bg-secondary); color: var(--text); }
+
+.detailBody { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.detailTitle { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.4; }
+
+.detailMeta { display: flex; flex-direction: column; gap: 10px; }
+.detailRow { display: flex; align-items: center; gap: 10px; }
+.detailKey {
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  min-width: 52px; flex-shrink: 0;
+}
+.detailVal { font-size: 13px; color: var(--text-secondary); }
+.detailAssignees { display: flex; flex-wrap: wrap; gap: 6px; }
+.detailAssigneeItem { display: flex; align-items: center; gap: 5px; }
+
+.detailFooter {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-light);
+}
+.detailDelete {
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--coral);
+  background: var(--coral-soft);
+  transition: all var(--transition-fast);
+}
+.detailDelete:hover { background: #fcd7d7; }
+.detailEdit {
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  background: var(--text); color: var(--bg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+.detailEdit:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* ── 수정 폼 ── */
+.editForm { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.editTitleInput {
+  height: 48px; border-radius: var(--radius-sm); border: 1px solid var(--primary);
+  background: var(--bg-secondary); padding: 0 14px;
+  font-size: 15px; font-weight: 600; color: var(--text); width: 100%;
+  box-shadow: var(--shadow-glow);
+}
+.editSection { display: flex; flex-direction: column; gap: 8px; }
+.editLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; text-transform: uppercase; }
+
+.editActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.editCancel {
+  padding: 9px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.editSave {
+  padding: 9px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  background: var(--text); color: var(--bg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+.editSave:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.editSave:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
 @media (max-width: 768px) {
   .board { grid-template-columns: 1fr; }
   .formRow { grid-template-columns: 1fr; }
