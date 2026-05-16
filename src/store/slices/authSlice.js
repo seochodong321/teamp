@@ -1,4 +1,4 @@
-import { doc, updateDoc } from 'firebase/firestore'
+import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 
 export const createAuthSlice = (set, get) => ({
@@ -56,21 +56,19 @@ export const createAuthSlice = (set, get) => ({
   },
 
   blockUser: async (targetId) => {
-    const { currentUser, blockedUsers } = get()
-    if (!targetId || blockedUsers.includes(targetId)) return
-    const updated = [...blockedUsers, targetId]
-    set({ blockedUsers: updated })
+    const { currentUser } = get()
+    if (!targetId || get().blockedUsers.includes(targetId)) return
+    set((s) => ({ blockedUsers: [...s.blockedUsers, targetId] }))
     if (currentUser?.id) {
-      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: updated })
+      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: arrayUnion(targetId) })
     }
   },
 
   unblockUser: async (targetId) => {
-    const { currentUser, blockedUsers } = get()
-    const updated = blockedUsers.filter((id) => id !== targetId)
-    set({ blockedUsers: updated })
+    const { currentUser } = get()
+    set((s) => ({ blockedUsers: s.blockedUsers.filter((id) => id !== targetId) }))
     if (currentUser?.id) {
-      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: updated })
+      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: arrayRemove(targetId) })
     }
   },
 

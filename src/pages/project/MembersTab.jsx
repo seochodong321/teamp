@@ -18,6 +18,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
   const [sentInvites, setSentInvites]     = useState({})
   const [showLeave, setShowLeave]         = useState(false)
   const [leaveLoading, setLeaveLoading]   = useState(false)
+  const [leaveError, setLeaveError]       = useState('')
 
   const handleCopyInvite = async () => {
     try {
@@ -86,21 +87,26 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
 
       {/* 프로젝트 나가기 확인 모달 */}
       {showLeave && (
-        <div className={styles.backdrop} onClick={() => setShowLeave(false)}>
+        <div className={styles.backdrop} onClick={() => { setShowLeave(false); setLeaveError('') }}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>프로젝트에서 나갈까요?</h3>
             <p className={styles.modalDesc}>나가면 다시 초대를 받아야 참여할 수 있어요. 이 작업은 되돌릴 수 없어요.</p>
+            {leaveError && <p style={{ fontSize: 13, color: '#E24B4A', margin: '4px 0 0' }}>{leaveError}</p>}
             <div className={styles.modalBtns}>
-              <button className={styles.modalCancel} onClick={() => setShowLeave(false)}>취소</button>
+              <button className={styles.modalCancel} onClick={() => { setShowLeave(false); setLeaveError('') }}>취소</button>
               <button
                 className={styles.modalConfirm}
                 style={{ background: '#E24B4A' }}
                 disabled={leaveLoading}
                 onClick={async () => {
                   setLeaveLoading(true)
+                  setLeaveError('')
                   try {
-                    await leaveOrDeleteProject(project.id)
+                    const result = await leaveOrDeleteProject(project.id)
+                    if (result?.error) { setLeaveError(result.error); return }
                     navigate('/home')
+                  } catch {
+                    setLeaveError('오류가 발생했어요. 다시 시도해주세요.')
                   } finally {
                     setLeaveLoading(false)
                   }

@@ -27,37 +27,29 @@ export const createProjectSlice = (set, get) => ({
       }
     })
 
-    // 피드백 수집 중 프로젝트 마감일 지나면 자동 완료 처리
-    firestoreProjects.forEach((fp) => {
-      if (fp.status === 'collecting' && fp.feedbackDeadline) {
-        if (new Date() > new Date(fp.feedbackDeadline)) {
-          updateDoc(doc(db, 'projects', fp.id), { status: 'archived' }).catch(() => {})
-        }
-      }
-    })
-
-    const stateUpdate = { projects: merged }
-    if (currentUser) {
-      const existingIds = new Set(connects.map(c => c.id))
-      const newConnects = []
-      firestoreProjects.forEach(fp => {
-        fp.members?.forEach(m => {
-          if (m.id !== currentUser.id && !existingIds.has(m.id)) {
-            existingIds.add(m.id)
-            newConnects.push({
-              id: m.id, name: m.name,
-              affiliation: m.affiliation || '',
-              email: m.email || '',
-              projectName: fp.name,
-              connectedAt: new Date().toISOString().split('T')[0],
-            })
-          }
+    set((s) => {
+      const stateUpdate = { projects: merged }
+      if (currentUser) {
+        const existingIds = new Set(s.connects.map(c => c.id))
+        const newConnects = []
+        firestoreProjects.forEach(fp => {
+          fp.members?.forEach(m => {
+            if (m.id !== currentUser.id && !existingIds.has(m.id)) {
+              existingIds.add(m.id)
+              newConnects.push({
+                id: m.id, name: m.name,
+                affiliation: m.affiliation || '',
+                email: m.email || '',
+                projectName: fp.name,
+                connectedAt: new Date().toISOString().split('T')[0],
+              })
+            }
+          })
         })
-      })
-      if (newConnects.length > 0) stateUpdate.connects = [...connects, ...newConnects]
-    }
-
-    set(stateUpdate)
+        if (newConnects.length > 0) stateUpdate.connects = [...s.connects, ...newConnects]
+      }
+      return stateUpdate
+    })
   },
 
   createTutorialProject: async (userId, userName) => {
@@ -244,8 +236,7 @@ export const createProjectSlice = (set, get) => ({
     const otherMembers = project.members.filter((m) => m.id !== currentUser.id)
 
     if (isLeader && otherLeaders.length === 0 && otherMembers.length > 0) {
-      alert('리더가 혼자면 프로젝트를 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.')
-      return
+      return { error: '리더가 혼자면 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.' }
     }
     if (isLeader && otherMembers.length === 0) {
       // 혼자 남은 경우 프로젝트 삭제
@@ -264,10 +255,16 @@ export const createProjectSlice = (set, get) => ({
   },
 
   updateProjectInfo: async (projectId, updates) => {
+    const prev = get().projects.find((p) => p.id === projectId)
     set((s) => ({
       projects: s.projects.map((p) => p.id === projectId ? { ...p, ...updates } : p),
     }))
-    await updateDoc(doc(db, 'projects', projectId), updates)
+    try {
+      await updateDoc(doc(db, 'projects', projectId), updates)
+    } catch (e) {
+      if (prev) set((s) => ({ projects: s.projects.map((p) => p.id === projectId ? prev : p) }))
+      throw e
+    }
   },
 
   togglePublic: async (projectId) => {
@@ -275,12 +272,10 @@ export const createProjectSlice = (set, get) => ({
   },
 
   kickMember: async (projectId, memberId) => {
-    const project = get().projects.find((p) => p.id === projectId)
-    if (!project) return
-    await updateDoc(doc(db, 'projects', projectId), {
-      members: project.members.filter((m) => m.id !== memberId),
-      memberIds: (project.memberIds || []).filter((id) => id !== memberId),
-    })
+    await txProject(projectId, (data) => ({
+      members: data.members.filter((m) => m.id !== memberId),
+      memberIds: (data.memberIds || []).filter((id) => id !== memberId),
+    }))
   },
 
   addMemberToProject: async (projectId, userId, userName) => {

@@ -79,7 +79,8 @@ export default function HomePage() {
   const [showEndTime, setShowEndTime] = useState(false)
   const [roomNames, setRoomNames] = useState(['개발팀'])
   const [newRoom, setNewRoom]     = useState('')
-  const [dateError, setDateError] = useState('')
+  const [dateError, setDateError]   = useState('')
+  const [stepError, setStepError]   = useState('')
 
   // 대표 프로젝트 (Zustand persist)
   const [showPinPicker, setShowPinPicker] = useState(false)
@@ -90,6 +91,7 @@ export default function HomePage() {
   }
   const [created, setCreated]     = useState(null)
   const [loading, setLoading]     = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   // ── 섹션 접기 ──
   const [showCollecting, setShowCollecting] = useState(true)
@@ -108,7 +110,7 @@ export default function HomePage() {
   const openModal = () => {
     setEmoji(''); setPName(''); setPurpose(''); setCategory('학교'); setCustomCategory('')
     setStartDate(''); setEndDate(''); setEndTime(''); setShowEndTime(false)
-    setRoomNames(['개발팀']); setNewRoom(''); setDateError('')
+    setRoomNames(['개발팀']); setNewRoom(''); setDateError(''); setStepError('')
     setCreated(null); setStep(0); setLoading(false)
     setShowModal(true)
   }
@@ -116,9 +118,10 @@ export default function HomePage() {
   const closeModal = () => setShowModal(false)
 
   const goNext = async () => {
+    setStepError('')
     if (step === 0) {
-      if (!emoji) { alert('프로젝트를 표현할 이모지를 골라주세요!'); return }
-      if (!pName.trim() || !startDate || !endDate) { alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
+      if (!emoji) { setStepError('프로젝트를 표현할 이모지를 골라주세요!'); return }
+      if (!pName.trim() || !startDate || !endDate) { setStepError('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
       if (endDate < today) { setDateError('종료일이 오늘보다 이전이에요. 다시 설정해주세요.'); return }
       if (startDate && endDate && endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
@@ -313,13 +316,16 @@ export default function HomePage() {
                   <div className={styles.linkBox} style={{ marginTop: 4, width: '100%' }}>
                     <span className={styles.linkText}>{inviteLink}</span>
                     <button type="button" className={styles.linkCopy}
-                      onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
+                      onClick={() => { navigator.clipboard.writeText(inviteLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}>
+                      {linkCopied ? '✅ 복사됨' : '복사'}
+                    </button>
                   </div>
                 </div>
               )}
             </div>
 
             <div className={styles.modalFooter}>
+              {stepError && <p style={{ fontSize: 12, color: '#E24B4A', flex: '0 0 100%', margin: '0 0 6px' }}>⚠️ {stepError}</p>}
               {step > 0 && step < STEPS.length && (
                 <button className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>
               )}

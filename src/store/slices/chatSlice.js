@@ -160,32 +160,35 @@ export const createChatSlice = (set, get) => ({
       const leftArr = data.left || []
       const hadLeft = leftArr.length > 0
 
-      try {
-        const msgsRef     = collection(db, 'rooms', roomId, 'messages')
-        const allMsgsSnap = await getDocs(msgsRef)
-        const batch       = writeBatch(db)
-        allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-        batch.update(dmRef, { left: [], createdBy: currentUser.id })
-        await batch.commit()
-      } catch (e) {
-        console.error('[DM] 메시지 초기화 오류:', e)
-      }
-
       if (hadLeft) {
+        // 한쪽이 나간 뒤 재개 → 메시지 초기화 + 알림
+        try {
+          const msgsRef     = collection(db, 'rooms', roomId, 'messages')
+          const allMsgsSnap = await getDocs(msgsRef)
+          const batch       = writeBatch(db)
+          allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
+          batch.update(dmRef, { left: [], createdBy: currentUser.id })
+          await batch.commit()
+        } catch (e) {
+          console.error('[DM] 메시지 초기화 오류:', e)
+        }
         addDoc(collection(db, 'notifications'), {
           targetUserId: otherUserId, type: 'dm',
           text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
           link: `/project/${projectId}/chat/${roomId}`,
           read: false, createdAt: serverTimestamp(),
         }).catch(() => {})
+        const freshRoom = { ...data, left: [], createdBy: currentUser.id }
+        set((s) => ({
+          dmRooms:  { ...s.dmRooms,  [dmKey]: freshRoom },
+          messages: { ...s.messages, [roomId]: [] },
+        }))
+        return freshRoom
       }
 
-      const freshRoom = { ...data, left: [], createdBy: currentUser.id }
-      set((s) => ({
-        dmRooms:  { ...s.dmRooms,  [dmKey]: freshRoom },
-        messages: { ...s.messages, [roomId]: [] },
-      }))
-      return freshRoom
+      // 양쪽 모두 나간 적 없음 → 기존 메시지 유지
+      set((s) => ({ dmRooms: { ...s.dmRooms, [dmKey]: data } }))
+      return data
     }
 
     // 방 없음 — 신규 생성

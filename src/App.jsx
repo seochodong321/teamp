@@ -157,6 +157,7 @@ export default function App() {
   const msgWatchersRef    = useRef({}) // roomId → unsub
   const dmMsgWatchersRef  = useRef({}) // dmRoomId → unsub
   const matchUnsubRef     = useRef(null)
+  const onMessageUnsubRef = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -198,6 +199,16 @@ export default function App() {
           async (snapshot) => {
             const projects = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
             setProjects(projects)
+
+            // 피드백 수집 마감일 지난 프로젝트 자동 종료 (캐시 아닌 실제 데이터일 때만)
+            if (!snapshot.metadata.fromCache) {
+              const now = new Date()
+              projects.forEach((p) => {
+                if (p.status === 'collecting' && p.feedbackDeadline && now > new Date(p.feedbackDeadline)) {
+                  updateDoc(doc(db, 'projects', p.id), { status: 'archived' }).catch(() => {})
+                }
+              })
+            }
 
             // 튜토리얼 프로젝트 리더 자동 수정
             const tutProj = projects.find((p) => p.isTutorial)
@@ -283,9 +294,10 @@ export default function App() {
           })
         }
 
-        // 포그라운드 메시지 처리
+        // 포그라운드 메시지 처리 (이전 리스너 해제 후 재등록)
         if (messaging) {
-          onMessage(messaging, (payload) => {
+          if (onMessageUnsubRef.current) onMessageUnsubRef.current()
+          onMessageUnsubRef.current = onMessage(messaging, (payload) => {
             const { title, body } = payload.notification || {}
             addNotification({ type: 'push', text: body || title || '새 알림이 있어요' })
           })
@@ -326,6 +338,7 @@ export default function App() {
         if (notifUnsubRef.current) { notifUnsubRef.current(); notifUnsubRef.current = null }
         if (inviteUnsubRef.current) { inviteUnsubRef.current(); inviteUnsubRef.current = null }
         if (matchUnsubRef.current) { matchUnsubRef.current(); matchUnsubRef.current = null }
+        if (onMessageUnsubRef.current) { onMessageUnsubRef.current(); onMessageUnsubRef.current = null }
         setMatchPostCount(0)
         // 채팅방 메시지 감시 구독도 해제 (permission 오류 방지)
         Object.values(msgWatchersRef.current).forEach((unsub) => unsub())
@@ -344,6 +357,7 @@ export default function App() {
       if (notifUnsubRef.current) notifUnsubRef.current()
       if (inviteUnsubRef.current) inviteUnsubRef.current()
       if (matchUnsubRef.current) matchUnsubRef.current()
+      if (onMessageUnsubRef.current) onMessageUnsubRef.current()
     }
   }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, setInvites, setNeedsUsernameSetup])
 
