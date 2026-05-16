@@ -6,6 +6,7 @@ import { useStore } from '../store/useStore.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
 import { getYearRange } from '../utils/dateUtils.js'
 import styles from './SetupUsernamePage.module.css'
+import TeampMark from '../components/TeampMark.jsx'
 
 export default function SetupUsernamePage() {
   const navigate = useNavigate()
@@ -107,7 +108,7 @@ export default function SetupUsernamePage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.mark}>T</div>
+          <TeampMark size={44} />
           <h1 className={styles.title}>프로필 설정</h1>
           <p className={styles.sub}>팀프에서 사용할 @아이디와 기본 정보를 설정해 주세요.</p>
         </div>

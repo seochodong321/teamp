@@ -10,6 +10,7 @@ import CreateProjectModal from './CreateProjectModal.jsx'
 import ChatToastContainer from './ChatToastContainer.jsx'
 import ErrorToastContainer from './ErrorToastContainer.jsx'
 import styles from './Layout.module.css'
+import TeampMark from './TeampMark.jsx'
 
 export default function Layout() {
   const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme, matchPostCount, matchSeenCount } = useStore()
@@ -100,7 +101,7 @@ export default function Layout() {
       <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`}>
         <div className={styles.logoRow}>
           <div className={styles.logo} onClick={() => { navigate('/home'); close() }}>
-            <span className={styles.logoMark}>T</span>
+            <TeampMark size={26} />
             <span className={styles.logoText}>Teamp</span>
           </div>
           <div className={styles.logoActions}>

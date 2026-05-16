@@ -9,6 +9,7 @@ import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
+import TeampMark from '../components/TeampMark.jsx'
 
 const FEATURES = [
   { icon: '💬', text: '채팅 · 할 일 · 캘린더 · 게시판' },
@@ -183,7 +184,7 @@ export default function LoginPage() {
       <div className={styles.left}>
         <div className={styles.leftInner}>
           <div className={styles.brand}>
-            <div className={styles.brandMark}>T</div>
+            <TeampMark size={44} />
             <div>
               <span className={styles.brandName}>Teamp</span>
               <span className={styles.brandTagline}>기여와 관계의 기록</span>
@@ -223,7 +224,7 @@ export default function LoginPage() {
         <div className={styles.card}>
           {/* 모바일에서만 보이는 로고 */}
           <div className={styles.mobileLogoRow}>
-            <div className={styles.mobileMark}>T</div>
+            <TeampMark size={36} />
             <span className={styles.mobileName}>Teamp</span>
           </div>
 

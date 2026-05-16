@@ -34,18 +34,9 @@
 }
 
 .brandMark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .brandName {
@@ -188,14 +179,7 @@
 .mobileMark {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: var(--primary);
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-shrink: 0;
 }
 
 .mobileName {
