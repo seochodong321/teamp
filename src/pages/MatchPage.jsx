@@ -26,6 +26,7 @@ export default function MatchPage() {
   const [loading, setLoading]         = useState(true)
   const [selected, setSelected]       = useState(null)
   const [showForm, setShowForm]       = useState(false)
+  const [activeTab, setActiveTab]     = useState('pool') // 'pool' | 'mine'
 
   // 검색
   const [searchQuery, setSearchQuery] = useState('')
@@ -198,12 +199,19 @@ export default function MatchPage() {
 
   const q = searchQuery.trim().toLowerCase()
   const isSearching = q.length > 0
-  const filteredPosts = isSearching
-    ? posts.filter((p) => {
-        const haystack = [p.title, p.description || '', p.projectName, ...(p.skills || []), ...(p.keywords || [])].join(' ').toLowerCase()
-        return haystack.includes(q)
-      })
-    : posts.filter((p) => p.visibility !== 'keyword')
+
+  const myPosts = posts.filter((p) => p.leaderId === currentUser?.id)
+  const pendingCount = myPosts.reduce((acc, p) =>
+    acc + (p.applicants || []).filter((a) => a.status === 'pending').length, 0)
+
+  const poolPosts = (() => {
+    const others = posts.filter((p) => p.leaderId !== currentUser?.id)
+    if (!isSearching) return others.filter((p) => p.visibility !== 'keyword')
+    return others.filter((p) => {
+      const haystack = [p.title, p.description || '', p.projectName, ...(p.skills || []), ...(p.keywords || [])].join(' ').toLowerCase()
+      return haystack.includes(q)
+    })
+  })()
 
   const isMyPost  = selected && selected.leaderId === currentUser?.id
   const myApplied = selected && (selected.applicants || []).find((a) => a.userId === currentUser?.id)
@@ -224,34 +232,62 @@ export default function MatchPage() {
       <div className={styles.layout}>
         {/* 목록 */}
         <div className={styles.listPanel}>
-          <div className={styles.searchRow}>
-            <span className={styles.searchIcon}>🔍</span>
-            <input
-              className={styles.searchInput}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="제목, 스킬, 키워드 검색..."
-            />
-            {searchQuery && (
-              <button className={styles.searchClear} onClick={() => setSearchQuery('')}>✕</button>
-            )}
+          {/* 탭 */}
+          <div className={styles.matchTabs}>
+            <button
+              className={`${styles.matchTab} ${activeTab === 'pool' ? styles.matchTabActive : ''}`}
+              onClick={() => { setActiveTab('pool'); setSelected(null) }}>
+              오픈 풀
+            </button>
+            <button
+              className={`${styles.matchTab} ${activeTab === 'mine' ? styles.matchTabActive : ''}`}
+              onClick={() => { setActiveTab('mine'); setSelected(null) }}>
+              내 모집글
+              {pendingCount > 0 && <span className={styles.pendingBadge}>{pendingCount}</span>}
+            </button>
           </div>
 
-          {!isSearching && <p className={styles.poolLabel}>오픈 풀 · 전체공개 모집글</p>}
-          {isSearching && filteredPosts.length > 0 && (
-            <p className={styles.poolLabel}>검색 결과 {filteredPosts.length}개</p>
+          {/* 오픈 풀 탭 */}
+          {activeTab === 'pool' && (
+            <>
+              <div className={styles.searchRow}>
+                <span className={styles.searchIcon}>🔍</span>
+                <input
+                  className={styles.searchInput}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="제목, 스킬, 키워드 검색..."
+                />
+                {searchQuery && (
+                  <button className={styles.searchClear} onClick={() => setSearchQuery('')}>✕</button>
+                )}
+              </div>
+              {!isSearching && <p className={styles.poolLabel}>전체공개 모집글</p>}
+              {isSearching && poolPosts.length > 0 && <p className={styles.poolLabel}>검색 결과 {poolPosts.length}개</p>}
+            </>
+          )}
+
+          {/* 내 모집글 탭 헤더 */}
+          {activeTab === 'mine' && myPosts.length > 0 && (
+            <p className={styles.poolLabel}>내가 올린 모집글 {myPosts.length}개</p>
           )}
 
           {loading ? (
             <div className={styles.loading}>불러오는 중...</div>
-          ) : filteredPosts.length === 0 ? (
+          ) : activeTab === 'pool' && poolPosts.length === 0 ? (
             <div className={styles.empty}>
               <p className={styles.emptyIcon}>{isSearching ? '🔍' : '🤝'}</p>
               <p className={styles.emptyTitle}>{isSearching ? '검색 결과가 없어요' : '아직 모집 중인 팀이 없어요'}</p>
               <p className={styles.emptySub}>{isSearching ? '다른 키워드로 검색해보세요' : '프로젝트 리더라면 팀원을 모집해보세요'}</p>
             </div>
+          ) : activeTab === 'mine' && myPosts.length === 0 ? (
+            <div className={styles.empty}>
+              <p className={styles.emptyIcon}>📝</p>
+              <p className={styles.emptyTitle}>올린 모집글이 없어요</p>
+              <p className={styles.emptySub}>팀원이 필요하다면 모집글을 작성해보세요</p>
+            </div>
           ) : (
-            filteredPosts.map((post) => (
+            (activeTab === 'pool' ? poolPosts : myPosts).map((post) => (
               <div key={post.id}
                 className={`${styles.postCard} ${selected?.id === post.id ? styles.postCardActive : ''}`}
                 onClick={() => setSelected(post)}>
@@ -269,8 +305,20 @@ export default function MatchPage() {
                       })()}
                     </p>
                   </div>
-                  <span className={styles.applicantCount}>{(post.applicants || []).length}명 지원</span>
+                  {activeTab === 'mine' ? (() => {
+                    const pending = (post.applicants || []).filter((a) => a.status === 'pending').length
+                    return (
+                      <span className={pending > 0 ? styles.applicantCountNew : styles.applicantCount}>
+                        {pending > 0 ? `🔔 ${pending}명 대기` : `${(post.applicants || []).length}명 지원`}
+                      </span>
+                    )
+                  })() : (
+                    <span className={styles.applicantCount}>{(post.applicants || []).length}명 지원</span>
+                  )}
                 </div>
+                {activeTab === 'mine' && post.visibility === 'keyword' && (
+                  <div className={styles.keywordBadge}>🔍 키워드 공개</div>
+                )}
                 {post.skills?.length > 0 && (
                   <div className={styles.skillTags}>
                     {post.skills.slice(0, 4).map((s) => <span key={s} className={styles.skillTag}>{s}</span>)}

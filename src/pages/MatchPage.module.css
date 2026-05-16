@@ -119,6 +119,33 @@
 /* 지원자 자기소개 */
 .applicantNote { font-size: 12px; color: var(--text-secondary); font-style: italic; margin: 2px 0; }
 
+/* ── 탭 ── */
+.matchTabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 3px; }
+.matchTab {
+  flex: 1; padding: 7px 0; border-radius: calc(var(--radius-md) - 2px);
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  transition: all var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.matchTab:hover { color: var(--text); }
+.matchTabActive { background: var(--bg); color: var(--text); box-shadow: var(--shadow-xs); }
+.pendingBadge {
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--coral); color: white;
+  border-radius: var(--radius-full); font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.applicantCountNew {
+  font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0;
+  background: var(--coral-soft); color: var(--coral);
+  padding: 2px 7px; border-radius: var(--radius-full);
+}
+.keywordBadge {
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: var(--radius-full);
+  width: fit-content;
+}
+
 /* ── 검색 ── */
 .searchRow {
   display: flex; align-items: center; gap: 8px;
