@@ -10,6 +10,7 @@ import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
 import TeampMark from '../components/TeampMark.jsx'
+import Spinner from '../components/Spinner.jsx'
 
 const FEATURES = [
   { icon: '💬', text: '채팅 · 할 일 · 캘린더 · 게시판' },
@@ -40,13 +41,7 @@ export default function LoginPage() {
     return () => unsub()
   }, [])
 
-  // Firebase 초기화 전엔 스피너 — 기존 세션 자동 복원 대기
-  if (!authReady) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
-  )
+  if (!authReady) return <Spinner />
 
   if (isLoggedIn) return <Navigate to={redirectTo} replace />
 

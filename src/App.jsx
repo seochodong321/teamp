@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
+import Spinner from './components/Spinner.jsx'
 
 // 인증 전 페이지는 즉시 로드 (로그인/가입 화면은 빠르게 보여야 함)
 import LoginPage          from './pages/LoginPage.jsx'
@@ -137,18 +138,7 @@ async function checkBirthdays(projects, myUid) {
 function PrivateRoute({ children, ready }) {
   const isLoggedIn          = useStore((s) => s.isLoggedIn)
   const needsUsernameSetup  = useStore((s) => s.needsUsernameSetup)
-  if (!ready) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
-      <div style={{
-        width: 40, height: 40, borderRadius: '50%',
-        border: '3px solid #E8E6F8',
-        borderTopColor: '#534AB7',
-        animation: 'spin 0.75s linear infinite',
-      }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      <span style={{ fontSize: 13, color: '#9B97C5', fontWeight: 500 }}>팀프 불러오는 중…</span>
-    </div>
-  )
+  if (!ready) return <Spinner size={40} label="팀프 불러오는 중…" />
   if (!isLoggedIn) return <Navigate to="/login" replace />
   if (needsUsernameSetup)  return <Navigate to="/setup-username" replace />
   return children
@@ -353,6 +343,7 @@ export default function App() {
       if (dmUnsubRef.current) dmUnsubRef.current()
       if (notifUnsubRef.current) notifUnsubRef.current()
       if (inviteUnsubRef.current) inviteUnsubRef.current()
+      if (matchUnsubRef.current) matchUnsubRef.current()
     }
   }, [login, logout, setProjects, createTutorialProject, setDmRoomList, addNotification, setInvites, setNeedsUsernameSetup])
 
@@ -480,12 +471,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-        </div>
-      }>
+      <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join/:code" element={<JoinPage />} />
@@ -493,11 +479,7 @@ export default function App() {
 
           {/* 루트: 비로그인 → 랜딩, 로그인 → /home 리다이렉트 */}
           <Route path="/" element={
-            !ready
-              ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}><div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #E8E6F8', borderTopColor: '#534AB7', animation: 'spin 0.75s linear infinite' }} /><style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style></div>
-              : isLoggedIn
-                ? <Navigate to="/home" replace />
-                : <LandingPage />
+            !ready ? <Spinner /> : isLoggedIn ? <Navigate to="/home" replace /> : <LandingPage />
           } />
 
           {/* 인증된 레이아웃 (pathless) */}

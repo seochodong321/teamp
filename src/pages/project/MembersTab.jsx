@@ -11,7 +11,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
     member: '팀원',
   }
   const navigate = useNavigate()
-  const { sendProjectInvite, getOrCreateDmRoom, leaveProject } = useStore()
+  const { sendProjectInvite, getOrCreateDmRoom, leaveOrDeleteProject } = useStore()
 
   const [profileMember, setProfileMember] = useState(null)
   const [inviteCopied, setInviteCopied]   = useState(false)
@@ -99,7 +99,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
                 onClick={async () => {
                   setLeaveLoading(true)
                   try {
-                    await leaveProject(project.id)
+                    await leaveOrDeleteProject(project.id)
                     navigate('/home')
                   } finally {
                     setLeaveLoading(false)

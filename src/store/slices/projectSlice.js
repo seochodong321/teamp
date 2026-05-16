@@ -274,15 +274,6 @@ export const createProjectSlice = (set, get) => ({
     await txProject(projectId, (data) => ({ isPublic: !data.isPublic }))
   },
 
-  leaveProject: async (projectId) => {
-    const { currentUser } = get()
-    const project = get().projects.find((p) => p.id === projectId)
-    if (!project) return
-    const newMembers   = project.members.filter((m) => m.id !== currentUser.id)
-    const newMemberIds = (project.memberIds || []).filter((id) => id !== currentUser.id)
-    await updateDoc(doc(db, 'projects', projectId), { members: newMembers, memberIds: newMemberIds })
-  },
-
   kickMember: async (projectId, memberId) => {
     const project = get().projects.find((p) => p.id === projectId)
     if (!project) return

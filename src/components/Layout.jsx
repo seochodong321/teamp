@@ -56,8 +56,10 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const active      = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
-  const unreadCount = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
+  const active         = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
+  const unreadCount    = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
+  const totalDmUnread  = useMemo(() => Object.values(dmUnreadCounts || {}).reduce((a, b) => a + b, 0), [dmUnreadCounts])
+  const matchHasNew    = matchPostCount > matchSeenCount
 
   // 모바일 헤더 페이지 타이틀
   const pageTitle = useMemo(() => {
@@ -214,30 +216,24 @@ export default function Layout() {
             </>
           )}
 
-          {(() => {
-            const totalDmUnread = Object.values(dmUnreadCounts || {}).reduce((a, b) => a + b, 0)
-            const matchHasNew   = matchPostCount > matchSeenCount
-            return (
-              <>
-                <p className={styles.navSection}>메뉴</p>
-                <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-                  <span className={styles.navIcon}>🤝</span>
-                  <span style={{ flex: 1 }}>팀프 매치</span>
-                  {matchHasNew && <span className={styles.navMenuBadge}>N</span>}
-                </NavLink>
-                <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-                  <span className={styles.navIcon}>✉️</span>
-                  <span style={{ flex: 1 }}>쪽지함</span>
-                  {totalDmUnread > 0 && (
-                    <span className={styles.navBadge}>{totalDmUnread > 99 ? 99 : totalDmUnread}</span>
-                  )}
-                </NavLink>
-                <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-                  <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
-                </NavLink>
-              </>
-            )
-          })()}
+          <>
+            <p className={styles.navSection}>메뉴</p>
+            <NavLink to="/match" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+              <span className={styles.navIcon}>🤝</span>
+              <span style={{ flex: 1 }}>팀프 매치</span>
+              {matchHasNew && <span className={styles.navMenuBadge}>N</span>}
+            </NavLink>
+            <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+              <span className={styles.navIcon}>✉️</span>
+              <span style={{ flex: 1 }}>쪽지함</span>
+              {totalDmUnread > 0 && (
+                <span className={styles.navBadge}>{totalDmUnread > 99 ? 99 : totalDmUnread}</span>
+              )}
+            </NavLink>
+            <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+              <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
+            </NavLink>
+          </>
           <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>❓</span><span>도움말</span>
           </NavLink>

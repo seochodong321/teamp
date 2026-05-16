@@ -13,6 +13,11 @@ import styles from './MatchPage.module.css'
 
 const SKILL_PRESETS = ['React', 'Vue', 'Node.js', 'Python', 'Java', 'Spring', 'Flutter', 'iOS', 'Android', 'UI/UX', '기획', '마케팅']
 
+function calcDday(deadline) {
+  const today = new Date(new Date().toDateString())
+  return Math.round((new Date(deadline + 'T00:00:00') - today) / 86400000)
+}
+
 export default function MatchPage() {
   const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen } = useStore()
   const navigate = useNavigate()
@@ -60,7 +65,6 @@ export default function MatchPage() {
 
       await Promise.all(snap.docs.map(async (d) => {
         const data = { id: d.id, ...d.data() }
-        // 기한 없는 레거시 글, 또는 기한 만료된 글 자동 삭제
         if (!data.deadline || data.deadline < today) {
           try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
           return
@@ -68,9 +72,12 @@ export default function MatchPage() {
         if (data.status === 'open' && !blocked.includes(data.leaderId)) valid.push(data)
       }))
 
-      setPosts(valid.sort((a, b) => (b.deadline > a.deadline ? 1 : -1)))
+      const sorted = valid.sort((a, b) => (b.deadline > a.deadline ? 1 : -1))
+      setPosts(sorted)
+      return sorted
     } catch (e) {
       console.error('matchPosts 로드 실패:', e)
+      return []
     } finally {
       setLoading(false)
     }
@@ -126,10 +133,10 @@ export default function MatchPage() {
           note: note.trim(),
         }),
       })
-      fetchPosts()
+      const updated = await fetchPosts()
       if (selected?.id === post.id) {
-        const fresh = await getDoc(doc(db, 'matchPosts', post.id))
-        if (fresh.exists()) setSelected({ id: fresh.id, ...fresh.data() })
+        const fresh = updated.find((p) => p.id === post.id)
+        if (fresh) setSelected(fresh)
       }
     } finally {
       setApplying(false)
@@ -219,7 +226,7 @@ export default function MatchPage() {
                     <p className={styles.postMeta}>
                       {post.projectName} · {post.leaderName}
                       {post.deadline && (() => {
-                        const diff = Math.round((new Date(post.deadline + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000)
+                        const diff = calcDday(post.deadline)
                         return <span style={{ marginLeft: 6, color: diff <= 3 ? 'var(--coral)' : 'var(--text-tertiary)' }}>
                           · {diff === 0 ? '오늘 마감' : `D-${diff}`}
                         </span>
@@ -256,7 +263,7 @@ export default function MatchPage() {
                   <h2 className={styles.detailTitle}>{selected.title}</h2>
                   <p className={styles.detailLeader}>리더: {selected.leaderName}</p>
                   {selected.deadline && (() => {
-                    const diff = Math.round((new Date(selected.deadline + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000)
+                    const diff  = calcDday(selected.deadline)
                     const label = diff < 0 ? '마감됨' : diff === 0 ? '오늘 마감' : `D-${diff}`
                     const color = diff <= 3 ? 'var(--coral)' : 'var(--text-secondary)'
                     return <p style={{ fontSize: 12, color, marginTop: 2 }}>모집 기한 {selected.deadline} ({label})</p>
