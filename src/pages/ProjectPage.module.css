@@ -349,9 +349,13 @@
   .memberGrid { grid-template-columns: 1fr; }
   .inviteLinkRow { flex-direction: column; align-items: stretch; }
   .headerCard { padding: 16px; }
-  .projectName { font-size: 18px; }
+  .projectName { display: none; } /* Layout mobileHeader가 이미 표시 */
   .tab { padding: 9px 10px; font-size: 12px; }
-  .tabs { padding-right: 12px; }
+  .tabs {
+    padding-right: 32px;
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 36px), transparent 100%);
+  }
   .writeForm { padding: 16px; }
   .manageCard { padding: 12px; }
   .detailCard { padding: 16px; }

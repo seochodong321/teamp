@@ -78,7 +78,9 @@ export const createProjectSlice = (set, get) => ({
 
   getProgress: (project) => project.status === 'archived' ? 100 : calcProgress(project.startDate, project.endDate),
   getDday: (endDate) => {
-    const diff = differenceInDays(parseISO(endDate), new Date())
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const end = new Date(endDate + 'T00:00:00')
+    const diff = Math.round((end - today) / 86400000)
     if (diff < 0) return '기한 초과'
     if (diff === 0) return 'D-day'
     return `D-${diff}`

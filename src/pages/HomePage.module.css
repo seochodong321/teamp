@@ -581,4 +581,9 @@
   .cardName { font-size: 15px; }
   .inviteBanner { flex-direction: column; align-items: flex-start; }
   .quickActions { grid-template-columns: 1fr; }
+  /* 4분할 → 2×2 */
+  .todayStrip { grid-template-columns: 1fr 1fr; }
+  .todayCell:nth-child(2) { border-right: 0; }
+  .todayCell:nth-child(3),
+  .todayCell:nth-child(4) { border-top: 1px solid var(--border-light); }
 }
