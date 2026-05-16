@@ -45,11 +45,11 @@ export const createTaskSlice = (set, get) => ({
     }))
   },
 
-  addTodo: async (projectId, { title, assignees = [], dueDate, priority }) => {
+  addTodo: async (projectId, { title, description = '', assignees = [], dueDate, priority }) => {
     const { currentUser } = get()
     const todo = {
       id: `todo_${Date.now()}`,
-      title, assignees, dueDate: dueDate || null,
+      title, description: description.trim(), assignees, dueDate: dueDate || null,
       priority: priority || 'medium', status: 'todo',
       createdBy: currentUser.id, createdAt: todayStr(),
     }

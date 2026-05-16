@@ -37,6 +37,7 @@ export default function TodoBoard({ project, currentUser }) {
 
   const [showForm, setShowForm]       = useState(false)
   const [title, setTitle]             = useState('')
+  const [description, setDescription] = useState('')
   const [assignees, setAssignees]     = useState([])
   const [dueDate, setDueDate]         = useState('')
   const [priority, setPriority]       = useState('medium')
@@ -46,6 +47,7 @@ export default function TodoBoard({ project, currentUser }) {
   const [selectedTodo, setSelectedTodo] = useState(null)
   const [editing, setEditing]           = useState(false)
   const [editTitle, setEditTitle]       = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [editAssignees, setEditAssignees] = useState([])
   const [editDueDate, setEditDueDate]   = useState('')
   const [editPriority, setEditPriority] = useState('medium')
@@ -59,11 +61,12 @@ export default function TodoBoard({ project, currentUser }) {
     if (!title.trim()) return
     addTodo(project.id, {
       title: title.trim(),
+      description,
       assignees,
       dueDate: dueDate || null,
       priority,
     })
-    setTitle(''); setAssignees([]); setDueDate(''); setPriority('medium'); setShowForm(false)
+    setTitle(''); setDescription(''); setAssignees([]); setDueDate(''); setPriority('medium'); setShowForm(false)
   }
 
   const handleDragStart = (id) => setDraggedId(id)
@@ -82,6 +85,7 @@ export default function TodoBoard({ project, currentUser }) {
 
   const openEdit = () => {
     setEditTitle(selectedTodo.title)
+    setEditDescription(selectedTodo.description || '')
     setEditAssignees(getAssignees(selectedTodo))
     setEditDueDate(selectedTodo.dueDate || '')
     setEditPriority(selectedTodo.priority || 'medium')
@@ -92,11 +96,12 @@ export default function TodoBoard({ project, currentUser }) {
     if (!editTitle.trim()) return
     await updateTodo(project.id, selectedTodo.id, {
       title: editTitle.trim(),
+      description: editDescription.trim(),
       assignees: editAssignees,
       dueDate: editDueDate || null,
       priority: editPriority,
     })
-    setSelectedTodo((t) => ({ ...t, title: editTitle.trim(), assignees: editAssignees, dueDate: editDueDate || null, priority: editPriority }))
+    setSelectedTodo((t) => ({ ...t, title: editTitle.trim(), description: editDescription.trim(), assignees: editAssignees, dueDate: editDueDate || null, priority: editPriority }))
     setEditing(false)
   }
 
@@ -144,6 +149,14 @@ export default function TodoBoard({ project, currentUser }) {
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSaveEdit() }}
                   />
 
+                  <textarea
+                    className={styles.editDescInput}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="설명 (선택)"
+                    rows={2}
+                  />
+
                   <div className={styles.editSection}>
                     <span className={styles.editLabel}>담당자</span>
                     <div className={styles.assigneeChips}>
@@ -186,6 +199,7 @@ export default function TodoBoard({ project, currentUser }) {
               ) : (
                 <div className={styles.detailBody}>
                   <p className={styles.detailTitle}>{t.title}</p>
+                  {t.description && <p className={styles.detailDesc}>{t.description}</p>}
 
                   <div className={styles.detailMeta}>
                     <div className={styles.detailRow}>
@@ -220,7 +234,9 @@ export default function TodoBoard({ project, currentUser }) {
                     {creator && (
                       <div className={styles.detailRow}>
                         <span className={styles.detailKey}>등록자</span>
-                        <span className={styles.detailVal}>{creator.name} · {t.createdAt}</span>
+                        <span className={styles.detailVal}>
+                          {creator.id === currentUser.id ? (currentUser.name || creator.name) : creator.name} · {t.createdAt}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -253,6 +269,10 @@ export default function TodoBoard({ project, currentUser }) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="할 일 제목을 입력하세요" autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleAdd() }} />
+
+          <textarea className={styles.formTextarea} value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="설명 (선택)" rows={2} />
 
           {/* 담당자 — 복수 선택 */}
           <div className={styles.assigneeSection}>

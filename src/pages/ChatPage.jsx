@@ -399,7 +399,9 @@ export default function ChatPage() {
           const isMine     = msg.senderId === currentUser.id
           const isSystem   = msg.senderId === 'system'
           const member     = project?.members.find((m) => m.id === msg.senderId)
-          const senderName = msg.senderName || '알 수 없음'
+          const senderName = isMine
+            ? (currentUser.name || msg.senderName || '알 수 없음')
+            : (msg.senderName || '알 수 없음')
 
           const prevMsg  = index > 0 ? roomMessages[index - 1] : null
           const nextMsg  = index < roomMessages.length - 1 ? roomMessages[index + 1] : null

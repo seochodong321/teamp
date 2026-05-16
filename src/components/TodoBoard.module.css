@@ -35,6 +35,8 @@
 .formSubmit { padding: 10px 20px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; align-self: flex-end; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
 .formSubmit:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
 .formSubmit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.formTextarea { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 14px; font-size: 13px; color: var(--text); resize: none; line-height: 1.55; width: 100%; font-family: inherit; transition: all var(--transition-fast); }
+.formTextarea:focus { border-color: var(--primary); background: var(--bg); box-shadow: var(--shadow-glow); }
 
 /* 담당자 복수 선택 */
 .assigneeSection { display: flex; flex-direction: column; gap: 8px; }
@@ -159,6 +161,7 @@
 .detailBody { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 
 .detailTitle { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.4; }
+.detailDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.65; white-space: pre-wrap; padding: 10px 12px; background: var(--bg-secondary); border-radius: var(--radius-sm); border-left: 2px solid var(--border-strong); }
 
 .detailMeta { display: flex; flex-direction: column; gap: 10px; }
 .detailRow { display: flex; align-items: center; gap: 10px; }
@@ -200,6 +203,13 @@
   font-size: 15px; font-weight: 600; color: var(--text); width: 100%;
   box-shadow: var(--shadow-glow);
 }
+.editDescInput {
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--bg-secondary); padding: 8px 14px;
+  font-size: 13px; color: var(--text); resize: none; line-height: 1.55;
+  width: 100%; font-family: inherit; transition: border-color var(--transition-fast);
+}
+.editDescInput:focus { border-color: var(--primary); background: var(--bg); }
 .editSection { display: flex; flex-direction: column; gap: 8px; }
 .editLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; text-transform: uppercase; }
 
