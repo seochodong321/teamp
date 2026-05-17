@@ -77,14 +77,16 @@ export default function CalendarPage() {
     return map
   }, [activeProjects, colorMap, currentUser?.id])
 
-  // 이번 달 날짜 배열
+  // 이번 달 날짜 배열 (이전/다음 달 날짜 포함)
   const calDays = useMemo(() => {
-    const firstDow  = new Date(year, month, 1).getDay()
-    const lastDay   = new Date(year, month + 1, 0).getDate()
+    const firstDow   = new Date(year, month, 1).getDay()
+    const lastDay    = new Date(year, month + 1, 0).getDate()
+    const prevLastDay = new Date(year, month, 0).getDate()
     const cells = []
-    for (let i = 0; i < firstDow; i++) cells.push(null)
-    for (let d = 1; d <= lastDay; d++) cells.push(d)
-    while (cells.length % 7 !== 0) cells.push(null)
+    for (let i = firstDow - 1; i >= 0; i--) cells.push({ d: prevLastDay - i, type: 'prev' })
+    for (let d = 1; d <= lastDay; d++) cells.push({ d, type: 'cur' })
+    let nextD = 1
+    while (cells.length % 7 !== 0) cells.push({ d: nextD++, type: 'next' })
     return cells
   }, [year, month])
 
@@ -93,8 +95,8 @@ export default function CalendarPage() {
     return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
   }, [])
 
-  const toKey = (d) => d
-    ? `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+  const toKey = (cell) => cell.type === 'cur'
+    ? `${year}-${String(month+1).padStart(2,'0')}-${String(cell.d).padStart(2,'0')}`
     : null
 
   const goMonth = (dir) => {
@@ -174,8 +176,10 @@ export default function CalendarPage() {
 
             {/* 날짜 그리드 */}
             <div className={styles.grid}>
-              {calDays.map((d, idx) => {
-                const key    = toKey(d)
+              {calDays.map((cell, idx) => {
+                const { d, type } = cell
+                const isOverflow = type !== 'cur'
+                const key    = toKey(cell)
                 const events = key ? (eventMap[key] || []) : []
                 const isToday    = key === todayStr
                 const isSel      = key === selected
@@ -183,30 +187,31 @@ export default function CalendarPage() {
                 const isPast     = key && key < todayStr
                 const todoEvs    = events.filter((e) => e.type === 'todo')
                 const otherEvs   = events.filter((e) => e.type !== 'todo')
-                const allPills   = [...otherEvs, ...todoEvs] // 이벤트/마일스톤 먼저
+                const allPills   = [...otherEvs, ...todoEvs]
                 const visiblePills = allPills.slice(0, 2)
-                const overflow   = allPills.length - visiblePills.length
+                const pillOverflow = allPills.length - visiblePills.length
 
                 return (
                   <div
                     key={idx}
                     className={[
                       styles.cell,
-                      !d        ? styles.cellEmpty    : '',
-                      isToday   ? styles.cellToday    : '',
-                      isSel     ? styles.cellSelected : '',
-                      isPast && d ? styles.cellPast   : '',
+                      isOverflow  ? styles.cellOverflow  : '',
+                      isToday     ? styles.cellToday     : '',
+                      isSel       ? styles.cellSelected  : '',
+                      isPast && !isOverflow ? styles.cellPast : '',
                     ].filter(Boolean).join(' ')}
-                    onClick={() => d && setSelected(isSel ? null : key)}
+                    onClick={() => !isOverflow && setSelected(isSel ? null : key)}
                   >
-                    {d && (
-                      <>
-                        <span className={[
-                          styles.dayNum,
-                          dow===0 ? styles.sunNum : dow===6 ? styles.satNum : '',
-                          isToday ? styles.dayNumToday : '',
-                        ].filter(Boolean).join(' ')}>{d}</span>
+                    <span className={[
+                      styles.dayNum,
+                      isOverflow  ? styles.dayNumOverflow : '',
+                      dow===0 && !isOverflow ? styles.sunNum : dow===6 && !isOverflow ? styles.satNum : '',
+                      isToday ? styles.dayNumToday : '',
+                    ].filter(Boolean).join(' ')}>{d}</span>
 
+                    {!isOverflow && (
+                      <>
                         {/* 이벤트 pill (데스크탑) */}
                         <div className={styles.pills}>
                           {visiblePills.map((ev, i) => (
@@ -214,8 +219,8 @@ export default function CalendarPage() {
                               {TYPE_ICON[ev.type]} <span className={styles.pillLabel}>{ev.label}</span>
                             </span>
                           ))}
-                          {overflow > 0 && (
-                            <span className={styles.pillMore}>+{overflow}개</span>
+                          {pillOverflow > 0 && (
+                            <span className={styles.pillMore}>+{pillOverflow}개</span>
                           )}
                         </div>
 

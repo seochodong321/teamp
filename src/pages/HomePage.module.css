@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 24px; max-width: 1180px; }
+.page { display: flex; flex-direction: column; gap: 24px; max-width: 1180px; padding-top: 20px; }
 
 /* ── 모달 공통 ── */
 .backdrop {

@@ -136,8 +136,9 @@
   position: relative;
   overflow: hidden;
 }
-.cell:hover:not(.cellEmpty) { background: var(--bg-secondary); }
-.cellEmpty { pointer-events: none; background: var(--bg-warm); }
+.cell:hover:not(.cellOverflow) { background: var(--bg-secondary); }
+.cellOverflow { pointer-events: none; background: var(--bg); }
+.cellOverflow .dayNumOverflow { opacity: 0.3; }
 .cellPast { background: var(--bg-warm); }
 .cellPast .dayNum { opacity: 0.45; }
 
@@ -161,6 +162,7 @@
   flex-shrink: 0;
   line-height: 1;
 }
+.dayNumOverflow { color: var(--text-quaternary) !important; }
 .sunNum { color: #E04343; }
 .satNum { color: var(--primary); }
 .dayNumToday {
