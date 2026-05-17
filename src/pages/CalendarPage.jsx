@@ -182,7 +182,7 @@ export default function CalendarPage() {
                 const key    = toKey(cell)
                 const events = key ? (eventMap[key] || []) : []
                 const isToday    = key === todayStr
-                const isSel      = key === selected
+                const isSel      = key !== null && key === selected
                 const dow        = idx % 7
                 const isPast     = key && key < todayStr
                 const todoEvs    = events.filter((e) => e.type === 'todo')
