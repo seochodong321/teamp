@@ -136,7 +136,7 @@ export default function ConnectPage() {
 
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.title}>팀프 커넥트</h1>
+          <h1 className={styles.title}>팀프 커넥트 🔗</h1>
           <p className={styles.subtitle}>같은 프로젝트에서 함께한 사람들이에요</p>
         </div>
         <span className={styles.countBadge}>{connects.length}명</span>

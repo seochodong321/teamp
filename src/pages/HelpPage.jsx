@@ -80,7 +80,7 @@ export default function HelpPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>도움말</h1>
+          <h1 className={styles.title}>도움말 💡</h1>
           <p className={styles.subtitle}>Teamp 사용 흐름을 빠르게 파악해보세요</p>
         </div>
       </div>

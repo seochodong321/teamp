@@ -144,7 +144,7 @@ export default function CalendarPage() {
       {/* ── 헤더 ── */}
       <div className={styles.pageHeader}>
         <div>
-          <h1 className={styles.title}>통합 캘린더</h1>
+          <h1 className={styles.title}>통합 캘린더 📅</h1>
           <p className={styles.subtitle}>진행 중인 프로젝트의 내 일정</p>
         </div>
         <button className={styles.todayBtn} onClick={goToday}>오늘</button>

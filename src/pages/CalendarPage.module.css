@@ -10,23 +10,24 @@
 /* ── 헤더 ── */
 .pageHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .title {
   font-size: 22px;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .subtitle {
   font-size: 13px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 
 .todayBtn {
