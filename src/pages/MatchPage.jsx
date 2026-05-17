@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import ProfileSelector from '../components/ProfileSelector.jsx'
 import styles from './MatchPage.module.css'
 
 // Firestore 보안 규칙 추가 필요:
@@ -19,7 +20,7 @@ function calcDday(deadline) {
 }
 
 export default function MatchPage() {
-  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen } = useStore()
+  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles } = useStore()
   const navigate = useNavigate()
 
   const [posts, setPosts]             = useState([])
@@ -49,6 +50,8 @@ export default function MatchPage() {
   const [applyTarget, setApplyTarget]       = useState(null)
   const [applyNote, setApplyNote]           = useState('')
   const [applying, setApplying]             = useState(false)
+  const [showProfileSel, setShowProfileSel] = useState(false)
+  const [pendingApplyPost, setPendingApplyPost] = useState(null)
 
   // 지원자 프로필 모달
   const [viewApplicant, setViewApplicant]     = useState(null)
@@ -127,7 +130,7 @@ export default function MatchPage() {
     }
   }
 
-  const handleApply = async (post, note = '') => {
+  const doApply = async (post, note, profileId, profileAffiliation) => {
     if (!currentUser) return
     const already = (post.applicants || []).find((a) => a.userId === currentUser.id)
     if (already) return
@@ -138,6 +141,8 @@ export default function MatchPage() {
         applicants: arrayUnion({
           userId: currentUser.id,
           userName: currentUser.name,
+          affiliation: profileAffiliation || currentUser.affiliation || '',
+          profileId: profileId || 'default',
           appliedAt: new Date().toISOString(),
           status: 'pending',
           note: note.trim(),
@@ -151,6 +156,17 @@ export default function MatchPage() {
     } finally {
       setApplying(false)
     }
+  }
+
+  const handleApply = async (post, note = '') => {
+    if (!currentUser) return
+    if (profiles.length > 0) {
+      setPendingApplyPost({ post, note })
+      setShowApplyModal(false)
+      setShowProfileSel(true)
+      return
+    }
+    await doApply(post, note, 'default', null)
   }
 
   const handleViewApplicant = async (applicant) => {
@@ -218,6 +234,7 @@ export default function MatchPage() {
   const myProject = selected && projects.find((p) => p.id === selected.projectId)
 
   return (
+    <>
     <div className={styles.page}>
       <div className={styles.pageHeader}>
         <div>
@@ -624,5 +641,19 @@ export default function MatchPage() {
         </div>
       )}
     </div>
+
+    {showProfileSel && pendingApplyPost && (
+      <ProfileSelector
+        title="어떤 프로필로 지원할까요?"
+        onSelect={(p) => {
+          const { post, note } = pendingApplyPost
+          setShowProfileSel(false)
+          setPendingApplyPost(null)
+          doApply(post, note, p.id, p.affiliation)
+        }}
+        onClose={() => { setShowProfileSel(false); setPendingApplyPost(null) }}
+      />
+    )}
+    </>
   )
 }

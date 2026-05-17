@@ -1,0 +1,313 @@
+.page {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.monthTotal {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+/* ── 달력 카드 ── */
+.calCard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.monthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.monthBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+.monthBtn:hover { background: var(--primary-light); color: var(--primary); }
+
+.monthLabel {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* 요일 헤더 */
+.weekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 8px 4px 4px;
+}
+
+.weekDay {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
+  padding: 4px 0;
+}
+.sun { color: #E24B4A; }
+.sat { color: var(--primary); }
+
+/* 날짜 그리드 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 0 4px 8px;
+  gap: 2px;
+}
+
+.cell {
+  min-height: 56px;
+  padding: 6px 4px 4px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  position: relative;
+}
+.cell:hover { background: var(--bg-secondary); }
+.cellEmpty { pointer-events: none; }
+.cellToday .dayNum {
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+}
+.cellSelected { background: var(--primary-soft) !important; }
+.cellHasEvent { }
+
+.dayNum {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+.sunNum { color: #E24B4A; }
+.satNum { color: var(--primary); }
+
+/* 이벤트 도트 */
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotMore {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+/* ── 이벤트 패널 ── */
+.eventPanel {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  animation: slideUp 0.2s ease;
+}
+
+.eventPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.eventPanelDate {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eventPanelClose {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  transition: all var(--transition-fast);
+}
+.eventPanelClose:hover { background: var(--bg-tertiary); color: var(--text); }
+
+.eventEmpty {
+  padding: 20px 18px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px;
+}
+
+.eventItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--border);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.eventItem:hover { background: var(--bg-tertiary); }
+
+.eventIcon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.eventInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.eventLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventProject {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.eventType {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-quaternary);
+  flex-shrink: 0;
+  background: var(--bg);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border-light);
+}
+
+/* ── 범례 ── */
+.legend {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+}
+
+.legendTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.legendList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 3px 6px;
+  transition: background var(--transition-fast);
+}
+.legendItem:hover { background: var(--bg-secondary); }
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .page { gap: 12px; }
+  .title { font-size: 18px; }
+  .cell { min-height: 46px; }
+  .dayNum { font-size: 12px; width: 24px; height: 24px; }
+  .dot { width: 4px; height: 4px; }
+  .monthLabel { font-size: 15px; }
+}

@@ -24,6 +24,7 @@ const WrapupPage        = lazy(() => import('./pages/WrapupPage.jsx'))
 const MatchPage         = lazy(() => import('./pages/MatchPage.jsx'))
 const HelpPage          = lazy(() => import('./pages/HelpPage.jsx'))
 const MessagesPage      = lazy(() => import('./pages/MessagesPage.jsx'))
+const CalendarPage      = lazy(() => import('./pages/CalendarPage.jsx'))
 
 // 오늘 생일인 팀원 감지 → 전체방 케이크 메시지 + Firestore 알림 전송
 // birthdayLogs/{YYYY}_{memberId}_{projectId} 로 중복 방지
@@ -506,6 +507,7 @@ export default function App() {
             <Route path="/profile"                         element={<ProfilePage />} />
             <Route path="/connect"                         element={<ConnectPage />} />
             <Route path="/match"                           element={<MatchPage />} />
+            <Route path="/calendar"                        element={<CalendarPage />} />
             <Route path="/messages"                        element={<MessagesPage />} />
             <Route path="/help"                            element={<HelpPage />} />
           </Route>

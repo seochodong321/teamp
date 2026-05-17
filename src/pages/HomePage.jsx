@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
+import ProfileSelector from '../components/ProfileSelector.jsx'
 import styles from './HomePage.module.css'
 
 const CATEGORIES = ['학교', '회사', '스터디', '기타']
@@ -51,6 +52,7 @@ export default function HomePage() {
     archiveProject, extendProject, createProject,
     hiddenProjects, hideProject,
     pinnedId, setPinnedId,
+    profiles,
   } = useStore()
 
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
@@ -92,6 +94,8 @@ export default function HomePage() {
   const [created, setCreated]     = useState(null)
   const [loading, setLoading]     = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [showProfileSel, setShowProfileSel] = useState(false)
+  const [pendingCreate, setPendingCreate] = useState(null) // 프로필 선택 대기 중인 data
 
   // ── 섹션 접기 ──
   const [showCollecting, setShowCollecting] = useState(true)
@@ -127,20 +131,24 @@ export default function HomePage() {
       setDateError('')
     }
     if (step === STEPS.length - 1) {
-      setLoading(true)
-      try {
-        const p = await createProject({
-          name: pName, emoji, purpose, category: finalCategory,
-          startDate, endDate, endTime: endTime || null, roomNames,
-        })
-        setCreated(p)
-        setStep((s) => s + 1)
-      } finally {
-        setLoading(false)
-      }
+      const data = { name: pName, emoji, purpose, category: finalCategory, startDate, endDate, endTime: endTime || null, roomNames }
+      if (profiles.length > 0) { setPendingCreate(data); setShowProfileSel(true); return }
+      await doCreate(data, 'default', null)
       return
     }
     setStep((s) => s + 1)
+  }
+
+  const doCreate = async (data, profileId, affiliation) => {
+    setShowProfileSel(false); setPendingCreate(null)
+    setLoading(true)
+    try {
+      const p = await createProject({ ...data, profileId, affiliation })
+      setCreated(p)
+      setStep((s) => s + 1)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const addRoom = () => {
@@ -746,6 +754,14 @@ export default function HomePage() {
         </div>
       )}
       </div>
+
+      {showProfileSel && pendingCreate && (
+        <ProfileSelector
+          title="어떤 프로필로 프로젝트를 만들까요?"
+          onSelect={(p) => doCreate(pendingCreate, p.id, p.affiliation)}
+          onClose={() => { setShowProfileSel(false); setPendingCreate(null) }}
+        />
+      )}
     </>
   )
 }

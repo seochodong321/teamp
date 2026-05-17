@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import ProfileSelector from '../components/ProfileSelector.jsx'
 import styles from './CreateProjectPage.module.css'
 
 const PRESET_CATEGORIES = ['학교', '회사', '스터디', '기타']
@@ -15,8 +16,10 @@ const EMOJI_OPTIONS = [
 export default function CreateProjectPage() {
   const navigate = useNavigate()
   const createProject = useStore((s) => s.createProject)
+  const profiles = useStore((s) => s.profiles)
 
   const [step, setStep]           = useState(0)
+  const [showProfileSel, setShowProfileSel] = useState(false)
   const [emoji, setEmoji]         = useState('')
   const [name, setName]           = useState('')
   const [purpose, setPurpose]     = useState('')
@@ -44,20 +47,28 @@ export default function CreateProjectPage() {
       setDateError('')
     }
     if (step === 1) {
-      setLoading(true)
-      try {
-        const p = await createProject({
-          name, emoji, purpose, category: finalCategory,
-          startDate, endDate, endTime: endTime || null, roomNames,
-        })
-        setCreated(p)
-        setStep(2)
-      } finally {
-        setLoading(false)
-      }
+      // 서브 프로필이 있으면 선택 먼저
+      if (profiles.length > 0) { setShowProfileSel(true); return }
+      await doCreate('default', null)
       return
     }
     setStep((s) => s + 1)
+  }
+
+  const doCreate = async (profileId, affiliation) => {
+    setShowProfileSel(false)
+    setLoading(true)
+    try {
+      const p = await createProject({
+        name, emoji, purpose, category: finalCategory,
+        startDate, endDate, endTime: endTime || null, roomNames,
+        profileId, affiliation,
+      })
+      setCreated(p)
+      setStep(2)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const addRoom = () => { if (!newRoom.trim()) return; setRoomNames((prev) => [...prev, newRoom.trim()]); setNewRoom('') }
@@ -67,6 +78,7 @@ export default function CreateProjectPage() {
   const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
 
   return (
+    <>
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.stepBar}>
@@ -224,5 +236,14 @@ export default function CreateProjectPage() {
         </div>
       </div>
     </div>
+
+    {showProfileSel && (
+      <ProfileSelector
+        title="어떤 프로필로 프로젝트를 만들까요?"
+        onSelect={(p) => doCreate(p.id, p.affiliation)}
+        onClose={() => setShowProfileSel(false)}
+      />
+    )}
+    </>
   )
 }

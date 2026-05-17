@@ -7,6 +7,7 @@ export const createAuthSlice = (set, get) => ({
   needsUsernameSetup: false,
   blockedUsers: [],
   connects: [],
+  profiles: [],
 
   login: (name, email, uid, extra = {}) => {
     const rawUsername = extra.username || `@${(email || 'user').split('@')[0]}`
@@ -30,6 +31,7 @@ export const createAuthSlice = (set, get) => ({
       isLoggedIn: true,
       currentUser: user,
       blockedUsers: extra.blockedUsers || [],
+      profiles: extra.profiles || [],
       ...(userChanged ? {
         projects: [], invites: [], notifications: [], connects: [],
         messages: {}, dmRooms: {}, dmRoomList: [], dmUnreadCounts: {},
@@ -41,7 +43,38 @@ export const createAuthSlice = (set, get) => ({
     isLoggedIn: false, currentUser: null, needsUsernameSetup: false,
     projects: [], messages: {}, roomOrders: {}, dmRooms: {}, dmRoomList: [],
     connects: [], invites: [], notifications: [], chatToasts: [], dmUnreadCounts: {}, blockedUsers: [],
+    profiles: [],
   }),
+
+  // ── 서브 프로필 관리 ──
+  addSubProfile: async (profile) => {
+    const { currentUser, profiles } = get()
+    const newProfile = { ...profile, id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, isDefault: false }
+    const updated = [...profiles, newProfile]
+    set({ profiles: updated })
+    if (currentUser?.id) {
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+    }
+    return newProfile
+  },
+
+  updateSubProfile: async (id, patch) => {
+    const { currentUser, profiles } = get()
+    const updated = profiles.map((p) => p.id === id ? { ...p, ...patch } : p)
+    set({ profiles: updated })
+    if (currentUser?.id) {
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+    }
+  },
+
+  deleteSubProfile: async (id) => {
+    const { currentUser, profiles } = get()
+    const updated = profiles.filter((p) => p.id !== id)
+    set({ profiles: updated })
+    if (currentUser?.id) {
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+    }
+  },
 
   setNeedsUsernameSetup: (v) => set({ needsUsernameSetup: v }),
 

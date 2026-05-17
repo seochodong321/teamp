@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import ProfileSelector from '../components/ProfileSelector.jsx'
 import styles from './JoinPage.module.css'
 
 export default function JoinPage() {
   const { code } = useParams()
   const navigate  = useNavigate()
-  const { isLoggedIn, getProjectByInviteCode, joinProjectByCode, currentUser } = useStore()
+  const { isLoggedIn, getProjectByInviteCode, joinProjectByCode, currentUser, profiles } = useStore()
 
   const [project, setProject] = useState(null)
   const [status, setStatus]   = useState('idle')
   const [msg, setMsg]         = useState('')
+  const [showProfileSel, setShowProfileSel] = useState(false)
 
   useEffect(() => {
     const run = async () => {
@@ -20,10 +22,11 @@ export default function JoinPage() {
     run()
   }, [code, isLoggedIn])
 
-  const handleJoin = async () => {
+  const doJoin = async (profileId, profileAffiliation) => {
+    setShowProfileSel(false)
     setStatus('joining')
     try {
-      const result = await joinProjectByCode(code)
+      const result = await joinProjectByCode(code, profileId, profileAffiliation)
       if (result.success) {
         setStatus('done')
         setMsg(result.message || '프로젝트에 참여했어요!')
@@ -32,10 +35,15 @@ export default function JoinPage() {
         setStatus('error')
         setMsg(result.message || '참여에 실패했어요.')
       }
-    } catch (e) {
+    } catch {
       setStatus('error')
       setMsg('오류가 발생했어요. 다시 시도해주세요.')
     }
+  }
+
+  const handleJoin = () => {
+    if (profiles.length > 0) { setShowProfileSel(true); return }
+    doJoin('default', null)
   }
 
   if (!isLoggedIn) {
@@ -72,6 +80,14 @@ export default function JoinPage() {
   }
 
   return (
+    <>
+    {showProfileSel && (
+      <ProfileSelector
+        title="어떤 프로필로 참여할까요?"
+        onSelect={(p) => doJoin(p.id, p.affiliation)}
+        onClose={() => setShowProfileSel(false)}
+      />
+    )}
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.logo}>
@@ -124,5 +140,6 @@ export default function JoinPage() {
         )}
       </div>
     </div>
+    </>
   )
 }

@@ -12,7 +12,7 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
@@ -66,6 +66,36 @@ export default function ProfilePage() {
 
   const [editingMemo, setEditingMemo] = useState(null)
   const [memoText, setMemoText]       = useState('')
+
+  // 서브 프로필 관리 상태
+  const [showProfileForm, setShowProfileForm] = useState(false)
+  const [editingProfile, setEditingProfile]   = useState(null) // null=신규, id=수정 중
+  const [pfLabel, setPfLabel]         = useState('')
+  const [pfAffil, setPfAffil]         = useState('')
+  const [pfOneliner, setPfOneliner]   = useState('')
+  const [pfSaving, setPfSaving]       = useState(false)
+
+  const openNewProfile = () => {
+    setEditingProfile(null)
+    setPfLabel(''); setPfAffil(''); setPfOneliner('')
+    setShowProfileForm(true)
+  }
+  const openEditProfile = (p) => {
+    setEditingProfile(p.id)
+    setPfLabel(p.label || ''); setPfAffil(p.affiliation || ''); setPfOneliner(p.oneliner || '')
+    setShowProfileForm(true)
+  }
+  const handleSaveSubProfile = async () => {
+    if (!pfLabel.trim()) return
+    setPfSaving(true)
+    if (editingProfile) {
+      await updateSubProfile(editingProfile, { label: pfLabel.trim(), affiliation: pfAffil.trim(), oneliner: pfOneliner.trim() })
+    } else {
+      await addSubProfile({ label: pfLabel.trim(), affiliation: pfAffil.trim(), oneliner: pfOneliner.trim() })
+    }
+    setPfSaving(false)
+    setShowProfileForm(false)
+  }
 
   const startEdit = (p) => {
     const me = p.members.find((m) => m.id === currentUser.id)
@@ -469,6 +499,89 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {/* 멀티 프로필 */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>내 프로필</h3>
+          <p className={styles.sectionDesc}>소속별로 다른 프로필을 만들어 상황에 맞게 사용해요</p>
+        </div>
+
+        {/* 기본 프로필 (현재 계정) */}
+        <div className={styles.profileItem}>
+          <div className={styles.profileItemLeft}>
+            <span className={styles.profileDefaultBadge}>기본</span>
+            <div>
+              <p className={styles.profileItemLabel}>{currentUser?.name}</p>
+              {currentUser?.affiliation && <p className={styles.profileItemAffil}>🏢 {currentUser.affiliation}</p>}
+              {currentUser?.oneliner && <p className={styles.profileItemOneliner}>"{currentUser.oneliner}"</p>}
+            </div>
+          </div>
+        </div>
+
+        {/* 서브 프로필 목록 */}
+        {profiles.map((p) => (
+          <div key={p.id} className={styles.profileItem}>
+            <div className={styles.profileItemLeft}>
+              <div className={styles.profileSubIcon}>{p.label?.charAt(0) || 'P'}</div>
+              <div>
+                <p className={styles.profileItemLabel}>{p.label}</p>
+                {p.affiliation && <p className={styles.profileItemAffil}>🏢 {p.affiliation}</p>}
+                {p.oneliner && <p className={styles.profileItemOneliner}>"{p.oneliner}"</p>}
+              </div>
+            </div>
+            <div className={styles.profileItemActions}>
+              <button className={styles.profileEditBtn} onClick={() => openEditProfile(p)}>편집</button>
+              <button className={styles.profileDeleteBtn} onClick={() => {
+                if (window.confirm(`"${p.label}" 프로필을 삭제할까요?`)) deleteSubProfile(p.id)
+              }}>🗑</button>
+            </div>
+          </div>
+        ))}
+
+        <button className={styles.addProfileBtn} onClick={openNewProfile}>
+          + 새 프로필 추가
+        </button>
+      </div>
+
+      {/* 서브 프로필 편집 모달 */}
+      {showProfileForm && (
+        <div className={styles.backdrop} onClick={() => !pfSaving && setShowProfileForm(false)}>
+          <div className={styles.editModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.editModalHeader}>
+              <h2 className={styles.editModalTitle}>{editingProfile ? '프로필 수정' : '새 프로필 추가'}</h2>
+              <button className={styles.closeBtn} onClick={() => !pfSaving && setShowProfileForm(false)}>✕</button>
+            </div>
+            <div className={styles.editModalBody}>
+              <div className={styles.editField}>
+                <label className={styles.editLabel}>프로필 이름 *</label>
+                <input className={styles.editInput} value={pfLabel}
+                  onChange={(e) => setPfLabel(e.target.value)}
+                  placeholder="예) 학교 프로필, 동아리 활동" />
+              </div>
+              <div className={styles.editField}>
+                <label className={styles.editLabel}>소속</label>
+                <input className={styles.editInput} value={pfAffil}
+                  onChange={(e) => setPfAffil(e.target.value)}
+                  placeholder="예) 영화 동아리 씨네마" />
+              </div>
+              <div className={styles.editField}>
+                <label className={styles.editLabel}>한 줄 소개</label>
+                <input className={styles.editInput} value={pfOneliner}
+                  onChange={(e) => setPfOneliner(e.target.value.slice(0, 50))}
+                  placeholder="이 소속에서의 나를 한 줄로" maxLength={50} />
+                <span className={styles.editCount}>{pfOneliner.length}/50</span>
+              </div>
+            </div>
+            <div className={styles.editModalFooter}>
+              <button className={styles.editCancel} onClick={() => setShowProfileForm(false)} disabled={pfSaving}>취소</button>
+              <button className={styles.editSave} onClick={handleSaveSubProfile} disabled={pfSaving || !pfLabel.trim()}>
+                {pfSaving ? '저장 중...' : '저장하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 요금제 */}
       <div className={styles.planCard}>

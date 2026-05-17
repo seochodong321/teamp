@@ -106,7 +106,7 @@ export const createInviteSlice = (set, get) => ({
     return null
   },
 
-  joinProjectByCode: async (code) => {
+  joinProjectByCode: async (code, profileId = 'default', profileAffiliation = null) => {
     const { currentUser, connects } = get()
     if (!currentUser) return { success: false, message: '로그인이 필요해요.' }
 
@@ -139,7 +139,8 @@ export const createInviteSlice = (set, get) => ({
     const newMember  = {
       id: currentUser.id, name: currentUser.name, role: 'member',
       roomIds: [personalDmId, allRoomId].filter(Boolean),
-      memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '',
+      memo: '', affiliation: profileAffiliation ?? currentUser.affiliation ?? '',
+      email: currentUser.email || '', profileId,
     }
     const joinPayload = { members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) }
     if (personalDm) joinPayload.rooms = arrayUnion(personalDm)

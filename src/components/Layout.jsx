@@ -67,6 +67,7 @@ export default function Layout() {
     if (p === '/home')     return null
     if (p === '/profile')  return '내 프로필'
     if (p === '/match')    return '팀프 매치'
+    if (p === '/calendar') return '통합 캘린더'
     if (p === '/messages') return '쪽지함'
     if (p === '/connect')  return '팀프 커넥트'
     if (p === '/help')     return '도움말'
@@ -223,6 +224,9 @@ export default function Layout() {
               <span style={{ flex: 1 }}>팀프 매치</span>
               {matchHasNew && <span className={styles.navMenuBadge}>N</span>}
             </NavLink>
+            <NavLink to="/calendar" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+              <span className={styles.navIcon}>📆</span><span>통합 캘린더</span>
+            </NavLink>
             <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
               <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
             </NavLink>
@@ -312,6 +316,17 @@ export default function Layout() {
               <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
             </svg>
             <span className={styles.mobileTabLabel}>매치</span>
+          </NavLink>
+
+          {/* 캘린더 */}
+          <NavLink to="/calendar" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span className={styles.mobileTabLabel}>캘린더</span>
           </NavLink>
 
           {/* + FAB */}

@@ -149,7 +149,9 @@ export const createProjectSlice = (set, get) => ({
       members: [{
         id: currentUser.id, name: currentUser.name, role: 'leader',
         roomIds: rooms.map((r) => r.id), memo: '',
-        affiliation: currentUser.affiliation || '', email: currentUser.email || '',
+        affiliation: data.affiliation ?? currentUser.affiliation ?? '',
+        email: currentUser.email || '',
+        profileId: data.profileId || 'default',
       }],
       rooms, announcements: [], todos: [], events: [], isPublic: false,
     }
