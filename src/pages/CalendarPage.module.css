@@ -71,8 +71,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px 14px;
-  border-bottom: 1px solid var(--border-light);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  background: var(--bg);
 }
 
 .navArrow {
@@ -100,8 +100,8 @@
 .weekRow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-light);
+  background: var(--bg);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
 }
 
 .weekDay {
@@ -120,7 +120,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-left: 1px solid var(--border-light);
+  border-left: 1px solid rgba(0,0,0,0.07);
 }
 
 .cell {
@@ -135,18 +135,18 @@
 }
 /* 이번 달 셀만 border 적용 */
 .cellCurrent {
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
+  border-right: 1px solid rgba(0,0,0,0.07);
+  border-bottom: 1px solid rgba(0,0,0,0.07);
   cursor: pointer;
 }
-.cellCurrent:hover { background: var(--bg-secondary); }
-/* 이전·다음 달 셀: border 없음, 투명 배경 */
+.cellCurrent:hover { background: rgba(0,0,0,0.03); }
+/* 이전·다음 달 셀: border 없음, 흰 배경 */
 .cellOverflow {
   pointer-events: none;
-  background: transparent;
+  background: var(--bg);
 }
-.dayNumOverflow { color: var(--text-quaternary) !important; opacity: 0.55; }
-.cellPast { background: var(--bg-warm); }
+.dayNumOverflow { color: var(--text-quaternary) !important; opacity: 0.45; }
+.cellPast { background: rgba(0,0,0,0.018); }
 .cellPast .dayNum { opacity: 0.45; }
 
 .cellToday { background: var(--primary-soft); }
