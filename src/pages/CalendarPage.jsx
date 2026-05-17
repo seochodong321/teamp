@@ -196,7 +196,7 @@ export default function CalendarPage() {
                     key={idx}
                     className={[
                       styles.cell,
-                      isOverflow  ? styles.cellOverflow  : '',
+                      isOverflow ? styles.cellOverflow : styles.cellCurrent,
                       isToday     ? styles.cellToday     : '',
                       isSel       ? styles.cellSelected  : '',
                       isPast && !isOverflow ? styles.cellPast : '',

@@ -126,22 +126,24 @@
 .cell {
   min-height: 90px;
   padding: 8px 6px 6px;
-  border-right: 1px solid var(--border-light);
-  border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   gap: 3px;
-  cursor: pointer;
   transition: background var(--transition-fast);
   position: relative;
   overflow: hidden;
 }
-.cell:hover:not(.cellOverflow) { background: var(--bg-secondary); }
+/* 이번 달 셀만 border 적용 */
+.cellCurrent {
+  border-right: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+}
+.cellCurrent:hover { background: var(--bg-secondary); }
+/* 이전·다음 달 셀: border 없음, 투명 배경 */
 .cellOverflow {
   pointer-events: none;
   background: transparent;
-  border-right-color: transparent;
-  border-bottom-color: transparent;
 }
 .dayNumOverflow { color: var(--text-quaternary) !important; opacity: 0.55; }
 .cellPast { background: var(--bg-warm); }
