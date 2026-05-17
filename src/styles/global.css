@@ -28,11 +28,11 @@
   --rose: #8A2A55;
   --rose-light: #F7E9EE;
 
-  /* ── 텍스트 (warm ink) ── */
-  --text: #14131C;
-  --text-secondary: #4A4757;
-  --text-tertiary: #807C8E;
-  --text-quaternary: #B5B1BE;
+  /* ── 텍스트 ── */
+  --text: #13111D;
+  --text-secondary: #44405A;
+  --text-tertiary: #7B778C;
+  --text-quaternary: #B0ACBE;
 
   /* ── 배경 (white & purple) ── */
   --bg: #FFFFFF;
