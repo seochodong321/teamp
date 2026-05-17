@@ -58,6 +58,13 @@ export default function MatchPage() {
   const [applicantProfile, setApplicantProfile] = useState(null)
   const [profileLoading, setProfileLoading]   = useState(false)
 
+  // 마감 확인 모달
+  const [confirmClose, setConfirmClose] = useState(null) // postId | null
+
+  // 마감된 모집글 아카이브
+  const [closedMyPosts, setClosedMyPosts] = useState([])
+  const [showClosed, setShowClosed]       = useState(false)
+
   const myLeaderProjects = projects.filter((p) =>
     p.status === 'active' &&
     p.members?.find((m) => m.id === currentUser?.id)?.role === 'leader'
@@ -71,19 +78,24 @@ export default function MatchPage() {
       const snap    = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
       const today   = new Date().toISOString().split('T')[0]
       const blocked = useStore.getState().blockedUsers || []
-      const valid   = []
+      const uid     = useStore.getState().currentUser?.id
+      const validOpen   = []
+      const validClosed = []
 
       await Promise.all(snap.docs.map(async (d) => {
         const data = { id: d.id, ...d.data() }
-        if (!data.deadline || data.deadline < today) {
+        // 마감된 모집글은 삭제하지 않고 보관, open 상태의 기한 초과만 삭제
+        if (!data.deadline || (data.deadline < today && data.status === 'open')) {
           try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
           return
         }
-        if (data.status === 'open' && !blocked.includes(data.leaderId)) valid.push(data)
+        if (data.status === 'open' && !blocked.includes(data.leaderId)) validOpen.push(data)
+        if (data.status === 'closed' && data.leaderId === uid) validClosed.push(data)
       }))
 
-      const sorted = valid.sort((a, b) => (b.deadline > a.deadline ? 1 : -1))
+      const sorted = validOpen.sort((a, b) => (b.deadline > a.deadline ? 1 : -1))
       setPosts(sorted)
+      setClosedMyPosts(validClosed)
       return sorted
     } catch (e) {
       console.error('matchPosts 로드 실패:', e)
@@ -202,9 +214,11 @@ export default function MatchPage() {
     alert(`${applicant.userName} 님이 프로젝트에 합류했어요!`)
   }
 
-  const handleClosePost = async (postId) => {
-    if (!window.confirm('모집을 마감할까요?')) return
-    await updateDoc(doc(db, 'matchPosts', postId), { status: 'closed' })
+  const handleClosePost = (postId) => setConfirmClose(postId)
+
+  const doClosePost = async () => {
+    await updateDoc(doc(db, 'matchPosts', confirmClose), { status: 'closed' })
+    setConfirmClose(null)
     fetchPosts()
     setSelected(null)
   }
@@ -304,7 +318,8 @@ export default function MatchPage() {
               <p className={styles.emptySub}>팀원이 필요하다면 모집글을 작성해보세요</p>
             </div>
           ) : (
-            (activeTab === 'pool' ? poolPosts : myPosts).map((post) => (
+            <>
+            {(activeTab === 'pool' ? poolPosts : myPosts).map((post) => (
               <div key={post.id}
                 className={`${styles.postCard} ${selected?.id === post.id ? styles.postCardActive : ''}`}
                 onClick={() => setSelected(post)}>
@@ -343,7 +358,37 @@ export default function MatchPage() {
                   </div>
                 )}
               </div>
-            ))
+            ))}
+
+            {/* 마감된 모집글 아카이브 */}
+            {activeTab === 'mine' && closedMyPosts.length > 0 && (
+              <div className={styles.closedSection}>
+                <button className={styles.closedToggle} onClick={() => setShowClosed((v) => !v)}>
+                  <span>📁 마감된 모집글 {closedMyPosts.length}개</span>
+                  <span className={styles.closedToggleArrow}>{showClosed ? '▲' : '▼'}</span>
+                </button>
+                {showClosed && closedMyPosts.map((post) => (
+                  <div key={post.id}
+                    className={`${styles.postCard} ${styles.postCardClosed} ${selected?.id === post.id ? styles.postCardActive : ''}`}
+                    onClick={() => setSelected(post)}>
+                    <div className={styles.postCardTop}>
+                      <span className={styles.postEmoji}>{post.projectEmoji}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className={styles.postTitle}>{post.title}</p>
+                        <p className={styles.postMeta}>{post.projectName} · {post.leaderName}</p>
+                      </div>
+                      <span className={styles.closedBadge}>마감됨</span>
+                    </div>
+                    {post.skills?.length > 0 && (
+                      <div className={styles.skillTags}>
+                        {post.skills.slice(0, 4).map((s) => <span key={s} className={styles.skillTag}>{s}</span>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            </>
           )}
         </div>
 
@@ -370,7 +415,7 @@ export default function MatchPage() {
                     return <p style={{ fontSize: 12, color, marginTop: 2 }}>모집 기한 {selected.deadline} ({label})</p>
                   })()}
                 </div>
-                {isMyPost && (
+                {isMyPost && selected.status !== 'closed' && (
                   <button className={styles.closePostBtn} onClick={() => handleClosePost(selected.id)}>마감하기</button>
                 )}
               </div>
@@ -641,6 +686,30 @@ export default function MatchPage() {
         </div>
       )}
     </div>
+
+    {/* 마감 확인 다이얼로그 */}
+    {confirmClose && (
+      <div className={styles.backdrop} onClick={() => setConfirmClose(null)}>
+        <div className={styles.applyModal} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.formModalHeader}>
+            <h3 className={styles.formModalTitle}>모집 마감</h3>
+            <button className={styles.formClose} onClick={() => setConfirmClose(null)}>✕</button>
+          </div>
+          <div style={{ padding: '20px 24px 8px' }}>
+            <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.7 }}>
+              이 모집글을 마감할까요?
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
+              마감 후에는 새 지원자를 받을 수 없어요.
+            </p>
+          </div>
+          <div className={styles.formFooter}>
+            <button className={styles.cancelBtn} onClick={() => setConfirmClose(null)}>취소</button>
+            <button className={styles.submitBtn} style={{ background: 'var(--coral)' }} onClick={doClosePost}>마감하기</button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {showProfileSel && pendingApplyPost && (
       <ProfileSelector

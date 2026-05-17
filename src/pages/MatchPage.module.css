@@ -5,6 +5,7 @@
 .subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 .createBtn { padding: 10px 20px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; white-space: nowrap; box-shadow: 0 2px 8px rgba(83,74,183,0.25); transition: all var(--transition); }
 .createBtn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+:global([data-theme='dark']) .createBtn { box-shadow: 0 2px 8px rgba(157,148,245,0.28); }
 
 .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
 
@@ -159,6 +160,14 @@
 .searchInput::placeholder { color: var(--text-tertiary); }
 .searchClear { font-size: 12px; color: var(--text-tertiary); padding: 2px 4px; border-radius: 4px; flex-shrink: 0; }
 .searchClear:hover { background: var(--bg-secondary); color: var(--text); }
+
+/* 마감된 모집글 아카이브 */
+.closedSection { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.closedToggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius-md); border: 1px dashed var(--border-strong); background: var(--bg); font-size: 12px; font-weight: 600; color: var(--text-tertiary); width: 100%; transition: all 0.15s; }
+.closedToggle:hover { border-color: var(--primary); color: var(--primary); }
+.closedToggleArrow { font-size: 10px; }
+.postCardClosed { opacity: 0.65; }
+.closedBadge { font-size: 10px; font-weight: 600; color: var(--text-tertiary); background: var(--bg-secondary); border: 1px solid var(--border); padding: 2px 7px; border-radius: var(--radius-full); white-space: nowrap; flex-shrink: 0; }
 
 .poolLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; text-transform: uppercase; padding: 0 2px; }
 

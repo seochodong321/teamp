@@ -81,11 +81,11 @@
 :root[data-theme='dark'],
 html[data-theme='dark'],
 html.dark {
-  --primary: #8B80F0;
+  --primary: #9D94F5;
   --primary-light: #25204A;
   --primary-dark: #6560C8;
   --primary-soft: #1B1830;
-  --primary-hover: #9F95F5;
+  --primary-hover: #AEA7F8;
 
   --teal: #4FBFA0;
   --teal-light: #1A2E27;
