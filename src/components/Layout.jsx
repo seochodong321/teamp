@@ -223,15 +223,15 @@ export default function Layout() {
               <span style={{ flex: 1 }}>팀프 매치</span>
               {matchHasNew && <span className={styles.navMenuBadge}>N</span>}
             </NavLink>
+            <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
+              <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
+            </NavLink>
             <NavLink to="/messages" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
               <span className={styles.navIcon}>✉️</span>
               <span style={{ flex: 1 }}>쪽지함</span>
               {totalDmUnread > 0 && (
                 <span className={styles.navBadge}>{totalDmUnread > 99 ? 99 : totalDmUnread}</span>
               )}
-            </NavLink>
-            <NavLink to="/connect" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
-              <span className={styles.navIcon}>🔗</span><span>팀프 커넥트</span>
             </NavLink>
           </>
           <NavLink to="/help" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>

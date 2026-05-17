@@ -34,16 +34,16 @@
   --text-tertiary: #807C8E;
   --text-quaternary: #B5B1BE;
 
-  /* ── 배경 (warm off-white) ── */
+  /* ── 배경 (white & purple) ── */
   --bg: #FFFFFF;
-  --bg-secondary: #F6F4EE;
-  --bg-tertiary: #F1EEE6;
-  --bg-warm: #FBF9F5;
+  --bg-secondary: #F5F3FF;
+  --bg-tertiary: #EDE9FF;
+  --bg-warm: #FAFAFF;
 
   /* ── 테두리 ── */
-  --border: #E5E1D6;
-  --border-light: #EFEBE0;
-  --border-strong: #D4CFC0;
+  --border: #E4DFFA;
+  --border-light: #EDE9FB;
+  --border-strong: #CEC6F0;
 
   /* ── 모서리 ── */
   --radius-sm: 8px;
