@@ -3,56 +3,99 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import styles from './CalendarPage.module.css'
 
-const DAYS = ['일', '월', '화', '수', '목', '금', '토']
-const TYPE_ICON = { todo: '✅', event: '📅', milestone: '🏁' }
+const DAYS_SHORT = ['일', '월', '화', '수', '목', '금', '토']
+const DAYS_FULL  = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+const MONTH_KO   = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
+
 const PROJECT_COLORS = [
-  '#4B41A6', '#0F6E56', '#6E4408', '#8A2A55',
-  '#1565C0', '#6A1B9A', '#2E7D32', '#BF360C',
+  '#4B41A6','#0F6E56','#C2410C','#9333EA',
+  '#1D4ED8','#0F766E','#B45309','#BE185D',
 ]
 
-function getProjectColor(projectId, projectsColorMap) {
-  return projectsColorMap[projectId] || '#4B41A6'
+const TYPE_LABEL = { todo: '할 일', event: '이벤트', milestone: '마일스톤' }
+const TYPE_ICON  = { todo: '✅', event: '📅', milestone: '🏁' }
+
+function toDateKey(dateStr) {
+  if (!dateStr) return null
+  return String(dateStr).slice(0, 10)
 }
 
 export default function CalendarPage() {
-  const projects = useStore((s) => s.projects)
-  const navigate = useNavigate()
+  const currentUser = useStore((s) => s.currentUser)
+  const projects    = useStore((s) => s.projects)
+  const navigate    = useNavigate()
 
   const [year, setYear]     = useState(() => new Date().getFullYear())
   const [month, setMonth]   = useState(() => new Date().getMonth())
-  const [selected, setSelected] = useState(null) // 'YYYY-MM-DD'
+  const [selected, setSelected] = useState(null) // 'YYYY-MM-DD' | null
 
-  // 프로젝트별 색상 맵 (index 기반 고정 색상)
-  const projectsColorMap = useMemo(() => {
+  // 진행 중인 프로젝트만
+  const activeProjects = useMemo(
+    () => projects.filter((p) => p.status === 'active' && !p.isTutorial),
+    [projects]
+  )
+
+  // 프로젝트 색상 맵
+  const colorMap = useMemo(() => {
     const map = {}
-    projects.forEach((p, i) => {
+    activeProjects.forEach((p, i) => {
       map[p.id] = p.color || PROJECT_COLORS[i % PROJECT_COLORS.length]
     })
     return map
-  }, [projects])
+  }, [activeProjects])
 
   // 날짜 → 이벤트 목록 맵
   const eventMap = useMemo(() => {
     const map = {}
     const add = (dateStr, item) => {
-      if (!dateStr) return
-      const key = String(dateStr).slice(0, 10)
+      const key = toDateKey(dateStr)
+      if (!key) return
       ;(map[key] ??= []).push(item)
     }
-    projects.forEach((p) => {
-      const color = getProjectColor(p.id, projectsColorMap)
-      p.todos?.forEach((t) => t.dueDate && add(t.dueDate, {
-        type: 'todo', label: t.title, color, projectName: p.name, projectId: p.id,
-      }))
-      p.events?.forEach((e) => e.date && add(e.date, {
-        type: 'event', label: e.title, color, projectName: p.name, projectId: p.id,
-      }))
-      p.milestones?.forEach((m) => m.targetDate && add(m.targetDate, {
-        type: 'milestone', label: m.title, color, projectName: p.name, projectId: p.id,
-      }))
+    activeProjects.forEach((p) => {
+      const color = colorMap[p.id]
+
+      // 할 일: 내게 배정된 것만, 완료되지 않은 것만
+      p.todos?.forEach((t) => {
+        if (!t.dueDate) return
+        if (t.status === 'done') return
+        const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
+        if (assignees.length > 0 && !assignees.includes(currentUser?.id)) return
+        add(t.dueDate, { type: 'todo', label: t.title, color, projectName: p.name, projectId: p.id, done: false })
+      })
+
+      // 이벤트 & 마일스톤: 전체 표시
+      p.events?.forEach((e) => {
+        if (!e.date) return
+        add(e.date, { type: 'event', label: e.title, color, projectName: p.name, projectId: p.id })
+      })
+      p.milestones?.forEach((m) => {
+        if (!m.targetDate) return
+        add(m.targetDate, { type: 'milestone', label: m.title, color, projectName: p.name, projectId: p.id })
+      })
     })
     return map
-  }, [projects, projectsColorMap])
+  }, [activeProjects, colorMap, currentUser?.id])
+
+  // 이번 달 날짜 배열
+  const calDays = useMemo(() => {
+    const firstDow  = new Date(year, month, 1).getDay()
+    const lastDay   = new Date(year, month + 1, 0).getDate()
+    const cells = []
+    for (let i = 0; i < firstDow; i++) cells.push(null)
+    for (let d = 1; d <= lastDay; d++) cells.push(d)
+    while (cells.length % 7 !== 0) cells.push(null)
+    return cells
+  }, [year, month])
+
+  const todayStr = useMemo(() => {
+    const t = new Date()
+    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
+  }, [])
+
+  const toKey = (d) => d
+    ? `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    : null
 
   const goMonth = (dir) => {
     setSelected(null)
@@ -64,140 +107,228 @@ export default function CalendarPage() {
     })
   }
 
-  // 달력 날짜 배열 생성
-  const calDays = useMemo(() => {
-    const first = new Date(year, month, 1)
-    const startDow = first.getDay()         // 0=일
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    const cells = []
-    for (let i = 0; i < startDow; i++) cells.push(null)
-    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-    // 6행 채우기
-    while (cells.length % 7 !== 0) cells.push(null)
-    return cells
-  }, [year, month])
+  const goToday = () => {
+    const now = new Date()
+    setYear(now.getFullYear())
+    setMonth(now.getMonth())
+    setSelected(todayStr)
+  }
 
-  const todayStr = useMemo(() => {
-    const t = new Date()
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`
-  }, [])
-
-  const toKey = (d) => d ? `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}` : null
-
+  // 선택된 날짜 이벤트
   const selectedEvents = selected ? (eventMap[selected] || []) : []
 
-  // 이번 달 총 이벤트 수
-  const monthTotal = useMemo(() => {
-    let cnt = 0
-    const prefix = `${year}-${String(month + 1).padStart(2, '0')}`
-    Object.entries(eventMap).forEach(([k, v]) => { if (k.startsWith(prefix)) cnt += v.length })
-    return cnt
-  }, [eventMap, year, month])
+  // 이번 달 + 다음 2주 예정 일정 (오늘 이후)
+  const upcoming = useMemo(() => {
+    const items = []
+    const now = todayStr
+    Object.entries(eventMap).forEach(([key, evs]) => {
+      if (key >= now) evs.forEach((ev) => items.push({ ...ev, date: key }))
+    })
+    items.sort((a, b) => a.date.localeCompare(b.date))
+    return items.slice(0, 20)
+  }, [eventMap, todayStr])
+
+  // 선택된 날짜의 요일 + 포맷
+  const selectedLabel = useMemo(() => {
+    if (!selected) return null
+    const [y, m, d] = selected.split('-').map(Number)
+    const dow = new Date(y, m - 1, d).getDay()
+    return `${m}월 ${d}일 ${DAYS_FULL[dow]}`
+  }, [selected])
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>통합 캘린더</h1>
-        {monthTotal > 0 && (
-          <span className={styles.monthTotal}>이번 달 {monthTotal}개</span>
-        )}
+
+      {/* ── 헤더 ── */}
+      <div className={styles.pageHeader}>
+        <div>
+          <h1 className={styles.title}>통합 캘린더</h1>
+          <p className={styles.subtitle}>진행 중인 프로젝트의 내 일정</p>
+        </div>
+        <button className={styles.todayBtn} onClick={goToday}>오늘</button>
       </div>
 
-      <div className={styles.calCard}>
-        {/* 월 네비게이션 */}
-        <div className={styles.monthNav}>
-          <button className={styles.monthBtn} onClick={() => goMonth(-1)}>‹</button>
-          <span className={styles.monthLabel}>{year}년 {month + 1}월</span>
-          <button className={styles.monthBtn} onClick={() => goMonth(1)}>›</button>
-        </div>
+      <div className={styles.layout}>
 
-        {/* 요일 헤더 */}
-        <div className={styles.weekRow}>
-          {DAYS.map((d, i) => (
-            <div key={d} className={`${styles.weekDay} ${i === 0 ? styles.sun : i === 6 ? styles.sat : ''}`}>{d}</div>
-          ))}
-        </div>
+        {/* ── 왼쪽: 달력 ── */}
+        <div className={styles.calendarSide}>
+          <div className={styles.calCard}>
 
-        {/* 날짜 그리드 */}
-        <div className={styles.grid}>
-          {calDays.map((d, idx) => {
-            const key = toKey(d)
-            const events = key ? (eventMap[key] || []) : []
-            const isToday = key === todayStr
-            const isSelected = key === selected
-            const dow = idx % 7
-            return (
-              <div
-                key={idx}
-                className={`${styles.cell} ${!d ? styles.cellEmpty : ''} ${isToday ? styles.cellToday : ''} ${isSelected ? styles.cellSelected : ''} ${d && events.length > 0 ? styles.cellHasEvent : ''}`}
-                onClick={() => d && setSelected(isSelected ? null : key)}
-              >
-                {d && (
-                  <>
-                    <span className={`${styles.dayNum} ${dow === 0 ? styles.sunNum : dow === 6 ? styles.satNum : ''}`}>{d}</span>
-                    {events.length > 0 && (
-                      <div className={styles.dots}>
-                        {events.slice(0, 3).map((ev, i) => (
-                          <span key={i} className={styles.dot} style={{ background: ev.color }} />
-                        ))}
-                        {events.length > 3 && <span className={styles.dotMore}>+{events.length - 3}</span>}
-                      </div>
+            {/* 월 네비게이션 */}
+            <div className={styles.monthNav}>
+              <button className={styles.navArrow} onClick={() => goMonth(-1)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span className={styles.monthLabel}>{year}년 {MONTH_KO[month]}</span>
+              <button className={styles.navArrow} onClick={() => goMonth(1)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+
+            {/* 요일 헤더 */}
+            <div className={styles.weekRow}>
+              {DAYS_SHORT.map((d, i) => (
+                <div key={d} className={`${styles.weekDay} ${i===0?styles.sun:i===6?styles.sat:''}`}>{d}</div>
+              ))}
+            </div>
+
+            {/* 날짜 그리드 */}
+            <div className={styles.grid}>
+              {calDays.map((d, idx) => {
+                const key    = toKey(d)
+                const events = key ? (eventMap[key] || []) : []
+                const isToday    = key === todayStr
+                const isSel      = key === selected
+                const dow        = idx % 7
+                const isPast     = key && key < todayStr
+                const todoEvs    = events.filter((e) => e.type === 'todo')
+                const otherEvs   = events.filter((e) => e.type !== 'todo')
+                const allPills   = [...otherEvs, ...todoEvs] // 이벤트/마일스톤 먼저
+                const visiblePills = allPills.slice(0, 2)
+                const overflow   = allPills.length - visiblePills.length
+
+                return (
+                  <div
+                    key={idx}
+                    className={[
+                      styles.cell,
+                      !d        ? styles.cellEmpty    : '',
+                      isToday   ? styles.cellToday    : '',
+                      isSel     ? styles.cellSelected : '',
+                      isPast && d ? styles.cellPast   : '',
+                    ].filter(Boolean).join(' ')}
+                    onClick={() => d && setSelected(isSel ? null : key)}
+                  >
+                    {d && (
+                      <>
+                        <span className={[
+                          styles.dayNum,
+                          dow===0 ? styles.sunNum : dow===6 ? styles.satNum : '',
+                          isToday ? styles.dayNumToday : '',
+                        ].filter(Boolean).join(' ')}>{d}</span>
+
+                        {/* 이벤트 pill (데스크탑) */}
+                        <div className={styles.pills}>
+                          {visiblePills.map((ev, i) => (
+                            <span key={i} className={styles.pill} style={{ background: ev.color + '22', color: ev.color, borderColor: ev.color + '55' }}>
+                              {TYPE_ICON[ev.type]} <span className={styles.pillLabel}>{ev.label}</span>
+                            </span>
+                          ))}
+                          {overflow > 0 && (
+                            <span className={styles.pillMore}>+{overflow}개</span>
+                          )}
+                        </div>
+
+                        {/* 도트만 (모바일) */}
+                        {events.length > 0 && (
+                          <div className={styles.dots}>
+                            {events.slice(0, 4).map((ev, i) => (
+                              <span key={i} className={styles.dot} style={{ background: ev.color }} />
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* 선택한 날짜 이벤트 목록 */}
-      {selected && (
-        <div className={styles.eventPanel}>
-          <div className={styles.eventPanelHeader}>
-            <span className={styles.eventPanelDate}>
-              {parseInt(selected.split('-')[1])}월 {parseInt(selected.split('-')[2])}일
-            </span>
-            <button className={styles.eventPanelClose} onClick={() => setSelected(null)}>✕</button>
-          </div>
-          {selectedEvents.length === 0 ? (
-            <p className={styles.eventEmpty}>일정이 없어요</p>
-          ) : (
-            <div className={styles.eventList}>
-              {selectedEvents.map((ev, i) => (
-                <div
-                  key={i}
-                  className={styles.eventItem}
-                  style={{ borderLeftColor: ev.color }}
-                  onClick={() => ev.projectId && navigate(`/project/${ev.projectId}`)}
-                >
-                  <span className={styles.eventIcon}>{TYPE_ICON[ev.type]}</span>
-                  <div className={styles.eventInfo}>
-                    <p className={styles.eventLabel}>{ev.label}</p>
-                    <p className={styles.eventProject}>{ev.projectName}</p>
                   </div>
-                  <span className={styles.eventType}>{ev.type === 'todo' ? '할 일' : ev.type === 'event' ? '이벤트' : '마일스톤'}</span>
-                </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 프로젝트 범례 */}
+          {activeProjects.length > 0 && (
+            <div className={styles.legend}>
+              {activeProjects.map((p) => (
+                <button key={p.id} className={styles.legendItem} onClick={() => navigate(`/project/${p.id}`)}>
+                  <span className={styles.legendDot} style={{ background: colorMap[p.id] }} />
+                  <span className={styles.legendName}>{p.emoji && `${p.emoji} `}{p.name}</span>
+                </button>
               ))}
             </div>
           )}
         </div>
-      )}
 
-      {/* 프로젝트 범례 */}
-      {projects.filter((p) => !p.isTutorial).length > 0 && (
-        <div className={styles.legend}>
-          <p className={styles.legendTitle}>프로젝트</p>
-          <div className={styles.legendList}>
-            {projects.filter((p) => !p.isTutorial).map((p) => (
-              <div key={p.id} className={styles.legendItem} onClick={() => navigate(`/project/${p.id}`)}>
-                <span className={styles.legendDot} style={{ background: getProjectColor(p.id, projectsColorMap) }} />
-                <span className={styles.legendName}>{p.emoji && `${p.emoji} `}{p.name}</span>
+        {/* ── 오른쪽: 사이드 패널 ── */}
+        <div className={styles.sidePanel}>
+
+          {selected ? (
+            /* 선택된 날짜 상세 */
+            <div className={styles.dayPanel}>
+              <div className={styles.dayPanelHeader}>
+                <div>
+                  <p className={styles.dayPanelDate}>{selectedLabel}</p>
+                  <p className={styles.dayPanelCount}>
+                    {selectedEvents.length > 0 ? `${selectedEvents.length}개의 일정` : '일정 없음'}
+                  </p>
+                </div>
+                <button className={styles.dayPanelClose} onClick={() => setSelected(null)}>✕</button>
               </div>
-            ))}
-          </div>
+
+              {selectedEvents.length === 0 ? (
+                <div className={styles.emptyDay}>
+                  <span className={styles.emptyDayIcon}>📭</span>
+                  <p>이 날은 일정이 없어요</p>
+                </div>
+              ) : (
+                <div className={styles.dayEventList}>
+                  {selectedEvents.map((ev, i) => (
+                    <div
+                      key={i}
+                      className={styles.dayEventItem}
+                      style={{ '--ev-color': ev.color }}
+                      onClick={() => navigate(`/project/${ev.projectId}`)}
+                    >
+                      <span className={styles.dayEventBar} style={{ background: ev.color }} />
+                      <div className={styles.dayEventBody}>
+                        <div className={styles.dayEventTop}>
+                          <span className={styles.dayEventIcon}>{TYPE_ICON[ev.type]}</span>
+                          <span className={styles.dayEventLabel}>{ev.label}</span>
+                        </div>
+                        <div className={styles.dayEventMeta}>
+                          <span className={styles.dayEventProject}>{ev.projectName}</span>
+                          <span className={styles.dayEventType} style={{ color: ev.color }}>{TYPE_LABEL[ev.type]}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* 다가오는 일정 */
+            <div className={styles.upcomingPanel}>
+              <p className={styles.upcomingTitle}>다가오는 일정</p>
+              {upcoming.length === 0 ? (
+                <div className={styles.emptyDay}>
+                  <span className={styles.emptyDayIcon}>🎉</span>
+                  <p>예정된 일정이 없어요</p>
+                </div>
+              ) : (
+                <div className={styles.upcomingList}>
+                  {upcoming.map((ev, i) => {
+                    const [, m, d] = ev.date.split('-').map(Number)
+                    const dow = new Date(ev.date).getDay()
+                    const isT = ev.date === todayStr
+                    return (
+                      <div key={i} className={styles.upcomingItem} onClick={() => { setSelected(ev.date); setYear(Number(ev.date.split('-')[0])); setMonth(Number(ev.date.split('-')[1]) - 1) }}>
+                        <div className={`${styles.upcomingDateBox} ${isT ? styles.upcomingDateBoxToday : ''}`}>
+                          <span className={styles.upcomingDay}>{d}</span>
+                          <span className={styles.upcomingDow}>{DAYS_SHORT[dow]}</span>
+                        </div>
+                        <div className={styles.upcomingBar} style={{ background: ev.color }} />
+                        <div className={styles.upcomingInfo}>
+                          <p className={styles.upcomingLabel}>{TYPE_ICON[ev.type]} {ev.label}</p>
+                          <p className={styles.upcomingProject}>{ev.projectName}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
