@@ -194,11 +194,9 @@
 
 /* 섹션 헤더 */
 .secTitle {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-tertiary);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: var(--text-secondary);
   margin-bottom: 10px;
 }
 
@@ -301,8 +299,8 @@
   border-radius: var(--radius-full);
   white-space: nowrap;
 }
-.statusActive { background: #E1F5EE; color: #0F6E56; }
-.statusDone   { background: var(--bg-secondary); color: var(--text-tertiary); border: 1px solid var(--border); }
+.statusActive { background: #E8F5E9; color: #2E7D32; }
+.statusDone   { background: #EEF2FF; color: #4338CA; }
 
 .projectPurpose {
   font-size: 12px;

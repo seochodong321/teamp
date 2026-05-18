@@ -116,8 +116,11 @@ export default function PublicProfilePage() {
     )
   }
 
-  const completedCount = projects.filter((p) => p.status === 'archived').length
-  const activeCount    = projects.filter((p) => p.status === 'active').length
+  const completedCount    = projects.filter((p) => p.status === 'archived').length
+  const uniqueTeammates   = new Set(
+    projects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
+  ).size
+  const totalFeedback     = Object.values(flowerTags).reduce((a, b) => a + b, 0)
   const topFlowers = FLOWER_TAGS
     .filter((t) => flowerTags[t.id])
     .sort((a, b) => (flowerTags[b.id] || 0) - (flowerTags[a.id] || 0))
@@ -173,16 +176,16 @@ export default function PublicProfilePage() {
           {/* 통계 */}
           <div className={styles.statsRow}>
             <div className={styles.statBox}>
-              <p className={styles.statNum}>{projects.length}</p>
-              <p className={styles.statLabel}>공개 프로젝트</p>
-            </div>
-            <div className={styles.statBox}>
               <p className={styles.statNum}>{completedCount}</p>
-              <p className={styles.statLabel}>완료한 프로젝트</p>
+              <p className={styles.statLabel}>완료 프로젝트</p>
             </div>
             <div className={styles.statBox}>
-              <p className={styles.statNum}>{activeCount}</p>
-              <p className={styles.statLabel}>현재 진행 중</p>
+              <p className={styles.statNum}>{uniqueTeammates}</p>
+              <p className={styles.statLabel}>함께한 팀원</p>
+            </div>
+            <div className={styles.statBox}>
+              <p className={styles.statNum}>{totalFeedback}</p>
+              <p className={styles.statLabel}>받은 피드백</p>
             </div>
           </div>
 
