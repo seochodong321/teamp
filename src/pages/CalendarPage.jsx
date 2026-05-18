@@ -201,7 +201,7 @@ export default function CalendarPage() {
                       isSel       ? styles.cellSelected  : '',
                       isPast && !isOverflow ? styles.cellPast : '',
                     ].filter(Boolean).join(' ')}
-                    style={isOverflow ? { background: '#FFFFFF', border: 'none', cursor: 'default' } : undefined}
+                    style={undefined}
                     onClick={() => !isOverflow && setSelected(isSel ? null : key)}
                   >
                     <span className={[

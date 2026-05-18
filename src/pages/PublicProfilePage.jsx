@@ -54,12 +54,11 @@ export default function PublicProfilePage() {
     try {
       const projSnap = await getDocs(
         query(collection(db, 'projects'),
-          where('memberIds', 'array-contains', userData.id),
-          where('isPublic', '==', true))
+          where('memberIds', 'array-contains', userData.id))
       )
       const pubs = projSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((p) => !p.isTutorial)
+        .filter((p) => p.isPublic && !p.isTutorial)
         .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
       setProjects(pubs)
 
