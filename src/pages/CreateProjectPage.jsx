@@ -145,22 +145,16 @@ export default function CreateProjectPage() {
               <div className={styles.field}>
                 <label className={styles.label}>종료일 *</label>
                 <input className={`${styles.input} ${dateError ? styles.inputError : ''}`} type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setDateError('') }} />
+                <label className={styles.timeToggle}>
+                  <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} />
+                  <span>종료 시간도 지정할게요</span>
+                </label>
+                {showEndTime && (
+                  <input className={styles.input} type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                )}
               </div>
             </div>
             {dateError && <p className={styles.dateErrorMsg}>⚠️ {dateError}</p>}
-
-            <div className={styles.field}>
-              <label className={styles.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                종료 시간
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 400, fontSize: 12, color: '#9E9E9E', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} />
-                  시간도 지정할게요
-                </label>
-              </label>
-              {showEndTime && (
-                <input className={styles.input} type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-              )}
-            </div>
           </div>
         )}
 

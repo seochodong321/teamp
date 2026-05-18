@@ -67,6 +67,8 @@
 .textarea:focus { border-color: var(--primary); background: var(--bg); box-shadow: var(--shadow-glow); }
 .dateRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dateError { font-size: 12px; color: var(--coral); background: var(--coral-soft); border-radius: 6px; padding: 8px 12px; }
+.timeToggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer; user-select: none; padding: 2px 0; }
+.timeToggle input[type='checkbox'] { width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
 
 .chipRow { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); transition: all var(--transition-fast); background: var(--bg); }
