@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 400;
+  z-index: 1100;
   display: flex;
   align-items: flex-end;
   justify-content: center;
