@@ -13,7 +13,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .brand {
@@ -21,7 +29,33 @@
   font-weight: 800;
   color: var(--primary);
   letter-spacing: -0.02em;
+  line-height: 1.2;
 }
+
+.brandSub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.copyBtn {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  transition: all 0.15s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.copyBtn:hover { border-color: var(--primary); color: var(--primary); }
 
 .ctaBtn {
   padding: 8px 18px;
@@ -32,6 +66,7 @@
   font-weight: 600;
   transition: all 0.15s;
   text-decoration: none;
+  white-space: nowrap;
 }
 .ctaBtn:hover { background: var(--primary-hover); }
 
@@ -298,4 +333,5 @@
   .body { padding: 16px 18px 22px; gap: 16px; }
   .banner { height: 64px; }
   .avatar { width: 60px; height: 60px; font-size: 22px; margin-top: -28px; }
+  .ctaBtn { display: none; }
 }

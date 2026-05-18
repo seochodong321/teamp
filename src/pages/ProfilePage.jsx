@@ -359,12 +359,12 @@ export default function ProfilePage() {
           {currentUser.username && (
             <button className={styles.shareBtn} onClick={() => {
               const url = `${window.location.origin}/u/${(currentUser.username || '').replace('@', '')}`
-              navigator.clipboard.writeText(url).then(() => {
-                setCopied(true)
-                setTimeout(() => setCopied(false), 2000)
-              })
+              navigator.clipboard.writeText(url).catch(() => {})
+              window.open(url, '_blank', 'noopener,noreferrer')
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
             }}>
-              {copied ? '✓ 복사됨' : '🔗 공유 링크'}
+              {copied ? '✓ 링크 복사됨' : '🗂️ 팀프폴리오'}
             </button>
           )}
           <button className={styles.logoutBtn} onClick={handleLogout}>로그아웃</button>

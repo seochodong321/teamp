@@ -14,6 +14,7 @@ export default function PublicProfilePage() {
   const [flowerTags, setFlowerTags] = useState({})
   const [loading, setLoading]   = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [copied, setCopied]     = useState(false)
 
   useEffect(() => {
     fetchProfile()
@@ -22,15 +23,20 @@ export default function PublicProfilePage() {
   const fetchProfile = async () => {
     setLoading(true)
     try {
-      // 1. username으로 유저 조회
-      const userSnap = await getDocs(
+      // username으로 유저 조회 — @prefix 있는 형태·없는 형태 모두 시도
+      let userSnap = await getDocs(
         query(collection(db, 'users'), where('username', '==', `@${username}`))
       )
+      if (userSnap.empty) {
+        userSnap = await getDocs(
+          query(collection(db, 'users'), where('username', '==', username))
+        )
+      }
       if (userSnap.empty) { setNotFound(true); return }
       const userData = { id: userSnap.docs[0].id, ...userSnap.docs[0].data() }
       setUser(userData)
 
-      // 2. 공개 프로젝트 조회
+      // 공개 프로젝트 조회
       const projSnap = await getDocs(
         query(collection(db, 'projects'),
           where('memberIds', 'array-contains', userData.id),
@@ -42,7 +48,7 @@ export default function PublicProfilePage() {
         .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
       setProjects(pubs)
 
-      // 3. 꽃다발 태그 (공개 완료 프로젝트의 wrapup에서)
+      // 꽃다발 태그 (공개 완료 프로젝트의 wrapup에서)
       const archived = pubs.filter((p) => p.status === 'archived' && p.wrapupId)
       const tagCounts = {}
       await Promise.all(archived.map(async (p) => {
@@ -69,14 +75,23 @@ export default function PublicProfilePage() {
     }
   }
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(window.location.href).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   if (loading) return <div className={styles.loading}>불러오는 중...</div>
 
   if (notFound) {
     return (
       <div className={styles.shell}>
-        <div className={styles.topBar} style={{ maxWidth: 600 }}>
-          <span className={styles.brand}>Teamp</span>
-          <Link to="/login" className={styles.ctaBtn}>로그인</Link>
+        <div className={styles.topBar}>
+          <div className={styles.brandBlock}>
+            <span className={styles.brand}>팀프폴리오</span>
+            <span className={styles.brandSub}>기여와 관계의 기록</span>
+          </div>
+          <Link to="/login" className={styles.ctaBtn}>Teamp 시작하기 →</Link>
         </div>
         <div className={styles.card}>
           <div className={styles.notFound}>
@@ -94,14 +109,22 @@ export default function PublicProfilePage() {
   const topFlowers = FLOWER_TAGS
     .filter((t) => flowerTags[t.id])
     .sort((a, b) => (flowerTags[b.id] || 0) - (flowerTags[a.id] || 0))
-    .slice(0, 5)
+    .slice(0, 6)
 
   return (
     <div className={styles.shell}>
-      {/* 상단 브랜드 바 */}
+      {/* 상단 바 */}
       <div className={styles.topBar}>
-        <span className={styles.brand}>Teamp</span>
-        <Link to="/login" className={styles.ctaBtn}>Teamp 시작하기 →</Link>
+        <div className={styles.brandBlock}>
+          <span className={styles.brand}>팀프폴리오</span>
+          <span className={styles.brandSub}>기여와 관계의 기록</span>
+        </div>
+        <div className={styles.topActions}>
+          <button className={styles.copyBtn} onClick={handleCopy}>
+            {copied ? '✓ 복사됨' : '🔗 링크 복사'}
+          </button>
+          <Link to="/login" className={styles.ctaBtn}>Teamp 시작하기 →</Link>
+        </div>
       </div>
 
       <div className={styles.card}>
@@ -128,10 +151,10 @@ export default function PublicProfilePage() {
             <p className={styles.oneliner}>"{user.oneliner}"</p>
           )}
 
-          {/* 메타 정보 */}
-          {(user.affiliation) && (
+          {/* 소속 */}
+          {user.affiliation && (
             <div className={styles.metaRow}>
-              {user.affiliation && <span className={styles.metaChip}>🏫 {user.affiliation}</span>}
+              <span className={styles.metaChip}>🏫 {user.affiliation}</span>
             </div>
           )}
 
@@ -151,10 +174,10 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          {/* 꽃다발 태그 */}
+          {/* 팀원 평가 */}
           {topFlowers.length > 0 && (
             <div>
-              <p className={styles.secTitle}>받은 꽃다발</p>
+              <p className={styles.secTitle}>팀원이 전한 말</p>
               <div className={styles.flowerRow}>
                 {topFlowers.map((t) => (
                   <span key={t.id} className={styles.flowerChip}>
@@ -166,9 +189,9 @@ export default function PublicProfilePage() {
             </div>
           )}
 
-          {/* 공개 프로젝트 목록 */}
+          {/* 프로젝트 이력 */}
           <div>
-            <p className={styles.secTitle}>공개 프로젝트</p>
+            <p className={styles.secTitle}>프로젝트 이력</p>
             {projects.length === 0 ? (
               <p className={styles.empty}>공개된 프로젝트가 없어요</p>
             ) : (
@@ -198,7 +221,7 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      <p className={styles.footer}>Powered by Teamp · 팀 프로젝트 협업 플랫폼</p>
+      <p className={styles.footer}>Powered by <strong>Teamp</strong> · 팀 프로젝트 협업 플랫폼</p>
     </div>
   )
 }
