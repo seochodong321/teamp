@@ -69,6 +69,8 @@
 .input:focus { border-color: var(--primary); background: var(--bg); }
 .inputError { border-color: var(--coral) !important; }
 .dateError { font-size: 12px; color: var(--coral); }
+.timeToggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-tertiary); cursor: pointer; user-select: none; padding: 2px 0; }
+.timeToggle input[type='checkbox'] { width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
 
 .textarea {
   border-radius: var(--radius-sm); border: 1px solid var(--border);

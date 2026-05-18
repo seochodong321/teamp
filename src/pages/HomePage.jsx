@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
-import ProfileSelector from '../components/ProfileSelector.jsx'
+import CreateProjectModal from '../components/CreateProjectModal.jsx'
 import styles from './HomePage.module.css'
-
-const CATEGORIES = ['학교', '회사', '스터디', '기타']
 
 function getCardBadge(p) {
   const now   = new Date()
@@ -35,13 +33,6 @@ function relativeTime(iso) {
   return `${Math.floor(diff / 86400000)}일 전`
 }
 
-const STEPS = ['기본 정보', '팀 구성']
-const EMOJI_OPTIONS = [
-  '📁', '📚', '💼', '🎓', '🏫', '💡', '🚀', '🎯',
-  '🎨', '🎬', '🎵', '⚽', '🏀', '🏃', '✈️', '🌱',
-  '🍕', '☕', '🐶', '🐱', '🌸', '🌟', '🔥', '💎',
-  '🎮', '📱', '💻', '🛠️', '📝', '📊', '🗓️', '🎉',
-]
 
 export default function HomePage() {
   const navigate = useNavigate()
@@ -49,10 +40,9 @@ export default function HomePage() {
     projects, currentUser, invites,
     acceptInvite, declineInvite,
     getProgress, isExpired,
-    archiveProject, extendProject, createProject,
+    archiveProject, extendProject,
     hiddenProjects, hideProject,
     pinnedId, setPinnedId,
-    profiles,
   } = useStore()
 
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
@@ -67,290 +57,22 @@ export default function HomePage() {
     return () => { el.style.paddingTop = '' }
   }, [])
 
-  // ── 새 프로젝트 모달 상태 ──
-  const [showModal, setShowModal] = useState(false)
-  const [step, setStep]           = useState(0)
-  const [emoji, setEmoji]         = useState('')
-  const [pName, setPName]         = useState('')
-  const [purpose, setPurpose]     = useState('')
-  const [category, setCategory]   = useState('학교')
-  const [customCategory, setCustomCategory] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate]     = useState('')
-  const [endTime, setEndTime]     = useState('')
-  const [showEndTime, setShowEndTime] = useState(false)
-  const [roomNames, setRoomNames] = useState(['개발팀'])
-  const [newRoom, setNewRoom]     = useState('')
-  const [dateError, setDateError]   = useState('')
-  const [stepError, setStepError]   = useState('')
-
-  // 대표 프로젝트 (Zustand persist)
-  const [showPinPicker, setShowPinPicker] = useState(false)
-
-  const setPinned = (id) => {
-    setPinnedId(id || null)
-    setShowPinPicker(false)
-  }
-  const [created, setCreated]     = useState(null)
-  const [loading, setLoading]     = useState(false)
-  const [linkCopied, setLinkCopied] = useState(false)
-  const [showProfileSel, setShowProfileSel] = useState(false)
-  const [pendingCreate, setPendingCreate] = useState(null) // 프로필 선택 대기 중인 data
-
-  // ── 섹션 접기 ──
+  const [showModal, setShowModal]           = useState(false)
+  const [showPinPicker, setShowPinPicker]   = useState(false)
   const [showCollecting, setShowCollecting] = useState(true)
   const [showArchived, setShowArchived]     = useState(false)
-
-  // ── 삭제 확인 모달 ──
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
-
-  // ── 연장 모달 ──
-  const [extendId, setExtendId]     = useState(null)
-  const [newEndDate, setNewEndDate] = useState('')
+  const [extendId, setExtendId]             = useState(null)
+  const [newEndDate, setNewEndDate]         = useState('')
 
   const today = new Date().toISOString().split('T')[0]
-  const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
 
-  const openModal = () => {
-    setEmoji(''); setPName(''); setPurpose(''); setCategory('학교'); setCustomCategory('')
-    setStartDate(''); setEndDate(''); setEndTime(''); setShowEndTime(false)
-    setRoomNames(['개발팀']); setNewRoom(''); setDateError(''); setStepError('')
-    setCreated(null); setStep(0); setLoading(false)
-    setShowModal(true)
-  }
-
-  const closeModal = () => setShowModal(false)
-
-  const goNext = async () => {
-    setStepError('')
-    if (step === 0) {
-      if (!emoji) { setStepError('프로젝트를 표현할 이모지를 골라주세요!'); return }
-      if (!pName.trim() || !startDate || !endDate) { setStepError('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
-      if (endDate < today) { setDateError('종료일이 오늘보다 이전이에요. 다시 설정해주세요.'); return }
-      if (startDate && endDate && endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
-      setDateError('')
-    }
-    if (step === STEPS.length - 1) {
-      const data = { name: pName, emoji, purpose, category: finalCategory, startDate, endDate, endTime: endTime || null, roomNames }
-      if (profiles.length > 0) { setPendingCreate(data); setShowProfileSel(true); return }
-      await doCreate(data, 'default', null)
-      return
-    }
-    setStep((s) => s + 1)
-  }
-
-  const doCreate = async (data, profileId, affiliation) => {
-    setShowProfileSel(false); setPendingCreate(null)
-    setLoading(true)
-    try {
-      const p = await createProject({ ...data, profileId, affiliation })
-      setCreated(p)
-      setStep((s) => s + 1)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const addRoom = () => {
-    if (!newRoom.trim()) return
-    setRoomNames((prev) => [...prev, newRoom.trim()])
-    setNewRoom('')
-  }
-
-  const appOrigin  = import.meta.env.VITE_APP_URL || window.location.origin
-  const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
+  const setPinned = (id) => { setPinnedId(id || null); setShowPinPicker(false) }
 
   return (
     <>
 
-      {/* ── 새 프로젝트 팝업 모달 ── */}
-      {showModal && (
-        <div className={styles.backdrop} onClick={closeModal}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>
-                {step < STEPS.length ? `새 프로젝트 — ${STEPS[step]}` : '🎉 완료!'}
-              </h2>
-              <button className={styles.closeBtn} onClick={closeModal}>✕</button>
-            </div>
-
-            {step < STEPS.length && (
-              <div className={styles.stepRow}>
-                {STEPS.map((_, i) => (
-                  <div key={i} className={`${styles.stepDot} ${i === step ? styles.stepDotActive : ''} ${i < step ? styles.stepDotDone : ''}`} />
-                ))}
-              </div>
-            )}
-
-            <div className={styles.modalBody}>
-
-              {/* STEP 0 — 기본 정보 */}
-              {step === 0 && (
-                <>
-                  <div className={styles.field}>
-                    <label className={styles.label}>
-                      프로젝트 이모지 * <span style={{ fontSize: 11, color: '#9E9E9E', fontWeight: 400 }}>(필수)</span>
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 56, background: '#EEEDFE', borderRadius: 10, border: '1px solid #E4E4E4', marginBottom: 8 }}>
-                      {emoji
-                        ? <span style={{ fontSize: 32 }}>{emoji}</span>
-                        : <span style={{ fontSize: 12, color: '#9E9E9E' }}>아래에서 골라주세요</span>}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
-                      {EMOJI_OPTIONS.map((em) => (
-                        <button type="button" key={em}
-                          onClick={() => setEmoji(em)}
-                          style={{
-                            aspectRatio: '1', fontSize: 16, borderRadius: 6,
-                            border: emoji === em ? '2px solid #534AB7' : '1px solid #E4E4E4',
-                            background: emoji === em ? '#EEEDFE' : '#FFFFFF',
-                            cursor: 'pointer', padding: 0, transition: 'all 0.15s',
-                          }}>
-                          {em}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.label}>프로젝트 이름 *</label>
-                    <input className={styles.input} value={pName} onChange={(e) => setPName(e.target.value)} placeholder="예) 2025 졸업작품" autoFocus />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>목적 / 설명</label>
-                    <textarea className={styles.textarea} value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="어떤 프로젝트인지 간단히 적어주세요" rows={2} />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>카테고리</label>
-                    <div className={styles.chipRow}>
-                      {CATEGORIES.map((c) => (
-                        <button key={c} type="button"
-                          className={`${styles.chip} ${category === c ? styles.chipActive : ''}`}
-                          onClick={() => setCategory(c)}>{c}</button>
-                      ))}
-                    </div>
-                    {category === '기타' && (
-                      <input className={styles.input} style={{ marginTop: 8 }} value={customCategory}
-                        onChange={(e) => setCustomCategory(e.target.value)}
-                        placeholder="카테고리를 직접 입력하세요 (예: 동아리, 연구팀)" />
-                    )}
-                  </div>
-                  <div className={styles.dateRow}>
-                    <div className={styles.field}>
-                      <label className={styles.label}>시작일 *</label>
-                      <input className={styles.input} type="date" value={startDate}
-                        onChange={(e) => { setStartDate(e.target.value); setDateError('') }} />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>종료일 *</label>
-                      <input className={`${styles.input} ${dateError ? styles.inputError : ''}`}
-                        type="date" value={endDate}
-                        onChange={(e) => { setEndDate(e.target.value); setDateError('') }} />
-                      <label className={styles.timeToggle}>
-                        <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} />
-                        <span>종료 시간도 지정할게요</span>
-                      </label>
-                      {showEndTime && (
-                        <input className={styles.input} type="time" value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)} />
-                      )}
-                    </div>
-                  </div>
-                  {dateError && <p className={styles.dateError}>⚠️ {dateError}</p>}
-                </>
-              )}
-
-              {/* STEP 1 — 팀 구성 */}
-              {step === 1 && (
-                <>
-                  <div className={styles.defaultRooms}>
-                    <p className={styles.defaultRoomsLabel}>기본 생성되는 채팅방</p>
-                    <div className={styles.defaultRoomItem}>
-                      <span className={styles.defaultRoomBadge} style={{ background: '#FAEEDA', color: '#854F0B' }}>💬</span>
-                      <div>
-                        <p className={styles.defaultRoomName}>나와의 채팅</p>
-                        <p className={styles.defaultRoomDesc}>나만 보는 메모 공간</p>
-                      </div>
-                    </div>
-                    <div className={styles.defaultRoomItem}>
-                      <span className={styles.defaultRoomBadge} style={{ background: '#EEEDFE', color: '#534AB7' }}>#전</span>
-                      <div>
-                        <p className={styles.defaultRoomName}>전체</p>
-                        <p className={styles.defaultRoomDesc}>모든 팀원이 참여하는 방</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>추가 팀 채팅방</label>
-                    <div className={styles.roomList}>
-                      {roomNames.map((r, i) => (
-                        <div key={i} className={styles.roomItem}>
-                          <span># {r}</span>
-                          <button type="button" className={styles.roomRemove}
-                            onClick={() => setRoomNames((p) => p.filter((_, j) => j !== i))}>✕</button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className={styles.addRoomRow}>
-                      <input className={styles.input} value={newRoom}
-                        onChange={(e) => setNewRoom(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                            e.preventDefault()
-                            if (newRoom.trim()) addRoom()
-                          }
-                        }}
-                        placeholder="팀 채팅방 이름 (Enter로 추가)" />
-                      <button type="button" className={styles.addRoomBtn} onClick={addRoom}>추가</button>
-                    </div>
-                  </div>
-                  <p className={styles.roomHint}>💡 팀 채팅방은 언제든 추가할 수 있어요!</p>
-                </>
-              )}
-
-              {/* 완료 — 초대 링크 */}
-              {step === STEPS.length && created && (
-                <div className={styles.doneWrap}>
-                  <div className={styles.doneIcon}>✓</div>
-                  <p className={styles.doneTitle}>프로젝트가 만들어졌어요!</p>
-                  <p className={styles.doneSub}>{emoji} {created.name}</p>
-                  <p className={styles.inviteHint}>팀원에게 초대 링크를 공유해보세요</p>
-                  <div className={styles.linkBox} style={{ marginTop: 4, width: '100%' }}>
-                    <span className={styles.linkText}>{inviteLink}</span>
-                    <button type="button" className={styles.linkCopy}
-                      onClick={() => { navigator.clipboard.writeText(inviteLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}>
-                      {linkCopied ? '✅ 복사됨' : '복사'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.modalFooter}>
-              {stepError && <p style={{ fontSize: 12, color: '#E24B4A', flex: '0 0 100%', margin: '0 0 6px' }}>⚠️ {stepError}</p>}
-              {step > 0 && step < STEPS.length && (
-                <button className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>
-              )}
-              <div style={{ flex: 1 }} />
-              {step < STEPS.length && (
-                <button className={styles.nextBtn} onClick={goNext} disabled={loading}>
-                  {loading ? '생성 중...' : step === STEPS.length - 1 ? '완료하기' : '다음 →'}
-                </button>
-              )}
-              {step === STEPS.length && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className={styles.prevBtn} onClick={closeModal}>닫기</button>
-                  <button className={styles.nextBtn}
-                    onClick={() => { closeModal(); navigate(`/project/${created.id}`) }}>
-                    프로젝트로 →
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
 
       {/* ── 연장 모달 ── */}
       {extendId && (
@@ -421,7 +143,7 @@ export default function HomePage() {
                   )}
                 </p>
               </div>
-              <button className={styles.createBtn} onClick={openModal}>새 프로젝트</button>
+              <button className={styles.createBtn} onClick={() => setShowModal(true)}>새 프로젝트</button>
             </div>
 
             {active.length > 0 && (
@@ -745,18 +467,11 @@ export default function HomePage() {
           <div className={styles.emptyIcon}>🚀</div>
           <p className={styles.emptyTitle}>첫 번째 프로젝트를 시작해보세요</p>
           <p className={styles.emptySub}>기여와 관계의 기록, 지금 시작해보세요</p>
-          <button className={styles.emptyBtn} onClick={openModal}>+ 새 프로젝트 만들기</button>
+          <button className={styles.emptyBtn} onClick={() => setShowModal(true)}>+ 새 프로젝트 만들기</button>
         </div>
       )}
       </div>
 
-      {showProfileSel && pendingCreate && (
-        <ProfileSelector
-          title="어떤 프로필로 프로젝트를 만들까요?"
-          onSelect={(p) => doCreate(pendingCreate, p.id, p.affiliation)}
-          onClose={() => { setShowProfileSel(false); setPendingCreate(null) }}
-        />
-      )}
     </>
   )
 }
