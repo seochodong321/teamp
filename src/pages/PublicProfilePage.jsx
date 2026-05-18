@@ -210,20 +210,32 @@ export default function PublicProfilePage() {
               <div className={styles.projectList}>
                 {projects.map((p) => {
                   const me = p.members?.find((m) => m.id === user.id)
+                  const teamSize = p.members?.length || 0
                   return (
                     <div key={p.id} className={styles.projectCard}>
-                      <span className={styles.projectEmoji}>{p.emoji || '📁'}</span>
-                      <div className={styles.projectInfo}>
-                        <p className={styles.projectName}>{p.name}</p>
-                        <p className={styles.projectMeta}>
-                          {p.category && `${p.category} · `}
-                          {p.startDate}{p.endDate && ` ~ ${p.endDate}`}
-                        </p>
+                      <div className={styles.projectTop}>
+                        <span className={styles.projectEmoji}>{p.emoji || '📁'}</span>
+                        <div className={styles.projectInfo}>
+                          <p className={styles.projectName}>{p.name}</p>
+                          <p className={styles.projectMeta}>
+                            {p.category && `${p.category} · `}
+                            {p.startDate}{p.endDate && ` ~ ${p.endDate}`}
+                            {teamSize > 0 && ` · 팀원 ${teamSize}명`}
+                          </p>
+                        </div>
+                        <div className={styles.projectChips}>
+                          {me && <span className={styles.projectRole}>{ROLE_LABEL[me.role] || me.role}</span>}
+                          <span className={`${styles.statusChip} ${p.status === 'archived' ? styles.statusDone : styles.statusActive}`}>
+                            {p.status === 'archived' ? '완료' : '진행 중'}
+                          </span>
+                        </div>
                       </div>
-                      {me && <span className={styles.projectRole}>{ROLE_LABEL[me.role] || me.role}</span>}
-                      <span className={`${styles.statusChip} ${p.status === 'archived' ? styles.statusDone : styles.statusActive}`}>
-                        {p.status === 'archived' ? '완료' : '진행 중'}
-                      </span>
+                      {p.purpose && (
+                        <p className={styles.projectPurpose}>{p.purpose}</p>
+                      )}
+                      {me?.memo && (
+                        <p className={styles.projectMemo}>✍️ {me.memo}</p>
+                      )}
                     </div>
                   )
                 })}
