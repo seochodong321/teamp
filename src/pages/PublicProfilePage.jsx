@@ -28,8 +28,10 @@ export default function PublicProfilePage() {
 
   const fetchProfile = async () => {
     setLoading(true)
+
+    // 1단계: 유저 조회 (실패 → not found)
+    let userData = null
     try {
-      // username으로 유저 조회 — @prefix 있는 형태·없는 형태 모두 시도
       let userSnap = await getDocs(
         query(collection(db, 'users'), where('username', '==', `@${username}`))
       )
@@ -38,11 +40,18 @@ export default function PublicProfilePage() {
           query(collection(db, 'users'), where('username', '==', username))
         )
       }
-      if (userSnap.empty) { setNotFound(true); return }
-      const userData = { id: userSnap.docs[0].id, ...userSnap.docs[0].data() }
+      if (userSnap.empty) { setNotFound(true); setLoading(false); return }
+      userData = { id: userSnap.docs[0].id, ...userSnap.docs[0].data() }
       setUser(userData)
+    } catch (e) {
+      console.error('유저 조회 실패:', e)
+      setNotFound(true)
+      setLoading(false)
+      return
+    }
 
-      // 공개 프로젝트 조회
+    // 2단계: 공개 프로젝트 + 꽃다발 태그 (실패해도 프로필은 표시)
+    try {
       const projSnap = await getDocs(
         query(collection(db, 'projects'),
           where('memberIds', 'array-contains', userData.id),
@@ -54,7 +63,6 @@ export default function PublicProfilePage() {
         .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
       setProjects(pubs)
 
-      // 꽃다발 태그 (공개 완료 프로젝트의 wrapup에서)
       const archived = pubs.filter((p) => p.status === 'archived' && p.wrapupId)
       const tagCounts = {}
       await Promise.all(archived.map(async (p) => {
@@ -74,8 +82,7 @@ export default function PublicProfilePage() {
       }))
       setFlowerTags(tagCounts)
     } catch (e) {
-      console.error(e)
-      setNotFound(true)
+      console.warn('프로젝트/태그 조회 실패 (Firestore 규칙 확인 필요):', e)
     } finally {
       setLoading(false)
     }
@@ -97,7 +104,7 @@ export default function PublicProfilePage() {
             <span className={styles.brand}>팀프폴리오</span>
             <span className={styles.brandSub}>기여와 관계의 기록</span>
           </div>
-          <Link to="/login" className={styles.ctaBtn}>Teamp 시작하기 →</Link>
+          <Link to="/home" className={styles.ctaBtn}>팀프 홈으로 →</Link>
         </div>
         <div className={styles.card}>
           <div className={styles.notFound}>
@@ -129,7 +136,7 @@ export default function PublicProfilePage() {
           <button className={styles.copyBtn} onClick={handleCopy}>
             {copied ? '✓ 복사됨' : '🔗 링크 복사'}
           </button>
-          <Link to="/login" className={styles.ctaBtn}>Teamp 시작하기 →</Link>
+          <Link to="/home" className={styles.ctaBtn}>팀프 홈으로 →</Link>
         </div>
       </div>
 
