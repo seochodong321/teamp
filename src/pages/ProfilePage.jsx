@@ -66,6 +66,7 @@ export default function ProfilePage() {
 
   const [editingMemo, setEditingMemo] = useState(null)
   const [memoText, setMemoText]       = useState('')
+  const [copied, setCopied]           = useState(false)
 
   // 서브 프로필 관리 상태
   const [showProfileForm, setShowProfileForm] = useState(false)
@@ -355,6 +356,17 @@ export default function ProfilePage() {
         </div>
         <div className={styles.profileActions}>
           <button className={styles.editBtn} onClick={openEditModal}>편집</button>
+          {currentUser.username && (
+            <button className={styles.shareBtn} onClick={() => {
+              const url = `${window.location.origin}/u/${(currentUser.username || '').replace('@', '')}`
+              navigator.clipboard.writeText(url).then(() => {
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              })
+            }}>
+              {copied ? '✓ 복사됨' : '🔗 공유 링크'}
+            </button>
+          )}
           <button className={styles.logoutBtn} onClick={handleLogout}>로그아웃</button>
         </div>
       </div>

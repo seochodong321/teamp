@@ -73,6 +73,8 @@
 .profileActions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .editBtn { padding: 8px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); transition: all var(--transition-fast); }
 .editBtn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.shareBtn { padding: 8px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--primary); background: var(--primary-soft); transition: all var(--transition-fast); }
+.shareBtn:hover { border-color: var(--primary); background: var(--primary-light); }
 .logoutBtn { padding: 8px 18px; border: 1px solid #E24B4A; border-radius: var(--radius-sm); font-size: 13px; color: #E24B4A; background: var(--bg); transition: all var(--transition-fast); }
 .logoutBtn:hover { background: #FCEBEB; }
 

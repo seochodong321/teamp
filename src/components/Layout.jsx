@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -21,6 +21,8 @@ export default function Layout() {
   const [showSearch, setShowSearch]           = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [collapsedProjects, setCollapsedProjects] = useState({}) // { [projectId]: true }
+
+  const navRef = useRef(null)
 
   const toggleCollapse = (projectId) =>
     setCollapsedProjects((s) => ({ ...s, [projectId]: !s[projectId] }))
@@ -55,6 +57,13 @@ export default function Layout() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
+
+  // 모바일 사이드바 열릴 때 nav 항상 맨 위로
+  useEffect(() => {
+    if (mobileOpen && navRef.current) {
+      navRef.current.scrollTop = 0
+    }
+  }, [mobileOpen])
 
   const active         = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
   const unreadCount    = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
@@ -117,7 +126,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <nav className={styles.nav}>
+        <nav className={styles.nav} ref={navRef}>
           <NavLink to="/home" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.navActive : ''}`} onClick={close}>
             <span className={styles.navIcon}>⊞</span>
             <span>홈</span>
