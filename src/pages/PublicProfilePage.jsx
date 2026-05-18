@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { collection, getDocs, getDoc, query, where, doc } from 'firebase/firestore'
-import { db } from '../firebase.js'
+import { onAuthStateChanged } from 'firebase/auth'
+import { db, auth } from '../firebase.js'
 import { FLOWER_TAGS } from '../constants.js'
 import styles from './PublicProfilePage.module.css'
 
@@ -16,8 +17,13 @@ export default function PublicProfilePage() {
   const [notFound, setNotFound] = useState(false)
   const [copied, setCopied]     = useState(false)
 
+  // auth 복원 완료 후 쿼리 (새 탭에서 auth가 초기화되기 전에 쿼리가 실행되는 문제 방지)
   useEffect(() => {
-    fetchProfile()
+    let cancelled = false
+    const unsub = onAuthStateChanged(auth, () => {
+      if (!cancelled) fetchProfile()
+    })
+    return () => { cancelled = true; unsub() }
   }, [username])
 
   const fetchProfile = async () => {
