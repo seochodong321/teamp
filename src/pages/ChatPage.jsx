@@ -380,7 +380,7 @@ export default function ChatPage() {
         </div>
         {isDm
           ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
-          : <div style={{ width: 80 }} />
+          : <div className={styles.headerSpacer} />
         }
       </div>
 

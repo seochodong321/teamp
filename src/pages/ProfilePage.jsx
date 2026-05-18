@@ -230,31 +230,29 @@ export default function ProfilePage() {
 
               <div className={styles.editField}>
                 <label className={styles.editLabel}>@아이디 <span className={styles.editLabelHint}>영문·숫자·_ 3~20자</span></label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>@</span>
-                  <input className={styles.editInput} style={{ paddingLeft: 28 }}
+                <div className={styles.inputWrap}>
+                  <span className={styles.inputAtPrefix}>@</span>
+                  <input className={`${styles.editInput} ${styles.editInputPadded}`}
                     value={editUsername}
                     onChange={(e) => { setEditUsername(e.target.value); checkUsername(e.target.value) }}
                     placeholder="나만의 아이디" maxLength={20} />
                   {usernameStatus === 'ok' && (
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--teal)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className={styles.inputStatusRight}>
+                      <span className={`${styles.inputStatusIcon} ${styles.inputStatusIconOk}`}>
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.5 10L11 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </span>
-                      <span style={{ fontSize: 11, color: 'var(--teal)', fontWeight: 700 }}>사용 가능</span>
+                      <span className={styles.inputStatusTextOk}>사용 가능</span>
                     </span>
                   )}
                   {usernameStatus === 'taken' && (
-                    <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className={styles.inputStatusRight}>
+                      <span className={`${styles.inputStatusIcon} ${styles.inputStatusIconTaken}`}>
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                       </span>
-                      <span style={{ fontSize: 11, color: 'var(--coral)', fontWeight: 700 }}>이미 사용 중</span>
+                      <span className={styles.inputStatusTextTaken}>이미 사용 중</span>
                     </span>
                   )}
-                  {usernameStatus === 'checking' && (
-                    <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, borderRadius: '50%', border: '2px solid var(--border)', borderTopColor: 'var(--primary)', animation: 'spin 0.7s linear infinite' }} />
-                  )}
+                  {usernameStatus === 'checking' && <span className={styles.inputSpinner} />}
                 </div>
               </div>
 
@@ -285,22 +283,22 @@ export default function ProfilePage() {
 
               <div className={styles.editField}>
                 <label className={styles.editLabel}>생일</label>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <select className={styles.editInput} style={{ flex: 1.2 }} value={editBirthYear}
+                <div className={styles.birthRow}>
+                  <select className={`${styles.editInput} ${styles.birthYear}`} value={editBirthYear}
                     onChange={(e) => setEditBirthYear(e.target.value)}>
                     <option value="">년도</option>
                     {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
                       <option key={y} value={String(y)}>{y}년</option>
                     ))}
                   </select>
-                  <select className={styles.editInput} style={{ flex: 1 }} value={editBirthMonth}
+                  <select className={`${styles.editInput} ${styles.birthField}`} value={editBirthMonth}
                     onChange={(e) => { setEditBirthMonth(e.target.value); setEditBirthDay('') }}>
                     <option value="">월</option>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                       <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>
                     ))}
                   </select>
-                  <select className={styles.editInput} style={{ flex: 1 }} value={editBirthDay}
+                  <select className={`${styles.editInput} ${styles.birthField}`} value={editBirthDay}
                     onChange={(e) => setEditBirthDay(e.target.value)} disabled={!editBirthMonth}>
                     <option value="">일</option>
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
@@ -335,7 +333,7 @@ export default function ProfilePage() {
             : <div className={styles.avatar}>{currentUser.name.charAt(0)}</div>
           }
           <div className={styles.avatarEditOverlay}>{photoUploading ? '⏳' : '📷'}</div>
-          <input type="file" accept="image/*" ref={photoFileRef} style={{ display: 'none' }} onChange={handlePhotoUpload} />
+          <input type="file" accept="image/*" ref={photoFileRef} className={styles.hidden} onChange={handlePhotoUpload} />
         </div>
         <div className={styles.info}>
           <h2 className={styles.name}>{currentUser.name}</h2>
@@ -388,8 +386,8 @@ export default function ProfilePage() {
             { icon: '✅', count: doneTodos,         label: '완료한 할 일' },
           ].map(({ icon, count, label }) => (
             <div key={label} className={styles.journeyItem}>
-              <span className={styles.journeyIcon} style={count === 0 ? { opacity: 0.4 } : {}}>{icon}</span>
-              <span className={styles.journeyCount} style={count === 0 ? { color: 'var(--text-tertiary)' } : {}}>{count}</span>
+              <span className={`${styles.journeyIcon} ${count === 0 ? styles.journeyIconEmpty : ''}`}>{icon}</span>
+              <span className={`${styles.journeyCount} ${count === 0 ? styles.journeyCountEmpty : ''}`}>{count}</span>
               <span className={styles.journeyLabel}>{label}</span>
             </div>
           ))}

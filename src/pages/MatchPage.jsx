@@ -325,13 +325,13 @@ export default function MatchPage() {
                 onClick={() => setSelected(post)}>
                 <div className={styles.postCardTop}>
                   <span className={styles.postEmoji}>{post.projectEmoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className={styles.postCardInfo}>
                     <p className={styles.postTitle}>{post.title}</p>
                     <p className={styles.postMeta}>
                       {post.projectName} · {post.leaderName}
                       {post.deadline && (() => {
                         const diff = calcDday(post.deadline)
-                        return <span style={{ marginLeft: 6, color: diff <= 3 ? 'var(--coral)' : 'var(--text-tertiary)' }}>
+                        return <span className={diff <= 3 ? styles.ddayUrgent : styles.ddayNormal}>
                           · {diff === 0 ? '오늘 마감' : `D-${diff}`}
                         </span>
                       })()}
@@ -373,7 +373,7 @@ export default function MatchPage() {
                     onClick={() => setSelected(post)}>
                     <div className={styles.postCardTop}>
                       <span className={styles.postEmoji}>{post.projectEmoji}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className={styles.postCardInfo}>
                         <p className={styles.postTitle}>{post.title}</p>
                         <p className={styles.postMeta}>{post.projectName} · {post.leaderName}</p>
                       </div>
@@ -411,8 +411,7 @@ export default function MatchPage() {
                   {selected.deadline && (() => {
                     const diff  = calcDday(selected.deadline)
                     const label = diff < 0 ? '마감됨' : diff === 0 ? '오늘 마감' : `D-${diff}`
-                    const color = diff <= 3 ? 'var(--coral)' : 'var(--text-secondary)'
-                    return <p style={{ fontSize: 12, color, marginTop: 2 }}>모집 기한 {selected.deadline} ({label})</p>
+                    return <p className={`${styles.deadlineInfo} ${diff <= 3 ? styles.deadlineUrgent : styles.deadlineNormal}`}>모집 기한 {selected.deadline} ({label})</p>
                   })()}
                 </div>
                 {isMyPost && selected.status !== 'closed' && (
@@ -475,12 +474,12 @@ export default function MatchPage() {
                       {(selected.applicants || []).map((a) => (
                         <div key={a.userId} className={styles.applicantCard}>
                           <div className={styles.applicantAvatar}>{a.userName.charAt(0)}</div>
-                          <div style={{ flex: 1 }}>
+                          <div className={styles.applicantInfo}>
                             <p className={styles.applicantName}>{a.userName}</p>
                             {a.note && <p className={styles.applicantNote}>"{a.note}"</p>}
                             <p className={styles.applicantDate}>{a.appliedAt?.slice(0, 10)}</p>
                           </div>
-                          <div style={{ display: 'flex', gap: 6 }}>
+                          <div className={styles.applicantActions}>
                             {a.status === 'accepted' ? (
                               <span className={styles.acceptedBadge}>합류 완료</span>
                             ) : (
@@ -565,7 +564,7 @@ export default function MatchPage() {
                       placeholder="키워드 입력 후 Enter (예: 영화, 스크립터)"
                     />
                     {formKeywords.length > 0 && (
-                      <div className={styles.skillTags} style={{ marginTop: 6 }}>
+                      <div className={`${styles.skillTags} ${styles.skillTagsMt}`}>
                         {formKeywords.map((k) => (
                           <button key={k} className={`${styles.skillTag} ${styles.skillTagRemove}`}
                             onClick={() => setFormKeywords((prev) => prev.filter((x) => x !== k))}>
@@ -586,7 +585,7 @@ export default function MatchPage() {
                       onClick={() => toggleSkill(s)}>{s}</button>
                   ))}
                 </div>
-                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                <div className={styles.customSkillRow}>
                   <input className={styles.formInput} value={formCustomSkill}
                     onChange={(e) => setFormCustomSkill(e.target.value)}
                     onKeyDown={(e) => {
@@ -599,7 +598,7 @@ export default function MatchPage() {
                     placeholder="직접 입력 후 Enter" />
                 </div>
                 {formSkills.length > 0 && (
-                  <div className={styles.skillTags} style={{ marginTop: 8 }}>
+                  <div className={`${styles.skillTags} ${styles.skillTagsMtMd}`}>
                     {formSkills.map((s) => (
                       <button key={s} className={`${styles.skillTag} ${styles.skillTagRemove}`}
                         onClick={() => setFormSkills((prev) => prev.filter((x) => x !== s))}>
@@ -610,7 +609,7 @@ export default function MatchPage() {
                 )}
               </div>
             </div>
-            {formError && <p style={{ color: 'var(--coral)', fontSize: 12, padding: '0 20px 8px', margin: 0 }}>{formError}</p>}
+            {formError && <p className={styles.formError}>{formError}</p>}
             <div className={styles.formFooter}>
               <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>취소</button>
               <button className={styles.submitBtn} onClick={handleCreatePost}
@@ -633,8 +632,8 @@ export default function MatchPage() {
             <div className={styles.applyModalBody}>
               <p className={styles.applyModalProject}>{applyTarget.projectEmoji} {applyTarget.projectName}</p>
               <p className={styles.applyModalPostTitle}>{applyTarget.title}</p>
-              <div className={styles.formField} style={{ marginTop: 16 }}>
-                <label className={styles.formLabel}>한 줄 자기소개 <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(선택 · 최대 100자)</span></label>
+              <div className={`${styles.formField} ${styles.applyNoteField}`}>
+                <label className={styles.formLabel}>한 줄 자기소개 <span className={styles.formLabelOptional}>(선택 · 최대 100자)</span></label>
                 <textarea
                   className={styles.formTextarea}
                   rows={3}
@@ -643,7 +642,7 @@ export default function MatchPage() {
                   onChange={(e) => setApplyNote(e.target.value)}
                   placeholder="간단한 자기소개나 지원 동기를 적어주세요"
                 />
-                <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'right', marginTop: 4 }}>{applyNote.length}/100</p>
+                <p className={styles.charCount}>{applyNote.length}/100</p>
               </div>
             </div>
             <div className={styles.formFooter}>
@@ -664,11 +663,11 @@ export default function MatchPage() {
       {viewApplicant && (
         <div className={styles.backdrop} onClick={() => setViewApplicant(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.formClose} style={{ alignSelf: 'flex-end', marginBottom: 4 }} onClick={() => setViewApplicant(null)}>✕</button>
+            <button className={`${styles.formClose} ${styles.profileCloseBtn}`} onClick={() => setViewApplicant(null)}>✕</button>
             <div className={styles.profileAvatar}>{viewApplicant.userName.charAt(0)}</div>
             <p className={styles.profileName}>{viewApplicant.userName}</p>
             {profileLoading ? (
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>불러오는 중...</p>
+              <p className={styles.profileLoading}>불러오는 중...</p>
             ) : applicantProfile ? (
               <div className={styles.profileInfo}>
                 {applicantProfile.oneliner && <p className={styles.profileOneliner}>"{applicantProfile.oneliner}"</p>}
@@ -676,9 +675,9 @@ export default function MatchPage() {
                 {applicantProfile.email && <p className={styles.profileDetail}>{applicantProfile.email}</p>}
               </div>
             ) : (
-              <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>프로필 정보가 없어요</p>
+              <p className={styles.profileEmpty}>프로필 정보가 없어요</p>
             )}
-            <button className={styles.submitBtn} style={{ marginTop: 16, width: '100%' }}
+            <button className={`${styles.submitBtn} ${styles.profileJoinBtn}`}
               onClick={() => handleAccept(selected, viewApplicant)}>
               프로젝트에 합류시키기
             </button>
@@ -695,17 +694,13 @@ export default function MatchPage() {
             <h3 className={styles.formModalTitle}>모집 마감</h3>
             <button className={styles.formClose} onClick={() => setConfirmClose(null)}>✕</button>
           </div>
-          <div style={{ padding: '20px 24px 8px' }}>
-            <p style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.7 }}>
-              이 모집글을 마감할까요?
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
-              마감 후에는 새 지원자를 받을 수 없어요.
-            </p>
+          <div className={styles.confirmBody}>
+            <p className={styles.confirmText}>이 모집글을 마감할까요?</p>
+            <p className={styles.confirmSub}>마감 후에는 새 지원자를 받을 수 없어요.</p>
           </div>
           <div className={styles.formFooter}>
             <button className={styles.cancelBtn} onClick={() => setConfirmClose(null)}>취소</button>
-            <button className={styles.submitBtn} style={{ background: 'var(--coral)' }} onClick={doClosePost}>마감하기</button>
+            <button className={`${styles.submitBtn} ${styles.submitBtnDanger}`} onClick={doClosePost}>마감하기</button>
           </div>
         </div>
       </div>

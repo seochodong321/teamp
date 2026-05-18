@@ -42,6 +42,7 @@
 .headerCenter { flex: 1; display: flex; align-items: center; gap: 8px; }
 .roomName { font-size: 15px; font-weight: 700; color: var(--text); }
 .roomMeta { font-size: 12px; color: var(--text-tertiary); }
+.headerSpacer { width: 80px; flex-shrink: 0; }
 .roomMetaBtn { font-size: 12px; color: var(--text-tertiary); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-secondary); transition: all var(--transition-fast); cursor: pointer; }
 .roomMetaBtn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 

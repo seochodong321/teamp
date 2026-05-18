@@ -31,6 +31,7 @@
 .back:hover { background: var(--amber-light); }
 
 .headerCenter { flex: 1; text-align: center; }
+.headerSpacer { width: 80px; flex-shrink: 0; }
 
 .title {
   font-size: 16px;

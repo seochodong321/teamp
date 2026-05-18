@@ -120,6 +120,31 @@
 /* 지원자 자기소개 */
 .applicantNote { font-size: 12px; color: var(--text-secondary); font-style: italic; margin: 2px 0; }
 
+/* inline-style replacements */
+.postCardInfo { flex: 1; min-width: 0; }
+.applicantInfo { flex: 1; }
+.applicantActions { display: flex; gap: 6px; }
+.customSkillRow { display: flex; gap: 6px; margin-top: 8px; }
+.skillTagsMt { margin-top: 6px; }
+.skillTagsMtMd { margin-top: 8px; }
+.formError { color: var(--coral); font-size: 12px; padding: 0 20px 8px; margin: 0; }
+.applyNoteField { margin-top: 16px; }
+.formLabelOptional { color: var(--text-tertiary); font-weight: 400; }
+.charCount { font-size: 11px; color: var(--text-tertiary); text-align: right; margin-top: 4px; }
+.profileCloseBtn { align-self: flex-end; margin-bottom: 4px; }
+.profileLoading { font-size: 13px; color: var(--text-tertiary); }
+.profileEmpty { font-size: 12px; color: var(--text-tertiary); }
+.profileJoinBtn { margin-top: 16px; width: 100%; }
+.confirmBody { padding: 20px 24px 8px; }
+.confirmText { font-size: 14px; color: var(--text); line-height: 1.7; }
+.confirmSub { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; }
+.submitBtnDanger { background: var(--coral) !important; }
+.ddayUrgent { margin-left: 6px; color: var(--coral); }
+.ddayNormal { margin-left: 6px; color: var(--text-tertiary); }
+.deadlineInfo { font-size: 12px; margin-top: 2px; }
+.deadlineUrgent { color: var(--coral); }
+.deadlineNormal { color: var(--text-secondary); }
+
 /* ── 탭 ── */
 .matchTabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 3px; }
 .matchTab {

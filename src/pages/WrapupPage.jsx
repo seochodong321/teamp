@@ -113,7 +113,7 @@ export default function WrapupPage() {
         <div className={styles.headerCenter}>
           <span className={styles.title}>🏁 프로젝트 마무리</span>
         </div>
-        <div style={{ width: 80 }} />
+        <div className={styles.headerSpacer} />
       </div>
 
       {/* 프로젝트 배너 — amber 톤 */}
