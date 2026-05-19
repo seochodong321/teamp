@@ -10,6 +10,17 @@ export default function GuideTab({ onGotoBoard, onGotoManage, onGotoMembers, onG
       </div>
 
       <div className={styles.guideCard}>
+        <div className={styles.guideCardTitle}>🗓️ 3단계 프로젝트 흐름</div>
+        <p className={styles.guideCardBody}>
+          Teamp 프로젝트는 시작일·종료일 기준으로 3단계가 자동 전환돼요.<br /><br />
+          <b>🚀 프리 단계</b> — 시작일 이전 준비 기간. 팀원 초대, 채팅방·마일스톤 세팅을 먼저 해두면 시작과 동시에 바로 달릴 수 있어요.<br />
+          <b>💼 진행 중</b> — 시작일~종료일. 홈 카드의 보라색 바와 D-Day 뱃지로 마감을 체크하세요. D-3 이내엔 빨간색으로 강조돼요.<br />
+          <b>📝 포스트</b> — 종료 후 2주. 회고 작성·피드백 수집·Wrap-up 완성에 집중하세요.<br /><br />
+          홈 카드 하단 3색 상태바(회색·보라·초록)가 현재 어느 단계인지 한눈에 보여줘요.
+        </p>
+      </div>
+
+      <div className={styles.guideCard}>
         <div className={styles.guideCardTitle}>📢 공지하기</div>
         <p className={styles.guideCardBody}>
           게시판 탭 → 글쓰기 → <b>전체 공지</b> 선택 후 등록하면 모든 채팅방에 알림이 자동으로 전송돼요.<br />

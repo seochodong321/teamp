@@ -153,6 +153,21 @@
 .labelHint { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
 .fieldHint { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4; }
 
+.phaseCard { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.phaseCardTop { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.phaseBadge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.phaseBadge_pre     { background: var(--primary-light); color: var(--primary); }
+.phaseBadge_project { background: var(--bg-tertiary); color: var(--text-secondary); }
+.phaseBadge_post    { background: #D1FAE5; color: #059669; }
+.phaseCardDday { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.phaseBarWrap  { position: relative; height: 6px; }
+.phaseBarTrack { height: 100%; border-radius: 3px; display: flex; overflow: hidden; }
+.phaseSegPre   { height: 100%; background: #A0A7C4; flex-shrink: 0; }
+.phaseSegProj  { height: 100%; background: var(--primary); flex-shrink: 0; }
+.phaseSegPost  { height: 100%; background: #64C8A0; }
+.todayMarker   { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: white; border: 2px solid var(--primary); pointer-events: none; }
+.phaseCardHint { font-size: 11px; color: var(--text-tertiary); line-height: 1.4; }
+
 @media (max-width: 600px) {
   .emojiGrid { grid-template-columns: repeat(6, 1fr); }
 }

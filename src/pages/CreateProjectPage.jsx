@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
+import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import styles from './CreateProjectPage.module.css'
 
 const PRESET_CATEGORIES = ['학교', '회사', '스터디', '기타']
@@ -12,6 +13,41 @@ const EMOJI_OPTIONS = [
   '🍕', '☕', '🐶', '🐱', '🌸', '🌟', '🔥', '💎',
   '🎮', '📱', '💻', '🛠️', '📝', '📊', '🗓️', '🎉',
 ]
+
+const PHASE_INFO = {
+  pre:     { icon: '🚀', name: '프리 단계',   hint: '시작일 전 준비 기간이에요. 팀원 초대·채팅방·마일스톤을 미리 세팅해보세요.' },
+  project: { icon: '💼', name: '진행 중',     hint: '시작일이 오늘 이전이에요. 생성하면 바로 프로젝트 단계로 시작해요.' },
+  post:    { icon: '📝', name: '포스트 단계', hint: '종료일이 이미 지났어요. 기록·회고 목적의 프로젝트로 생성돼요.' },
+}
+
+function PhasePreview({ start, end }) {
+  if (!start) return null
+  const today = new Date().toISOString().split('T')[0]
+  const phase = today < start ? 'pre' : (!end || today <= end) ? 'project' : 'post'
+  const info  = PHASE_INFO[phase]
+  const proj  = { projectStartDate: start, projectEndDate: end }
+  const lbl   = end ? getDDayLabel(proj) : null
+  const bar   = end ? getPhaseBar(proj) : null
+  return (
+    <div className={styles.phaseCard}>
+      <div className={styles.phaseCardTop}>
+        <span className={`${styles.phaseBadge} ${styles[`phaseBadge_${phase}`]}`}>{info.icon} {info.name}</span>
+        {lbl && <span className={styles.phaseCardDday}>{lbl.main}{lbl.sub ? ` · ${lbl.sub}` : ''}</span>}
+      </div>
+      {bar && (
+        <div className={styles.phaseBarWrap}>
+          <div className={styles.phaseBarTrack}>
+            <div className={styles.phaseSegPre}  style={{ width: `${bar.prePct}%` }} />
+            <div className={styles.phaseSegProj} style={{ width: `${bar.projPct}%` }} />
+            <div className={styles.phaseSegPost} style={{ flex: 1 }} />
+          </div>
+          <span className={styles.todayMarker} style={{ left: `${bar.pos}%` }} />
+        </div>
+      )}
+      <p className={styles.phaseCardHint}>{info.hint}</p>
+    </div>
+  )
+}
 
 export default function CreateProjectPage() {
   const navigate = useNavigate()
@@ -153,6 +189,7 @@ export default function CreateProjectPage() {
                 )}
               </div>
             </div>
+            <PhasePreview start={projectStartDate} end={projectEndDate} />
             {dateError && <p className={styles.dateErrorMsg}>⚠️ {dateError}</p>}
           </div>
         )}

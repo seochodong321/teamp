@@ -162,7 +162,12 @@ export const createProjectSlice = (set, get) => ({
         email: currentUser.email || '',
         profileId: data.profileId || 'default',
       }],
-      rooms, announcements: [], todos: [], events: [], isPublic: false,
+      rooms, announcements: [], todos: [],
+      events: [
+        ...(pStart ? [{ id: `evt_start_${projectId}`, title: `${data.emoji || '📁'} ${data.name} 시작`, date: pStart, type: 'event', isSystem: true }] : []),
+        ...(pEnd   ? [{ id: `evt_end_${projectId}`,   title: `${data.emoji || '📁'} ${data.name} 마감`, date: pEnd,   type: 'event', isSystem: true }] : []),
+      ],
+      isPublic: false,
     }
     await setDoc(doc(db, 'projects', projectId), project)
     return project
