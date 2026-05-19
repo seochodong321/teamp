@@ -303,6 +303,12 @@ export default function ChatPage() {
             {sharedProjects.length > 0 && (
               <p className={styles.ppShared}>함께한 프로젝트 {sharedProjects.length}개</p>
             )}
+            {pd.username && (
+              <a href={`/u/${pd.username.replace('@', '')}`} target="_blank" rel="noreferrer"
+                className={styles.ppTeamfolio} onClick={(e) => e.stopPropagation()}>
+                팀프폴리오 보기 →
+              </a>
+            )}
             <div className={styles.ppFooter}>
               {isBlocked
                 ? <button className={styles.ppUnblockBtn} onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>차단 해제</button>

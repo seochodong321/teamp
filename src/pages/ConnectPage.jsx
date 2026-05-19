@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ConnectPage.module.css'
@@ -41,11 +41,14 @@ export default function ConnectPage() {
         ...contact,
         affiliation: userData.affiliation || contact.affiliation || '',
         oneliner:    userData.oneliner    || '',
+        username:    userData.username    || '',
       })
-      // 공개 프로젝트 — Firestore 보안규칙 우회, 내가 접근 가능한 공유 프로젝트만
-      const pubs = projects.filter(
-        (p) => p.memberIds?.includes(contact.id) && p.isPublic && !p.isTutorial
-      )
+      // Firestore에서 해당 유저의 공개 프로젝트 직접 조회
+      const projSnap = await getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id)))
+      const pubs = projSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((p) => p.isPublic && !p.isTutorial)
+        .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
       setPubProjects(pubs)
     } catch (e) {
       console.error('[openProfile] 프로필 로드 실패:', e)
@@ -127,6 +130,17 @@ export default function ConnectPage() {
               )}
             </div>
 
+            {profile.username && (
+              <a
+                href={`/u/${profile.username.replace('@', '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.teamfolioLink}
+                onClick={(e) => e.stopPropagation()}
+              >
+                팀프폴리오 보기 →
+              </a>
+            )}
             <button className={styles.dmBtn} onClick={handleDm}>
               💬 1:1 대화하기
             </button>

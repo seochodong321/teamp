@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, serverTimestamp, arrayUnion } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -54,9 +54,10 @@ export default function MatchPage() {
   const [pendingApplyPost, setPendingApplyPost] = useState(null)
 
   // 지원자 프로필 모달
-  const [viewApplicant, setViewApplicant]     = useState(null)
+  const [viewApplicant, setViewApplicant]       = useState(null)
   const [applicantProfile, setApplicantProfile] = useState(null)
-  const [profileLoading, setProfileLoading]   = useState(false)
+  const [applicantProjects, setApplicantProjects] = useState([])
+  const [profileLoading, setProfileLoading]     = useState(false)
 
   // 마감 확인 모달
   const [confirmClose, setConfirmClose] = useState(null) // postId | null
@@ -184,10 +185,20 @@ export default function MatchPage() {
   const handleViewApplicant = async (applicant) => {
     setViewApplicant(applicant)
     setApplicantProfile(null)
+    setApplicantProjects([])
     setProfileLoading(true)
     try {
-      const snap = await getDoc(doc(db, 'users', applicant.userId))
-      setApplicantProfile(snap.exists() ? snap.data() : null)
+      const [userSnap, projSnap] = await Promise.all([
+        getDoc(doc(db, 'users', applicant.userId)),
+        getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', applicant.userId))),
+      ])
+      setApplicantProfile(userSnap.exists() ? userSnap.data() : null)
+      setApplicantProjects(
+        projSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter((p) => p.isPublic && !p.isTutorial)
+          .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
+      )
     } catch {
       setApplicantProfile(null)
     } finally {
@@ -688,6 +699,31 @@ export default function MatchPage() {
                 {applicantProfile.oneliner && <p className={styles.profileOneliner}>"{applicantProfile.oneliner}"</p>}
                 {applicantProfile.affiliation && <p className={styles.profileDetail}>{applicantProfile.affiliation}</p>}
                 {applicantProfile.email && <p className={styles.profileDetail}>{applicantProfile.email}</p>}
+                {applicantProjects.length > 0 && (
+                  <div className={styles.profileProjects}>
+                    <p className={styles.profileProjectsLabel}>공개 프로젝트</p>
+                    {applicantProjects.slice(0, 3).map((p) => (
+                      <div key={p.id} className={styles.profileProjectItem}>
+                        <span>{p.emoji || '📁'}</span>
+                        <span className={styles.profileProjectName}>{p.name}</span>
+                        {p.startDate && <span className={styles.profileProjectDate}>{p.startDate.slice(0, 7)}</span>}
+                      </div>
+                    ))}
+                    {applicantProjects.length > 3 && (
+                      <p className={styles.profileProjectMore}>+{applicantProjects.length - 3}개 더</p>
+                    )}
+                  </div>
+                )}
+                {applicantProfile.username && (
+                  <a
+                    href={`/u/${applicantProfile.username.replace('@', '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={styles.profileTeamfolio}
+                  >
+                    팀프폴리오 보기 →
+                  </a>
+                )}
               </div>
             ) : (
               <p className={styles.profileEmpty}>프로필 정보가 없어요</p>

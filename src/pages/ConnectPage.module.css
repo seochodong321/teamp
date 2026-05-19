@@ -67,5 +67,7 @@
 .pubMeta { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .pubMemo { font-size: 11px; color: var(--primary); font-style: italic; margin-top: 2px; }
 .pubRole { font-size: 13px; flex-shrink: 0; }
+.teamfolioLink { display: block; margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--primary); text-align: center; }
+.teamfolioLink:hover { text-decoration: underline; }
 .dmBtn { width: 100%; margin-top: 12px; padding: 12px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
 .dmBtn:hover { opacity: 0.88; }
