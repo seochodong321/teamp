@@ -542,11 +542,14 @@
 .cardName { font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.2; }
 .dday { font-size: 10.5px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 5px 8px; border-radius: 7px; white-space: nowrap; letter-spacing: -0.01em; }
 .ddayBefore  { background: var(--primary-light); color: var(--primary); }
+.ddayPre     { background: var(--primary-light); color: var(--primary); }
 .ddayStart   { background: #D1FAE5; color: #059669; }
 .ddayNormal  { background: var(--bg-secondary); color: var(--text-secondary); }
 .ddayWarning { background: #FEE2E2; color: #DC2626; }
 .ddayUrgent  { background: var(--amber-light); color: var(--amber); }
 .ddayOver    { background: var(--coral-light); color: var(--coral); }
+.ddayPost    { background: #D1FAE5; color: #059669; }
+.ddaySub     { display: block; font-size: 9px; font-weight: 500; opacity: 0.8; margin-top: 1px; }
 .archivedBadge { font-size: 10.5px; font-weight: 600; background: var(--bg-tertiary); color: var(--text-tertiary); padding: 5px 8px; border-radius: 7px; }
 
 .cardPurpose { font-size: 12.5px; color: var(--text-secondary); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -557,6 +560,12 @@
 .progressValue { font-size: 11px; font-weight: 700; color: var(--text); }
 .progressBar { height: 4px; background: var(--border-light); border-radius: 2px; overflow: hidden; }
 .progressFill { height: 100%; border-radius: 2px; transition: width 0.5s ease; background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
+.phaseBar { position: relative; height: 4px; border-radius: 2px; display: flex; overflow: visible; }
+.phaseSegPre  { height: 100%; background: #A0A7C4; border-radius: 2px 0 0 2px; min-width: 0; }
+.phaseSegProj { height: 100%; background: var(--primary); min-width: 0; }
+.phaseSegPost { height: 100%; background: #64C8A0; border-radius: 0 2px 2px 0; min-width: 0; }
+.phaseSegPre:last-child, .phaseSegProj:last-child { border-radius: 2px; }
+.todayDot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: white; border: 2px solid var(--primary); z-index: 1; pointer-events: none; }
 
 .cardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
 .memberAvatars { display: flex; }

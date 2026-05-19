@@ -151,6 +151,7 @@
   box-shadow: var(--shadow-glow);
 }
 .labelHint { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
+.fieldHint { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4; }
 
 @media (max-width: 600px) {
   .emojiGrid { grid-template-columns: repeat(6, 1fr); }

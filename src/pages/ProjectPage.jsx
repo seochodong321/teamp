@@ -4,6 +4,7 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 import { storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle, COVER_PRESETS } from '../constants.js'
+import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import CalendarInline from '../components/CalendarInline.jsx'
 import TodoBoard from '../components/TodoBoard.jsx'
 import RoomsTab      from './project/RoomsTab.jsx'
@@ -21,7 +22,7 @@ export default function ProjectPage() {
   const tabParam = searchParams.get('tab')
   const {
     projects, currentUser, connects,
-    getProgress, getDday, getVisibleRooms, canManage,
+    getProgress, getVisibleRooms, canManage,
     extendProject, endProject,
     isExpired, setCoverImage, updateProjectInfo, blockedUsers,
     setWeeklyGoalSchedule, addWeeklyGoal,
@@ -73,7 +74,8 @@ export default function ProjectPage() {
   const canInvite    = isLeader || myRole === 'sub-leader'
   const iCanManage   = canManage(project, currentUser.id)
   const progress     = getProgress(project)
-  const dday         = getDday(project.endDate)
+  const ddayLabel    = getDDayLabel(project)
+  const phaseBar     = getPhaseBar(project)
   const expired      = isExpired(project.endDate)
   const visibleRooms = getVisibleRooms(project, currentUser.id)
   const today        = new Date().toISOString().split('T')[0]
@@ -109,8 +111,8 @@ export default function ProjectPage() {
     setSettingEmoji(project.emoji || '')
     setSettingName(project.name || '')
     setSettingPurpose(project.purpose || '')
-    setSettingStart(project.startDate || '')
-    setSettingEnd(project.endDate || '')
+    setSettingStart(project.projectStartDate || project.startDate || '')
+    setSettingEnd(project.projectEndDate || project.endDate || '')
     setShowSettings(true)
   }
 
@@ -120,7 +122,9 @@ export default function ProjectPage() {
     try {
       await updateProjectInfo(projectId, {
         emoji: settingEmoji, name: settingName.trim(),
-        purpose: settingPurpose.trim(), startDate: settingStart, endDate: settingEnd,
+        purpose: settingPurpose.trim(),
+        startDate: settingStart, endDate: settingEnd,
+        projectStartDate: settingStart, projectEndDate: settingEnd,
       })
       setShowSettings(false)
     } finally {
@@ -339,21 +343,29 @@ export default function ProjectPage() {
               {isLeader && (
                 <button className={styles.addCoverBtn} onClick={openSettings} title="프로젝트 설정">⚙️</button>
               )}
-              <span className={`${styles.ddayBadge} ${dday === '기한 초과' ? styles.ddayExpired : dday === 'D-day' ? styles.ddayToday : ''}`}>{dday}</span>
+              <span className={`${styles.ddayBadge} ${styles[ddayLabel.cls] || ''}`}>
+                {ddayLabel.main}
+                {ddayLabel.sub && <span className={styles.ddaySub}>{ddayLabel.sub}</span>}
+              </span>
             </div>
             <div className={styles.progressWrap}>
-              <div className={styles.progressInfo}>
-                <span className={styles.progressLabel}>기간 진행률</span>
-                <span className={styles.progressValue}>{progress}%</span>
-              </div>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 50 ? '#BA7517' : 'var(--primary)' }} />
-              </div>
+              {phaseBar ? (
+                <div className={styles.phaseBar}>
+                  <div className={styles.phaseSegPre}  style={{ width: `${phaseBar.prePct}%` }} />
+                  <div className={styles.phaseSegProj} style={{ width: `${phaseBar.projPct}%` }} />
+                  <div className={styles.phaseSegPost} style={{ width: `${phaseBar.postPct}%` }} />
+                  <span className={styles.todayDot} style={{ left: `${phaseBar.pos}%` }} />
+                </div>
+              ) : (
+                <div className={styles.progressBar}>
+                  <div className={styles.progressFill} style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 50 ? '#BA7517' : 'var(--primary)' }} />
+                </div>
+              )}
             </div>
           </div>
         </div>
         <div className={styles.headerMeta}>
-          <span>📅 {project.startDate} ~ {project.endDate}</span>
+          <span>📅 {project.projectStartDate || project.startDate} ~ {project.projectEndDate || project.endDate}</span>
           <span className={styles.dot}>·</span>
           <span>👥 {project.members.length}명</span>
           <span className={styles.dot}>·</span>

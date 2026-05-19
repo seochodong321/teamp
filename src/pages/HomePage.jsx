@@ -3,28 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
+import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import CreateProjectModal from '../components/CreateProjectModal.jsx'
 import styles from './HomePage.module.css'
 
 const ITEM_ICON = { todo: '✅', event: '📅', milestone: '🏁' }
-
-function getCardBadge(p) {
-  const now   = new Date()
-  const today = now.toISOString().split('T')[0]
-  const { startDate, endDate } = p
-
-  if (startDate && today < startDate) {
-    const diff = Math.round((new Date(startDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
-    return { text: `D-${diff}`, cls: 'ddayBefore' }
-  }
-  if (endDate && today > endDate) return { text: '기한 초과', cls: 'ddayOver' }
-  if (endDate) {
-    const diff = Math.round((new Date(endDate + 'T00:00:00') - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000)
-    if (diff === 0) return { text: 'D-DAY', cls: 'ddayUrgent' }
-    if (diff <= 7)  return { text: `D-${diff}`, cls: 'ddayWarning' }
-  }
-  return { text: '진행중', cls: 'ddayNormal' }
-}
 function relativeTime(iso) {
   if (!iso) return ''
   const diff = Date.now() - new Date(iso).getTime()
@@ -177,7 +160,7 @@ export default function HomePage() {
         const totalActive = active.length
         const totalCollecting = collecting.length
         const pinned = active.find((p) => p.id === pinnedId) || null
-        const pinnedBadge = pinned ? getCardBadge(pinned) : null
+        const pinnedBadge = pinned ? getDDayLabel(pinned) : null
         const today = new Date()
         const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`
         const weekday = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()]
@@ -236,7 +219,7 @@ export default function HomePage() {
                         <div className={styles.todayFeatureName}>{pinned.name}</div>
                         <div className={styles.todayFeatureMeta}>~ {pinned.endDate}</div>
                       </div>
-                      <span className={`${styles.todayPill} ${styles[pinnedBadge.cls] || ''}`}>{pinnedBadge.text}</span>
+                      <span className={`${styles.todayPill} ${styles[pinnedBadge.cls] || ''}`}>{pinnedBadge.main}</span>
                     </div>
                   ) : (
                     <button className={styles.todayFeatureMeta} style={{ textDecoration: 'underline', cursor: 'pointer' }}
@@ -303,7 +286,7 @@ export default function HomePage() {
       {todaySummary.length > 0 && (
         <div className={styles.summaryCard}>
           <div className={styles.summaryCardHead}>
-            <span className={styles.summaryCardTitle}>📅 오늘·내일 마감</span>
+            <span className={styles.summaryCardTitle}>📅 나만의 알림</span>
             <button className={styles.summaryCardLink} onClick={() => navigate('/calendar')}>전체 캘린더 →</button>
           </div>
           {todaySummary.slice(0, 5).map((item, i) => (
@@ -332,9 +315,10 @@ export default function HomePage() {
         const showGroups = leaderActive.length > 0 && memberActive.length > 0
 
         const renderCard = (p) => {
-          const progress = getProgress(p)
-          const badge    = getCardBadge(p)
-          const expired  = isExpired(p.endDate)
+          const progress  = getProgress(p)
+          const badge     = getDDayLabel(p)
+          const phaseBar  = getPhaseBar(p)
+          const expired   = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
           const buzz     = hasBuzz(p)
           const todayStr = new Date().toISOString().split('T')[0]
@@ -392,7 +376,8 @@ export default function HomePage() {
                 </div>
                 <div className={styles.cardHeaderRight}>
                   <span className={`${styles.dday} ${styles[badge.cls] || ''}`}>
-                    {badge.text}
+                    {badge.main}
+                    {badge.sub && <span className={styles.ddaySub}>{badge.sub}</span>}
                   </span>
                   {buzz && <span className={styles.activityDot} />}
                 </div>
@@ -427,14 +412,19 @@ export default function HomePage() {
               )}
 
               <div className={styles.cardProgress}>
-                <div className={styles.progressInfo}>
-                  <span className={styles.progressLabel}>기간 진행률</span>
-                  <span className={styles.progressValue}>{progress}%</span>
-                </div>
-                <div className={styles.progressBar}>
-                  <div className={styles.progressFill}
-                    style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
-                </div>
+                {phaseBar ? (
+                  <div className={styles.phaseBar}>
+                    <div className={styles.phaseSegPre}  style={{ width: `${phaseBar.prePct}%` }} />
+                    <div className={styles.phaseSegProj} style={{ width: `${phaseBar.projPct}%` }} />
+                    <div className={styles.phaseSegPost} style={{ width: `${phaseBar.postPct}%` }} />
+                    <span className={styles.todayDot} style={{ left: `${phaseBar.pos}%` }} />
+                  </div>
+                ) : (
+                  <div className={styles.progressBar}>
+                    <div className={styles.progressFill}
+                      style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
+                  </div>
+                )}
               </div>
               <div className={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.memberAvatars}>

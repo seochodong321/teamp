@@ -23,8 +23,8 @@ export default function CreateProjectModal({ onClose }) {
   const [purpose, setPurpose]               = useState('')
   const [category, setCategory]             = useState('학교')
   const [customCategory, setCustomCategory] = useState('')
-  const [startDate, setStartDate]           = useState('')
-  const [endDate, setEndDate]               = useState('')
+  const [projectStartDate, setProjectStartDate] = useState('')
+  const [projectEndDate, setProjectEndDate]     = useState('')
   const [endTime, setEndTime]               = useState('')
   const [showEndTime, setShowEndTime]       = useState(false)
   const [roomNames, setRoomNames]           = useState(['개발팀'])
@@ -35,19 +35,17 @@ export default function CreateProjectModal({ onClose }) {
   const [showProfileSel, setShowProfileSel] = useState(false)
   const [pendingData, setPendingData]       = useState(null)
 
-  const today = new Date().toISOString().split('T')[0]
   const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
 
   const goNext = async () => {
     if (step === 0) {
       if (!emoji) { alert('이모지를 골라주세요!'); return }
-      if (!name.trim() || !startDate || !endDate) { alert('이름, 시작일, 종료일을 입력해주세요.'); return }
-      if (endDate < today) { setDateError('종료일이 오늘보다 이전이에요.'); return }
-      if (endDate < startDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
+      if (!name.trim() || !projectStartDate || !projectEndDate) { alert('이름, 시작일, 종료일을 입력해주세요.'); return }
+      if (projectStartDate && projectEndDate && projectEndDate < projectStartDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
     if (step === 1) {
-      const data = { name, emoji, purpose, category: finalCategory, startDate, endDate, endTime: endTime || null, roomNames }
+      const data = { name, emoji, purpose, category: finalCategory, projectStartDate, projectEndDate, endTime: endTime || null, roomNames }
       if (profiles.length > 0) { setPendingData(data); setShowProfileSel(true); return }
       await doCreate(data, 'default', null)
       return
@@ -131,12 +129,12 @@ export default function CreateProjectModal({ onClose }) {
                 </div>
                 <div className={styles.dateRow}>
                   <div className={styles.field}>
-                    <label className={styles.label}>시작일 *</label>
-                    <input className={styles.input} type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setDateError('') }} />
+                    <label className={styles.label}>프로젝트 시작일 ⭐</label>
+                    <input className={styles.input} type="date" value={projectStartDate} onChange={(e) => { setProjectStartDate(e.target.value); setDateError('') }} />
                   </div>
                   <div className={styles.field}>
-                    <label className={styles.label}>종료일 *</label>
-                    <input className={`${styles.input} ${dateError ? styles.inputError : ''}`} type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setDateError('') }} />
+                    <label className={styles.label}>프로젝트 종료일 *</label>
+                    <input className={`${styles.input} ${dateError ? styles.inputError : ''}`} type="date" value={projectEndDate} onChange={(e) => { setProjectEndDate(e.target.value); setDateError('') }} />
                     <label className={styles.timeToggle}>
                       <input type="checkbox" checked={showEndTime} onChange={(e) => { setShowEndTime(e.target.checked); if (!e.target.checked) setEndTime('') }} />
                       <span>종료 시간도 지정할게요</span>
@@ -183,7 +181,7 @@ export default function CreateProjectModal({ onClose }) {
                   <button className={styles.linkCopy} onClick={() => navigator.clipboard.writeText(inviteLink).then(() => alert('복사됐어요!'))}>복사</button>
                 </div>
                 <div className={styles.summary}>
-                  {[['프로젝트명', `${emoji} ${created.name}`], ['기간', `${created.startDate} ~ ${created.endDate}`], ['채팅방', `${created.rooms.length}개`]].map(([k, v]) => (
+                  {[['프로젝트명', `${emoji} ${created.name}`], ['기간', `${created.projectStartDate || created.startDate} ~ ${created.projectEndDate || created.endDate}`], ['채팅방', `${created.rooms.length}개`]].map(([k, v]) => (
                     <div key={k} className={styles.summaryRow}>
                       <span className={styles.summaryKey}>{k}</span>
                       <span className={styles.summaryVal}>{v}</span>
