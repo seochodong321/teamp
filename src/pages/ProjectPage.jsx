@@ -351,9 +351,11 @@ export default function ProjectPage() {
             <div className={styles.progressWrap}>
               {phaseBar ? (
                 <div className={styles.phaseBar}>
-                  <div className={styles.phaseSegPre}  style={{ width: `${phaseBar.prePct}%` }} />
-                  <div className={styles.phaseSegProj} style={{ width: `${phaseBar.projPct}%` }} />
-                  <div className={styles.phaseSegPost} style={{ width: `${phaseBar.postPct}%` }} />
+                  <div className={styles.phaseBarTrack}>
+                    <div className={styles.phaseSegPre}  style={{ width: `${phaseBar.prePct}%` }} />
+                    <div className={styles.phaseSegProj} style={{ width: `${phaseBar.projPct}%` }} />
+                    <div className={styles.phaseSegPost} style={{ flex: 1 }} />
+                  </div>
                   <span className={styles.todayDot} style={{ left: `${phaseBar.pos}%` }} />
                 </div>
               ) : (

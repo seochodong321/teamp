@@ -73,21 +73,25 @@ export function getDDayLabel(p) {
 // 3분할 진행률 바 데이터
 // null = 날짜 정보 부족 (폴백: 단순 진행률 바)
 export function getPhaseBar(p) {
-  const { start, end, postEnd, created } = pDates(p)
+  const { start, end, postEnd } = pDates(p)
   if (!start || !end) return null
 
-  const tlStart = created && created < start ? created : start
-  const tlEnd   = postEnd && postEnd > end   ? postEnd  : addDays(end, 14)
+  const todayS = new Date().toISOString().split('T')[0]
+
+  // pre-phase일 땐 오늘을 기준점으로 삼아야 프리 구간이 올바르게 표시됨
+  // 이미 시작한 경우엔 start가 기준점 (pre 구간 = 0)
+  const tlStart = todayS < start ? todayS : start
+  const tlEnd   = postEnd && postEnd > end ? postEnd : addDays(end, 14)
   const total   = Math.max(1, daysBetween(tlStart, tlEnd))
 
   const preDays  = Math.max(0, daysBetween(tlStart, start))
   const projDays = Math.max(0, daysBetween(start, end))
 
-  const prePct  = Math.round((preDays  / total) * 100)
-  const projPct = Math.round((projDays / total) * 100)
+  // Math.floor 사용: 두 값의 합이 100을 넘지 않아 postPct ≥ 0 보장
+  const prePct  = Math.floor((preDays  / total) * 100)
+  const projPct = Math.floor((projDays / total) * 100)
   const postPct = 100 - prePct - projPct
 
-  const todayS  = new Date().toISOString().split('T')[0]
   const elapsed = Math.max(0, daysBetween(tlStart, todayS))
   const pos     = Math.min(100, Math.round((elapsed / total) * 100))
 
