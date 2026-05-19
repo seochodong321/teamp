@@ -10,12 +10,13 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function PublicProfilePage() {
   const { username } = useParams()
-  const [user, setUser]         = useState(null)
-  const [projects, setProjects] = useState([])
+  const [user, setUser]             = useState(null)
+  const [projects, setProjects]     = useState([])   // 공개 프로젝트 (목록 표시용)
+  const [allProjects, setAllProjects] = useState([]) // 전체 참여 프로젝트 (통계용)
   const [flowerTags, setFlowerTags] = useState({})
-  const [loading, setLoading]   = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [copied, setCopied]     = useState(false)
+  const [loading, setLoading]       = useState(true)
+  const [notFound, setNotFound]     = useState(false)
+  const [copied, setCopied]         = useState(false)
 
   // auth 복원 완료 후 쿼리 (새 탭에서 auth가 초기화되기 전에 쿼리가 실행되는 문제 방지)
   useEffect(() => {
@@ -64,13 +65,16 @@ export default function PublicProfilePage() {
         query(collection(db, 'projects'),
           where('memberIds', 'array-contains', userData.id))
       )
-      const pubs = projSnap.docs
+      const all = projSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((p) => p.isPublic && !p.isTutorial)
+        .filter((p) => !p.isTutorial)
         .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
+      const pubs = all.filter((p) => p.isPublic)
+      setAllProjects(all)
       setProjects(pubs)
 
-      const archived = pubs.filter((p) => p.status === 'archived' && p.wrapupId)
+      // 꽃다발 태그: 전체 아카이브 프로젝트 기준
+      const archived = all.filter((p) => p.status === 'archived' && p.wrapupId)
       const tagCounts = {}
       await Promise.all(archived.map(async (p) => {
         try {
@@ -124,11 +128,12 @@ export default function PublicProfilePage() {
     )
   }
 
-  const completedCount    = projects.filter((p) => p.status === 'archived').length
-  const uniqueTeammates   = new Set(
-    projects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
+  // 통계는 전체 참여 프로젝트 기준 (공개 여부 무관)
+  const completedCount  = allProjects.filter((p) => p.status === 'archived').length
+  const uniqueTeammates = new Set(
+    allProjects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
   ).size
-  const totalFeedback     = Object.values(flowerTags).reduce((a, b) => a + b, 0)
+  const totalFeedback   = Object.values(flowerTags).reduce((a, b) => a + b, 0)
   const topFlowers = FLOWER_TAGS
     .filter((t) => flowerTags[t.id])
     .sort((a, b) => (flowerTags[b.id] || 0) - (flowerTags[a.id] || 0))
@@ -216,7 +221,10 @@ export default function PublicProfilePage() {
           <div>
             <p className={styles.secTitle}>프로젝트 이력</p>
             {projects.length === 0 ? (
-              <p className={styles.empty}>공개된 프로젝트가 없어요</p>
+              <p className={styles.empty}>
+                공개 설정된 프로젝트가 없어요<br />
+                <span className={styles.emptyHint}>프로젝트 멤버 탭에서 공개 설정하면 이 곳에 표시돼요</span>
+              </p>
             ) : (
               <div className={styles.projectList}>
                 {projects.map((p) => {
