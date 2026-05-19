@@ -7,8 +7,8 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#6B5CE7",
-  "theme_color": "#6B5CE7",
+  "background_color": "#534AB7",
+  "theme_color": "#534AB7",
   "lang": "ko",
   "categories": ["productivity", "business"],
   "icons": [

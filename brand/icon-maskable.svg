@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <title>Teamp — App icon (main)</title>
+  <title>Teamp — App icon (maskable, safe-zone fitted)</title>
   <style>@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&amp;display=swap');.wm{font-family:'Luckiest Guy','Arial Black',sans-serif;font-size:200px;text-anchor:middle;letter-spacing:-2px;}</style>
   
   <defs>
@@ -9,17 +9,17 @@
       <stop offset="1" stop-color="#7C6FDE"></stop>
     </linearGradient>
     <radialGradient id="hl" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(72 72) rotate(45) scale(320)">
-      <stop offset="0" stop-color="#9A8FF0" stop-opacity="0.5"></stop>
+      <stop offset="0" stop-color="#9A8FF0" stop-opacity="0.4"></stop>
       <stop offset="1" stop-color="#9A8FF0" stop-opacity="0"></stop>
     </radialGradient>
   </defs>
 
-  <rect width="512" height="512" rx="115" fill="url(#bg)"></rect>
-  <rect width="512" height="512" rx="115" fill="url(#hl)"></rect>
-  <rect width="512" height="512" rx="115" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="3"></rect>
+  
+  <rect width="512" height="512" fill="url(#bg)"></rect>
+  <rect width="512" height="512" fill="url(#hl)"></rect>
 
   
-  <g transform="translate(256 316) scale(0.68)">
+  <g transform="translate(256 300) scale(0.55)">
     <g transform="skewX(-10)">
       <text class="wm" x="8" y="8" fill="#1A1450">TEAMP</text>
       <text class="wm" x="6.4" y="6.4" fill="#1A1450">TEAMP</text>
