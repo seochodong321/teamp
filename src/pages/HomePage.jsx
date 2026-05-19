@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useLayoutEffect } from 'react'
+import React, { useState, useMemo, useLayoutEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
@@ -39,13 +39,47 @@ function relativeTime(iso) {
 export default function HomePage() {
   const navigate = useNavigate()
   const {
-    projects, currentUser, invites,
+    projects, currentUser, invites, notifications,
     acceptInvite, declineInvite,
     getProgress, isExpired,
     archiveProject, extendProject,
     hiddenProjects, hideProject,
     pinnedId, setPinnedId,
   } = useStore()
+
+  // 홈 카드 활동 감지 — localStorage에 마지막 클릭 시각 저장
+  const [homeSeen, setHomeSeen] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hp_seen') || '{}') } catch { return {} }
+  })
+
+  // 읽지 않은 알림이 있는 프로젝트 ID 집합
+  const unreadSet = useMemo(() => {
+    const s = new Set()
+    notifications.forEach((n) => { if (!n.read && n.projectId) s.add(n.projectId) })
+    return s
+  }, [notifications])
+
+  // 프로젝트에 새 활동이 있는지 — 읽지 않은 알림 OR 24h 내 새 메시지
+  const hasBuzz = useCallback((p) => {
+    if (unreadSet.has(p.id)) return true
+    const room = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
+      || p.rooms?.find((r) => !r.isDm && r.lastMessageAt)
+    const lastAt = room?.lastMessageAt
+    if (!lastAt) return false
+    if (Date.now() - new Date(lastAt).getTime() > 24 * 3600000) return false
+    const seen = homeSeen[p.id]
+    return !seen || new Date(lastAt) > new Date(seen)
+  }, [unreadSet, homeSeen])
+
+  // 카드 클릭 → "봤다" 기록 후 이동
+  const handleCardNav = useCallback((p) => {
+    setHomeSeen((prev) => {
+      const next = { ...prev, [p.id]: new Date().toISOString() }
+      localStorage.setItem('hp_seen', JSON.stringify(next))
+      return next
+    })
+    navigate(`/project/${p.id}`)
+  }, [navigate])
 
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
   const collecting = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
@@ -302,6 +336,7 @@ export default function HomePage() {
           const badge    = getCardBadge(p)
           const expired  = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
+          const buzz     = hasBuzz(p)
           const todayStr = new Date().toISOString().split('T')[0]
 
           const activeRoom = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
@@ -328,8 +363,10 @@ export default function HomePage() {
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 
           return (
-            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''} ${isRecentlyActive ? styles.cardActive : styles.cardInactive}`}
-              onClick={() => navigate(`/project/${p.id}`)} style={{ cursor: 'pointer' }}>
+            <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''} ${isRecentlyActive ? styles.cardActive : styles.cardInactive} ${buzz ? styles.cardBuzz : ''}`}
+              onClick={() => handleCardNav(p)}>
+              {/* 활동 도트 — 새 메시지/알림이 있을 때 */}
+              {buzz && <span className={styles.activityDot} />}
               {/* 커버 이미지 썸네일 — 설정된 경우만 표시 */}
               {p.coverImage && (
                 <div className={styles.cardCover} style={getCoverStyle(p)}>
@@ -351,7 +388,7 @@ export default function HomePage() {
                   <span className={styles.cardCategory}>{p.category}</span>
                   <h3 className={styles.cardName}>
                     {/* 커버가 없을 때만 이모지를 이름 앞에 표시 */}
-                    {p.emoji && <span style={{ marginRight: 6 }}>{p.emoji}</span>}
+                    {p.emoji && <span className={`${styles.cardEmoji} ${buzz ? styles.emojiPop : ''}`}>{p.emoji}</span>}
                     {p.name}
                   </h3>
                 </div>
