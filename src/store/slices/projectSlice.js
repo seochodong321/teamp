@@ -76,7 +76,10 @@ export const createProjectSlice = (set, get) => ({
     })
   },
 
-  getProgress: (project) => project.status === 'archived' ? 100 : calcProgress(project.startDate, project.endDate),
+  getProgress: (project) => project.status === 'archived' ? 100 : calcProgress(
+    project.projectStartDate || project.startDate,
+    project.projectEndDate   || project.endDate,
+  ),
   getDday: (endDate) => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const end = new Date(endDate + 'T00:00:00')
@@ -140,10 +143,16 @@ export const createProjectSlice = (set, get) => ({
         ...ROOM_COLORS[(i + 1) % ROOM_COLORS.length], isDm: false,
       })),
     ]
+    const pStart = data.projectStartDate || data.startDate || ''
+    const pEnd   = data.projectEndDate   || data.endDate   || ''
+    const postEnd = data.postEndDate || (pEnd ? (() => {
+      const d = new Date(pEnd + 'T00:00:00'); d.setDate(d.getDate() + 14); return d.toISOString().split('T')[0]
+    })() : '')
     const project = {
       id: projectId, inviteCode: projectId,
       name: data.name, emoji: data.emoji || '📁', purpose: data.purpose, category: data.category,
-      startDate: data.startDate, endDate: data.endDate,
+      startDate: pStart, endDate: pEnd,              // 하위 호환
+      projectStartDate: pStart, projectEndDate: pEnd, postEndDate: postEnd,
       status: 'active', leaderId: currentUser.id,
       memberIds: [currentUser.id],
       members: [{

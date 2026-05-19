@@ -109,7 +109,7 @@ export default function HelpPage() {
 
       {/* 흐름 요약 */}
       <div className={styles.flowBar}>
-        {['프로젝트 시작', '→', '팀과 협업', '→', '마무리·랩업'].map((item, i) => (
+        {['프로젝트 시작', '→', '팀과 협업', '→', '마무리·랩업', '→', '팀프폴리오 기록', '→', '새로운 프로젝트'].map((item, i) => (
           <span key={i} className={item === '→' ? styles.flowArrow : styles.flowStep}>{item}</span>
         ))}
       </div>
