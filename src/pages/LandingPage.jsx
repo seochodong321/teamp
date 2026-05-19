@@ -130,7 +130,7 @@ export default function LandingPage() {
           ))}
         </div>
         <div className={styles.heroBadge}>기한이 있는 프로젝트를 위한 협업 플랫폼</div>
-        <img src="/brand/wordmark-main.svg" className={styles.heroWordmark} alt="TEAMP" />
+        <h1 className={styles.heroTitle}>TEAMP</h1>
         <p className={styles.heroTagline}>기여와 관계의 기록</p>
         <p className={styles.heroSub}>
           프로젝트가 끝난 뒤에도 여러분의 노력이<br />

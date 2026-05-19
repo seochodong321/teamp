@@ -282,7 +282,7 @@ export default function ProfilePage() {
               </div>
 
               <div className={styles.editField}>
-                <label className={styles.editLabel}>생일</label>
+                <label className={styles.editLabel}>생년월일</label>
                 <div className={styles.birthRow}>
                   <select className={`${styles.editInput} ${styles.birthYear}`} value={editBirthYear}
                     onChange={(e) => setEditBirthYear(e.target.value)}>
@@ -513,7 +513,7 @@ export default function ProfilePage() {
       {/* 멀티 프로필 */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
-          <h3 className={styles.sectionTitle}>내 프로필</h3>
+          <h3 className={styles.sectionTitle}>멀티프로필</h3>
           <p className={styles.sectionDesc}>소속별로 다른 프로필을 만들어 상황에 맞게 사용해요</p>
         </div>
 
