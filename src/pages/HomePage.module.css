@@ -565,6 +565,40 @@
 .deleteBtn:hover { border-color: #E24B4A; color: #E24B4A; background: #FCEBEB; }
 .deleteConfirmBtn { padding: 9px 20px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 
+/* ── 오늘·내일 일정 요약 카드 ── */
+.summaryCard {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-xs);
+}
+.summaryCardHead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 16px; border-bottom: 1px solid var(--border-light);
+  background: var(--primary-light);
+}
+.summaryCardTitle { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
+.summaryCardLink { font-size: 12px; font-weight: 600; color: var(--primary); transition: opacity 0.15s; }
+.summaryCardLink:hover { opacity: 0.75; }
+.summaryRow {
+  display: flex; align-items: center; gap: 8px; padding: 9px 16px;
+  border-bottom: 1px solid var(--border-light); cursor: pointer;
+  transition: background 0.12s;
+}
+.summaryRow:last-of-type { border-bottom: none; }
+.summaryRow:hover { background: var(--bg-secondary); }
+.summaryRowIcon { font-size: 13px; flex-shrink: 0; }
+.summaryRowLabel { flex: 1; font-size: 13px; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summaryRowProject { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
+.summaryDayBadge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); flex-shrink: 0; }
+.summaryDayToday    { background: var(--coral-soft); color: var(--coral); }
+.summaryDayTomorrow { background: var(--primary-light); color: var(--primary); }
+.summaryMore {
+  display: block; width: 100%; padding: 8px 16px;
+  font-size: 12px; color: var(--text-secondary); text-align: center;
+  border-top: 1px solid var(--border-light); background: var(--bg-secondary);
+  transition: color 0.12s;
+}
+.summaryMore:hover { color: var(--primary); }
+
 /* ── 카드 상태 미리보기 ── */
 .cardPreview { display: flex; flex-direction: column; gap: 4px; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 8px; padding: 8px 10px; margin: 0; }
 .cardPreviewMsg, .cardPreviewTodo { display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; padding: 1px 2px; transition: background 0.12s; }

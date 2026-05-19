@@ -196,6 +196,24 @@
 
 .poolLabel { font-size: 11px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; text-transform: uppercase; padding: 0 2px; }
 
+/* ── 지원 프로필 미리보기 ── */
+.applyProfilePrev {
+  background: var(--bg-secondary); border-radius: var(--radius-md);
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
+  margin-top: 12px;
+}
+.applyProfilePrevLabel { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+.applyProfilePrevRow { display: flex; align-items: center; gap: 10px; }
+.applyProfilePrevAvatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--primary-light); color: var(--primary);
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.applyProfilePrevName { font-size: 14px; font-weight: 600; color: var(--text); }
+.applyProfilePrevDetail { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.applyProfilePrevHint { font-size: 11px; color: var(--primary); }
+
 /* ── 공개 설정 ── */
 .visibilityBtns { display: flex; gap: 8px; }
 .visBtn {

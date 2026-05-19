@@ -632,6 +632,21 @@ export default function MatchPage() {
             <div className={styles.applyModalBody}>
               <p className={styles.applyModalProject}>{applyTarget.projectEmoji} {applyTarget.projectName}</p>
               <p className={styles.applyModalPostTitle}>{applyTarget.title}</p>
+              <div className={styles.applyProfilePrev}>
+                <p className={styles.applyProfilePrevLabel}>리크루터에게 보이는 내 정보</p>
+                <div className={styles.applyProfilePrevRow}>
+                  <div className={styles.applyProfilePrevAvatar}>{currentUser?.name?.charAt(0)}</div>
+                  <div>
+                    <p className={styles.applyProfilePrevName}>{currentUser?.name}</p>
+                    {(currentUser?.affiliation || currentUser?.oneliner) && (
+                      <p className={styles.applyProfilePrevDetail}>{currentUser?.affiliation || currentUser?.oneliner}</p>
+                    )}
+                  </div>
+                </div>
+                {profiles.length > 0 && (
+                  <p className={styles.applyProfilePrevHint}>다음 단계에서 소속 프로필을 선택할 수 있어요</p>
+                )}
+              </div>
               <div className={`${styles.formField} ${styles.applyNoteField}`}>
                 <label className={styles.formLabel}>한 줄 자기소개 <span className={styles.formLabelOptional}>(선택 · 최대 100자)</span></label>
                 <textarea

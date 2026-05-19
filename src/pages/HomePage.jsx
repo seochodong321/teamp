@@ -6,6 +6,8 @@ import { getGreeting } from '../greetings.js'
 import CreateProjectModal from '../components/CreateProjectModal.jsx'
 import styles from './HomePage.module.css'
 
+const ITEM_ICON = { todo: '✅', event: '📅', milestone: '🏁' }
+
 function getCardBadge(p) {
   const now   = new Date()
   const today = now.toISOString().split('T')[0]
@@ -48,6 +50,30 @@ export default function HomePage() {
   const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
   const collecting = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
   const archived   = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
+
+  const todaySummary = useMemo(() => {
+    const t  = new Date().toISOString().split('T')[0]
+    const tm = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+    const items = []
+    for (const p of active) {
+      const base = { pName: p.name, pEmoji: p.emoji, pId: p.id }
+      for (const todo of p.todos || []) {
+        if (todo.status === 'done') continue
+        if (todo.dueDate === t)  items.push({ ...base, type: 'todo', label: todo.title, day: 'today' })
+        if (todo.dueDate === tm) items.push({ ...base, type: 'todo', label: todo.title, day: 'tomorrow' })
+      }
+      for (const ev of p.events || []) {
+        if (ev.date === t)  items.push({ ...base, type: 'event', label: ev.title, day: 'today' })
+        if (ev.date === tm) items.push({ ...base, type: 'event', label: ev.title, day: 'tomorrow' })
+      }
+      for (const ms of p.milestones || []) {
+        if (ms.status === 'done') continue
+        if (ms.targetDate === t)  items.push({ ...base, type: 'milestone', label: ms.title, day: 'today' })
+        if (ms.targetDate === tm) items.push({ ...base, type: 'milestone', label: ms.title, day: 'tomorrow' })
+      }
+    }
+    return items
+  }, [active])
 
   // 홈에서만 .content padding-top 제거 → sticky 헤더가 최상단에 바로 붙게
   useLayoutEffect(() => {
@@ -238,6 +264,31 @@ export default function HomePage() {
           </div>
         </div>
       ))}
+
+      {/* ── 오늘·내일 일정 요약 ── */}
+      {todaySummary.length > 0 && (
+        <div className={styles.summaryCard}>
+          <div className={styles.summaryCardHead}>
+            <span className={styles.summaryCardTitle}>📅 오늘·내일 마감</span>
+            <button className={styles.summaryCardLink} onClick={() => navigate('/calendar')}>전체 캘린더 →</button>
+          </div>
+          {todaySummary.slice(0, 5).map((item, i) => (
+            <div key={i} className={styles.summaryRow} onClick={() => navigate(`/project/${item.pId}`)}>
+              <span className={styles.summaryRowIcon}>{ITEM_ICON[item.type]}</span>
+              <span className={styles.summaryRowLabel}>{item.label}</span>
+              <span className={styles.summaryRowProject}>{item.pEmoji} {item.pName}</span>
+              <span className={`${styles.summaryDayBadge} ${item.day === 'today' ? styles.summaryDayToday : styles.summaryDayTomorrow}`}>
+                {item.day === 'today' ? '오늘' : '내일'}
+              </span>
+            </div>
+          ))}
+          {todaySummary.length > 5 && (
+            <button className={styles.summaryMore} onClick={() => navigate('/calendar')}>
+              +{todaySummary.length - 5}개 더 보기
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── 진행 중 ── */}
       {active.length > 0 && (() => {
