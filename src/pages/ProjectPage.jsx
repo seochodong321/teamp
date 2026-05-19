@@ -13,6 +13,7 @@ import MilestonesTab from './project/MilestonesTab.jsx'
 import MembersTab    from './project/MembersTab.jsx'
 import GuideTab      from './project/GuideTab.jsx'
 import ManageTab     from './project/ManageTab.jsx'
+import TeampMark     from '../components/TeampMark.jsx'
 import styles from './ProjectPage.module.css'
 
 export default function ProjectPage() {
@@ -138,7 +139,7 @@ export default function ProjectPage() {
       {/* ─── 상단 네비게이션 ─── */}
       <div className={styles.topNav}>
         <button className={styles.topNavBack} onClick={() => navigate('/home')}>← 홈</button>
-        <span className={styles.topNavLogo}>Teamp</span>
+        <span className={styles.topNavLogo}><TeampMark size={22}/></span>
         <div style={{ width: 80 }} />
       </div>
 

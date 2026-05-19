@@ -4,6 +4,7 @@ import { collection, getDocs, getDoc, query, where, doc } from 'firebase/firesto
 import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../firebase.js'
 import { FLOWER_TAGS } from '../constants.js'
+import TeampMark from '../components/TeampMark.jsx'
 import styles from './PublicProfilePage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
@@ -112,8 +113,11 @@ export default function PublicProfilePage() {
       <div className={styles.shell}>
         <div className={styles.topBar}>
           <div className={styles.brandBlock}>
-            <span className={styles.brand}>팀프폴리오</span>
-            <span className={styles.brandSub}>기여와 관계의 기록</span>
+            <TeampMark size={28}/>
+            <div className={styles.brandTexts}>
+              <span className={styles.brand}>팀프폴리오</span>
+              <span className={styles.brandSub}>기여와 관계의 기록</span>
+            </div>
           </div>
           <Link to="/home" className={styles.ctaBtn}>팀프 홈으로 →</Link>
         </div>

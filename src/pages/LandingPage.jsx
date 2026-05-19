@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import TeampMark from '../components/TeampMark.jsx'
 import styles from './LandingPage.module.css'
 
 // 스크롤 진입 감지 훅
@@ -105,9 +106,10 @@ export default function LandingPage() {
       {/* ── 고정 네비게이션 ── */}
       <nav className={`${styles.nav} ${scrolled ? styles.navScrolled : ''}`}>
         <div className={styles.navInner}>
-          <span className={styles.navLogo} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-            TEAMP
-          </span>
+          <div className={styles.navLogo} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            <TeampMark size={28}/>
+            <span className={styles.navLogoText}>Teamp</span>
+          </div>
           <div className={styles.navActions}>
             <button className={styles.navLogin} onClick={() => navigate('/login?mode=login')}>로그인</button>
             <button className={styles.navCta} onClick={() => navigate('/login?mode=signup')}>무료로 시작</button>
@@ -128,7 +130,7 @@ export default function LandingPage() {
           ))}
         </div>
         <div className={styles.heroBadge}>기한이 있는 프로젝트를 위한 협업 플랫폼</div>
-        <h1 className={styles.heroTitle}>TEAMP</h1>
+        <img src="/brand/wordmark-main.svg" className={styles.heroWordmark} alt="TEAMP" />
         <p className={styles.heroTagline}>기여와 관계의 기록</p>
         <p className={styles.heroSub}>
           프로젝트가 끝난 뒤에도 여러분의 노력이<br />
@@ -346,7 +348,10 @@ export default function LandingPage() {
       {/* ── 푸터 ── */}
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <span className={styles.footerLogo}>팀프</span>
+          <div className={styles.footerLogo}>
+            <TeampMark size={26}/>
+            <span className={styles.footerLogoText}>Teamp</span>
+          </div>
           <p className={styles.footerTagline}>기여와 관계의 기록</p>
           <p className={styles.footerCopy}>© 2026 Teamp. All rights reserved.</p>
         </div>

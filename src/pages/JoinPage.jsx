@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
+import TeampMark from '../components/TeampMark.jsx'
 import styles from './JoinPage.module.css'
 
 export default function JoinPage() {
@@ -51,8 +52,7 @@ export default function JoinPage() {
       <div className={styles.page}>
         <div className={styles.card}>
           <div className={styles.logo}>
-            <div className={styles.logoMark}>T</div>
-            <h1 className={styles.logoName}>Teamp</h1>
+            <TeampMark size={44}/>
           </div>
           {project ? (
             <>

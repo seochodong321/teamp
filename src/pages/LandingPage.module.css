@@ -29,11 +29,16 @@
   justify-content: space-between;
 }
 .navLogo {
-  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.navLogoText {
+  font-size: 18px;
   font-weight: 800;
   color: #534AB7;
-  cursor: pointer;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 .navActions {
   display: flex;
@@ -113,16 +118,10 @@
   margin-bottom: 28px;
   letter-spacing: 0.2px;
 }
-.heroTitle {
-  font-size: clamp(72px, 15vw, 148px);
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: -6px;
-  background: linear-gradient(135deg, #3b35a0 0%, #7c6fde 60%, #b8aef7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 16px;
+.heroWordmark {
+  width: min(360px, 75vw);
+  display: block;
+  margin: 0 auto 16px;
 }
 .heroTagline {
   font-size: clamp(18px, 3vw, 26px);
@@ -734,14 +733,14 @@
 /* ─── 푸터 ─── */
 .footer { background: #0f0d25; padding: 40px 24px; text-align: center; }
 .footerInner { max-width: 1080px; margin: 0 auto; }
-.footerLogo { font-size: 20px; font-weight: 900; color: #534AB7; display: block; margin-bottom: 8px; }
+.footerLogo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+.footerLogoText { font-size: 18px; font-weight: 800; color: #B8AEF7; letter-spacing: -0.3px; }
 .footerTagline { font-size: 13px; color: #534AB7; opacity: 0.7; margin: 0 0 12px; }
 .footerCopy { font-size: 12px; color: #4a4670; margin: 0; }
 
 /* ─── 반응형 ─── */
 @media (max-width: 768px) {
-  .heroTitle { letter-spacing: -1px; }
-  .heroStats { padding: 12px 16px; gap: 0; }
+.heroStats { padding: 12px 16px; gap: 0; }
   .heroStat { padding: 0 12px; }
   .heroStat strong { font-size: 13px; }
 
