@@ -365,8 +365,6 @@ export default function HomePage() {
           return (
             <div key={p.id} className={`${styles.card} ${expired ? styles.cardExpired : ''} ${p.coverImage ? styles.cardHasCover : ''} ${isRecentlyActive ? styles.cardActive : styles.cardInactive} ${buzz ? styles.cardBuzz : ''}`}
               onClick={() => handleCardNav(p)}>
-              {/* 활동 도트 — 새 메시지/알림이 있을 때 */}
-              {buzz && <span className={styles.activityDot} />}
               {/* 커버 이미지 썸네일 — 설정된 경우만 표시 */}
               {p.coverImage && (
                 <div className={styles.cardCover} style={getCoverStyle(p)}>
@@ -392,9 +390,12 @@ export default function HomePage() {
                     {p.name}
                   </h3>
                 </div>
-                <span className={`${styles.dday} ${styles[badge.cls] || ''}`}>
-                  {badge.text}
-                </span>
+                <div className={styles.cardHeaderRight}>
+                  <span className={`${styles.dday} ${styles[badge.cls] || ''}`}>
+                    {badge.text}
+                  </span>
+                  {buzz && <span className={styles.activityDot} />}
+                </div>
               </div>
               {p.purpose && <p className={styles.cardPurpose}>{p.purpose}</p>}
 
