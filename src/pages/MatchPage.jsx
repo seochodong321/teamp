@@ -85,9 +85,11 @@ export default function MatchPage() {
 
       await Promise.all(snap.docs.map(async (d) => {
         const data = { id: d.id, ...d.data() }
-        // 마감된 모집글은 삭제하지 않고 보관, open 상태의 기한 초과만 삭제
+        // 마감된 모집글은 삭제하지 않고 보관, open 상태의 기한 초과만 삭제 (본인 글만)
         if (!data.deadline || (data.deadline < today && data.status === 'open')) {
-          try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
+          if (data.leaderId === uid) {
+            try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
+          }
           return
         }
         if (data.status === 'open' && !blocked.includes(data.leaderId)) validOpen.push(data)

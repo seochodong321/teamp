@@ -41,7 +41,15 @@ export default function PublicProfilePage() {
         )
       }
       if (userSnap.empty) { setNotFound(true); setLoading(false); return }
-      userData = { id: userSnap.docs[0].id, ...userSnap.docs[0].data() }
+      const raw = userSnap.docs[0].data()
+      userData = {
+        id:          userSnap.docs[0].id,
+        name:        raw.name        || '',
+        username:    raw.username    || '',
+        oneliner:    raw.oneliner    || '',
+        affiliation: raw.affiliation || '',
+        photoURL:    raw.photoURL    || null,
+      }
       setUser(userData)
     } catch (e) {
       console.error('유저 조회 실패:', e)
