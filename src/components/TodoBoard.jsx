@@ -178,7 +178,8 @@ export default function TodoBoard({ project, currentUser }) {
                     <label className={styles.formField}>
                       <span className={styles.formFieldLabel}>마감일</span>
                       <input className={styles.formSelect} type="date" value={editDueDate}
-                        onChange={(e) => setEditDueDate(e.target.value)} />
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                        onClick={(e) => e.target.showPicker?.()} />
                     </label>
                     <div className={styles.formField}>
                       <span className={styles.formFieldLabel}>우선순위</span>
@@ -298,7 +299,8 @@ export default function TodoBoard({ project, currentUser }) {
             <label className={styles.formField}>
               <span className={styles.formFieldLabel}>마감일</span>
               <input className={styles.formSelect} type="date" value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)} />
+                onChange={(e) => setDueDate(e.target.value)}
+                onClick={(e) => e.target.showPicker?.()} />
             </label>
             <div className={styles.formField}>
               <span className={styles.formFieldLabel}>우선순위</span>

@@ -238,7 +238,9 @@ export default function MatchPage() {
         ),
       })
     }
-    fetchPosts()
+    const updated = await fetchPosts()
+    const fresh = updated?.find((p) => p.id === post.id)
+    if (fresh) setSelected(fresh)
   }
 
   const handleClosePost = (postId) => setConfirmClose(postId)
