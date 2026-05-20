@@ -69,6 +69,7 @@ export default function HomePage() {
   const archived   = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
 
   const todaySummary = useMemo(() => {
+    const myId = currentUser?.id
     const t  = new Date().toISOString().split('T')[0]
     const tm = new Date(Date.now() + 86400000).toISOString().split('T')[0]
     const items = []
@@ -76,8 +77,16 @@ export default function HomePage() {
       const base = { pName: p.name, pEmoji: p.emoji, pId: p.id }
       for (const todo of p.todos || []) {
         if (todo.status === 'done') continue
-        if (todo.dueDate === t)  items.push({ ...base, type: 'todo', label: todo.title, day: 'today' })
-        if (todo.dueDate === tm) items.push({ ...base, type: 'todo', label: todo.title, day: 'tomorrow' })
+        const tAssignees = Array.isArray(todo.assignees) ? todo.assignees : (todo.assignee ? [todo.assignee] : [])
+        // 나한테 배정된 것 또는 미배정만 표시
+        if (tAssignees.length > 0 && !tAssignees.includes(myId)) continue
+        // 공동 담당자 이름 (나 제외)
+        const otherNames = tAssignees.length > 1
+          ? tAssignees.filter(id => id !== myId).map(id => p.members?.find(m => m.id === id)?.name).filter(Boolean)
+          : []
+        const push = (day) => items.push({ ...base, type: 'todo', label: todo.title, day, otherNames })
+        if (todo.dueDate === t)  push('today')
+        if (todo.dueDate === tm) push('tomorrow')
       }
       for (const ev of p.events || []) {
         if (ev.date === t)  items.push({ ...base, type: 'event', label: ev.title, day: 'today' })
@@ -90,7 +99,7 @@ export default function HomePage() {
       }
     }
     return items
-  }, [active])
+  }, [active, currentUser?.id])
 
   // 홈에서만 .content padding-top 제거 → sticky 헤더가 최상단에 바로 붙게
   useLayoutEffect(() => {
@@ -293,6 +302,9 @@ export default function HomePage() {
             <div key={i} className={styles.summaryRow} onClick={() => navigate(`/project/${item.pId}`)}>
               <span className={styles.summaryRowIcon}>{ITEM_ICON[item.type]}</span>
               <span className={styles.summaryRowLabel}>{item.label}</span>
+              {item.otherNames?.length > 0 && (
+                <span className={styles.summaryAssignee}>{item.otherNames.join(', ')}</span>
+              )}
               <span className={styles.summaryRowProject}>{item.pEmoji} {item.pName}</span>
               <span className={`${styles.summaryDayBadge} ${item.day === 'today' ? styles.summaryDayToday : styles.summaryDayTomorrow}`}>
                 {item.day === 'today' ? '오늘' : '내일'}

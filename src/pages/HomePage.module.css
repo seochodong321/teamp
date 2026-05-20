@@ -655,6 +655,7 @@
 .summaryRow:hover { background: var(--bg-secondary); }
 .summaryRowIcon { font-size: 13px; flex-shrink: 0; }
 .summaryRowLabel { flex: 1; font-size: 13px; color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summaryAssignee { font-size: 11px; color: var(--primary); background: var(--primary-light); padding: 1px 7px; border-radius: var(--radius-full); flex-shrink: 0; white-space: nowrap; }
 .summaryRowProject { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
 .summaryDayBadge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); flex-shrink: 0; }
 .summaryDayToday    { background: var(--coral-soft); color: var(--coral); }
