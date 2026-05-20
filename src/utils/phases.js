@@ -80,20 +80,21 @@ export function getPhaseBar(p) {
 
   // pre-phase일 땐 오늘을 기준점으로 삼아야 프리 구간이 올바르게 표시됨
   // 이미 시작한 경우엔 start가 기준점 (pre 구간 = 0)
-  const tlStart = todayS < start ? todayS : start
-  const tlEnd   = postEnd && postEnd > end ? postEnd : addDays(end, 14)
-  const total   = Math.max(1, daysBetween(tlStart, tlEnd))
-
+  const tlStart  = todayS < start ? todayS : start
   const preDays  = Math.max(0, daysBetween(tlStart, start))
   const projDays = Math.max(0, daysBetween(start, end))
+  const total    = Math.max(1, preDays + projDays)
 
-  // Math.floor 사용: 두 값의 합이 100을 넘지 않아 postPct ≥ 0 보장
-  const prePct  = Math.floor((preDays  / total) * 100)
-  const projPct = Math.floor((projDays / total) * 100)
-  const postPct = 100 - prePct - projPct
+  // post는 고정 8% 슬리버 — 기간에 관계없이 항상 작게 표시
+  const AVAIL  = 92
+  const prePct  = Math.round((preDays / total) * AVAIL)
+  const projPct = AVAIL - prePct  // 나머지 전부 (반올림 오차 흡수)
 
+  // 오늘 점: post 구간에 있을 때는 pre+proj 끝 지점에 고정
   const elapsed = Math.max(0, daysBetween(tlStart, todayS))
-  const pos     = Math.min(100, Math.round((elapsed / total) * 100))
+  const pos     = todayS > end
+    ? AVAIL
+    : Math.min(AVAIL, Math.round((elapsed / total) * AVAIL))
 
-  return { prePct, projPct, postPct, pos, phase: getCurrentPhase(p) }
+  return { prePct, projPct, postPct: 100 - AVAIL, pos, phase: getCurrentPhase(p) }
 }
