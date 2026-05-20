@@ -26,8 +26,18 @@ export default function ChatToastContainer() {
     }, 260)
   }
 
+  // 모바일: X 누르면 전체 삭제
+  const handleMobileDismiss = (e, id) => {
+    e.stopPropagation()
+    setClosingIds((prev) => new Set([...prev, id]))
+    setTimeout(() => {
+      clearChatToasts()
+      setClosingIds(new Set())
+    }, 260)
+  }
+
   const handleClick = (toast) => {
-    removeChatToast(toast.id)
+    clearChatToasts()
     if (toast.link) navigate(toast.link)
     else navigate(`/project/${toast.projectId}/chat/${toast.roomId}`)
   }
@@ -42,8 +52,8 @@ export default function ChatToastContainer() {
 
   if (!chatToasts.length) return null
 
-  // 모바일: 가장 최신 토스트 1개만 표시
-  const visibleToasts = mobile ? chatToasts.slice(-1) : [...chatToasts].reverse()
+  // 모바일: 가장 최신(index 0) 1개만 표시 — addChatToast가 앞에 prepend하므로 [0]이 최신
+  const visibleToasts = mobile ? chatToasts.slice(0, 1) : [...chatToasts].reverse()
 
   return (
     <div className={styles.container}>
@@ -69,7 +79,10 @@ export default function ChatToastContainer() {
               <p className={styles.toastText}>{toast.text}</p>
             </div>
           </div>
-          <button className={styles.closeBtn} onClick={(e) => handleDismiss(e, toast.id)}>✕</button>
+          <button
+            className={styles.closeBtn}
+            onClick={(e) => mobile ? handleMobileDismiss(e, toast.id) : handleDismiss(e, toast.id)}
+          >✕</button>
         </div>
       ))}
     </div>
