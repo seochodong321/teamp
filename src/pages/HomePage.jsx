@@ -80,11 +80,11 @@ export default function HomePage() {
         const tAssignees = Array.isArray(todo.assignees) ? todo.assignees : (todo.assignee ? [todo.assignee] : [])
         // 나한테 배정된 것 또는 미배정만 표시
         if (tAssignees.length > 0 && !tAssignees.includes(myId)) continue
-        // 공동 담당자 이름 (나 제외)
-        const otherNames = tAssignees.length > 1
-          ? tAssignees.filter(id => id !== myId).map(id => p.members?.find(m => m.id === id)?.name).filter(Boolean)
-          : []
-        const push = (day) => items.push({ ...base, type: 'todo', label: todo.title, day, otherNames })
+        // 담당자 이름 표시 (나 → '나', 다른 사람 → 이름)
+        const allNames = tAssignees.map(id =>
+          id === myId ? '나' : (p.members?.find(m => m.id === id)?.name || '')
+        ).filter(Boolean)
+        const push = (day) => items.push({ ...base, type: 'todo', label: todo.title, day, allNames })
         if (todo.dueDate === t)  push('today')
         if (todo.dueDate === tm) push('tomorrow')
       }
@@ -302,8 +302,8 @@ export default function HomePage() {
             <div key={i} className={styles.summaryRow} onClick={() => navigate(`/project/${item.pId}`)}>
               <span className={styles.summaryRowIcon}>{ITEM_ICON[item.type]}</span>
               <span className={styles.summaryRowLabel}>{item.label}</span>
-              {item.otherNames?.length > 0 && (
-                <span className={styles.summaryAssignee}>{item.otherNames.join(', ')}</span>
+              {item.allNames?.length > 0 && (
+                <span className={styles.summaryAssignee}>{item.allNames.join(' · ')}</span>
               )}
               <span className={styles.summaryRowProject}>{item.pEmoji} {item.pName}</span>
               <span className={`${styles.summaryDayBadge} ${item.day === 'today' ? styles.summaryDayToday : styles.summaryDayTomorrow}`}>
