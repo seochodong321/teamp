@@ -30,6 +30,7 @@ export const createTaskSlice = (set, get) => ({
 
     await txProject(projectId, (data) => ({
       announcements: [ann, ...(data.announcements || [])],
+      lastActivityAt: new Date().toISOString(),
     }))
   },
 
@@ -83,6 +84,7 @@ export const createTaskSlice = (set, get) => ({
 
     await txProject(projectId, (data) => ({
       todos: [...(data.todos || []), todo],
+      lastActivityAt: new Date().toISOString(),
     }))
   },
 
@@ -156,6 +158,7 @@ export const createTaskSlice = (set, get) => ({
 
     await txProject(projectId, (data) => ({
       events: [...(data.events || []), ev].sort((a, b) => a.date.localeCompare(b.date)),
+      lastActivityAt: new Date().toISOString(),
     }))
   },
 
@@ -182,6 +185,7 @@ export const createTaskSlice = (set, get) => ({
     }
     await txProject(projectId, (data) => ({
       milestones: [...(data.milestones || []), ms],
+      lastActivityAt: new Date().toISOString(),
     }))
   },
 

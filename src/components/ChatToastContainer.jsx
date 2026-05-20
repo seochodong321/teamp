@@ -1,12 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatToastContainer.module.css'
+
+const isMobile = () => window.innerWidth <= 768
 
 export default function ChatToastContainer() {
   const { chatToasts, removeChatToast, clearChatToasts } = useStore()
   const navigate = useNavigate()
   const [closingIds, setClosingIds] = useState(new Set())
+  const [mobile, setMobile] = useState(isMobile)
+
+  useEffect(() => {
+    const handler = () => setMobile(isMobile())
+    window.addEventListener('resize', handler, { passive: true })
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   const handleDismiss = (e, id) => {
     e.stopPropagation()
@@ -33,15 +42,17 @@ export default function ChatToastContainer() {
 
   if (!chatToasts.length) return null
 
+  // 모바일: 가장 최신 토스트 1개만 표시
+  const visibleToasts = mobile ? chatToasts.slice(-1) : [...chatToasts].reverse()
+
   return (
     <div className={styles.container}>
-      {chatToasts.length >= 2 && (
+      {!mobile && chatToasts.length >= 2 && (
         <button className={styles.clearAll} onClick={handleClearAll}>
           전체 삭제 ✕
         </button>
       )}
-      {/* 새 토스트가 맨 아래에서 위로 쌓이도록 역순 렌더 */}
-      {[...chatToasts].reverse().map((toast) => (
+      {visibleToasts.map((toast) => (
         <div
           key={toast.id}
           className={`${styles.toast} ${closingIds.has(toast.id) ? styles.toastClosing : ''}`}

@@ -42,12 +42,12 @@ export default function HomePage() {
     return s
   }, [notifications])
 
-  // 프로젝트에 새 활동이 있는지 — 읽지 않은 알림 OR 24h 내 새 메시지
+  // 프로젝트에 새 활동이 있는지 — 읽지 않은 알림 OR 24h 내 새 메시지/활동
   const hasBuzz = useCallback((p) => {
     if (unreadSet.has(p.id)) return true
     const room = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
       || p.rooms?.find((r) => !r.isDm && r.lastMessageAt)
-    const lastAt = room?.lastMessageAt
+    const lastAt = p.lastActivityAt || room?.lastMessageAt
     if (!lastAt) return false
     if (Date.now() - new Date(lastAt).getTime() > 24 * 3600000) return false
     const seen = homeSeen[p.id]

@@ -456,17 +456,29 @@ export default function ChatPage() {
           // 시스템 알림
           if (isSystem || msg.type === 'notify') {
             const isLeaveMsg = isDm && otherLeft && msg.text?.includes('퇴장')
+            const sn = msg.senderName || ''
+            const isAnn   = sn.includes('공지')
+            const isTodo  = sn.includes('할 일')
+            const isEvent = sn.includes('일정')
+            const isRich  = isAnn || isTodo || isEvent
             return (
               <React.Fragment key={msg.id}>
                 {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
-                <div className={styles.systemMsg}>
-                  <span>{msg.text}</span>
-                  {isLeaveMsg && (
-                    <button className={styles.reinviteBtn} onClick={handleReinvite}>
-                      다시 초대하기
-                    </button>
-                  )}
-                </div>
+                {isRich ? (
+                  <div className={[styles.notifyCard, isAnn ? styles.notifyAnn : isTodo ? styles.notifyTodo : styles.notifyEvent].join(' ')}>
+                    <span className={styles.notifyCardIcon}>{isAnn ? '📢' : isTodo ? '✅' : '📅'}</span>
+                    <span className={styles.notifyCardText}>{msg.text}</span>
+                  </div>
+                ) : (
+                  <div className={styles.systemMsg}>
+                    <span>{msg.text}</span>
+                    {isLeaveMsg && (
+                      <button className={styles.reinviteBtn} onClick={handleReinvite}>
+                        다시 초대하기
+                      </button>
+                    )}
+                  </div>
+                )}
               </React.Fragment>
             )
           }

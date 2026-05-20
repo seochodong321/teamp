@@ -6,6 +6,14 @@
   from { transform: translateY(0);    opacity: 1; }
   to   { transform: translateY(100%); opacity: 0; }
 }
+@keyframes slideFromTop {
+  from { transform: translateY(-110%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes slideToTop {
+  from { transform: translateY(0);     opacity: 1; }
+  to   { transform: translateY(-110%); opacity: 0; }
+}
 
 .container {
   position: fixed;
@@ -19,16 +27,22 @@
   align-items: flex-end;
 }
 
-/* 모바일: 탭바(60px) + 여백 위 */
+/* 모바일: 화면 상단, 최신 1개만 */
 @media (max-width: 768px) {
   .container {
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px) + 12px);
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
+    bottom: unset;
     left: 12px;
     right: 12px;
     align-items: stretch;
   }
-  .toast { max-width: 100%; min-width: unset; }
-  .clearAll { align-self: flex-end; }
+  .toast {
+    max-width: 100%;
+    min-width: unset;
+    animation: slideFromTop 0.28s ease;
+  }
+  .toastClosing { animation: slideToTop 0.26s ease forwards; }
+  .clearAll { display: none; }
 }
 
 .clearAll {

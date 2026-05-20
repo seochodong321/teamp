@@ -64,9 +64,10 @@ export default function CalendarPage() {
         add(t.dueDate, { type: 'todo', label: t.title, color, projectName: p.name, projectId: p.id, done: false })
       })
 
-      // 이벤트 & 마일스톤: 전체 표시
+      // 이벤트: 나만 보는 일정은 내 것만 표시
       p.events?.forEach((e) => {
         if (!e.date) return
+        if (e.isPersonal && e.createdBy !== currentUser?.id) return
         add(e.date, { type: 'event', label: e.title, color, projectName: p.name, projectId: p.id })
       })
       p.milestones?.forEach((m) => {

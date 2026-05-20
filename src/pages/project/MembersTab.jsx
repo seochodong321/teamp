@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../../firebase.js'
 import { useStore } from '../../store/useStore.js'
 import styles from '../ProjectPage.module.css'
 
@@ -14,6 +16,9 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
   const { sendProjectInvite, getOrCreateDmRoom, leaveOrDeleteProject } = useStore()
 
   const [profileMember, setProfileMember] = useState(null)
+  const [profileExtra, setProfileExtra]   = useState(null)   // { oneliner, username }
+  const [profilePubs, setProfilePubs]     = useState([])
+  const [profileLoading, setProfileLoading] = useState(false)
   const [inviteCopied, setInviteCopied]   = useState(false)
   const [sentInvites, setSentInvites]     = useState({})
   const [showLeave, setShowLeave]         = useState(false)
@@ -40,42 +45,86 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
     setSentInvites((prev) => ({ ...prev, [connect.id]: result?.alreadySent ? 'sent' : result?.success ? 'sent' : 'error' }))
   }
 
+  const openProfile = async (member) => {
+    setProfileMember(member)
+    setProfileExtra(null)
+    setProfilePubs([])
+    setProfileLoading(true)
+    try {
+      const userSnap = await getDoc(doc(db, 'users', member.id))
+      const ud = userSnap.exists() ? userSnap.data() : {}
+      setProfileExtra({ oneliner: ud.oneliner || '', username: ud.username || '' })
+      const projSnap = await getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', member.id)))
+      setProfilePubs(
+        projSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          .filter((p) => p.isPublic && !p.isTutorial)
+          .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
+      )
+    } catch {}
+    setProfileLoading(false)
+  }
+
   const handleDm = async (member) => {
     setProfileMember(null)
-    const room = await getOrCreateDmRoom(project.id, member.id, member.name)
-    if (room) navigate(`/project/${project.id}/chat/${room.id}`)
+    try {
+      const room = await getOrCreateDmRoom(project.id, member.id, member.name)
+      if (room) navigate(`/project/${project.id}/chat/${room.id}`)
+    } catch (e) {
+      console.error('[DM]', e)
+    }
   }
 
   return (
     <div className={styles.section}>
       {/* 멤버 프로필 모달 */}
       {profileMember && (
-        <div className={styles.backdrop} onClick={() => setProfileMember(null)}>
+        <div className={styles.backdrop} onClick={() => { setProfileMember(null); setProfileExtra(null); setProfilePubs([]) }}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.profileClose} onClick={() => setProfileMember(null)}>✕</button>
-            <div className={styles.profileAvatar}>{(profileMember.id === currentUser.id ? (currentUser.name || profileMember.name) : profileMember.name).charAt(0)}</div>
-            <h3 className={styles.profileName}>{profileMember.id === currentUser.id ? (currentUser.name || profileMember.name) : profileMember.name}</h3>
+            <button className={styles.profileClose} onClick={() => { setProfileMember(null); setProfileExtra(null); setProfilePubs([]) }}>✕</button>
+            <div className={styles.profileAvatar}>{(profileMember.id === currentUser.id ? currentUser.name : profileMember.name).charAt(0)}</div>
+            <h3 className={styles.profileName}>{profileMember.id === currentUser.id ? currentUser.name : profileMember.name}</h3>
             <span className={styles.profileRole}>{ROLE_LABEL[profileMember.role]}</span>
-            <div className={styles.profileInfo}>
-              {profileMember.affiliation && (
-                <div className={styles.profileRow}>
-                  <span className={styles.profileKey}>소속</span>
-                  <span className={styles.profileVal}>{profileMember.affiliation}</span>
-                </div>
-              )}
-              {profileMember.email && (
-                <div className={styles.profileRow}>
-                  <span className={styles.profileKey}>이메일</span>
-                  <span className={styles.profileVal}>{profileMember.email}</span>
-                </div>
-              )}
-              {profileMember.memo && (
-                <div className={styles.profileRow}>
-                  <span className={styles.profileKey}>역할</span>
-                  <span className={styles.profileVal}>"{profileMember.memo}"</span>
+            {profileExtra?.oneliner && <p className={styles.profileOneliner}>"{profileExtra.oneliner}"</p>}
+            {profileMember.affiliation && <p className={styles.profileAffil}>{profileMember.affiliation}</p>}
+            {profileMember.email && <p className={styles.profileEmail}>{profileMember.email}</p>}
+            {profileMember.memo && (
+              <div className={styles.memoBox}>
+                <span className={styles.memoLabel}>{project.name}</span>
+                <p className={styles.memoText}>"{profileMember.memo}"</p>
+              </div>
+            )}
+            <div className={styles.pubProjectsSection}>
+              <p className={styles.pubProjectsLabel}>공개 프로젝트</p>
+              {profileLoading ? (
+                <p className={styles.pubLoading}>불러오는 중...</p>
+              ) : profilePubs.length === 0 ? (
+                <p className={styles.pubEmpty}>공개된 프로젝트가 없어요</p>
+              ) : (
+                <div className={styles.pubList}>
+                  {profilePubs.map((p) => {
+                    const mem = p.members?.find((m) => m.id === profileMember.id)
+                    return (
+                      <div key={p.id} className={styles.pubItem}>
+                        <span className={styles.pubEmoji}>{p.emoji || '📁'}</span>
+                        <div className={styles.pubInfo}>
+                          <p className={styles.pubName}>{p.name}</p>
+                          <p className={styles.pubMeta}>{p.category} · {p.startDate} ~ {p.endDate}</p>
+                          {mem?.memo && <p className={styles.pubMemo}>"{mem.memo}"</p>}
+                        </div>
+                        <span className={styles.pubRole}>
+                          {mem?.role === 'leader' ? '👑' : mem?.role === 'sub-leader' ? '⭐' : '팀원'}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
+            {profileExtra?.username && (
+              <a href={`/u/${profileExtra.username.replace('@','')}`} target="_blank" rel="noreferrer" className={styles.teamfolioLink} onClick={(e) => e.stopPropagation()}>
+                팀프폴리오 보기 →
+              </a>
+            )}
             {profileMember.id !== currentUser.id && (
               <button className={styles.dmBtn} onClick={() => handleDm(profileMember)}>
                 💬 1:1 대화하기
@@ -122,7 +171,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
       <p className={styles.hint}>멤버를 클릭하면 프로필을 볼 수 있어요</p>
       <div className={styles.memberGrid}>
         {project.members.map((m) => (
-          <div key={m.id} className={styles.memberCard} onClick={() => setProfileMember(m)}>
+          <div key={m.id} className={styles.memberCard} onClick={() => openProfile(m)}>
             <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
             <div className={styles.memberInfo}>
               <p className={styles.memberName}>
