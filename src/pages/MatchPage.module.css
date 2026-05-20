@@ -75,6 +75,9 @@
 .acceptBtn { padding: 5px 12px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; transition: opacity 0.15s; }
 .acceptBtn:hover { opacity: 0.9; }
 .acceptedBadge { font-size: 11px; color: var(--teal); font-weight: 600; }
+.heldBadge { font-size: 11px; color: var(--text-tertiary); font-weight: 600; }
+.holdBtn { padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-secondary); background: var(--bg); transition: all 0.15s; }
+.holdBtn:hover { border-color: #999; color: var(--text); }
 
 /* 모집글 작성 모달 */
 .backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }

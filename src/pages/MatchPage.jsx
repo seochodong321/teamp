@@ -227,6 +227,20 @@ export default function MatchPage() {
     alert(`${applicant.userName} 님이 프로젝트에 합류했어요!`)
   }
 
+  const handleHold = async (post, applicant) => {
+    const postRef  = doc(db, 'matchPosts', post.id)
+    const postSnap = await getDoc(postRef)
+    if (postSnap.exists()) {
+      const data = postSnap.data()
+      await updateDoc(postRef, {
+        applicants: data.applicants.map((a) =>
+          a.userId === applicant.userId ? { ...a, status: 'held' } : a
+        ),
+      })
+    }
+    fetchPosts()
+  }
+
   const handleClosePost = (postId) => setConfirmClose(postId)
 
   const doClosePost = async () => {
@@ -495,9 +509,12 @@ export default function MatchPage() {
                           <div className={styles.applicantActions}>
                             {a.status === 'accepted' ? (
                               <span className={styles.acceptedBadge}>합류 완료</span>
+                            ) : a.status === 'held' ? (
+                              <span className={styles.heldBadge}>보류</span>
                             ) : (
                               <>
                                 <button className={styles.profileBtn} onClick={() => handleViewApplicant(a)}>프로필</button>
+                                <button className={styles.holdBtn} onClick={() => handleHold(selected, a)}>보류</button>
                                 <button className={styles.acceptBtn} onClick={() => handleAccept(selected, a)}>합류</button>
                               </>
                             )}
