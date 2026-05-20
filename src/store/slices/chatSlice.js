@@ -153,9 +153,15 @@ export const createChatSlice = (set, get) => ({
     const roomId = `dm_${dmKey}`
     const dmRef  = doc(db, 'dmRooms', roomId)
 
-    const dmSnap = await getDoc(dmRef)
+    // getDoc: 문서가 없을 때 rules에서 permission denied가 날 수 있음 → 폴백으로 생성
+    let dmSnap = null
+    try {
+      dmSnap = await getDoc(dmRef)
+    } catch (e) {
+      console.warn('[DM] getDoc 실패 — 신규 생성 시도:', e.code)
+    }
 
-    if (dmSnap.exists()) {
+    if (dmSnap?.exists()) {
       const data    = { id: roomId, ...dmSnap.data() }
       const leftArr = data.left || []
       const hadLeft = leftArr.length > 0
