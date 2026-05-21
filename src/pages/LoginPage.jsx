@@ -35,16 +35,11 @@ export default function LoginPage() {
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
   const [authReady, setAuthReady]         = useState(false)
 
-  // 약관 동의 — 이미 동의한 기기는 다시 보지 않음
-  const alreadyAgreed = !!localStorage.getItem('teamp-terms-agreed')
-  const [agreedTerms,      setAgreedTerms]      = useState(alreadyAgreed)
-  const [agreedPrivacy,    setAgreedPrivacy]     = useState(alreadyAgreed)
+  // 약관 동의 — 회원가입 시에만 표시
+  const [agreedTerms,      setAgreedTerms]      = useState(false)
+  const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
   const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
-  const canProceed = agreedTerms && agreedPrivacy
-
-  const saveAgreement = () => {
-    localStorage.setItem('teamp-terms-agreed', 'true')
-  }
+  const canSignup = agreedTerms && agreedPrivacy
 
   // Firebase Auth 초기화 대기 — 기존 세션 복원 전에 로그인 폼이 깜빡이는 현상 방지
   useEffect(() => {
@@ -58,8 +53,6 @@ export default function LoginPage() {
 
   // ── 소셜 로그인 공통 핸들러 (Google / Apple / Kakao 등 재사용)
   const handleSocialLogin = async (provider) => {
-    if (!canProceed) return
-    saveAgreement()
     setLoading(true)
     setError('')
 
@@ -100,13 +93,12 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (!canProceed) { setError('이용약관 및 개인정보처리방침에 동의해주세요.'); return }
     if (!email.trim())       { setError('이메일을 입력해주세요.'); return }
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 해요.'); return }
     if (mode === 'signup') {
       if (!name.trim()) { setError('이름을 입력해주세요.'); return }
+      if (!canSignup) { setError('이용약관 및 개인정보처리방침에 동의해주세요.'); return }
     }
-    saveAgreement()
     setLoading(true)
     try {
       // 자동 로그인 여부에 따라 세션 지속성 설정
@@ -266,8 +258,8 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* 약관 동의 — 미동의 상태일 때만 표시 */}
-            {!alreadyAgreed && (
+            {/* 약관 동의 — 회원가입 시에만 표시 */}
+            {mode === 'signup' && (
               <div className={styles.agreeSection}>
                 <label className={styles.agreeRow}>
                   <input type="checkbox" checked={agreedTerms}
@@ -298,14 +290,14 @@ export default function LoginPage() {
 
             {error && <p className={styles.error}>{error}</p>}
 
-            <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading || !canProceed}>
+            <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading || (mode === 'signup' && !canSignup)}>
               {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
             </button>
           </form>
 
           {/* ── 소셜 로그인 ── */}
           <div className={styles.dividerOr}><span>또는</span></div>
-          <button type="button" className={styles.socialBtn} onClick={() => handleSocialLogin(new GoogleAuthProvider())} disabled={loading || !canProceed}>
+          <button type="button" className={styles.socialBtn} onClick={() => handleSocialLogin(new GoogleAuthProvider())} disabled={loading}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 13.652 17.64 11.345 17.64 9.2z"/>
               <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
