@@ -253,7 +253,7 @@ export default function BoardTab({ project, currentUser, isLeader, defaultView =
                         placeholder="대댓글을 입력하세요..."
                         autoFocus
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddReply(comment.id) }
+                          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleAddReply(comment.id) }
                           if (e.key === 'Escape') { setReplyingTo(null); setReplyText('') }
                         }}
                       />
@@ -274,7 +274,7 @@ export default function BoardTab({ project, currentUser, isLeader, defaultView =
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="댓글을 입력하세요..."
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddComment() }
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleAddComment() }
                 }}
               />
               <button className={styles.cmtSubmitBtn} disabled={!commentText.trim()}
