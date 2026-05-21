@@ -1,111 +1,375 @@
 .page {
+  display: flex;
   min-height: 100dvh;
+}
+
+/* ── 왼쪽 브랜드 영역 ── */
+.left {
+  position: relative;
+  flex: 0 0 45%;
+  background: linear-gradient(150deg, #3C3489 0%, #534AB7 40%, #7B6FD4 80%, #9B8EE8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
-  padding: 24px 16px;
+  padding: 48px 40px;
+  overflow: hidden;
 }
 
-.card {
-  width: 100%;
-  max-width: 400px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 40px 32px 32px;
+.leftInner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
+  gap: 32px;
+  max-width: 360px;
+  width: 100%;
+}
+
+.brand {
+  display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.logo {
-  margin-bottom: 4px;
-}
-
-.iconWrap {
-  margin: 8px 0 4px;
-}
-
-.title {
+.brandName {
   font-size: 20px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+  display: block;
+}
+
+.brandTagline {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+  display: block;
+  margin-top: 2px;
+}
+
+.envelope {
+  display: flex;
+  align-items: center;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.headline {
+  font-size: 34px;
   font-weight: 800;
-  color: var(--text);
-  text-align: center;
+  color: white;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
   margin: 0;
+}
+
+.subCopy {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.85;
+  margin: 0;
+}
+
+.subCopy strong {
+  color: white;
+  font-weight: 600;
+}
+
+/* 단계 표시 */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.stepDone {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.stepActive {
+  color: white;
+  font-weight: 700;
+}
+
+.stepDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.stepDone .stepDot {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.stepActive .stepDot {
+  background: white;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  max-width: 28px;
+}
+
+/* 데코 원 */
+.decorCircle1 {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  top: -80px;
+  right: -80px;
+}
+
+.decorCircle2 {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  bottom: -60px;
+  left: -60px;
+}
+
+/* ── 오른쪽 카드 영역 ── */
+.right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 40px 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobileLogoRow {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mobileName {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
   letter-spacing: -0.02em;
 }
 
-.desc {
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cardTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.cardDesc {
   font-size: 14px;
   color: var(--text-secondary);
-  text-align: center;
   line-height: 1.75;
   margin: 0;
 }
 
-.emailBadge {
-  font-weight: 700;
+.spamHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* 이메일 박스 */
+.emailBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-light);
+  border-radius: var(--radius-md);
+}
+
+.emailIcon { flex-shrink: 0; }
+
+.emailAddr {
+  font-size: 14px;
+  font-weight: 600;
   color: var(--primary);
   word-break: break-all;
 }
 
-.hint {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
+/* 피드백 메시지 */
 .message {
   font-size: 13px;
   color: var(--primary);
-  text-align: center;
   background: var(--primary-soft);
   border-radius: var(--radius-sm);
-  padding: 8px 14px;
-  margin: 4px 0;
-  width: 100%;
-  box-sizing: border-box;
+  padding: 10px 14px;
+  margin: 0;
+  line-height: 1.6;
 }
 
-.primaryBtn {
-  width: 100%;
-  padding: 13px;
+.messageError {
+  color: var(--coral);
+  background: rgba(255, 100, 100, 0.08);
+}
+
+/* 메일함 바로가기 버튼 */
+.mailBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 20px;
   background: var(--primary);
-  color: #fff;
+  color: white;
   font-size: 15px;
   font-weight: 700;
-  border: none;
   border-radius: var(--radius-md);
-  cursor: pointer;
-  margin-top: 8px;
+  text-decoration: none;
   transition: opacity 0.15s;
 }
-.primaryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.secondaryBtn {
+.mailBtn:hover { opacity: 0.9; }
+
+.externalIcon { opacity: 0.7; margin-left: 2px; }
+
+/* 인증 완료 버튼 */
+.primaryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-strong);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.primaryBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 2px 0;
+}
+
+/* 재발송 버튼 */
+.resendBtn {
   width: 100%;
   padding: 11px;
   background: transparent;
-  color: var(--primary);
-  font-size: 14px;
-  font-weight: 600;
-  border: 1px solid var(--primary-light);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
-.secondaryBtn:hover:not(:disabled) { background: var(--primary-soft); }
-.secondaryBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.resendBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.resendBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 취소 버튼 */
 .cancelBtn {
   background: none;
   border: none;
   color: var(--text-tertiary);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
-  padding: 4px 8px;
-  margin-top: 4px;
+  padding: 4px;
+  text-align: center;
+  transition: color 0.15s;
 }
+
 .cancelBtn:hover { color: var(--text-secondary); }
+
+/* ── 모바일 ── */
+@media (max-width: 768px) {
+  .page { flex-direction: column; }
+
+  .left {
+    flex: none;
+    padding: 32px 24px 28px;
+    min-height: auto;
+  }
+
+  .leftInner { gap: 20px; }
+
+  .envelope { display: none; }
+
+  .headline { font-size: 26px; }
+
+  .subCopy { font-size: 14px; }
+
+  .right { padding: 32px 20px 40px; }
+
+  .mobileLogoRow { display: flex; }
+
+  .cardTitle { font-size: 20px; }
+}
