@@ -102,5 +102,5 @@ export const TERMS_DATA = {
       ],
     },
   ],
-  contact: 'seobomin524@gmail.com',
+  contact: 'info@teamp.kr',
 }

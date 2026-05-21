@@ -70,10 +70,10 @@ export const PRIVACY_DATA = {
         '개인정보 처리에 관한 업무를 총괄하고 관련 불만 처리 및 피해 구제를 위해 아래와 같이 개인정보 보호 책임자를 지정합니다.',
       ],
       items: [
-        '담당: 서보민',
-        '이메일: seobomin524@gmail.com',
+        '담당: 팀프 개인정보 보호 책임자',
+        '이메일: info@teamp.kr',
       ],
     },
   ],
-  contact: 'seobomin524@gmail.com',
+  contact: 'info@teamp.kr',
 }

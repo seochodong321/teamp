@@ -58,7 +58,7 @@ export const GUIDELINES_DATA = {
       ],
     },
   ],
-  contact: 'seobomin524@gmail.com',
+  contact: 'info@teamp.kr',
   cultureSection: {
     heading: '7. 우리가 만들고 싶은 문화',
     paragraphs: [
