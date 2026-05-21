@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [name, setName]   = useState('')
   const [email, setEmail] = useState(() => localStorage.getItem('teamp-saved-email') || '')
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading]         = useState(false)
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
@@ -118,6 +119,7 @@ export default function LoginPage() {
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 해요.'); return }
     if (mode === 'signup') {
       if (!name.trim()) { setError('이름을 입력해주세요.'); return }
+      if (password !== passwordConfirm) { setError('비밀번호가 일치하지 않아요.'); return }
     }
     setLoading(true)
     try {
@@ -243,9 +245,9 @@ export default function LoginPage() {
 
           <div className={styles.tabs}>
             <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`}
-              onClick={() => { setMode('login');  setError('') }}>로그인</button>
+              onClick={() => { setMode('login');  setError(''); setPasswordConfirm('') }}>로그인</button>
             <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
-              onClick={() => { setMode('signup'); setError('') }}>회원가입</button>
+              onClick={() => { setMode('signup'); setError(''); setPasswordConfirm('') }}>회원가입</button>
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -267,6 +269,20 @@ export default function LoginPage() {
               <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="8자 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
             </div>
+            {mode === 'signup' && (
+              <div className={styles.field}>
+                <label className={styles.label}>비밀번호 확인 *</label>
+                <input className={`${styles.input} ${passwordConfirm && password !== passwordConfirm ? styles.inputError : ''}`}
+                  type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="비밀번호를 한 번 더 입력해주세요" autoComplete="new-password" disabled={loading} />
+                {passwordConfirm && password !== passwordConfirm && (
+                  <span className={styles.fieldError}>비밀번호가 일치하지 않아요</span>
+                )}
+                {passwordConfirm && password === passwordConfirm && password.length >= 8 && (
+                  <span className={styles.fieldOk}>비밀번호가 일치해요</span>
+                )}
+              </div>
+            )}
 
             {/* 로그인 옵션 (로그인 모드 전용) */}
             {mode === 'login' && (
@@ -312,7 +328,7 @@ export default function LoginPage() {
           <p className={styles.switchText}>
             {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
             <button className={styles.switchBtn} type="button"
-              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError('') }}>
+              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setPasswordConfirm('') }}>
               {mode === 'login' ? '회원가입' : '로그인'}
             </button>
           </p>

@@ -232,6 +232,9 @@ export default function SetupUsernamePage() {
                 {' '}동의 <span className={styles.agreeOptional}>(선택)</span>
               </span>
             </label>
+            {!canSignup && (
+              <p className={styles.agreeHint}>필수 항목에 모두 동의해야 가입할 수 있어요.</p>
+            )}
           </div>
 
           {error && <p className={styles.error}>{error}</p>}
