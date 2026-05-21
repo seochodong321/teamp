@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -63,6 +63,41 @@ export default function WrapupPage() {
 
   const getFeedbackFromMe = (toUserId) =>
     wrapup?.feedbacks?.find((f) => f.fromUserId === currentUser?.id && f.toUserId === toUserId)
+
+  // 자주 나온 키워드 — 할 일·마일스톤·공지·회고 텍스트에서 추출
+  const topKeywords = useMemo(() => {
+    if (!project || !wrapup) return []
+    const STOP = new Set([
+      '이','가','은','는','을','를','의','에','에서','으로','로','도','만','이다','있다','없다',
+      '하다','했다','할','것','수','때','더','잘','해','안','또','그','이번','우리','팀',
+      '프로젝트','활동','같은','같이','있어','없어','너무','정말','많이','조금','아직','계속',
+      '그리고','하지만','그래서','때문에','위해','통해','대해','관련','사용','진행','완료',
+      '추가','기능','작업','회의','내용','결과','방향','목표','계획',
+    ])
+    const raw = [
+      ...(project.todos || []).map((t) => t.title),
+      ...(project.milestones || []).map((m) => m.title),
+      ...(project.announcements || []).map((a) => `${a.title} ${a.content}`),
+      ...(wrapup.reflections || []).map((r) => r.text),
+    ].join(' ')
+    const counts = {}
+    raw.split(/[\s\n,.!?~·:()\[\]"']+/).forEach((w) => {
+      if (w.length < 2 || STOP.has(w) || /^[0-9]+$/.test(w)) return
+      counts[w] = (counts[w] || 0) + 1
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([word, count]) => ({ word, count }))
+  }, [project, wrapup])
+
+  const fmtKorDate = (dateStr) => {
+    if (!dateStr) return ''
+    const d = new Date(dateStr + 'T00:00:00')
+    return `${d.getMonth() + 1}월 ${d.getDate()}일`
+  }
+  const fmtKorTime = (timeStr) => {
+    if (!timeStr) return ''
+    const [h, m] = timeStr.split(':').map(Number)
+    return `${h >= 12 ? '오후' : '오전'} ${h > 12 ? h - 12 : h === 0 ? 12 : h}:${String(m).padStart(2, '0')}`
+  }
 
   const getMyFeedbacksFor = (userId) =>
     wrapup?.feedbacks?.filter((f) => f.toUserId === userId) || []
@@ -191,18 +226,6 @@ export default function WrapupPage() {
                   )}
                 </div>
 
-                {wrapup.highlights?.mostActiveUserName && (
-                  <div className={styles.highlight}>
-                    <div className={styles.highlightItem}>
-                      <span className={styles.highlightIcon}>🏆</span>
-                      <div>
-                        <p className={styles.highlightLabel}>가장 활발한 팀원</p>
-                        <p className={styles.highlightName}>{wrapup.highlights.mostActiveUserName}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* 마일스톤 여정 */}
                 {(() => {
                   const milestones = project.milestones || []
@@ -262,6 +285,88 @@ export default function WrapupPage() {
         {/* ── 회고 탭 ── */}
         {tab === 'reflection' && (
           <div className={styles.reflectionTab}>
+            {/* 팀 인사이트 */}
+            {wrapup && (
+              wrapup.highlights?.mostActiveUserName ||
+              wrapup.highlights?.busiestDay ||
+              wrapup.highlights?.latestNightActivity ||
+              wrapup.highlights?.activityTrend ||
+              topKeywords.length > 0
+            ) && (
+              <div className={styles.insightSection}>
+                <h3 className={styles.sectionTitle}>이번 프로젝트 돌아보기</h3>
+                <div className={styles.insightGrid}>
+                  {wrapup.highlights?.mostActiveUserName && (
+                    <div className={styles.insightCard}>
+                      <span className={styles.insightIcon}>🏆</span>
+                      <p className={styles.insightLabel}>가장 활발한 팀원</p>
+                      <p className={styles.insightValue}>{wrapup.highlights.mostActiveUserName}</p>
+                    </div>
+                  )}
+                  {wrapup.highlights?.busiestDay && (
+                    <div className={styles.insightCard}>
+                      <span className={styles.insightIcon}>🔥</span>
+                      <p className={styles.insightLabel}>가장 뜨거웠던 날</p>
+                      <p className={styles.insightValue}>{fmtKorDate(wrapup.highlights.busiestDay.date)}</p>
+                      <p className={styles.insightSub}>{wrapup.highlights.busiestDay.count}개 메시지</p>
+                    </div>
+                  )}
+                  {wrapup.highlights?.latestNightActivity && (
+                    <div className={styles.insightCard}>
+                      <span className={styles.insightIcon}>🌙</span>
+                      <p className={styles.insightLabel}>밤까지 활동한 날</p>
+                      <p className={styles.insightValue}>{fmtKorDate(wrapup.highlights.latestNightActivity.date)}</p>
+                      <p className={styles.insightSub}>{fmtKorTime(wrapup.highlights.latestNightActivity.time)}까지</p>
+                    </div>
+                  )}
+                  {wrapup.highlights?.activityTrend && (
+                    <div className={`${styles.insightCard} ${styles.insightCardWide}`}>
+                      <span className={styles.insightIcon}>📈</span>
+                      <p className={styles.insightLabel}>에너지 흐름</p>
+                      <div className={styles.trendBar}>
+                        {[
+                          { label: '전반', val: wrapup.highlights.activityTrend.firstHalf, cls: styles.trendFill },
+                          { label: '후반', val: wrapup.highlights.activityTrend.secondHalf, cls: `${styles.trendFill} ${styles.trendFillSecond}` },
+                        ].map(({ label, val, cls }) => {
+                          const total = Math.max(
+                            wrapup.highlights.activityTrend.firstHalf + wrapup.highlights.activityTrend.secondHalf, 1
+                          )
+                          return (
+                            <div key={label} className={styles.trendHalf}>
+                              <span className={styles.trendHalfLabel}>{label}</span>
+                              <div className={styles.trendTrack}>
+                                <div className={cls} style={{ width: `${Math.round((val / total) * 100)}%` }} />
+                              </div>
+                              <span className={styles.trendCount}>{val}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {wrapup.highlights.activityTrend.firstHalf !== wrapup.highlights.activityTrend.secondHalf && (
+                        <p className={styles.insightSub}>
+                          {wrapup.highlights.activityTrend.secondHalf > wrapup.highlights.activityTrend.firstHalf
+                            ? '후반으로 갈수록 더 활발해졌어요 🚀'
+                            : '초반에 더 열정적으로 달렸어요 💪'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {topKeywords.length > 0 && (
+                  <div className={styles.keywordSection}>
+                    <p className={styles.insightLabel}>자주 나온 키워드</p>
+                    <div className={styles.keywordRow}>
+                      {topKeywords.map(({ word, count }) => (
+                        <span key={word} className={styles.keywordChip}>
+                          {word}<span className={styles.keywordCount}>{count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {isMember && (
               <div className={styles.myReflection}>
                 <h3 className={styles.sectionTitle}>내 회고 작성</h3>

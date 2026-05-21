@@ -663,6 +663,111 @@
 .msBadge_done    { background: var(--teal-light); color: var(--teal); }
 .msBadge_delayed { background: var(--amber-light); color: var(--amber); }
 
+/* ── 회고 탭 — 인사이트 섹션 ── */
+.insightSection {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow-xs);
+}
+
+.insightGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.insightCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.insightCardWide { grid-column: span 2; }
+
+.insightIcon { font-size: 18px; margin-bottom: 2px; }
+
+.insightLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.insightValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.insightSub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* 에너지 흐름 트렌드 바 */
+.trendBar { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px; }
+
+.trendHalf { display: flex; align-items: center; gap: 8px; }
+
+.trendHalfLabel { font-size: 11px; color: var(--text-tertiary); width: 26px; flex-shrink: 0; }
+
+.trendTrack {
+  flex: 1;
+  height: 8px;
+  background: var(--border-light);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trendFill {
+  height: 100%;
+  background: var(--amber);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  min-width: 4px;
+}
+
+.trendFillSecond { background: var(--primary); }
+
+.trendCount { font-size: 11px; color: var(--text-tertiary); width: 24px; text-align: right; flex-shrink: 0; }
+
+/* 키워드 섹션 */
+.keywordSection { border-top: 1px solid var(--border-light); padding-top: 12px; }
+
+.keywordRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.keywordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-light);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-dark);
+}
+
+.keywordCount {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--primary-light);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+}
+
 @media (max-width: 600px) {
   .tagGrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .banner { flex-wrap: wrap; gap: 10px; }

@@ -20,6 +20,8 @@ export const createWrapupSlice = (set, get) => ({
     let totalFiles = 0
     const messageSenderCount = {}
 
+    const messagesByDate = {}  // { 'YYYY-MM-DD': { count, latestTime } }
+
     const snaps = await Promise.all(
       allRoomIds.map((rid) =>
         getDocs(collection(db, 'rooms', rid, 'messages')).catch(() => null)
@@ -33,17 +35,47 @@ export const createWrapupSlice = (set, get) => ({
         if (msg.type === 'file') totalFiles++
         if (msg.senderId && msg.senderId !== 'system') {
           messageSenderCount[msg.senderId] = (messageSenderCount[msg.senderId] || 0) + 1
+          const date = msg.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || null
+          const time = msg.time || null
+          if (date) {
+            if (!messagesByDate[date]) messagesByDate[date] = { count: 0, latestTime: '00:00' }
+            messagesByDate[date].count++
+            if (time && time > messagesByDate[date].latestTime) messagesByDate[date].latestTime = time
+          }
         }
       })
     })
 
-    const totalTodos    = project.todos?.length ?? 0
+    const totalTodos     = project.todos?.length ?? 0
     const completedTodos = project.todos?.filter((t) => t.status === 'done').length ?? 0
 
     const mostActiveUserId   = Object.keys(messageSenderCount).sort(
       (a, b) => (messageSenderCount[b] || 0) - (messageSenderCount[a] || 0)
     )[0] || null
     const mostActiveUserName = project.members.find((m) => m.id === mostActiveUserId)?.name || null
+
+    // 인사이트 — 활발했던 날
+    const dateEntries = Object.entries(messagesByDate)
+    const busiestEntry = [...dateEntries].sort((a, b) => b[1].count - a[1].count)[0]
+    const busiestDay = busiestEntry ? { date: busiestEntry[0], count: busiestEntry[1].count } : null
+
+    // 인사이트 — 밤까지 활동한 날 (22:00 이후)
+    const lateEntry = dateEntries
+      .filter(([, v]) => v.latestTime >= '22:00')
+      .sort((a, b) => b[1].latestTime.localeCompare(a[1].latestTime))[0]
+    const latestNightActivity = lateEntry ? { date: lateEntry[0], time: lateEntry[1].latestTime } : null
+
+    // 인사이트 — 전반·후반 에너지 흐름
+    let activityTrend = null
+    if (project.startDate && project.endDate && dateEntries.length > 0) {
+      const mid = (new Date(project.startDate).getTime() + new Date(project.endDate).getTime()) / 2
+      let firstHalf = 0, secondHalf = 0
+      dateEntries.forEach(([date, { count }]) => {
+        if (new Date(date).getTime() <= mid) firstHalf += count
+        else secondHalf += count
+      })
+      activityTrend = { firstHalf, secondHalf }
+    }
 
     const feedbackDeadline = collectFeedback
       ? new Date(Date.now() + feedbackDuration * 24 * 60 * 60 * 1000).toISOString()
@@ -59,6 +91,9 @@ export const createWrapupSlice = (set, get) => ({
         mostActiveUserId, mostActiveUserName,
         mostTodoCompletedUserId: null, mostTodoCompletedUserName: null,
         mostConnectedUserId: null, mostConnectedUserName: null,
+        busiestDay,
+        latestNightActivity,
+        activityTrend,
       },
       members: project.members.map((m) => ({ userId: m.id, name: m.name, role: m.role })),
       reflections: [],
