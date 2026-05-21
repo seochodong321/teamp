@@ -317,7 +317,7 @@ export default function Layout() {
             <span className={styles.footerDot}>·</span>
             <NavLink to="/privacy" className={styles.footerLink}>개인정보처리방침</NavLink>
             <span className={styles.footerDot}>·</span>
-            <span>© 2025 Teamp. All rights reserved.</span>
+            <span>© 2026 Teamp. All rights reserved.</span>
           </span>
         </footer>
 

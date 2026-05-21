@@ -147,7 +147,7 @@ export default function CreateProjectModal({ onClose }) {
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>프로젝트 이름 *</label>
-                  <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="예) 2025 졸업작품" />
+                  <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="예) 2026 졸업작품" />
                 </div>
                 <div className={styles.field}>
                   <label className={styles.label}>목적 / 설명</label>
