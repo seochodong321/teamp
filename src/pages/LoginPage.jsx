@@ -4,7 +4,7 @@ import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-  sendEmailVerification,
+  sendEmailVerification, sendPasswordResetEmail,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -12,6 +12,20 @@ import { useStore } from '../store/useStore.js'
 import styles from './LoginPage.module.css'
 import TeampMark from '../components/TeampMark.jsx'
 import Spinner from '../components/Spinner.jsx'
+
+function getPasswordStrength(pw) {
+  if (!pw) return null
+  let score = 0
+  if (pw.length >= 8)  score++
+  if (pw.length >= 12) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[a-z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  if (score <= 2) return { level: 'weak',   label: '약함' }
+  if (score <= 4) return { level: 'medium', label: '보통' }
+  return              { level: 'strong',  label: '강함' }
+}
 
 const FEATURES = [
   { icon: '💬', text: '채팅 · 할 일 · 캘린더 · 게시판' },
@@ -43,6 +57,11 @@ export default function LoginPage() {
   const [emailAlreadyInUse, setEmailAlreadyInUse] = useState(false)
   const resendTimerRef = React.useRef(null)
 
+  // 비밀번호 재설정
+  const [showForgot, setShowForgot]   = useState(false)
+  const [forgotSent, setForgotSent]   = useState(false)
+  const [forgotLoading, setForgotLoading] = useState(false)
+
   const startResendCooldown = () => {
     clearInterval(resendTimerRef.current)
     setResendCooldown(60)
@@ -52,6 +71,20 @@ export default function LoginPage() {
   }
 
   useEffect(() => () => clearInterval(resendTimerRef.current), [])
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) { setError('이메일을 입력해주세요.'); return }
+    setForgotLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, email.trim())
+      setForgotSent(true)
+      setError('')
+    } catch (e) {
+      setError(e.code === 'auth/user-not-found' ? '등록되지 않은 이메일이에요.' : '재설정 메일 발송 중 오류가 발생했어요.')
+    } finally {
+      setForgotLoading(false)
+    }
+  }
 
   const handleResendVerification = async () => {
     if (resendCooldown > 0) return
@@ -279,6 +312,19 @@ export default function LoginPage() {
               <label className={styles.label}>비밀번호 *</label>
               <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 placeholder="8자 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
+              {mode === 'signup' && password.length > 0 && (() => {
+                const s = getPasswordStrength(password)
+                return (
+                  <div className={styles.strengthRow}>
+                    <div className={styles.strengthBar}>
+                      <div className={`${styles.strengthSegment} ${s.level !== 'weak' ? styles.strengthFilled : ''}`} data-level={s.level} />
+                      <div className={`${styles.strengthSegment} ${s.level === 'medium' || s.level === 'strong' ? styles.strengthFilled : ''}`} data-level={s.level} />
+                      <div className={`${styles.strengthSegment} ${s.level === 'strong' ? styles.strengthFilled : ''}`} data-level={s.level} />
+                    </div>
+                    <span className={`${styles.strengthLabel} ${styles['strengthLabel_' + s.level]}`}>{s.label}</span>
+                  </div>
+                )
+              })()}
             </div>
             {mode === 'signup' && (
               <div className={styles.field}>
@@ -297,18 +343,39 @@ export default function LoginPage() {
 
             {/* 로그인 옵션 (로그인 모드 전용) */}
             {mode === 'login' && (
-              <div className={styles.optRow}>
-                <label className={styles.optItem}>
-                  <input type="checkbox" checked={rememberEmail}
-                    onChange={(e) => setRememberEmail(e.target.checked)} />
-                  <span>아이디 저장</span>
-                </label>
-                <label className={styles.optItem}>
-                  <input type="checkbox" checked={autoLogin}
-                    onChange={(e) => setAutoLogin(e.target.checked)} />
-                  <span>자동 로그인</span>
-                </label>
-              </div>
+              <>
+                <div className={styles.optRow}>
+                  <label className={styles.optItem}>
+                    <input type="checkbox" checked={rememberEmail}
+                      onChange={(e) => setRememberEmail(e.target.checked)} />
+                    <span>아이디 저장</span>
+                  </label>
+                  <label className={styles.optItem}>
+                    <input type="checkbox" checked={autoLogin}
+                      onChange={(e) => setAutoLogin(e.target.checked)} />
+                    <span>자동 로그인</span>
+                  </label>
+                  <button type="button" className={styles.forgotLink}
+                    onClick={() => { setShowForgot((v) => !v); setForgotSent(false); setError('') }}>
+                    비밀번호 잊으셨나요?
+                  </button>
+                </div>
+                {showForgot && (
+                  <div className={styles.forgotBox}>
+                    {forgotSent ? (
+                      <p className={styles.forgotSuccess}>재설정 메일을 보냈어요! 받은 편지함을 확인해주세요.</p>
+                    ) : (
+                      <>
+                        <p className={styles.forgotDesc}>가입한 이메일로 비밀번호 재설정 링크를 보내드려요.</p>
+                        <button type="button" className={styles.forgotBtn}
+                          onClick={handleForgotPassword} disabled={forgotLoading}>
+                          {forgotLoading ? '발송 중...' : '재설정 메일 보내기'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             {error && <p className={styles.error}>{error}</p>}

@@ -32,6 +32,7 @@ const HelpPage          = lazy(() => import('./pages/HelpPage.jsx'))
 const MessagesPage      = lazy(() => import('./pages/MessagesPage.jsx'))
 const CalendarPage      = lazy(() => import('./pages/CalendarPage.jsx'))
 const PublicProfilePage = lazy(() => import('./pages/PublicProfilePage.jsx'))
+const AdminPage         = lazy(() => import('./pages/AdminPage.jsx'))
 
 // 오늘 생일인 팀원 감지 → 전체방 케이크 메시지 + Firestore 알림 전송
 // birthdayLogs/{YYYY}_{memberId}_{projectId} 로 중복 방지
@@ -512,6 +513,7 @@ export default function App() {
 
           {/* 인증된 레이아웃 (pathless) */}
           <Route element={<PrivateRoute ready={ready}><Layout /></PrivateRoute>}>
+            <Route path="/admin"                           element={<AdminPage />} />
             <Route path="/home"                            element={<HomePage />} />
             <Route path="/project/:projectId"              element={<ProjectPage />} />
             <Route path="/project/:projectId/chat/:roomId" element={<ChatPage />} />

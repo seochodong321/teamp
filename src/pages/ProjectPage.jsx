@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../firebase.js'
@@ -14,6 +14,7 @@ import MembersTab    from './project/MembersTab.jsx'
 import GuideTab      from './project/GuideTab.jsx'
 import ManageTab     from './project/ManageTab.jsx'
 import TeampMark     from '../components/TeampMark.jsx'
+import ReportModal   from '../components/ReportModal.jsx'
 import styles from './ProjectPage.module.css'
 
 export default function ProjectPage() {
@@ -51,6 +52,9 @@ export default function ProjectPage() {
   const [settingStart, setSettingStart]         = useState('')
   const [settingEnd, setSettingEnd]             = useState('')
   const [settingSaving, setSettingSaving]       = useState(false)
+
+  // 신고
+  const [showReport, setShowReport] = useState(false)
 
   // 게시판 탭 초기 상태 (가이드 탭 → 게시판 탭 공지 쓰기 진입 시 사용)
   const [boardKey, setBoardKey]               = useState(0)
@@ -344,6 +348,7 @@ export default function ProjectPage() {
               {isLeader && (
                 <button className={styles.addCoverBtn} onClick={openSettings} title="프로젝트 설정">⚙️</button>
               )}
+              <button className={styles.reportProjectBtn} onClick={() => setShowReport(true)} title="프로젝트 신고">🚩</button>
               <span className={`${styles.ddayBadge} ${styles[ddayLabel.cls] || ''}`}>
                 {ddayLabel.main}
                 {ddayLabel.sub && <span className={styles.ddaySub}>{ddayLabel.sub}</span>}
@@ -528,6 +533,15 @@ export default function ProjectPage() {
 
       {tab === 'manage' && iCanManage && (
         <ManageTab project={project} currentUser={currentUser} isLeader={isLeader} />
+      )}
+
+      {showReport && (
+        <ReportModal
+          type="project"
+          targetId={project.id}
+          targetName={project.name}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </div>
   )

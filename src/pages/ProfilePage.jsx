@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
+import { signOut, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, getDoc, updateDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
@@ -85,6 +85,21 @@ export default function ProfilePage() {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   const [deleting, setDeleting]               = useState(false)
   const [dangerOpen, setDangerOpen]           = useState(false)
+  const [pwResetSent, setPwResetSent]         = useState(false)
+  const [pwResetLoading, setPwResetLoading]   = useState(false)
+
+  const handleSendPasswordReset = async () => {
+    if (!currentUser.email || !auth.currentUser) return
+    setPwResetLoading(true)
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email)
+      setPwResetSent(true)
+    } catch {
+      showError('비밀번호 재설정 메일 발송 중 오류가 발생했어요.')
+    } finally {
+      setPwResetLoading(false)
+    }
+  }
 
   const openNewProfile = () => {
     setEditingProfile(null)
@@ -656,6 +671,26 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* 비밀번호 변경 (이메일 계정 전용) */}
+      {currentUser.email && auth.currentUser?.providerData?.[0]?.providerId === 'password' && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.sectionTitle}>비밀번호 변경</h3>
+          </div>
+          <div className={styles.resetPwRow}>
+            <div>
+              <p className={styles.resetPwDesc}>
+                <strong>{currentUser.email}</strong>으로 재설정 링크를 보내드려요.
+              </p>
+              {pwResetSent && <p className={styles.resetPwSuccess}>✓ 메일을 보냈어요. 받은 편지함을 확인해주세요.</p>}
+            </div>
+            <button className={styles.resetPwBtn} onClick={handleSendPasswordReset} disabled={pwResetLoading || pwResetSent}>
+              {pwResetSent ? '발송 완료' : pwResetLoading ? '발송 중...' : '재설정 메일 보내기'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 계정 탈퇴 — 아코디언 */}
       <div className={`${styles.dangerZone} ${dangerOpen ? styles.dangerZoneOpen : ''}`}>

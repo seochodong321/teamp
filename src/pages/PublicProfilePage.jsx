@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../firebase.js'
 import { FLOWER_TAGS } from '../constants.js'
 import TeampMark from '../components/TeampMark.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import styles from './PublicProfilePage.module.css'
 
 const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
@@ -18,12 +19,18 @@ export default function PublicProfilePage() {
   const [loading, setLoading]       = useState(true)
   const [notFound, setNotFound]     = useState(false)
   const [copied, setCopied]         = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const [isOwnProfile, setIsOwnProfile] = useState(false)
 
   // auth 복원 완료 후 쿼리 (새 탭에서 auth가 초기화되기 전에 쿼리가 실행되는 문제 방지)
   useEffect(() => {
     let cancelled = false
-    const unsub = onAuthStateChanged(auth, () => {
-      if (!cancelled) fetchProfile()
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!cancelled) {
+        fetchProfile().then((uid) => {
+          if (firebaseUser && uid) setIsOwnProfile(firebaseUser.uid === uid)
+        })
+      }
     })
     return () => { cancelled = true; unsub() }
   }, [username])
@@ -42,7 +49,7 @@ export default function PublicProfilePage() {
           query(collection(db, 'users'), where('username', '==', username))
         )
       }
-      if (userSnap.empty) { setNotFound(true); setLoading(false); return }
+      if (userSnap.empty) { setNotFound(true); setLoading(false); return null }
       const raw = userSnap.docs[0].data()
       userData = {
         id:               userSnap.docs[0].id,
@@ -59,7 +66,7 @@ export default function PublicProfilePage() {
       console.error('유저 조회 실패:', e)
       setNotFound(true)
       setLoading(false)
-      return
+      return null
     }
 
     // 2단계: 공개 프로젝트 + 꽃다발 태그 (실패해도 프로필은 표시)
@@ -83,6 +90,7 @@ export default function PublicProfilePage() {
     } finally {
       setLoading(false)
     }
+    return userData.id
   }
 
   const handleCopy = () => {
@@ -129,6 +137,7 @@ export default function PublicProfilePage() {
     .slice(0, 6)
 
   return (
+    <>
     <div className={styles.shell}>
       {/* 상단 바 */}
       <div className={styles.topBar}>
@@ -140,6 +149,9 @@ export default function PublicProfilePage() {
           <button className={styles.copyBtn} onClick={handleCopy}>
             {copied ? '✓ 복사됨' : '🔗 링크 복사'}
           </button>
+          {!isOwnProfile && (
+            <button className={styles.reportUserBtn} onClick={() => setShowReport(true)}>🚩 신고</button>
+          )}
           <Link to="/home" className={styles.ctaBtn}>팀프 홈으로 →</Link>
         </div>
       </div>
@@ -258,5 +270,14 @@ export default function PublicProfilePage() {
 
       <p className={styles.footer}>Powered by <strong>Teamp</strong> · 팀 프로젝트 협업 플랫폼</p>
     </div>
+    {showReport && user && (
+      <ReportModal
+        type="user"
+        targetId={user.id}
+        targetName={user.name}
+        onClose={() => setShowReport(false)}
+      />
+    )}
+    </>
   )
 }

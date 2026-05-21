@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import styles from './MatchPage.module.css'
 
 // Firestore 보안 규칙 추가 필요:
@@ -52,6 +53,9 @@ export default function MatchPage() {
   const [applying, setApplying]             = useState(false)
   const [showProfileSel, setShowProfileSel] = useState(false)
   const [pendingApplyPost, setPendingApplyPost] = useState(null)
+
+  // 신고
+  const [reportTarget, setReportTarget] = useState(null) // { id, name }
 
   // 지원자 프로필 모달
   const [viewApplicant, setViewApplicant]       = useState(null)
@@ -443,9 +447,14 @@ export default function MatchPage() {
                     return <p className={`${styles.deadlineInfo} ${diff <= 3 ? styles.deadlineUrgent : styles.deadlineNormal}`}>모집 기한 {selected.deadline} ({label})</p>
                   })()}
                 </div>
-                {isMyPost && selected.status !== 'closed' && (
-                  <button className={styles.closePostBtn} onClick={() => handleClosePost(selected.id)}>마감하기</button>
-                )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {isMyPost && selected.status !== 'closed' && (
+                    <button className={styles.closePostBtn} onClick={() => handleClosePost(selected.id)}>마감하기</button>
+                  )}
+                  {!isMyPost && (
+                    <button className={styles.reportBtn} onClick={() => setReportTarget({ id: selected.id, name: selected.title })}>🚩 신고</button>
+                  )}
+                </div>
               </div>
 
               {selected.description && (
@@ -788,6 +797,14 @@ export default function MatchPage() {
           doApply(post, note, p.id, p.affiliation)
         }}
         onClose={() => { setShowProfileSel(false); setPendingApplyPost(null) }}
+      />
+    )}
+    {reportTarget && (
+      <ReportModal
+        type="match"
+        targetId={reportTarget.id}
+        targetName={reportTarget.name}
+        onClose={() => setReportTarget(null)}
       />
     )}
     </>
