@@ -40,6 +40,7 @@ export default function LoginPage() {
   // 미인증 계정 로그인 시 재발송 UI
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
   const [resendCooldown,  setResendCooldown]  = useState(0)
+  const [emailAlreadyInUse, setEmailAlreadyInUse] = useState(false)
 
   const startResendCooldown = () => {
     setResendCooldown(60)
@@ -174,8 +175,15 @@ export default function LoginPage() {
 
       navigate(redirectTo, { replace: true })
     } catch (err) {
+      if (err.code === 'auth/email-already-in-use') {
+        setEmailAlreadyInUse(true)
+        setError('이미 가입된 이메일이에요. 로그인 탭에서 로그인해주세요.')
+        setLoading(false)
+        return
+      }
+      setEmailAlreadyInUse(false)
       const map = {
-        'auth/email-already-in-use':   '이미 사용 중인 이메일이에요.',
+        'auth/email-already-in-use':   '이미 가입된 이메일이에요.',
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
         'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
         'auth/user-not-found':         '등록되지 않은 이메일이에요.',
@@ -245,9 +253,9 @@ export default function LoginPage() {
 
           <div className={styles.tabs}>
             <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`}
-              onClick={() => { setMode('login');  setError(''); setPasswordConfirm('') }}>로그인</button>
+                onClick={() => { setMode('login');  setError(''); setPasswordConfirm(''); setEmailAlreadyInUse(false) }}>로그인</button>
             <button className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
-              onClick={() => { setMode('signup'); setError(''); setPasswordConfirm('') }}>회원가입</button>
+              onClick={() => { setMode('signup'); setError(''); setPasswordConfirm(''); setEmailAlreadyInUse(false) }}>회원가입</button>
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
@@ -301,6 +309,12 @@ export default function LoginPage() {
             )}
 
             {error && <p className={styles.error}>{error}</p>}
+            {emailAlreadyInUse && mode === 'signup' && (
+              <button type="button" className={styles.resendBtn}
+                onClick={() => { setMode('login'); setError(''); setEmailAlreadyInUse(false); setPasswordConfirm('') }}>
+                로그인 탭으로 이동하기
+              </button>
+            )}
             {unverifiedEmail && mode === 'login' && (
               <button type="button" className={styles.resendBtn}
                 onClick={handleResendVerification} disabled={resendCooldown > 0}>
