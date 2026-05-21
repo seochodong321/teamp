@@ -20,6 +20,10 @@ export default function SetupUsernamePage() {
   const [birthDay, setBirthDay]           = useState('')
   const [error, setError]                 = useState('')
   const [loading, setLoading]             = useState(false)
+  const [agreedTerms,      setAgreedTerms]      = useState(false)
+  const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
+  const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
+  const canSignup = agreedTerms && agreedPrivacy
 
   // 로그인도 안 됐고 setup도 필요 없으면 → 로그인 페이지로
   if (!isLoggedIn && !auth.currentUser) return <Navigate to="/login" replace />
@@ -58,6 +62,7 @@ export default function SetupUsernamePage() {
     }
     if (!affiliation.trim())           { setError('소속을 입력해주세요.'); return }
     if (!birthYear || !birthMonth || !birthDay) { setError('생일을 선택해주세요.'); return }
+    if (!canSignup) { setError('이용약관 및 개인정보처리방침에 동의해주세요.'); return }
 
     setLoading(true)
     try {
@@ -193,9 +198,37 @@ export default function SetupUsernamePage() {
             </div>
           </div>
 
+          {/* 약관 동의 */}
+          <div className={styles.agreeSection}>
+            <label className={styles.agreeRow}>
+              <input type="checkbox" checked={agreedTerms}
+                onChange={(e) => setAgreedTerms(e.target.checked)} />
+              <span>
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>이용약관</a>
+                {' '}동의 <span className={styles.agreeRequired}>(필수)</span>
+              </span>
+            </label>
+            <label className={styles.agreeRow}>
+              <input type="checkbox" checked={agreedPrivacy}
+                onChange={(e) => setAgreedPrivacy(e.target.checked)} />
+              <span>
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>개인정보처리방침</a>
+                {' '}동의 <span className={styles.agreeRequired}>(필수)</span>
+              </span>
+            </label>
+            <label className={styles.agreeRow}>
+              <input type="checkbox" checked={agreedGuidelines}
+                onChange={(e) => setAgreedGuidelines(e.target.checked)} />
+              <span>
+                <a href="/guidelines" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>커뮤니티 가이드라인</a>
+                {' '}동의 <span className={styles.agreeOptional}>(선택)</span>
+              </span>
+            </label>
+          </div>
+
           {error && <p className={styles.error}>{error}</p>}
 
-          <button type="submit" className={styles.submitBtn} disabled={loading}>
+          <button type="submit" className={styles.submitBtn} disabled={loading || !canSignup}>
             {loading ? '저장 중...' : '팀프 시작하기 →'}
           </button>
         </form>
