@@ -237,6 +237,12 @@
 }
 .unblockBtn:hover { background: var(--coral); color: white; }
 
+.bannedAt {
+  font-size: 11px;
+  color: var(--coral);
+  margin: 2px 0 0;
+}
+
 /* ── 확인 다이얼로그 ── */
 .confirmBackdrop {
   position: fixed;

@@ -112,7 +112,7 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
                     <button className={styles.dangerBtn} onClick={() => onDeleteMatch(r.targetId, r.targetName, r.id)}>모집글 삭제</button>
                   )}
                   {r.type === 'user' && (
-                    <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, r.id)}>유저 블락</button>
+                    <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, null, r.id)}>유저 블락</button>
                   )}
                   {r.status === 'pending' ? (
                     <button className={styles.resolveBtn} onClick={() => handleResolve(r.id)}>처리 완료</button>
@@ -135,18 +135,20 @@ function ProjectsTab({ onDeleteProject }) {
   const [loading, setLoading]   = useState(true)
   const [search, setSearch]     = useState('')
 
-  useEffect(() => {
-    const fetch = async () => {
-      setLoading(true)
-      try {
-        const snap = await getDocs(query(collection(db, 'projects'), orderBy('createdAt', 'desc'), limit(200)))
-        setProjects(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-      } finally {
-        setLoading(false)
-      }
+  const fetchProjects = useCallback(async () => {
+    setLoading(true)
+    try {
+      const snap = await getDocs(collection(db, 'projects'))
+      const sorted = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+      setProjects(sorted)
+    } finally {
+      setLoading(false)
     }
-    fetch()
   }, [])
+
+  useEffect(() => { fetchProjects() }, [fetchProjects])
 
   const filtered = search
     ? projects.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search))
@@ -298,11 +300,18 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
                 </p>
                 <p className={styles.reporter}>{u.email} {u.affiliation && `· ${u.affiliation}`}</p>
               </div>
+              {u.banned && u.bannedAt && (
+                <p className={styles.bannedAt}>
+                  블락일: {u.bannedAt?.toDate?.()?.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) || '-'}
+                </p>
+              )}
               <div className={styles.cardActions}>
                 {u.banned ? (
                   <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id)}>블락 해제</button>
                 ) : (
-                  <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name)}>블락</button>
+                  <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name, () => {
+                    setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, banned: true, bannedAt: { toDate: () => new Date() } } : x))
+                  })}>블락</button>
                 )}
               </div>
             </div>
@@ -345,11 +354,12 @@ export default function AdminPage() {
   }
 
   // ── 액션: 유저 블락
-  const handleBlockUser = (uid, name, reportId) => {
+  const handleBlockUser = (uid, name, onSuccess, reportId) => {
     ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`, async () => {
       closeConfirm()
       await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
       if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+      onSuccess?.()
     })
   }
 
