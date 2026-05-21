@@ -36,13 +36,6 @@ export default function LoginPage() {
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
   const [authReady, setAuthReady]         = useState(false)
 
-  // 약관 동의 — 회원가입 시에만 표시
-  const [agreedTerms,      setAgreedTerms]      = useState(false)
-  const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
-  const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
-  const [agreedAge,        setAgreedAge]         = useState(false)
-  const canSignup = agreedTerms && agreedPrivacy && agreedAge
-
   // 미인증 계정 로그인 시 재발송 UI
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
   const [resendCooldown,  setResendCooldown]  = useState(0)
@@ -125,7 +118,6 @@ export default function LoginPage() {
     if (password.length < 8) { setError('비밀번호는 8자 이상이어야 해요.'); return }
     if (mode === 'signup') {
       if (!name.trim()) { setError('이름을 입력해주세요.'); return }
-      if (!canSignup) { setError('이용약관 및 개인정보처리방침에 동의해주세요.'); return }
     }
     setLoading(true)
     try {
@@ -292,43 +284,6 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* 약관 동의 — 회원가입 시에만 표시 */}
-            {mode === 'signup' && (
-              <div className={styles.agreeSection}>
-                <label className={styles.agreeRow}>
-                  <input type="checkbox" checked={agreedAge}
-                    onChange={(e) => setAgreedAge(e.target.checked)} />
-                  <span>
-                    만 14세 이상입니다 <span className={styles.agreeRequired}>(필수)</span>
-                  </span>
-                </label>
-                <label className={styles.agreeRow}>
-                  <input type="checkbox" checked={agreedTerms}
-                    onChange={(e) => setAgreedTerms(e.target.checked)} />
-                  <span>
-                    <a href="/terms" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>이용약관</a>
-                    {' '}동의 <span className={styles.agreeRequired}>(필수)</span>
-                  </span>
-                </label>
-                <label className={styles.agreeRow}>
-                  <input type="checkbox" checked={agreedPrivacy}
-                    onChange={(e) => setAgreedPrivacy(e.target.checked)} />
-                  <span>
-                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>개인정보처리방침</a>
-                    {' '}동의 <span className={styles.agreeRequired}>(필수)</span>
-                  </span>
-                </label>
-                <label className={styles.agreeRow}>
-                  <input type="checkbox" checked={agreedGuidelines}
-                    onChange={(e) => setAgreedGuidelines(e.target.checked)} />
-                  <span>
-                    <a href="/guidelines" target="_blank" rel="noopener noreferrer" className={styles.agreeLink}>커뮤니티 가이드라인</a>
-                    {' '}동의 <span className={styles.agreeOptional}>(선택)</span>
-                  </span>
-                </label>
-              </div>
-            )}
-
             {error && <p className={styles.error}>{error}</p>}
             {unverifiedEmail && mode === 'login' && (
               <button type="button" className={styles.resendBtn}
@@ -337,7 +292,7 @@ export default function LoginPage() {
               </button>
             )}
 
-            <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading || (mode === 'signup' && !canSignup)}>
+            <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading}>
               {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}
             </button>
           </form>
