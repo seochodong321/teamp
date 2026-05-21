@@ -17,38 +17,29 @@ const REASON_LABEL = {
   hate: '욕설 / 혐오 표현', other: '기타',
 }
 
-// document.body에 portal로 렌더 — 어떤 CSS 스택도 무관
-function AdminConfirm({ message, onConfirm, onCancel }) {
-  return createPortal(
-    <div className={styles.confirmBackdrop} onClick={onCancel}>
+// 콜백 기반 confirm — Promise 없이 단순하게
+function useAdminConfirm() {
+  const [state, setState] = useState(null) // { message, onConfirm }
+
+  const ask = useCallback((message, onConfirm) => {
+    setState({ message, onConfirm })
+  }, [])
+
+  const dismiss = useCallback(() => setState(null), [])
+
+  const dialog = state ? createPortal(
+    <div className={styles.confirmBackdrop} onClick={dismiss}>
       <div className={styles.confirmBox} onClick={(e) => e.stopPropagation()}>
-        <p className={styles.confirmMsg}>{message}</p>
+        <p className={styles.confirmMsg}>{state.message}</p>
         <div className={styles.confirmBtns}>
-          <button className={styles.confirmCancel} onClick={onCancel}>취소</button>
-          <button className={styles.confirmOk} onClick={onConfirm}>확인</button>
+          <button className={styles.confirmCancel} onClick={dismiss}>취소</button>
+          <button className={styles.confirmOk} onClick={() => { state.onConfirm(); dismiss() }}>확인</button>
         </div>
       </div>
     </div>,
     document.body
-  )
-}
-
-function useAdminConfirm() {
-  const [confirm, setConfirm] = useState(null)
-  const ask = useCallback((message) => new Promise((resolve) => {
-    setConfirm({ message, resolve })
-  }), [])
-  const handleConfirm = useCallback(() => {
-    confirm?.resolve(true)
-    setConfirm(null)
-  }, [confirm])
-  const handleCancel = useCallback(() => {
-    confirm?.resolve(false)
-    setConfirm(null)
-  }, [confirm])
-  const dialog = confirm ? (
-    <AdminConfirm message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />
   ) : null
+
   return { ask, dialog }
 }
 
@@ -354,33 +345,33 @@ export default function AdminPage() {
   if (!isAdmin) return <Navigate to="/home" replace />
 
   // ── 액션: 프로젝트 삭제
-  const handleDeleteProject = async (projectId, name, reportId) => {
-    const ok = await ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`)
-    if (!ok) return
-    await deleteDoc(doc(db, 'projects', projectId))
-    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+  const handleDeleteProject = (projectId, name, reportId) => {
+    ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`, async () => {
+      await deleteDoc(doc(db, 'projects', projectId))
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    })
   }
 
   // ── 액션: 매치 모집글 삭제
-  const handleDeleteMatch = async (postId, title, reportId) => {
-    const ok = await ask(`"${title}" 모집글을 삭제할까요?`)
-    if (!ok) return
-    await deleteDoc(doc(db, 'matchPosts', postId))
-    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+  const handleDeleteMatch = (postId, title, reportId) => {
+    ask(`"${title}" 모집글을 삭제할까요?`, async () => {
+      await deleteDoc(doc(db, 'matchPosts', postId))
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    })
   }
 
   // ── 액션: 유저 블락
-  const handleBlockUser = async (uid, name, onSuccess, reportId) => {
-    const ok = await ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`)
-    if (!ok) return
-    await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
-    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
-    onSuccess?.()
+  const handleBlockUser = (uid, name, onSuccess, reportId) => {
+    ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`, async () => {
+      await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+      onSuccess?.()
+    })
   }
 
   // ── 액션: 유저 블락 해제
-  const handleUnblockUser = async (uid) => {
-    await updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
+  const handleUnblockUser = (uid) => {
+    updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
   }
 
   const TABS = [
