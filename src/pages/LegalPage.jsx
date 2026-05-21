@@ -9,7 +9,7 @@ export default function LegalPage({ data }) {
       <header className={styles.header}>
         <Link to="/" className={styles.brand}>
           <TeampMark size={22} />
-          <span className={styles.brandName}>팀프폴리오</span>
+          <span className={styles.brandName}>팀프</span>
         </Link>
         <button className={styles.back} onClick={() => window.history.back()}>← 뒤로</button>
       </header>
@@ -37,6 +37,15 @@ export default function LegalPage({ data }) {
             </section>
           ))}
         </div>
+
+        {data.cultureSection && (
+          <section className={`${styles.section} ${styles.cultureSection}`}>
+            <h2 className={styles.heading}>{data.cultureSection.heading}</h2>
+            {data.cultureSection.paragraphs.map((para, i) => (
+              <p key={i} className={styles.para}>{para}</p>
+            ))}
+          </section>
+        )}
 
         <div className={styles.contactBox}>
           <p className={styles.contactLabel}>문의</p>

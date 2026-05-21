@@ -128,6 +128,23 @@
   font-weight: 700;
 }
 
+/* 문화 섹션 */
+.cultureSection {
+  background: var(--bg-secondary);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 16px 20px;
+  margin-top: 4px;
+}
+.cultureSection .heading {
+  border-bottom: none;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+.cultureSection .para {
+  color: var(--text);
+}
+
 /* 연락처 박스 */
 .contactBox {
   margin-top: 48px;
