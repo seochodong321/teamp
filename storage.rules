@@ -1,0 +1,42 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ──────────────────────────────────────────────
+    // 프로필 아바타
+    //   읽기: 인증된 모든 유저
+    //   쓰기: 본인만 / 이미지 파일만 / 5 MB 이하
+    // ──────────────────────────────────────────────
+    match /users/{userId}/avatar.jpg {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size  <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ──────────────────────────────────────────────
+    // 프로젝트 커버 이미지
+    //   읽기: 인증된 모든 유저
+    //   쓰기: 인증된 유저 / 이미지 파일만 / 10 MB 이하
+    //   (멤버십 검증은 Firestore 규칙에서 담당)
+    // ──────────────────────────────────────────────
+    match /projects/{projectId}/cover.jpg {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size  <= 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ──────────────────────────────────────────────
+    // 채팅 파일 / 이미지
+    //   읽기: 인증된 모든 유저 (room ID는 UUID → 추측 불가)
+    //   쓰기: 인증된 유저 / 20 MB 이하
+    // ──────────────────────────────────────────────
+    match /chat/{roomId}/{fileName} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size <= 20 * 1024 * 1024;
+    }
+  }
+}
