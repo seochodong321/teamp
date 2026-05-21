@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import {
   collection, query, orderBy, getDocs, updateDoc, deleteDoc, doc,
   serverTimestamp, limit, where,
@@ -14,6 +15,41 @@ const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '
 const REASON_LABEL = {
   illegal: '불법 콘텐츠', spam: '스팸 / 홍보', false: '허위 정보',
   hate: '욕설 / 혐오 표현', other: '기타',
+}
+
+// document.body에 portal로 렌더 — 어떤 CSS 스택도 무관
+function AdminConfirm({ message, onConfirm, onCancel }) {
+  return createPortal(
+    <div className={styles.confirmBackdrop} onClick={onCancel}>
+      <div className={styles.confirmBox} onClick={(e) => e.stopPropagation()}>
+        <p className={styles.confirmMsg}>{message}</p>
+        <div className={styles.confirmBtns}>
+          <button className={styles.confirmCancel} onClick={onCancel}>취소</button>
+          <button className={styles.confirmOk} onClick={onConfirm}>확인</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+function useAdminConfirm() {
+  const [confirm, setConfirm] = useState(null)
+  const ask = useCallback((message) => new Promise((resolve) => {
+    setConfirm({ message, resolve })
+  }), [])
+  const handleConfirm = useCallback(() => {
+    confirm?.resolve(true)
+    setConfirm(null)
+  }, [confirm])
+  const handleCancel = useCallback(() => {
+    confirm?.resolve(false)
+    setConfirm(null)
+  }, [confirm])
+  const dialog = confirm ? (
+    <AdminConfirm message={confirm.message} onConfirm={handleConfirm} onCancel={handleCancel} />
+  ) : null
+  return { ask, dialog }
 }
 
 // ─── 신고 관리 탭 ────────────────────────────────────────────
@@ -310,15 +346,16 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
 
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
-  const { currentUser, showConfirm } = useStore()
+  const { currentUser } = useStore()
   const [activeTab, setActiveTab] = useState('reports')
+  const { ask, dialog } = useAdminConfirm()
 
   const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
   if (!isAdmin) return <Navigate to="/home" replace />
 
   // ── 액션: 프로젝트 삭제
   const handleDeleteProject = async (projectId, name, reportId) => {
-    const ok = await showConfirm(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`)
+    const ok = await ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`)
     if (!ok) return
     await deleteDoc(doc(db, 'projects', projectId))
     if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
@@ -326,7 +363,7 @@ export default function AdminPage() {
 
   // ── 액션: 매치 모집글 삭제
   const handleDeleteMatch = async (postId, title, reportId) => {
-    const ok = await showConfirm(`"${title}" 모집글을 삭제할까요?`)
+    const ok = await ask(`"${title}" 모집글을 삭제할까요?`)
     if (!ok) return
     await deleteDoc(doc(db, 'matchPosts', postId))
     if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
@@ -334,7 +371,7 @@ export default function AdminPage() {
 
   // ── 액션: 유저 블락
   const handleBlockUser = async (uid, name, onSuccess, reportId) => {
-    const ok = await showConfirm(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`)
+    const ok = await ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`)
     if (!ok) return
     await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
     if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
@@ -381,6 +418,8 @@ export default function AdminPage() {
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
       {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} />}
       {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} />}
+
+      {dialog}
     </div>
   )
 }
