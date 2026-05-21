@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useLayoutEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
@@ -564,6 +564,14 @@ export default function HomePage() {
         </div>
       )}
       </div>
+
+      <footer className={styles.legalFooter}>
+        <Link to="/terms" className={styles.legalLink}>이용약관</Link>
+        <span className={styles.legalDot}>·</span>
+        <Link to="/privacy" className={styles.legalLink}>개인정보처리방침</Link>
+        <span className={styles.legalDot}>·</span>
+        <Link to="/guidelines" className={styles.legalLink}>커뮤니티 가이드라인</Link>
+      </footer>
 
     </>
   )

@@ -13,6 +13,10 @@ import JoinPage           from './pages/JoinPage.jsx'
 import Layout             from './components/Layout.jsx'
 import LandingPage        from './pages/LandingPage.jsx'
 import SetupUsernamePage  from './pages/SetupUsernamePage.jsx'
+import LegalPage          from './pages/LegalPage.jsx'
+import { TERMS_DATA }     from './legal/termsData.js'
+import { PRIVACY_DATA }   from './legal/privacyData.js'
+import { GUIDELINES_DATA } from './legal/guidelinesData.js'
 
 // 인증 후 페이지는 lazy load — 초기 번들에서 분리
 const HomePage          = lazy(() => import('./pages/HomePage.jsx'))
@@ -495,6 +499,9 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join/:code" element={<JoinPage />} />
           <Route path="/setup-username" element={<SetupUsernamePage />} />
+          <Route path="/terms"      element={<LegalPage data={TERMS_DATA} />} />
+          <Route path="/privacy"    element={<LegalPage data={PRIVACY_DATA} />} />
+          <Route path="/guidelines" element={<LegalPage data={GUIDELINES_DATA} />} />
 
           {/* 루트: 비로그인 → 랜딩, 로그인 → /home 리다이렉트 */}
           <Route path="/" element={

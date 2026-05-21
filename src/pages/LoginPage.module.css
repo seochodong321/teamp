@@ -350,6 +350,36 @@
   animation: slideUp 0.2s ease;
 }
 
+/* ── 약관 동의 ── */
+.agreeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.agreeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.agreeLink {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.agreeRequired { color: var(--primary); font-weight: 600; }
+.agreeOptional { color: var(--text-tertiary); }
+
 /* ── 모바일: 위아래 구조 ── */
 @media (max-width: 768px) {
   .page { flex-direction: column; }
