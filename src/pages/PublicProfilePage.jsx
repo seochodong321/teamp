@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { collection, getDocs, getDoc, query, where, doc } from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../firebase.js'
 import { FLOWER_TAGS } from '../constants.js'
@@ -45,12 +45,14 @@ export default function PublicProfilePage() {
       if (userSnap.empty) { setNotFound(true); setLoading(false); return }
       const raw = userSnap.docs[0].data()
       userData = {
-        id:          userSnap.docs[0].id,
-        name:        raw.name        || '',
-        username:    raw.username    || '',
-        oneliner:    raw.oneliner    || '',
-        affiliation: raw.affiliation || '',
-        photoURL:    raw.photoURL    || null,
+        id:               userSnap.docs[0].id,
+        name:             raw.name             || '',
+        username:         raw.username         || '',
+        oneliner:         raw.oneliner         || '',
+        affiliation:      raw.affiliation      || '',
+        photoURL:         raw.photoURL         || null,
+        flowerTagSummary: raw.flowerTagSummary || {},
+        flowerSenderCount: raw.flowerSenderCount || 0,
       }
       setUser(userData)
     } catch (e) {
@@ -74,25 +76,8 @@ export default function PublicProfilePage() {
       setAllProjects(all)
       setProjects(pubs)
 
-      // 꽃다발 태그: 전체 아카이브 프로젝트 기준
-      const archived = all.filter((p) => p.status === 'archived' && p.wrapupId)
-      const tagCounts = {}
-      await Promise.all(archived.map(async (p) => {
-        try {
-          const snap = await getDoc(doc(db, 'wrapups', p.wrapupId))
-          if (snap.exists()) {
-            const data = snap.data()
-            ;(data.feedbacks || [])
-              .filter((f) => f.toUserId === userData.id)
-              .forEach((f) => {
-                ;(f.tags || []).forEach((tag) => {
-                  tagCounts[tag.id] = (tagCounts[tag.id] || 0) + 1
-                })
-              })
-          }
-        } catch {}
-      }))
-      setFlowerTags(tagCounts)
+      // 꽃다발 태그: 유저 문서에 캐싱된 값 사용 (공개/비공개 무관 전체 집계)
+      setFlowerTags(userData.flowerTagSummary || {})
     } catch (e) {
       console.warn('프로젝트/태그 조회 실패 (Firestore 규칙 확인 필요):', e)
     } finally {

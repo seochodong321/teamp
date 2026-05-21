@@ -47,6 +47,13 @@ export default function ProfilePage() {
       }))
       setFlowerSenders(senderIds.size)
       setFlowerTags(tagCounts)
+      // 팀프폴리오에서 읽을 수 있도록 유저 문서에 캐싱 (본인만 쓸 수 있는 필드)
+      try {
+        await updateDoc(doc(db, 'users', currentUser.id), {
+          flowerTagSummary: tagCounts,
+          flowerSenderCount: senderIds.size,
+        })
+      } catch {}
     }
     fetchFlowers()
   }, [myProjects.map((p) => p.wrapupId).join(',')])
