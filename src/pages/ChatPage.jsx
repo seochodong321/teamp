@@ -59,7 +59,7 @@ export default function ChatPage() {
     sendMessage, sendFile, sendPoll, votePoll, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
     leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers,
-    removeChatToastsByRoom,
+    removeChatToastsByRoom, showError,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -198,19 +198,27 @@ export default function ChatPage() {
     }
   }
 
-  const handleFile = (e) => {
+  const handleFile = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    sendFile(roomId, file)
     e.target.value = ''
     setShowToolbar(false)
+    try {
+      await sendFile(roomId, file)
+    } catch {
+      showError('파일 전송에 실패했어요.')
+    }
   }
 
-  const handlePollSend = () => {
+  const handlePollSend = async () => {
     const valid = pollOptions.filter((o) => o.trim())
     if (!pollQ.trim() || valid.length < 2) return
-    sendPoll(roomId, pollQ.trim(), valid)
-    setPollQ(''); setPollOptions(['', '']); setMode('text'); setShowToolbar(false)
+    try {
+      await sendPoll(roomId, pollQ.trim(), valid)
+      setPollQ(''); setPollOptions(['', '']); setMode('text'); setShowToolbar(false)
+    } catch {
+      showError('투표 등록에 실패했어요.')
+    }
   }
 
   const handleAvatarClick = async (e, userId, name, avStyle) => {

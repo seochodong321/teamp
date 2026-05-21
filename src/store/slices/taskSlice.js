@@ -82,10 +82,15 @@ export const createTaskSlice = (set, get) => ({
       }
     }
 
-    await txProject(projectId, (data) => ({
-      todos: [...(data.todos || []), todo],
-      lastActivityAt: new Date().toISOString(),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        todos: [...(data.todos || []), todo],
+        lastActivityAt: new Date().toISOString(),
+      }))
+    } catch {
+      get().showError('할 일 추가에 실패했어요.')
+      throw new Error()
+    }
   },
 
   updateTodo: async (projectId, todoId, updates) => {
@@ -125,9 +130,13 @@ export const createTaskSlice = (set, get) => ({
     if (!todo) return
     const me = project.members.find((m) => m.id === currentUser.id)
     if (todo.createdBy !== currentUser.id && me?.role !== 'leader') return
-    await txProject(projectId, (data) => ({
-      todos: data.todos.filter((t) => t.id !== todoId),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        todos: data.todos.filter((t) => t.id !== todoId),
+      }))
+    } catch {
+      get().showError('할 일 삭제에 실패했어요.')
+    }
   },
 
   addEvent: async (projectId, { title, date, time, scope, roomIds, isPersonal }) => {
@@ -156,10 +165,15 @@ export const createTaskSlice = (set, get) => ({
       await batch.commit()
     }
 
-    await txProject(projectId, (data) => ({
-      events: [...(data.events || []), ev].sort((a, b) => a.date.localeCompare(b.date)),
-      lastActivityAt: new Date().toISOString(),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        events: [...(data.events || []), ev].sort((a, b) => a.date.localeCompare(b.date)),
+        lastActivityAt: new Date().toISOString(),
+      }))
+    } catch {
+      get().showError('일정 추가에 실패했어요.')
+      throw new Error()
+    }
   },
 
   removeEvent: async (projectId, eventId) => {
@@ -169,9 +183,13 @@ export const createTaskSlice = (set, get) => ({
     if (!ev) return
     const me = project.members.find((m) => m.id === currentUser.id)
     if (ev.createdBy !== currentUser.id && me?.role !== 'leader' && me?.role !== 'sub-leader') return
-    await txProject(projectId, (data) => ({
-      events: data.events.filter((e) => e.id !== eventId),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        events: data.events.filter((e) => e.id !== eventId),
+      }))
+    } catch {
+      get().showError('일정 삭제에 실패했어요.')
+    }
   },
 
   addMilestone: async (projectId, { title, description, targetDate }) => {
@@ -183,26 +201,39 @@ export const createTaskSlice = (set, get) => ({
       status: 'pending', completedAt: null, createdAt: now, createdBy: currentUser.id,
       history: [{ action: 'created', at: now, by: currentUser.id, byName: currentUser.name, note: '' }],
     }
-    await txProject(projectId, (data) => ({
-      milestones: [...(data.milestones || []), ms],
-      lastActivityAt: new Date().toISOString(),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        milestones: [...(data.milestones || []), ms],
+        lastActivityAt: new Date().toISOString(),
+      }))
+    } catch {
+      get().showError('마일스톤 추가에 실패했어요.')
+      throw new Error()
+    }
   },
 
   updateMilestone: async (projectId, milestoneId, { action, note, ...changes }) => {
     const { currentUser } = get()
     const now = new Date().toISOString()
     const entry = { action: action || 'modified', at: now, by: currentUser.id, byName: currentUser.name, note: note || '' }
-    await txProject(projectId, (data) => ({
-      milestones: (data.milestones || []).map((m) =>
-        m.id !== milestoneId ? m : { ...m, ...changes, history: [...(m.history || []), entry] }
-      ),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        milestones: (data.milestones || []).map((m) =>
+          m.id !== milestoneId ? m : { ...m, ...changes, history: [...(m.history || []), entry] }
+        ),
+      }))
+    } catch {
+      get().showError('마일스톤 업데이트에 실패했어요.')
+    }
   },
 
   deleteMilestone: async (projectId, milestoneId) => {
-    await txProject(projectId, (data) => ({
-      milestones: (data.milestones || []).filter((m) => m.id !== milestoneId),
-    }))
+    try {
+      await txProject(projectId, (data) => ({
+        milestones: (data.milestones || []).filter((m) => m.id !== milestoneId),
+      }))
+    } catch {
+      get().showError('마일스톤 삭제에 실패했어요.')
+    }
   },
 })

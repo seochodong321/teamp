@@ -294,7 +294,7 @@ export default function App() {
             if (token) {
               updateDoc(doc(db, 'users', user.uid), { fcmToken: token }).catch(() => {})
             }
-          })
+          }).catch(() => {})
         }
 
         // 포그라운드 메시지 처리 (이전 리스너 해제 후 재등록)
