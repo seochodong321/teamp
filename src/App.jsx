@@ -5,6 +5,7 @@ import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderB
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
 import Spinner from './components/Spinner.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 // 인증 전 페이지는 즉시 로드 (로그인/가입 화면은 빠르게 보여야 함)
 import LoginPage          from './pages/LoginPage.jsx'
@@ -487,6 +488,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <ErrorBoundary>
       <Suspense fallback={<Spinner />}>
         <Routes>
           <Route path="/u/:username" element={<PublicProfilePage />} />
@@ -515,6 +517,7 @@ export default function App() {
           </Route>
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

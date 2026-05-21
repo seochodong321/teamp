@@ -495,6 +495,7 @@ export default function ChatPage() {
                   <div className={styles.bubbleWrap}>
                     {nameEl}
                     <img src={msg.fileUrl} alt={msg.text} className={styles.chatImg}
+                      loading="lazy" decoding="async"
                       onClick={() => setLightbox({ url: msg.fileUrl, name: msg.text })} />
                     {(timeEl || (isMine && readCount > 0)) && (
                       <div className={styles.timeRow}>
