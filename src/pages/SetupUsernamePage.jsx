@@ -26,8 +26,10 @@ export default function SetupUsernamePage() {
   const [agreedAge,        setAgreedAge]         = useState(false)
   const canSignup = agreedTerms && agreedPrivacy && agreedAge
 
-  // 로그인도 안 됐고 setup도 필요 없으면 → 로그인 페이지로
-  if (!isLoggedIn && !auth.currentUser) return <Navigate to="/login" replace />
+  // Firebase 세션 없음 → 로그인
+  if (!auth.currentUser) return <Navigate to="/login" replace />
+  // 이메일 미인증 → 인증 페이지 (이메일 가입 유저만 해당, Google은 항상 verified)
+  if (!auth.currentUser.emailVerified) return <Navigate to="/verify-email" replace />
   // 이미 프로필 완성된 유저 → 홈으로
   if (isLoggedIn && !needsUsernameSetup) return <Navigate to="/home" replace />
 
