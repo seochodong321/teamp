@@ -33,6 +33,7 @@ const MessagesPage      = lazy(() => import('./pages/MessagesPage.jsx'))
 const CalendarPage      = lazy(() => import('./pages/CalendarPage.jsx'))
 const PublicProfilePage = lazy(() => import('./pages/PublicProfilePage.jsx'))
 const AdminPage         = lazy(() => import('./pages/AdminPage.jsx'))
+const NotFoundPage      = lazy(() => import('./pages/NotFoundPage.jsx'))
 
 // 오늘 생일인 팀원 감지 → 전체방 케이크 메시지 + Firestore 알림 전송
 // birthdayLogs/{YYYY}_{memberId}_{projectId} 로 중복 방지
@@ -526,6 +527,7 @@ export default function App() {
             <Route path="/messages"                        element={<MessagesPage />} />
             <Route path="/help"                            element={<HelpPage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
       </ErrorBoundary>

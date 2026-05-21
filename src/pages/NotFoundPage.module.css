@@ -1,0 +1,169 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(150deg, #2B2470 0%, #3C3489 35%, #534AB7 65%, #7B6FD4 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 40px 24px;
+}
+
+/* 배경 블롭 */
+.blob1 {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+  top: -120px;
+  right: -100px;
+  pointer-events: none;
+}
+.blob2 {
+  position: absolute;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  bottom: -80px;
+  left: -60px;
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+/* 브랜드 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 48px;
+  opacity: 0.85;
+}
+.brandName {
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+/* 404 숫자 */
+.numberWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.four {
+  font-size: 120px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  font-feature-settings: 'tnum';
+}
+
+.zeroWrap {
+  position: relative;
+  width: 100px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zero {
+  width: 100px;
+  height: 120px;
+  border-radius: 60px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 3.5px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zeroInner {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 텍스트 */
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.03em;
+  margin: 0 0 14px;
+}
+
+.desc {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.8;
+  margin: 0 0 40px;
+}
+
+/* 버튼 */
+.btns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.backBtn {
+  padding: 12px 24px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.backBtn:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.homeBtn {
+  padding: 12px 28px;
+  background: white;
+  color: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+.homeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 480px) {
+  .four { font-size: 88px; }
+  .zero { width: 74px; height: 88px; border-radius: 44px; }
+  .zeroWrap { width: 74px; height: 88px; }
+  .title { font-size: 20px; }
+  .desc { font-size: 14px; }
+}
