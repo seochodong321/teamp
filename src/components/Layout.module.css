@@ -377,6 +377,7 @@
   .content { padding: 10px 12px 0; padding-bottom: calc(60px + 20px + env(safe-area-inset-bottom, 0px)); }
   .mobileLogo { font-size: 17px; }
   .createBtn { display: none; }
+  .footer { display: none; }
 }
 
 /* ── 모바일 하단 탭바 ── */
@@ -670,3 +671,46 @@
   transition: background 0.15s;
 }
 .notiPromptDismiss:hover { background: var(--bg); }
+
+/* ── 하단 푸터 ── */
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px;
+  height: 36px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  flex-wrap: wrap;
+}
+
+.footerLegal {
+  font-size: 11px;
+  color: var(--text-quaternary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-quaternary);
+  white-space: nowrap;
+}
+
+.footerLink {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footerLink:hover { color: var(--primary); }
+
+.footerDot { opacity: 0.5; }

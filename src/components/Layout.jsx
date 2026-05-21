@@ -307,6 +307,20 @@ export default function Layout() {
           <Outlet />
         </div>
 
+        {/* ── 하단 푸터 (데스크탑 전용) ── */}
+        <footer className={styles.footer}>
+          <span className={styles.footerLegal}>
+            상호: 팀프&nbsp;·&nbsp;대표자: 서보민&nbsp;·&nbsp;사업자등록번호: 미등록&nbsp;·&nbsp;이메일: support@teamp.kr
+          </span>
+          <span className={styles.footerRight}>
+            <NavLink to="/terms" className={styles.footerLink}>이용약관</NavLink>
+            <span className={styles.footerDot}>·</span>
+            <NavLink to="/privacy" className={styles.footerLink}>개인정보처리방침</NavLink>
+            <span className={styles.footerDot}>·</span>
+            <span>© 2025 Teamp. All rights reserved.</span>
+          </span>
+        </footer>
+
         {/* ── 모바일 하단 탭바 ── */}
         <nav className={styles.mobileTabBar}>
           {/* 홈 */}
