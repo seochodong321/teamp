@@ -236,4 +236,77 @@ export const createTaskSlice = (set, get) => ({
       get().showError('마일스톤 삭제에 실패했어요.')
     }
   },
+
+  addComment: async (projectId, annId, content) => {
+    const { currentUser } = get()
+    const comment = {
+      id: `cmt_${Date.now()}`,
+      authorId: currentUser.id,
+      author: currentUser.name,
+      content,
+      createdAt: new Date().toISOString(),
+      replies: [],
+    }
+    try {
+      await txProject(projectId, (data) => ({
+        announcements: data.announcements.map((a) =>
+          a.id !== annId ? a : { ...a, comments: [...(a.comments || []), comment] }
+        ),
+      }))
+    } catch {
+      get().showError('댓글 등록에 실패했어요.')
+    }
+  },
+
+  deleteComment: async (projectId, annId, commentId) => {
+    try {
+      await txProject(projectId, (data) => ({
+        announcements: data.announcements.map((a) =>
+          a.id !== annId ? a : { ...a, comments: (a.comments || []).filter((c) => c.id !== commentId) }
+        ),
+      }))
+    } catch {
+      get().showError('댓글 삭제에 실패했어요.')
+    }
+  },
+
+  addReply: async (projectId, annId, commentId, content) => {
+    const { currentUser } = get()
+    const reply = {
+      id: `rpl_${Date.now()}`,
+      authorId: currentUser.id,
+      author: currentUser.name,
+      content,
+      createdAt: new Date().toISOString(),
+    }
+    try {
+      await txProject(projectId, (data) => ({
+        announcements: data.announcements.map((a) =>
+          a.id !== annId ? a : {
+            ...a, comments: (a.comments || []).map((c) =>
+              c.id !== commentId ? c : { ...c, replies: [...(c.replies || []), reply] }
+            ),
+          }
+        ),
+      }))
+    } catch {
+      get().showError('대댓글 등록에 실패했어요.')
+    }
+  },
+
+  deleteReply: async (projectId, annId, commentId, replyId) => {
+    try {
+      await txProject(projectId, (data) => ({
+        announcements: data.announcements.map((a) =>
+          a.id !== annId ? a : {
+            ...a, comments: (a.comments || []).map((c) =>
+              c.id !== commentId ? c : { ...c, replies: (c.replies || []).filter((r) => r.id !== replyId) }
+            ),
+          }
+        ),
+      }))
+    } catch {
+      get().showError('대댓글 삭제에 실패했어요.')
+    }
+  },
 })
