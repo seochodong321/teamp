@@ -3,6 +3,8 @@ export const createUiSlice = (set, get) => ({
   errorToasts: [],
   successToasts: [],
   chatToasts: [],
+  confirmDialog: null, // { message, resolve }
+
 
   // 팀프 매치 새 게시글 감지 — matchPostCount: 실시간 count, matchSeenCount: 마지막으로 본 count
   matchPostCount: 0,
@@ -68,4 +70,12 @@ export const createUiSlice = (set, get) => ({
   removeChatToastsByRoom: (roomId) =>
     set((s) => ({ chatToasts: s.chatToasts.filter((t) => t.roomId !== roomId) })),
   clearChatToasts: () => set({ chatToasts: [] }),
+
+  showConfirm: (message) =>
+    new Promise((resolve) => set({ confirmDialog: { message, resolve } })),
+  dismissConfirm: (result) => {
+    const { confirmDialog } = get()
+    if (confirmDialog) confirmDialog.resolve(result)
+    set({ confirmDialog: null })
+  },
 })

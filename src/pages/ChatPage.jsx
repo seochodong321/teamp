@@ -84,6 +84,7 @@ export default function ChatPage() {
 
   // ─── refs ──────────────────────────────────────────────────────
   const isComposing   = useRef(false)
+  const isSending     = useRef(false)
   const bottomRef     = useRef(null)
   const fileRef       = useRef(null)
   const textareaRef   = useRef(null)
@@ -181,12 +182,13 @@ export default function ChatPage() {
   }
 
   const handleSend = () => {
-    if (!text.trim()) return
+    if (!text.trim() || isSending.current) return
+    isSending.current = true
     sendMessage(roomId, text.trim())
     setText('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setSendPulse(true)
-    setTimeout(() => setSendPulse(false), 400)
+    setTimeout(() => { setSendPulse(false); isSending.current = false }, 400)
   }
 
   const handleKey = (e) => {

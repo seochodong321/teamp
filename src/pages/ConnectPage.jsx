@@ -7,7 +7,7 @@ import styles from './ConnectPage.module.css'
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const { connects, removeConnect, currentUser, projects, getOrCreateDmRoom, showError } = useStore()
+  const { connects, removeConnect, currentUser, projects, getOrCreateDmRoom, showError, showConfirm } = useStore()
   const [search, setSearch] = useState('')
   const [profile, setProfile] = useState(null)
   const [pubProjects, setPubProjects] = useState([])
@@ -24,8 +24,8 @@ export default function ConnectPage() {
     return acc
   }, {})
 
-  const handleRemove = (id, name) => {
-    if (!window.confirm(`${name} 님을 팀프 커넥트에서 제거할까요?\n상대방에게는 알림이 가지 않아요.`)) return
+  const handleRemove = async (id, name) => {
+    if (!await showConfirm(`${name} 님을 팀프 커넥트에서 제거할까요?\n상대방에게는 알림이 가지 않아요.`)) return
     removeConnect(id)
   }
 

@@ -9,6 +9,7 @@ import SearchModal from './SearchModal.jsx'
 import CreateProjectModal from './CreateProjectModal.jsx'
 import ChatToastContainer from './ChatToastContainer.jsx'
 import ErrorToastContainer from './ErrorToastContainer.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 import styles from './Layout.module.css'
 import TeampMark from './TeampMark.jsx'
 
@@ -371,6 +372,7 @@ export default function Layout() {
       {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} />}
       <ChatToastContainer />
       <ErrorToastContainer />
+      <ConfirmDialog />
     </div>
   )
 }

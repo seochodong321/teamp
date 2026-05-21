@@ -241,7 +241,12 @@ export const createProjectSlice = (set, get) => ({
   },
 
   archiveProject: async (projectId) => {
-    await updateDoc(doc(db, 'projects', projectId), { status: 'archived' })
+    try {
+      await updateDoc(doc(db, 'projects', projectId), { status: 'archived' })
+    } catch (e) {
+      get().showError('프로젝트 마감에 실패했어요.')
+      throw e
+    }
   },
 
   leaveOrDeleteProject: async (projectId) => {
@@ -256,20 +261,28 @@ export const createProjectSlice = (set, get) => ({
     if (isLeader && otherLeaders.length === 0 && otherMembers.length > 0) {
       return { error: '리더가 혼자면 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.' }
     }
-    if (isLeader && otherMembers.length === 0) {
-      // 혼자 남은 경우 프로젝트 삭제
-      await deleteDoc(doc(db, 'projects', projectId))
-    } else {
-      // 공동리더 포함 일반 퇴장
-      await updateDoc(doc(db, 'projects', projectId), {
-        memberIds: arrayRemove(currentUser.id),
-        members: arrayRemove(me),
-      })
+    try {
+      if (isLeader && otherMembers.length === 0) {
+        await deleteDoc(doc(db, 'projects', projectId))
+      } else {
+        await updateDoc(doc(db, 'projects', projectId), {
+          memberIds: arrayRemove(currentUser.id),
+          members: arrayRemove(me),
+        })
+      }
+    } catch (e) {
+      get().showError('프로젝트에서 나가지 못했어요.')
+      throw e
     }
   },
 
   extendProject: async (projectId, newEndDate) => {
-    await updateDoc(doc(db, 'projects', projectId), { endDate: newEndDate })
+    try {
+      await updateDoc(doc(db, 'projects', projectId), { endDate: newEndDate })
+    } catch (e) {
+      get().showError('기간 연장에 실패했어요.')
+      throw e
+    }
   },
 
   updateProjectInfo: async (projectId, updates) => {

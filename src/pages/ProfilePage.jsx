@@ -12,7 +12,7 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
@@ -475,12 +475,12 @@ export default function ProfilePage() {
                     </button>
                     <button
                       className={styles.deleteBtn}
-                      onClick={() => {
+                      onClick={async () => {
                         const isLeader = p.members.find((m) => m.id === currentUser.id)?.role === 'leader'
                         const msg = isLeader
                           ? `"${p.name}" 프로젝트를 삭제할까요? 모든 팀원이 접근할 수 없게 돼요.`
                           : `"${p.name}" 프로젝트에서 나갈까요?`
-                        if (window.confirm(msg)) leaveOrDeleteProject(p.id)
+                        if (await showConfirm(msg)) leaveOrDeleteProject(p.id)
                       }}
                       title="삭제 / 나가기"
                     >
@@ -549,8 +549,8 @@ export default function ProfilePage() {
             </div>
             <div className={styles.profileItemActions}>
               <button className={styles.profileEditBtn} onClick={() => openEditProfile(p)}>편집</button>
-              <button className={styles.profileDeleteBtn} onClick={() => {
-                if (window.confirm(`"${p.label}" 프로필을 삭제할까요?`)) deleteSubProfile(p.id)
+              <button className={styles.profileDeleteBtn} onClick={async () => {
+                if (await showConfirm(`"${p.label}" 프로필을 삭제할까요?`)) deleteSubProfile(p.id)
               }}>🗑</button>
             </div>
           </div>

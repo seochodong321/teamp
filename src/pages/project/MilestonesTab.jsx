@@ -6,7 +6,7 @@ const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' 
 const MS_HISTORY_LABEL = { created: '생성', completed: '완료', reopened: '재개', delayed: '연기', modified: '수정' }
 
 export default function MilestonesTab({ project, canInvite }) {
-  const { addMilestone, updateMilestone, deleteMilestone } = useStore()
+  const { addMilestone, updateMilestone, deleteMilestone, showConfirm } = useStore()
   const milestones = project.milestones || []
 
   const [showMsForm, setShowMsForm]   = useState(false)
@@ -32,8 +32,8 @@ export default function MilestonesTab({ project, canInvite }) {
     updateMilestone(project.id, msId, { action: 'reopened', status: 'pending', completedAt: null })
   const handleDelayMilestone  = (msId) =>
     updateMilestone(project.id, msId, { action: 'delayed', status: 'delayed' })
-  const handleDeleteMilestone = (msId) => {
-    if (window.confirm('마일스톤을 삭제할까요?')) deleteMilestone(project.id, msId)
+  const handleDeleteMilestone = async (msId) => {
+    if (await showConfirm('마일스톤을 삭제할까요?')) deleteMilestone(project.id, msId)
   }
 
   return (

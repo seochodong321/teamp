@@ -31,7 +31,7 @@ function timeAgo(timestamp) {
 
 export default function NotificationPanel({ open, onClose }) {
   const navigate = useNavigate()
-  const { notifications, markNotificationRead, markAllNotificationsRead, removeNotification, clearAllNotifications } = useStore()
+  const { notifications, markNotificationRead, markAllNotificationsRead, removeNotification, clearAllNotifications, showConfirm } = useStore()
 
   if (!open) return null
 
@@ -62,8 +62,8 @@ export default function NotificationPanel({ open, onClose }) {
                 모두 읽음 처리
               </button>
             )}
-            <button className={styles.actionBtnDanger} onClick={() => {
-              if (window.confirm('모든 알림을 삭제할까요?')) clearAllNotifications()
+            <button className={styles.actionBtnDanger} onClick={async () => {
+              if (await showConfirm('모든 알림을 삭제할까요?')) clearAllNotifications()
             }}>
               전체 삭제
             </button>

@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore.js'
 import styles from '../ProjectPage.module.css'
 
 export default function ManageTab({ project, currentUser, isLeader }) {
-  const { updateMemberRole, setMemberRooms, addCoLeader, kickMember } = useStore()
+  const { updateMemberRole, setMemberRooms, addCoLeader, kickMember, showConfirm } = useStore()
 
   const [pendingRoles, setPendingRoles] = useState({})
   const [pendingRooms, setPendingRooms] = useState({})
@@ -66,13 +66,13 @@ export default function ManageTab({ project, currentUser, isLeader }) {
                   )}
                   {isLeader && m.role !== 'leader' && (
                     <button className={styles.transferBtn}
-                      onClick={() => { if (window.confirm(`${m.name} 님을 공동리더로 추가할까요?`)) addCoLeader(project.id, m.id) }}>
+                      onClick={async () => { if (await showConfirm(`${m.name} 님을 공동리더로 추가할까요?`)) addCoLeader(project.id, m.id) }}>
                       공동리더 추가
                     </button>
                   )}
                   {isLeader && (
                     <button className={styles.kickBtn}
-                      onClick={() => { if (window.confirm(`${m.name} 님을 프로젝트에서 방출할까요?`)) kickMember(project.id, m.id) }}>
+                      onClick={async () => { if (await showConfirm(`${m.name} 님을 프로젝트에서 방출할까요?`)) kickMember(project.id, m.id) }}>
                       방출
                     </button>
                   )}
