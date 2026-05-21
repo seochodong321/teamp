@@ -186,10 +186,13 @@ export default function PublicProfilePage() {
               <p className={styles.statLabel}>함께한 팀원</p>
             </div>
             <div className={styles.statBox}>
-              <p className={styles.statNum}>{totalFeedback}</p>
+              <p className={styles.statNum}>{user.flowerSenderCount || totalFeedback}</p>
               <p className={styles.statLabel}>받은 피드백</p>
             </div>
           </div>
+          {projects.length < allProjects.length && (
+            <p className={styles.statNote}>* 공개 설정된 프로젝트 기준이에요</p>
+          )}
 
           {/* 팀원 평가 */}
           {topFlowers.length > 0 && (

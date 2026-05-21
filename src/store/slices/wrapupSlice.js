@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp,
+  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { txProject } from '../helpers.js'
@@ -101,6 +101,11 @@ export const createWrapupSlice = (set, get) => ({
       const snap = await tx.get(ref)
       if (!snap.exists()) return
       const data = snap.data()
+
+      // 이전 피드백 찾기 (태그 delta 계산용)
+      const oldFeedback = (data.feedbacks || []).find(
+        (f) => f.fromUserId === currentUser.id && f.toUserId === feedbackData.toUserId
+      )
       const feedbacks = (data.feedbacks || []).filter(
         (f) => !(f.fromUserId === currentUser.id && f.toUserId === feedbackData.toUserId)
       )
@@ -115,6 +120,16 @@ export const createWrapupSlice = (set, get) => ({
         createdAt: new Date().toISOString(),
       })
       tx.update(ref, { feedbacks })
+
+      // flowerTagSummary 실시간 동기화 — 추가/제거된 태그만 increment
+      const newTagIds = new Set((feedbackData.tags || []).map((t) => t.id))
+      const oldTagIds = new Set((oldFeedback?.tags || []).map((t) => t.id))
+      const tagUpdates = {}
+      newTagIds.forEach((id) => { if (!oldTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(1) })
+      oldTagIds.forEach((id) => { if (!newTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(-1) })
+      if (Object.keys(tagUpdates).length > 0) {
+        tx.update(doc(db, 'users', feedbackData.toUserId), tagUpdates)
+      }
     })
   },
 

@@ -198,6 +198,12 @@
   margin-top: 2px;
 }
 
+.statNote {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin: -4px 0 4px;
+}
+
 /* 섹션 헤더 */
 .secTitle {
   font-size: 13px;
