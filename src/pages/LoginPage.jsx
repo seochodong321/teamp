@@ -41,13 +41,17 @@ export default function LoginPage() {
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
   const [resendCooldown,  setResendCooldown]  = useState(0)
   const [emailAlreadyInUse, setEmailAlreadyInUse] = useState(false)
+  const resendTimerRef = React.useRef(null)
 
   const startResendCooldown = () => {
+    clearInterval(resendTimerRef.current)
     setResendCooldown(60)
-    const id = setInterval(() => {
-      setResendCooldown((c) => { if (c <= 1) { clearInterval(id); return 0 } return c - 1 })
+    resendTimerRef.current = setInterval(() => {
+      setResendCooldown((c) => { if (c <= 1) { clearInterval(resendTimerRef.current); return 0 } return c - 1 })
     }, 1000)
   }
+
+  useEffect(() => () => clearInterval(resendTimerRef.current), [])
 
   const handleResendVerification = async () => {
     if (resendCooldown > 0) return
@@ -183,7 +187,6 @@ export default function LoginPage() {
       }
       setEmailAlreadyInUse(false)
       const map = {
-        'auth/email-already-in-use':   '이미 가입된 이메일이에요.',
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
         'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
         'auth/user-not-found':         '등록되지 않은 이메일이에요.',
@@ -342,7 +345,7 @@ export default function LoginPage() {
           <p className={styles.switchText}>
             {mode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '}
             <button className={styles.switchBtn} type="button"
-              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setPasswordConfirm('') }}>
+              onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setPasswordConfirm(''); setEmailAlreadyInUse(false) }}>
               {mode === 'login' ? '회원가입' : '로그인'}
             </button>
           </p>

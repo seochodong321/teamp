@@ -42,7 +42,9 @@ export default function VerifyEmailPage() {
           clearInterval(id)
           handleVerified()
         }
-      } catch {}
+      } catch {
+        if (!auth.currentUser) { clearInterval(id); navigate('/login', { replace: true }) }
+      }
     }, 5000)
 
     return () => clearInterval(id)
