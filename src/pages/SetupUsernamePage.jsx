@@ -23,7 +23,8 @@ export default function SetupUsernamePage() {
   const [agreedTerms,      setAgreedTerms]      = useState(false)
   const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
   const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
-  const canSignup = agreedTerms && agreedPrivacy
+  const [agreedAge,        setAgreedAge]         = useState(false)
+  const canSignup = agreedTerms && agreedPrivacy && agreedAge
 
   // 로그인도 안 됐고 setup도 필요 없으면 → 로그인 페이지로
   if (!isLoggedIn && !auth.currentUser) return <Navigate to="/login" replace />
@@ -200,6 +201,13 @@ export default function SetupUsernamePage() {
 
           {/* 약관 동의 */}
           <div className={styles.agreeSection}>
+            <label className={styles.agreeRow}>
+              <input type="checkbox" checked={agreedAge}
+                onChange={(e) => setAgreedAge(e.target.checked)} />
+              <span>
+                만 14세 이상입니다 <span className={styles.agreeRequired}>(필수)</span>
+              </span>
+            </label>
             <label className={styles.agreeRow}>
               <input type="checkbox" checked={agreedTerms}
                 onChange={(e) => setAgreedTerms(e.target.checked)} />

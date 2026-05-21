@@ -14,6 +14,7 @@ import Layout             from './components/Layout.jsx'
 import LandingPage        from './pages/LandingPage.jsx'
 import SetupUsernamePage  from './pages/SetupUsernamePage.jsx'
 import LegalPage          from './pages/LegalPage.jsx'
+import VerifyEmailPage    from './pages/VerifyEmailPage.jsx'
 import { TERMS_DATA }     from './legal/termsData.js'
 import { PRIVACY_DATA }   from './legal/privacyData.js'
 import { GUIDELINES_DATA } from './legal/guidelinesData.js'
@@ -499,9 +500,10 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/join/:code" element={<JoinPage />} />
           <Route path="/setup-username" element={<SetupUsernamePage />} />
-          <Route path="/terms"      element={<LegalPage data={TERMS_DATA} />} />
-          <Route path="/privacy"    element={<LegalPage data={PRIVACY_DATA} />} />
-          <Route path="/guidelines" element={<LegalPage data={GUIDELINES_DATA} />} />
+          <Route path="/terms"        element={<LegalPage data={TERMS_DATA} />} />
+          <Route path="/privacy"      element={<LegalPage data={PRIVACY_DATA} />} />
+          <Route path="/guidelines"   element={<LegalPage data={GUIDELINES_DATA} />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           {/* 루트: 비로그인 → 랜딩, 로그인 → /home 리다이렉트 */}
           <Route path="/" element={

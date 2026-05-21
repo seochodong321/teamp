@@ -380,6 +380,22 @@
 .agreeRequired { color: var(--primary); font-weight: 600; }
 .agreeOptional { color: var(--text-tertiary); }
 
+.resendBtn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: -4px;
+}
+.resendBtn:hover:not(:disabled) { background: var(--primary-soft); }
+.resendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ── 모바일: 위아래 구조 ── */
 @media (max-width: 768px) {
   .page { flex-direction: column; }

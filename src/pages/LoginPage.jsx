@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
   setPersistence, browserLocalPersistence, browserSessionPersistence,
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+  sendEmailVerification,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -39,7 +40,34 @@ export default function LoginPage() {
   const [agreedTerms,      setAgreedTerms]      = useState(false)
   const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
   const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
-  const canSignup = agreedTerms && agreedPrivacy
+  const [agreedAge,        setAgreedAge]         = useState(false)
+  const canSignup = agreedTerms && agreedPrivacy && agreedAge
+
+  // 미인증 계정 로그인 시 재발송 UI
+  const [unverifiedEmail, setUnverifiedEmail] = useState('')
+  const [resendCooldown,  setResendCooldown]  = useState(0)
+
+  const startResendCooldown = () => {
+    setResendCooldown(60)
+    const id = setInterval(() => {
+      setResendCooldown((c) => { if (c <= 1) { clearInterval(id); return 0 } return c - 1 })
+    }, 1000)
+  }
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0) return
+    setError('')
+    try {
+      await setPersistence(auth, browserSessionPersistence)
+      const cred = await signInWithEmailAndPassword(auth, unverifiedEmail, password)
+      await sendEmailVerification(cred.user)
+      await signOut(auth)
+      setError('인증 메일을 다시 보냈어요. 받은 편지함을 확인해주세요.')
+      startResendCooldown()
+    } catch {
+      setError('재발송 중 오류가 발생했어요. 비밀번호를 확인해주세요.')
+    }
+  }
 
   // Firebase Auth 초기화 대기 — 기존 세션 복원 전에 로그인 폼이 깜빡이는 현상 방지
   useEffect(() => {
@@ -107,16 +135,22 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
-        login(name.trim(), email.trim(), cred.user.uid)
-        setNeedsUsernameSetup(true)
+        await sendEmailVerification(cred.user)
         if (rememberEmail) localStorage.setItem('teamp-saved-email', email.trim())
         else localStorage.removeItem('teamp-saved-email')
         if (!autoLogin) localStorage.setItem('teamp-auto-login', 'false')
         else localStorage.removeItem('teamp-auto-login')
-        navigate('/setup-username', { replace: true })
+        navigate('/verify-email', { replace: true })
         return
       } else {
         const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
+        if (!cred.user.emailVerified) {
+          await signOut(auth)
+          setUnverifiedEmail(email.trim())
+          setError('이메일 인증이 완료되지 않았어요. 받은 편지함의 인증 메일을 확인해주세요.')
+          setLoading(false)
+          return
+        }
         // Firestore 프로필 로드 실패해도 로그인 자체는 성공 처리
         try {
           const snap = await getDoc(doc(db, 'users', cred.user.uid))
@@ -262,6 +296,13 @@ export default function LoginPage() {
             {mode === 'signup' && (
               <div className={styles.agreeSection}>
                 <label className={styles.agreeRow}>
+                  <input type="checkbox" checked={agreedAge}
+                    onChange={(e) => setAgreedAge(e.target.checked)} />
+                  <span>
+                    만 14세 이상입니다 <span className={styles.agreeRequired}>(필수)</span>
+                  </span>
+                </label>
+                <label className={styles.agreeRow}>
                   <input type="checkbox" checked={agreedTerms}
                     onChange={(e) => setAgreedTerms(e.target.checked)} />
                   <span>
@@ -289,6 +330,12 @@ export default function LoginPage() {
             )}
 
             {error && <p className={styles.error}>{error}</p>}
+            {unverifiedEmail && mode === 'login' && (
+              <button type="button" className={styles.resendBtn}
+                onClick={handleResendVerification} disabled={resendCooldown > 0}>
+                {resendCooldown > 0 ? `재발송 대기 (${resendCooldown}s)` : '인증 메일 다시 보내기'}
+              </button>
+            )}
 
             <button type="submit" className={`${styles.submitBtn} ${loading ? styles.submitBtnLoading : ''}`} disabled={loading || (mode === 'signup' && !canSignup)}>
               {loading ? (mode === 'login' ? '로그인 중...' : '가입 중...') : (mode === 'login' ? '로그인' : '가입하기')}

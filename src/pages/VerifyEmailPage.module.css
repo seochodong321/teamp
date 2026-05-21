@@ -1,0 +1,111 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 24px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  margin-bottom: 4px;
+}
+
+.iconWrap {
+  margin: 8px 0 4px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.75;
+  margin: 0;
+}
+
+.emailBadge {
+  font-weight: 700;
+  color: var(--primary);
+  word-break: break-all;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.message {
+  font-size: 13px;
+  color: var(--primary);
+  text-align: center;
+  background: var(--primary-soft);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  margin: 4px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+.primaryBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.secondaryBtn {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--primary-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.secondaryBtn:hover:not(:disabled) { background: var(--primary-soft); }
+.secondaryBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancelBtn {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-top: 4px;
+}
+.cancelBtn:hover { color: var(--text-secondary); }
