@@ -12,7 +12,7 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm, deleteAccount } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
@@ -82,6 +82,8 @@ export default function ProfilePage() {
   const [pfAffil, setPfAffil]         = useState('')
   const [pfOneliner, setPfOneliner]   = useState('')
   const [pfSaving, setPfSaving]       = useState(false)
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false)
+  const [deleting, setDeleting]               = useState(false)
 
   const openNewProfile = () => {
     setEditingProfile(null)
@@ -212,6 +214,23 @@ export default function ProfilePage() {
     try { await signOut(auth) } catch { try { await signOut(auth) } catch {} }
     logout()
     navigate('/login')
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmed = await showConfirm('정말로 탈퇴하시겠어요?\n계정과 모든 데이터가 즉시 삭제되며 복구할 수 없습니다.')
+    if (!confirmed) return
+    setDeleting(true)
+    try {
+      await deleteAccount()
+      navigate('/', { replace: true })
+    } catch (e) {
+      if (e.code === 'requires-recent-login') {
+        showError('보안을 위해 로그아웃 후 다시 로그인한 뒤 탈퇴해주세요.')
+      } else {
+        showError('탈퇴 처리 중 오류가 발생했어요. 다시 시도해주세요.')
+      }
+      setDeleting(false)
+    }
   }
 
   return (
@@ -636,7 +655,30 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* 계정 탈퇴 */}
+      <div className={styles.dangerZone}>
+        <h3 className={styles.dangerTitle}>계정 탈퇴</h3>
+        <ul className={styles.dangerList}>
+          <li>계정과 모든 개인 데이터가 <strong>즉시 삭제</strong>되며 <strong>복구가 불가능</strong>합니다.</li>
+          <li>내가 참여한 프로젝트의 채팅·할 일·파일 기록은 팀원들에게 텍스트로 보존됩니다.</li>
+          <li>내가 유일한 멤버인 프로젝트는 함께 삭제됩니다.</li>
+          <li>내가 리더인 프로젝트는 다른 팀원에게 리더 권한이 자동으로 이전됩니다.</li>
+        </ul>
+        <label className={styles.dangerCheck}>
+          <input type="checkbox" checked={deleteConfirmed}
+            onChange={(e) => setDeleteConfirmed(e.target.checked)} />
+          <span>위 내용을 이해했으며 탈퇴에 동의합니다</span>
+        </label>
+        <button
+          className={styles.dangerBtn}
+          disabled={!deleteConfirmed || deleting}
+          onClick={handleDeleteAccount}
+        >
+          {deleting ? '탈퇴 처리 중...' : '계정 탈퇴'}
+        </button>
+      </div>
     </div>
-    
+
   )
 }

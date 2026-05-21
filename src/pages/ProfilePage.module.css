@@ -372,3 +372,71 @@
 .birthField { flex: 1; }
 .journeyIconEmpty { opacity: 0.4; }
 .journeyCountEmpty { color: var(--text-tertiary) !important; }
+
+/* ── 계정 탈퇴 ── */
+.dangerZone {
+  border: 1px solid var(--coral-light);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  background: var(--coral-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dangerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--coral);
+  margin: 0;
+}
+
+.dangerList {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dangerList li {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding-left: 14px;
+  position: relative;
+}
+.dangerList li::before {
+  content: '·';
+  position: absolute;
+  left: 3px;
+  color: var(--coral);
+  font-weight: 700;
+}
+.dangerList li strong { color: var(--coral); }
+
+.dangerCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dangerBtn {
+  align-self: flex-start;
+  padding: 9px 20px;
+  background: var(--coral);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.dangerBtn:hover:not(:disabled) { opacity: 0.85; }
+.dangerBtn:disabled { opacity: 0.35; cursor: not-allowed; }

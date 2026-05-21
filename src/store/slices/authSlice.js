@@ -1,5 +1,6 @@
-import { arrayRemove, arrayUnion, doc, updateDoc } from 'firebase/firestore'
-import { db } from '../../firebase.js'
+import { arrayRemove, arrayUnion, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore'
+import { deleteUser } from 'firebase/auth'
+import { db, auth } from '../../firebase.js'
 
 export const createAuthSlice = (set, get) => ({
   isLoggedIn: false,
@@ -122,5 +123,53 @@ export const createAuthSlice = (set, get) => ({
   updateMyMemo: (projectId, memo) => {
     const { currentUser } = get()
     get().updateMemberMemo(projectId, currentUser.id, memo)
+  },
+
+  deleteAccount: async () => {
+    const { currentUser, projects, logout } = get()
+    if (!currentUser) return
+    const uid = currentUser.id
+    const batch = writeBatch(db)
+
+    for (const project of (projects || [])) {
+      if (!project.memberIds?.includes(uid)) continue
+
+      const otherMembers    = (project.members   || []).filter((m) => m.id !== uid)
+      const otherMemberIds  = (project.memberIds || []).filter((id) => id !== uid)
+
+      if (otherMembers.length === 0) {
+        // 혼자인 프로젝트 — 함께 삭제
+        batch.delete(doc(db, 'projects', project.id))
+      } else {
+        const updates = { memberIds: otherMemberIds, members: otherMembers }
+        if (project.leaderId === uid) {
+          // 부리더 → 첫 번째 멤버 순으로 리더 이전
+          const newLeader = otherMembers.find((m) => m.role === 'sub-leader') || otherMembers[0]
+          updates.leaderId = newLeader.id
+          updates.members  = otherMembers.map((m) =>
+            m.id === newLeader.id ? { ...m, role: 'leader' } : m
+          )
+        }
+        batch.update(doc(db, 'projects', project.id), updates)
+      }
+    }
+
+    // 유저 문서 삭제
+    batch.delete(doc(db, 'users', uid))
+    await batch.commit()
+
+    // Firebase Auth 계정 삭제 (최근 로그인이 오래됐으면 실패할 수 있음)
+    try {
+      if (auth.currentUser) await deleteUser(auth.currentUser)
+    } catch (e) {
+      if (e.code === 'auth/requires-recent-login') {
+        const err = new Error('재로그인 후 다시 시도해주세요.')
+        err.code = 'requires-recent-login'
+        throw err
+      }
+      // Auth 삭제 실패해도 Firestore 데이터는 이미 삭제됨 — 로그아웃으로 처리
+    }
+
+    logout()
   },
 })
