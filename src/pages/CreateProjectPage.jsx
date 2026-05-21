@@ -53,8 +53,10 @@ export default function CreateProjectPage() {
   const navigate = useNavigate()
   const createProject = useStore((s) => s.createProject)
   const profiles = useStore((s) => s.profiles)
+  const showError = useStore((s) => s.showError)
 
   const [step, setStep]           = useState(0)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [showProfileSel, setShowProfileSel] = useState(false)
   const [emoji, setEmoji]         = useState('')
   const [name, setName]           = useState('')
@@ -75,8 +77,8 @@ export default function CreateProjectPage() {
 
   const goNext = async () => {
     if (step === 0) {
-      if (!emoji) { alert('프로젝트를 표현할 이모지를 골라주세요!'); return }
-      if (!name.trim() || !projectStartDate || !projectEndDate) { alert('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
+      if (!emoji) { showError('프로젝트를 표현할 이모지를 골라주세요!'); return }
+      if (!name.trim() || !projectStartDate || !projectEndDate) { showError('프로젝트 이름, 시작일, 종료일을 입력해주세요.'); return }
       if (projectStartDate && projectEndDate && projectEndDate < projectStartDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
@@ -235,7 +237,7 @@ export default function CreateProjectPage() {
             <p className={styles.doneSub}>팀원들에게 초대 링크를 공유해보세요</p>
             <div className={styles.linkBoxDone}>
               <span className={styles.linkText}>{inviteLink}</span>
-              <button type="button" className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); alert('초대 링크가 복사됐어요!') }}>복사</button>
+              <button type="button" className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}>{linkCopied ? '✓ 복사됨' : '복사'}</button>
             </div>
             <div className={styles.summary}>
               {[

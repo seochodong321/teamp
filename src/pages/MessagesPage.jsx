@@ -11,7 +11,7 @@ import styles from './MessagesPage.module.css'
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { currentUser } = useStore()
+  const { currentUser, showError } = useStore()
 
   const composeMode = searchParams.get('compose') === '1'
   const initTo      = searchParams.get('to') || ''
@@ -120,7 +120,7 @@ export default function MessagesPage() {
       setSubject(''); setBody('')
       navigate('/messages', { replace: true })
     } catch (e) {
-      alert('전송에 실패했어요. 잠시 후 다시 시도해주세요.')
+      showError('전송에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
       setSending(false)
     }
@@ -143,7 +143,7 @@ export default function MessagesPage() {
       })
       setReplyText('')
     } catch {
-      alert('답장 전송에 실패했어요.')
+      showError('답장 전송에 실패했어요.')
     } finally {
       setReplying(false)
     }

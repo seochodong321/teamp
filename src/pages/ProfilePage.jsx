@@ -12,7 +12,7 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError } = useStore()
   const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
 
   // 나의 여정 통계
@@ -127,7 +127,7 @@ export default function ProfilePage() {
       await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
       updateProfile({ photoURL: url })
     } catch {
-      alert('업로드에 실패했어요. Firebase Storage가 활성화되지 않았거나 네트워크 오류예요.')
+      showError('업로드에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
       setPhotoUploading(false)
       e.target.value = ''
@@ -169,7 +169,7 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
-      alert('이름은 비울 수 없어요.')
+      showError('이름은 비울 수 없어요.')
       return
     }
     setSaving(true)
@@ -177,7 +177,7 @@ export default function ProfilePage() {
       ? `${editBirthYear}-${editBirthMonth}-${editBirthDay}`
       : (editBirthMonth && editBirthDay ? `${editBirthMonth}-${editBirthDay}` : '')
     const newUsername = editUsername.trim() ? `@${editUsername.trim().toLowerCase().replace(/^@/, '')}` : currentUser.username
-    if (usernameStatus === 'taken') { alert('이미 사용 중인 아이디예요.'); return }
+    if (usernameStatus === 'taken') { showError('이미 사용 중인 아이디예요.'); return }
     try {
       // Firestore에 저장
       if (currentUser.id) {
@@ -202,7 +202,7 @@ export default function ProfilePage() {
       setShowEditModal(false)
     } catch (err) {
       console.error(err)
-      alert('저장에 실패했어요. 다시 시도해주세요.')
+      showError('저장에 실패했어요. 다시 시도해주세요.')
     } finally {
       setSaving(false)
     }

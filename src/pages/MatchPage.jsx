@@ -20,7 +20,7 @@ function calcDday(deadline) {
 }
 
 export default function MatchPage() {
-  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles } = useStore()
+  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles, showError, showSuccess } = useStore()
   const navigate = useNavigate()
 
   const [posts, setPosts]             = useState([])
@@ -210,7 +210,7 @@ export default function MatchPage() {
 
   const handleAccept = async (post, applicant) => {
     const result = await addMemberToProject(post.projectId, applicant.userId, applicant.userName)
-    if (result?.message) { alert(result.message); return }
+    if (result?.message) { showError(result.message); return }
 
     const postRef  = doc(db, 'matchPosts', post.id)
     const postSnap = await getDoc(postRef)
@@ -224,7 +224,7 @@ export default function MatchPage() {
     }
     setViewApplicant(null)
     fetchPosts()
-    alert(`${applicant.userName} 님이 프로젝트에 합류했어요!`)
+    showSuccess(`${applicant.userName} 님이 프로젝트에 합류했어요!`)
   }
 
   const handleHold = async (post, applicant) => {

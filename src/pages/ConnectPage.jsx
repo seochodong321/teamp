@@ -7,7 +7,7 @@ import styles from './ConnectPage.module.css'
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const { connects, removeConnect, currentUser, projects, getOrCreateDmRoom } = useStore()
+  const { connects, removeConnect, currentUser, projects, getOrCreateDmRoom, showError } = useStore()
   const [search, setSearch] = useState('')
   const [profile, setProfile] = useState(null)
   const [pubProjects, setPubProjects] = useState([])
@@ -70,14 +70,14 @@ export default function ConnectPage() {
     const shared = projects.find((p) =>
       p.memberIds?.includes(profile.id) || p.members?.some((m) => m.id === profile.id)
     )
-    if (!shared) { alert('함께한 프로젝트를 찾을 수 없어요.'); return }
+    if (!shared) { showError('함께한 프로젝트를 찾을 수 없어요.'); return }
     try {
       const room = await getOrCreateDmRoom(shared.id, profile.id, profile.name)
       setProfile(null)
       navigate(`/project/${shared.id}/chat/${room.id}`)
     } catch (e) {
       console.error('[DM] 열기 실패:', e)
-      alert('대화방을 열 수 없어요. 잠시 후 다시 시도해주세요.')
+      showError('대화방을 열 수 없어요. 잠시 후 다시 시도해주세요.')
     }
   }
 

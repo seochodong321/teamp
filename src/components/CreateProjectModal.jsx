@@ -51,7 +51,7 @@ const STEPS = ['기본 정보', '팀 구성', '완료']
 
 export default function CreateProjectModal({ onClose }) {
   const navigate = useNavigate()
-  const { createProject, profiles } = useStore((s) => ({ createProject: s.createProject, profiles: s.profiles }))
+  const { createProject, profiles, showError, showSuccess } = useStore((s) => ({ createProject: s.createProject, profiles: s.profiles, showError: s.showError, showSuccess: s.showSuccess }))
 
   const [step, setStep]                     = useState(0)
   const [emoji, setEmoji]                   = useState('')
@@ -68,6 +68,7 @@ export default function CreateProjectModal({ onClose }) {
   const [created, setCreated]               = useState(null)
   const [dateError, setDateError]           = useState('')
   const [loading, setLoading]               = useState(false)
+  const [linkCopied, setLinkCopied]         = useState(false)
   const [showProfileSel, setShowProfileSel] = useState(false)
   const [pendingData, setPendingData]       = useState(null)
 
@@ -75,8 +76,8 @@ export default function CreateProjectModal({ onClose }) {
 
   const goNext = async () => {
     if (step === 0) {
-      if (!emoji) { alert('이모지를 골라주세요!'); return }
-      if (!name.trim() || !projectStartDate || !projectEndDate) { alert('이름, 시작일, 종료일을 입력해주세요.'); return }
+      if (!emoji) { showError('이모지를 골라주세요!'); return }
+      if (!name.trim() || !projectStartDate || !projectEndDate) { showError('이름, 시작일, 종료일을 입력해주세요.'); return }
       if (projectStartDate && projectEndDate && projectEndDate < projectStartDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
       setDateError('')
     }
@@ -215,7 +216,7 @@ export default function CreateProjectModal({ onClose }) {
                 <p className={styles.doneSub}>초대 링크를 복사해 팀원들에게 공유하세요</p>
                 <div className={styles.linkBox}>
                   <span className={styles.linkText}>{inviteLink}</span>
-                  <button className={styles.linkCopy} onClick={() => navigator.clipboard.writeText(inviteLink).then(() => alert('복사됐어요!'))}>복사</button>
+                  <button className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}>{linkCopied ? '✓ 복사됨' : '복사'}</button>
                 </div>
                 <div className={styles.summary}>
                   {[['프로젝트명', `${emoji} ${created.name}`], ['기간', `${created.projectStartDate || created.startDate} ~ ${created.projectEndDate || created.endDate}`], ['채팅방', `${created.rooms.length}개`]].map(([k, v]) => (

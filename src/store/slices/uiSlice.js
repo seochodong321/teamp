@@ -1,6 +1,7 @@
 export const createUiSlice = (set, get) => ({
   theme: (typeof window !== 'undefined' && localStorage.getItem('teamp-theme')) || 'light',
   errorToasts: [],
+  successToasts: [],
   chatToasts: [],
 
   // 팀프 매치 새 게시글 감지 — matchPostCount: 실시간 count, matchSeenCount: 마지막으로 본 count
@@ -46,6 +47,16 @@ export const createUiSlice = (set, get) => ({
 
   dismissError: (id) =>
     set((s) => ({ errorToasts: s.errorToasts.filter((e) => e.id !== id) })),
+
+  showSuccess: (message) => {
+    const id = `suc_${Date.now()}`
+    set((s) => ({ successToasts: [...s.successToasts, { id, message }].slice(-3) }))
+    setTimeout(() => {
+      set((s) => ({ successToasts: s.successToasts.filter((t) => t.id !== id) }))
+    }, 3000)
+  },
+  dismissSuccess: (id) =>
+    set((s) => ({ successToasts: s.successToasts.filter((t) => t.id !== id) })),
 
   setPinnedId: (id) => set({ pinnedId: id }),
 
