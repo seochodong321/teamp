@@ -84,6 +84,7 @@ export default function ProfilePage() {
   const [pfSaving, setPfSaving]       = useState(false)
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
   const [deleting, setDeleting]               = useState(false)
+  const [dangerOpen, setDangerOpen]           = useState(false)
 
   const openNewProfile = () => {
     setEditingProfile(null)
@@ -656,27 +657,43 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 계정 탈퇴 */}
-      <div className={styles.dangerZone}>
-        <h3 className={styles.dangerTitle}>계정 탈퇴</h3>
-        <ul className={styles.dangerList}>
-          <li>계정과 모든 개인 데이터가 <strong>즉시 삭제</strong>되며 <strong>복구가 불가능</strong>합니다.</li>
-          <li>내가 참여한 프로젝트의 채팅·할 일·파일 기록은 팀원들에게 텍스트로 보존됩니다.</li>
-          <li>내가 유일한 멤버인 프로젝트는 함께 삭제됩니다.</li>
-          <li>내가 리더인 프로젝트는 다른 팀원에게 리더 권한이 자동으로 이전됩니다.</li>
-        </ul>
-        <label className={styles.dangerCheck}>
-          <input type="checkbox" checked={deleteConfirmed}
-            onChange={(e) => setDeleteConfirmed(e.target.checked)} />
-          <span>위 내용을 이해했으며 탈퇴에 동의합니다</span>
-        </label>
+      {/* 계정 탈퇴 — 아코디언 */}
+      <div className={`${styles.dangerZone} ${dangerOpen ? styles.dangerZoneOpen : ''}`}>
         <button
-          className={styles.dangerBtn}
-          disabled={!deleteConfirmed || deleting}
-          onClick={handleDeleteAccount}
+          className={styles.dangerToggle}
+          onClick={() => { setDangerOpen((v) => !v); setDeleteConfirmed(false) }}
         >
-          {deleting ? '탈퇴 처리 중...' : '계정 탈퇴'}
+          <span className={styles.dangerTitle}>계정 탈퇴</span>
+          <svg
+            className={`${styles.dangerChevron} ${dangerOpen ? styles.dangerChevronOpen : ''}`}
+            width="16" height="16" viewBox="0 0 16 16" fill="none"
+          >
+            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
+
+        {dangerOpen && (
+          <>
+            <ul className={styles.dangerList}>
+              <li>계정과 모든 개인 데이터가 <strong>즉시 삭제</strong>되며 <strong>복구가 불가능</strong>합니다.</li>
+              <li>내가 참여한 프로젝트의 채팅·할 일·파일 기록은 팀원들에게 텍스트로 보존됩니다.</li>
+              <li>내가 유일한 멤버인 프로젝트는 함께 삭제됩니다.</li>
+              <li>내가 리더인 프로젝트는 다른 팀원에게 리더 권한이 자동으로 이전됩니다.</li>
+            </ul>
+            <label className={styles.dangerCheck}>
+              <input type="checkbox" checked={deleteConfirmed}
+                onChange={(e) => setDeleteConfirmed(e.target.checked)} />
+              <span>위 내용을 이해했으며 탈퇴에 동의합니다</span>
+            </label>
+            <button
+              className={styles.dangerBtn}
+              disabled={!deleteConfirmed || deleting}
+              onClick={handleDeleteAccount}
+            >
+              {deleting ? '탈퇴 처리 중...' : '계정 탈퇴'}
+            </button>
+          </>
+        )}
       </div>
     </div>
 
