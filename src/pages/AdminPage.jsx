@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   collection, query, orderBy, getDocs, updateDoc, deleteDoc, doc,
-  serverTimestamp, limit, startAfter, where,
+  serverTimestamp, limit, where,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -14,21 +14,6 @@ const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '
 const REASON_LABEL = {
   illegal: '불법 콘텐츠', spam: '스팸 / 홍보', false: '허위 정보',
   hate: '욕설 / 혐오 표현', other: '기타',
-}
-
-// ─── 확인 다이얼로그 ─────────────────────────────────────────
-function ConfirmAction({ message, onConfirm, onCancel }) {
-  return (
-    <div className={styles.confirmBackdrop}>
-      <div className={styles.confirmBox}>
-        <p className={styles.confirmMsg}>{message}</p>
-        <div className={styles.confirmBtns}>
-          <button className={styles.confirmCancel} onClick={onCancel}>취소</button>
-          <button className={styles.confirmOk} onClick={onConfirm}>확인</button>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // ─── 신고 관리 탭 ────────────────────────────────────────────
@@ -325,42 +310,35 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
 
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
-  const { currentUser } = useStore()
+  const { currentUser, showConfirm } = useStore()
   const [activeTab, setActiveTab] = useState('reports')
-  const [confirm, setConfirm]     = useState(null) // { message, onConfirm }
 
   const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
   if (!isAdmin) return <Navigate to="/home" replace />
 
-  const ask = (message, onConfirm) => setConfirm({ message, onConfirm })
-  const closeConfirm = () => setConfirm(null)
-
   // ── 액션: 프로젝트 삭제
-  const handleDeleteProject = (projectId, name, reportId) => {
-    ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`, async () => {
-      closeConfirm()
-      await deleteDoc(doc(db, 'projects', projectId))
-      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
-    })
+  const handleDeleteProject = async (projectId, name, reportId) => {
+    const ok = await showConfirm(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`)
+    if (!ok) return
+    await deleteDoc(doc(db, 'projects', projectId))
+    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
   }
 
   // ── 액션: 매치 모집글 삭제
-  const handleDeleteMatch = (postId, title, reportId) => {
-    ask(`"${title}" 모집글을 삭제할까요?`, async () => {
-      closeConfirm()
-      await deleteDoc(doc(db, 'matchPosts', postId))
-      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
-    })
+  const handleDeleteMatch = async (postId, title, reportId) => {
+    const ok = await showConfirm(`"${title}" 모집글을 삭제할까요?`)
+    if (!ok) return
+    await deleteDoc(doc(db, 'matchPosts', postId))
+    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
   }
 
   // ── 액션: 유저 블락
-  const handleBlockUser = (uid, name, onSuccess, reportId) => {
-    ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`, async () => {
-      closeConfirm()
-      await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
-      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
-      onSuccess?.()
-    })
+  const handleBlockUser = async (uid, name, onSuccess, reportId) => {
+    const ok = await showConfirm(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`)
+    if (!ok) return
+    await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
+    if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    onSuccess?.()
   }
 
   // ── 액션: 유저 블락 해제
@@ -403,14 +381,6 @@ export default function AdminPage() {
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
       {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} />}
       {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} />}
-
-      {confirm && (
-        <ConfirmAction
-          message={confirm.message}
-          onConfirm={confirm.onConfirm}
-          onCancel={closeConfirm}
-        />
-      )}
     </div>
   )
 }

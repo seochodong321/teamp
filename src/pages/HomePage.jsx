@@ -565,14 +565,6 @@ export default function HomePage() {
       )}
       </div>
 
-      <footer className={styles.legalFooter}>
-        <Link to="/terms" className={styles.legalLink}>이용약관</Link>
-        <span className={styles.legalDot}>·</span>
-        <Link to="/privacy" className={styles.legalLink}>개인정보처리방침</Link>
-        <span className={styles.legalDot}>·</span>
-        <Link to="/guidelines" className={styles.legalLink}>커뮤니티 가이드라인</Link>
-      </footer>
-
     </>
   )
 }
