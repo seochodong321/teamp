@@ -1,55 +1,64 @@
-import React, { useState, useEffect } from 'react'
-import { collection, query, orderBy, getDocs, updateDoc, doc } from 'firebase/firestore'
+import React, { useState, useEffect, useCallback } from 'react'
+import {
+  collection, query, orderBy, getDocs, updateDoc, deleteDoc, doc,
+  serverTimestamp, limit, startAfter, where,
+} from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { Navigate } from 'react-router-dom'
 import styles from './AdminPage.module.css'
 
-const ADMIN_EMAILS = ['byond1318@gmail.com']
+const ADMIN_EMAILS = ['seobomin524@gmail.com']
 
-const TYPE_LABEL  = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필' }
+const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필' }
 const REASON_LABEL = {
-  illegal: '불법 콘텐츠',
-  spam:    '스팸 / 홍보',
-  false:   '허위 정보',
-  hate:    '욕설 / 혐오 표현',
-  other:   '기타',
+  illegal: '불법 콘텐츠', spam: '스팸 / 홍보', false: '허위 정보',
+  hate: '욕설 / 혐오 표현', other: '기타',
 }
 
-export default function AdminPage() {
-  const { currentUser } = useStore()
+// ─── 확인 다이얼로그 ─────────────────────────────────────────
+function ConfirmAction({ message, onConfirm, onCancel }) {
+  return (
+    <div className={styles.confirmBackdrop}>
+      <div className={styles.confirmBox}>
+        <p className={styles.confirmMsg}>{message}</p>
+        <div className={styles.confirmBtns}>
+          <button className={styles.confirmCancel} onClick={onCancel}>취소</button>
+          <button className={styles.confirmOk} onClick={onConfirm}>확인</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── 신고 관리 탭 ────────────────────────────────────────────
+function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   const [reports, setReports]   = useState([])
   const [loading, setLoading]   = useState(true)
-  const [filter, setFilter]     = useState('pending') // 'pending' | 'resolved' | 'all'
+  const [filter, setFilter]     = useState('pending')
 
-  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
-  if (!isAdmin) return <Navigate to="/home" replace />
-
-  useEffect(() => { fetchReports() }, [])
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true)
     try {
       const snap = await getDocs(query(collection(db, 'reports'), orderBy('createdAt', 'desc')))
       setReports(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    } catch (e) {
-      console.error('신고 목록 조회 실패:', e)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => { fetchReports() }, [fetchReports])
 
   const handleResolve = async (reportId) => {
     await updateDoc(doc(db, 'reports', reportId), { status: 'resolved' })
     setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'resolved' } : r))
   }
-
   const handleReopen = async (reportId) => {
     await updateDoc(doc(db, 'reports', reportId), { status: 'pending' })
     setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'pending' } : r))
   }
 
-  const filtered = reports.filter((r) => filter === 'all' || r.status === filter)
+  const filtered = filter === 'all' ? reports : reports.filter((r) => r.status === filter)
   const pendingCount = reports.filter((r) => r.status === 'pending').length
 
   const targetLink = (r) => {
@@ -59,32 +68,19 @@ export default function AdminPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>신고 관리</h1>
-          <p className={styles.sub}>팀프 콘텐츠 신고 처리 · 관리자 전용</p>
-        </div>
-        <button className={styles.refreshBtn} onClick={fetchReports}>새로고침</button>
+    <div className={styles.tabContent}>
+      <div className={styles.subTabRow}>
+        {[['pending', `미처리`, pendingCount], ['resolved', '처리 완료', null], ['all', '전체', null]].map(([v, label, count]) => (
+          <button key={v} className={`${styles.subTab} ${filter === v ? styles.subTabActive : ''}`} onClick={() => setFilter(v)}>
+            {label}
+            {count > 0 && <span className={styles.badge}>{count}</span>}
+          </button>
+        ))}
+        <button className={styles.refreshBtn} onClick={fetchReports}>↻</button>
       </div>
 
-      <div className={styles.tabs}>
-        <button className={`${styles.tab} ${filter === 'pending' ? styles.tabActive : ''}`}
-          onClick={() => setFilter('pending')}>
-          미처리 {pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
-        </button>
-        <button className={`${styles.tab} ${filter === 'resolved' ? styles.tabActive : ''}`}
-          onClick={() => setFilter('resolved')}>처리 완료</button>
-        <button className={`${styles.tab} ${filter === 'all' ? styles.tabActive : ''}`}
-          onClick={() => setFilter('all')}>전체</button>
-      </div>
-
-      {loading ? (
-        <p className={styles.empty}>불러오는 중...</p>
-      ) : filtered.length === 0 ? (
-        <p className={styles.empty}>
-          {filter === 'pending' ? '처리할 신고가 없어요 ✅' : '신고 내역이 없어요'}
-        </p>
+      {loading ? <p className={styles.empty}>불러오는 중...</p> : filtered.length === 0 ? (
+        <p className={styles.empty}>{filter === 'pending' ? '처리할 신고가 없어요 ✅' : '신고 내역이 없어요'}</p>
       ) : (
         <div className={styles.list}>
           {filtered.map((r) => {
@@ -94,39 +90,316 @@ export default function AdminPage() {
               <div key={r.id} className={`${styles.card} ${r.status === 'resolved' ? styles.cardResolved : ''}`}>
                 <div className={styles.cardTop}>
                   <div className={styles.cardMeta}>
-                    <span className={`${styles.typeBadge} ${styles['type_' + r.type]}`}>
-                      {TYPE_LABEL[r.type] || r.type}
-                    </span>
-                    <span className={`${styles.reasonBadge}`}>{REASON_LABEL[r.reason] || r.reason}</span>
+                    <span className={`${styles.typeBadge} ${styles['type_' + r.type]}`}>{TYPE_LABEL[r.type] || r.type}</span>
+                    <span className={styles.reasonBadge}>{REASON_LABEL[r.reason] || r.reason}</span>
                     {r.status === 'resolved' && <span className={styles.resolvedBadge}>처리 완료</span>}
                   </div>
                   <span className={styles.date}>{createdAt}</span>
                 </div>
-
                 <div className={styles.cardBody}>
                   <p className={styles.targetName}>
                     <strong>대상:</strong> {r.targetName}
-                    {link && (
-                      <a href={link} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>
-                        → 바로가기
-                      </a>
-                    )}
+                    {link && <a href={link} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 바로가기</a>}
                   </p>
                   <p className={styles.reporter}><strong>신고자:</strong> {r.reporterName}</p>
                   {r.detail && <p className={styles.detail}>"{r.detail}"</p>}
                 </div>
-
                 <div className={styles.cardActions}>
+                  {r.type === 'project' && (
+                    <button className={styles.dangerBtn} onClick={() => onDeleteProject(r.targetId, r.targetName, r.id)}>프로젝트 삭제</button>
+                  )}
+                  {r.type === 'match' && (
+                    <button className={styles.dangerBtn} onClick={() => onDeleteMatch(r.targetId, r.targetName, r.id)}>모집글 삭제</button>
+                  )}
+                  {r.type === 'user' && (
+                    <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, r.id)}>유저 블락</button>
+                  )}
                   {r.status === 'pending' ? (
-                    <button className={styles.resolveBtn} onClick={() => handleResolve(r.id)}>처리 완료로 표시</button>
+                    <button className={styles.resolveBtn} onClick={() => handleResolve(r.id)}>처리 완료</button>
                   ) : (
-                    <button className={styles.reopenBtn} onClick={() => handleReopen(r.id)}>미처리로 되돌리기</button>
+                    <button className={styles.reopenBtn} onClick={() => handleReopen(r.id)}>미처리로</button>
                   )}
                 </div>
               </div>
             )
           })}
         </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 프로젝트 관리 탭 ────────────────────────────────────────
+function ProjectsTab({ onDeleteProject }) {
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [search, setSearch]     = useState('')
+
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const snap = await getDocs(query(collection(db, 'projects'), orderBy('createdAt', 'desc'), limit(200)))
+        setProjects(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
+  }, [])
+
+  const filtered = search
+    ? projects.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search))
+    : projects
+
+  return (
+    <div className={styles.tabContent}>
+      <input className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)}
+        placeholder="프로젝트명 또는 ID 검색..." />
+      {loading ? <p className={styles.empty}>불러오는 중...</p> : (
+        <div className={styles.list}>
+          {filtered.map((p) => (
+            <div key={p.id} className={styles.card}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardMeta}>
+                  <span className={`${styles.typeBadge} ${styles.type_project}`}>프로젝트</span>
+                  <span className={styles.reasonBadge}>{p.status === 'archived' ? '완료' : p.status === 'active' ? '진행 중' : p.status}</span>
+                  {p.isTutorial && <span className={styles.tutorialBadge}>튜토리얼</span>}
+                </div>
+                <span className={styles.date}>{p.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || '-'}</span>
+              </div>
+              <div className={styles.cardBody}>
+                <p className={styles.targetName}>
+                  <strong>{p.emoji} {p.name}</strong>
+                  <a href={`/project/${p.id}`} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 바로가기</a>
+                </p>
+                <p className={styles.reporter}>멤버 {p.members?.length || 0}명 · {p.category || '카테고리 없음'}</p>
+                {p.purpose && <p className={styles.detail}>{p.purpose}</p>}
+              </div>
+              <div className={styles.cardActions}>
+                <button className={styles.dangerBtn} onClick={() => onDeleteProject(p.id, p.name)}>삭제</button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && <p className={styles.empty}>검색 결과가 없어요</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 매치 관리 탭 ────────────────────────────────────────────
+function MatchTab({ onDeleteMatch }) {
+  const [posts, setPosts]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const snap = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc'), limit(200)))
+        setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
+  }, [])
+
+  const filtered = search
+    ? posts.filter((p) => p.title?.toLowerCase().includes(search.toLowerCase()) || p.leaderName?.includes(search))
+    : posts
+
+  return (
+    <div className={styles.tabContent}>
+      <input className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)}
+        placeholder="제목 또는 리더명 검색..." />
+      {loading ? <p className={styles.empty}>불러오는 중...</p> : (
+        <div className={styles.list}>
+          {filtered.map((p) => (
+            <div key={p.id} className={styles.card}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardMeta}>
+                  <span className={`${styles.typeBadge} ${styles.type_match}`}>매치 모집글</span>
+                  <span className={styles.reasonBadge}>{p.status === 'closed' ? '마감' : '모집 중'}</span>
+                </div>
+                <span className={styles.date}>{p.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || '-'}</span>
+              </div>
+              <div className={styles.cardBody}>
+                <p className={styles.targetName}><strong>{p.title}</strong></p>
+                <p className={styles.reporter}>리더: {p.leaderName} · {p.projectName}</p>
+                {p.skills?.length > 0 && <p className={styles.detail}>{p.skills.join(', ')}</p>}
+              </div>
+              <div className={styles.cardActions}>
+                <button className={styles.dangerBtn} onClick={() => onDeleteMatch(p.id, p.title)}>삭제</button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && <p className={styles.empty}>검색 결과가 없어요</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 유저 관리 탭 ────────────────────────────────────────────
+function UsersTab({ onBlockUser, onUnblockUser }) {
+  const [users, setUsers]     = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch]   = useState('')
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const snap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(300)))
+      setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  const handleUnblock = async (uid) => {
+    await onUnblockUser(uid)
+    setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, banned: false } : u))
+  }
+
+  const filtered = search
+    ? users.filter((u) => u.name?.includes(search) || u.email?.includes(search) || u.username?.includes(search))
+    : users
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.subTabRow}>
+        <input className={styles.searchInput} style={{ flex: 1 }} value={search}
+          onChange={(e) => setSearch(e.target.value)} placeholder="이름, 이메일, 유저명 검색..." />
+        <button className={styles.refreshBtn} onClick={fetchUsers}>↻</button>
+      </div>
+      {loading ? <p className={styles.empty}>불러오는 중...</p> : (
+        <div className={styles.list}>
+          {filtered.map((u) => (
+            <div key={u.id} className={`${styles.card} ${u.banned ? styles.cardBanned : ''}`}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardMeta}>
+                  <span className={`${styles.typeBadge} ${styles.type_user}`}>유저</span>
+                  {u.banned && <span className={styles.bannedBadge}>블락됨</span>}
+                </div>
+                <span className={styles.date}>{u.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || '-'}</span>
+              </div>
+              <div className={styles.cardBody}>
+                <p className={styles.targetName}>
+                  <strong>{u.name}</strong>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{u.username}</span>
+                  {u.username && (
+                    <a href={`/u/${(u.username || '').replace('@', '')}`} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 프로필</a>
+                  )}
+                </p>
+                <p className={styles.reporter}>{u.email} {u.affiliation && `· ${u.affiliation}`}</p>
+              </div>
+              <div className={styles.cardActions}>
+                {u.banned ? (
+                  <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id)}>블락 해제</button>
+                ) : (
+                  <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name)}>블락</button>
+                )}
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && <p className={styles.empty}>검색 결과가 없어요</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 메인 AdminPage ───────────────────────────────────────────
+export default function AdminPage() {
+  const { currentUser } = useStore()
+  const [activeTab, setActiveTab] = useState('reports')
+  const [confirm, setConfirm]     = useState(null) // { message, onConfirm }
+
+  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
+  if (!isAdmin) return <Navigate to="/home" replace />
+
+  const ask = (message, onConfirm) => setConfirm({ message, onConfirm })
+  const closeConfirm = () => setConfirm(null)
+
+  // ── 액션: 프로젝트 삭제
+  const handleDeleteProject = (projectId, name, reportId) => {
+    ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`, async () => {
+      closeConfirm()
+      await deleteDoc(doc(db, 'projects', projectId))
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    })
+  }
+
+  // ── 액션: 매치 모집글 삭제
+  const handleDeleteMatch = (postId, title, reportId) => {
+    ask(`"${title}" 모집글을 삭제할까요?`, async () => {
+      closeConfirm()
+      await deleteDoc(doc(db, 'matchPosts', postId))
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    })
+  }
+
+  // ── 액션: 유저 블락
+  const handleBlockUser = (uid, name, reportId) => {
+    ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`, async () => {
+      closeConfirm()
+      await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
+      if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+    })
+  }
+
+  // ── 액션: 유저 블락 해제
+  const handleUnblockUser = async (uid) => {
+    await updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
+  }
+
+  const TABS = [
+    ['reports',  '🚩 신고 관리'],
+    ['projects', '📁 프로젝트'],
+    ['match',    '🤝 매치 모집글'],
+    ['users',    '👤 유저'],
+  ]
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>🛡️ 팀프 마스터</h1>
+          <p className={styles.sub}>Teamp Admin · {currentUser?.email}</p>
+        </div>
+      </div>
+
+      <div className={styles.mainTabs}>
+        {TABS.map(([key, label]) => (
+          <button key={key} className={`${styles.mainTab} ${activeTab === key ? styles.mainTabActive : ''}`}
+            onClick={() => setActiveTab(key)}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'reports' && (
+        <ReportsTab
+          onDeleteProject={handleDeleteProject}
+          onDeleteMatch={handleDeleteMatch}
+          onBlockUser={handleBlockUser}
+        />
+      )}
+      {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
+      {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} />}
+      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} />}
+
+      {confirm && (
+        <ConfirmAction
+          message={confirm.message}
+          onConfirm={confirm.onConfirm}
+          onCancel={closeConfirm}
+        />
       )}
     </div>
   )

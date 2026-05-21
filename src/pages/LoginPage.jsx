@@ -125,14 +125,22 @@ export default function LoginPage() {
       const cred = await signInWithPopup(auth, provider)
       const user  = cred.user
       const snap  = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists() && snap.data().username) {
+      if (snap.exists()) {
         const d = snap.data()
-        login(d.name, d.email || user.email, user.uid, d)
-        navigate(redirectTo, { replace: true })
-      } else {
-        setNeedsUsernameSetup(true)
-        navigate('/setup-username', { replace: true })
+        if (d.banned) {
+          await signOut(auth)
+          setError('이 계정은 이용이 제한됐어요. 문의: support@teamp.kr')
+          setLoading(false)
+          return
+        }
+        if (d.username) {
+          login(d.name, d.email || user.email, user.uid, d)
+          navigate(redirectTo, { replace: true })
+          return
+        }
       }
+      setNeedsUsernameSetup(true)
+      navigate('/setup-username', { replace: true })
     } catch (e) {
       if (e.code === 'auth/unauthorized-domain') {
         const host = window.location.hostname
@@ -188,6 +196,12 @@ export default function LoginPage() {
           const snap = await getDoc(doc(db, 'users', cred.user.uid))
           if (snap.exists()) {
             const d = snap.data()
+            if (d.banned) {
+              await signOut(auth)
+              setError('이 계정은 이용이 제한됐어요. 문의: support@teamp.kr')
+              setLoading(false)
+              return
+            }
             login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
           } else {
             login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
