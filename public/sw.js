@@ -39,7 +39,7 @@ self.addEventListener('fetch', (e) => {
   // JS/CSS/이미지 정적 에셋
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
     // 컨텐츠 해시 파일(예: index-abc123.js)은 URL이 바뀌면 새 파일이므로 캐시 우선
-    const isHashed = /\.[a-f0-9]{6,}\.(js|css)$/i.test(url.pathname)
+    const isHashed = /-[A-Za-z0-9_-]{6,}\.(js|css)$/.test(url.pathname)
     if (isHashed) {
       e.respondWith(
         caches.match(request).then((cached) => {
