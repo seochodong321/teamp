@@ -320,7 +320,169 @@
 }
 .confirmOk:hover { opacity: 0.88; }
 
+/* ── 통계 대시보드 ── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.statCard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statLabel { font-size: 12px; color: var(--text-tertiary); margin: 0; font-weight: 500; }
+.statValue { font-size: 28px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.03em; }
+.statSub   { font-size: 12px; color: var(--primary); margin: 0; font-weight: 600; }
+
+.chartCard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px 12px;
+}
+
+.chartTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 120px;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.barValue {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-height: 16px;
+}
+
+.barTrack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar {
+  width: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+  transition: height 0.4s ease;
+  min-height: 2px;
+}
+
+.barLabel {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── 공지 폼 ── */
+.announceWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.announceDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+
+.announceBody {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text);
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.6;
+  font-family: inherit;
+}
+.announceBody:focus { border-color: var(--primary); outline: none; background: var(--bg); }
+
+.announceSuccess {
+  font-size: 14px;
+  color: var(--primary);
+  font-weight: 600;
+  margin: 0;
+}
+
+.sendBtn {
+  align-self: flex-start;
+  padding: 10px 22px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sendBtn:hover:not(:disabled) { opacity: 0.88; }
+.sendBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── 매치 강제 마감 ── */
+.warnBtn {
+  padding: 6px 14px;
+  background: transparent;
+  color: #D97706;
+  border: 1.5px solid #D97706;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.warnBtn:hover { background: #D97706; color: white; }
+
+.closedTag {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+}
+
 @media (max-width: 600px) {
   .page { padding: 20px 16px; }
   .mainTab { padding: 8px 12px; font-size: 13px; }
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .statValue { font-size: 22px; }
 }

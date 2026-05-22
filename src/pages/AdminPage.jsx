@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
   collection, query, orderBy, getDocs, updateDoc, deleteDoc, doc,
-  serverTimestamp, limit, where,
+  serverTimestamp, limit, where, writeBatch,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -59,7 +59,192 @@ function useAdminConfirm() {
   return { ask, dialog }
 }
 
-// ─── 신고 관리 탭 ────────────────────────────────────────────
+// ─── 통계 대시보드 탭 ─────────────────────────────────────────
+function StatCard({ label, value, sub }) {
+  return (
+    <div className={styles.statCard}>
+      <p className={styles.statLabel}>{label}</p>
+      <p className={styles.statValue}>{value.toLocaleString()}</p>
+      {sub && <p className={styles.statSub}>{sub}</p>}
+    </div>
+  )
+}
+
+function StatsTab() {
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true)
+      try {
+        const [userSnap, projectSnap, matchSnap] = await Promise.all([
+          getDocs(collection(db, 'users')),
+          getDocs(collection(db, 'projects')),
+          getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc'), limit(500))),
+        ])
+
+        const users    = userSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        const projects = projectSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+        const matches  = matchSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+
+        const toDate = (v) => {
+          if (!v) return null
+          if (typeof v.toDate === 'function') return v.toDate()
+          return new Date(v)
+        }
+
+        const now = new Date()
+        const thisMonthUsers = users.filter((u) => {
+          const d = toDate(u.createdAt)
+          return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+        }).length
+
+        const monthly = Array.from({ length: 6 }, (_, i) => {
+          const target = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+          const count = users.filter((u) => {
+            const d = toDate(u.createdAt)
+            return d && d.getMonth() === target.getMonth() && d.getFullYear() === target.getFullYear()
+          }).length
+          return { label: `${target.getMonth() + 1}월`, count }
+        })
+
+        setStats({
+          totalUsers:     users.length,
+          thisMonthUsers,
+          totalProjects:  projects.filter((p) => !p.isTutorial).length,
+          activeProjects: projects.filter((p) => p.status === 'active' && !p.isTutorial).length,
+          totalMatches:   matches.length,
+          openMatches:    matches.filter((m) => m.status === 'open').length,
+          monthly,
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetch()
+  }, [])
+
+  if (loading) return <p className={styles.empty}>통계 불러오는 중...</p>
+  if (!stats)  return null
+
+  const maxMonthly = Math.max(...stats.monthly.map((m) => m.count), 1)
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.statsGrid}>
+        <StatCard label="총 유저" value={stats.totalUsers} sub={`이번 달 +${stats.thisMonthUsers}`} />
+        <StatCard label="총 프로젝트" value={stats.totalProjects} sub={`활성 ${stats.activeProjects}개`} />
+        <StatCard label="매치 모집" value={stats.totalMatches} sub={`모집 중 ${stats.openMatches}개`} />
+      </div>
+
+      <div className={styles.chartCard}>
+        <p className={styles.chartTitle}>월별 신규 가입자 (최근 6개월)</p>
+        <div className={styles.barChart}>
+          {stats.monthly.map((m, i) => (
+            <div key={i} className={styles.barCol}>
+              <span className={styles.barValue}>{m.count || ''}</span>
+              <div className={styles.barTrack}>
+                <div className={styles.bar} style={{ height: `${(m.count / maxMonthly) * 100}%` }} />
+              </div>
+              <span className={styles.barLabel}>{m.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── 전체공지 탭 ──────────────────────────────────────────────
+function AnnouncementTab({ currentUser }) {
+  const [subject, setSubject] = useState('')
+  const [body,    setBody]    = useState('')
+  const [sending, setSending] = useState(false)
+  const [result,  setResult]  = useState(null)
+  const [error,   setError]   = useState(null)
+
+  const handleSend = async () => {
+    if (!subject.trim() || !body.trim()) return
+    setSending(true)
+    setResult(null)
+    setError(null)
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'))
+      const targets = usersSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((u) => u.id !== currentUser.uid)
+
+      const now = new Date()
+      const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+      const CHUNK = 400
+      let sent = 0
+
+      for (let i = 0; i < targets.length; i += CHUNK) {
+        const batch = writeBatch(db)
+        targets.slice(i, i + CHUNK).forEach((user) => {
+          const ref = doc(collection(db, 'notes'))
+          batch.set(ref, {
+            fromUid:      currentUser.uid,
+            fromName:     '📢 팀프 공식',
+            fromUsername: '@teamp',
+            toUid:        user.id,
+            toName:       user.name || '유저',
+            toUsername:   user.username || '',
+            subject,
+            participants: [user.id],
+            messages: [{ senderUid: currentUser.uid, senderName: '📢 팀프 공식', text: body, time: timeStr }],
+            read:         { [user.id]: false },
+            isAnnouncement: true,
+            createdAt:    serverTimestamp(),
+            lastMessageAt: serverTimestamp(),
+          })
+          sent++
+        })
+        await batch.commit()
+      }
+      setResult(sent)
+      setSubject('')
+      setBody('')
+    } catch (err) {
+      setError(err?.message || '발송 중 오류가 발생했어요.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.announceWrap}>
+        <p className={styles.announceDesc}>모든 유저의 쪽지함으로 공지가 발송됩니다.</p>
+        <input
+          className={styles.searchInput}
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="제목..."
+        />
+        <textarea
+          className={styles.announceBody}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="내용을 입력하세요..."
+          rows={6}
+        />
+        {error  && <p className={styles.tabError}>{error}</p>}
+        {result != null && <p className={styles.announceSuccess}>✅ {result}명에게 발송 완료</p>}
+        <button
+          className={styles.sendBtn}
+          onClick={handleSend}
+          disabled={sending || !subject.trim() || !body.trim()}
+        >
+          {sending ? '발송 중...' : '📢 전체 발송'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── 신고 관리 탭 ─────────────────────────────────────────────
 function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   const [reports, setReports]   = useState([])
   const [loading, setLoading]   = useState(true)
@@ -242,7 +427,7 @@ function ProjectsTab({ onDeleteProject }) {
 }
 
 // ─── 매치 관리 탭 ────────────────────────────────────────────
-function MatchTab({ onDeleteMatch }) {
+function MatchTab({ onDeleteMatch, onCloseMatch }) {
   const [posts, setPosts]   = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -285,6 +470,10 @@ function MatchTab({ onDeleteMatch }) {
                 {p.skills?.length > 0 && <p className={styles.detail}>{p.skills.join(', ')}</p>}
               </div>
               <div className={styles.cardActions}>
+                {p.status === 'open' && (
+                  <button className={styles.warnBtn} onClick={() => onCloseMatch(p.id, p.title)}>강제 마감</button>
+                )}
+                {p.status === 'closed' && <span className={styles.closedTag}>마감됨</span>}
                 <button className={styles.dangerBtn} onClick={() => onDeleteMatch(p.id, p.title)}>삭제</button>
               </div>
             </div>
@@ -377,7 +566,7 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
   const { currentUser } = useStore()
-  const [activeTab, setActiveTab] = useState('reports')
+  const [activeTab, setActiveTab] = useState('stats')
   const { ask, dialog } = useAdminConfirm()
 
   const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
@@ -408,16 +597,25 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: 매치 강제 마감
+  const handleCloseMatch = (postId, title) => {
+    ask(`"${title}" 모집글을 강제 마감할까요? 기존 지원자는 유지되고 새 지원은 받지 않아요.`, async () => {
+      await updateDoc(doc(db, 'matchPosts', postId), { status: 'closed' })
+    })
+  }
+
   // ── 액션: 유저 블락 해제
   const handleUnblockUser = (uid) => {
     updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
   }
 
   const TABS = [
+    ['stats',    '📊 통계'],
     ['reports',  '🚩 신고 관리'],
     ['projects', '📁 프로젝트'],
     ['match',    '🤝 매치 모집글'],
     ['users',    '👤 유저'],
+    ['announce', '📢 공지'],
   ]
 
   return (
@@ -438,7 +636,8 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {activeTab === 'reports' && (
+      {activeTab === 'stats'    && <StatsTab />}
+      {activeTab === 'reports'  && (
         <ReportsTab
           onDeleteProject={handleDeleteProject}
           onDeleteMatch={handleDeleteMatch}
@@ -446,8 +645,9 @@ export default function AdminPage() {
         />
       )}
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
-      {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} />}
+      {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} onCloseMatch={handleCloseMatch} />}
       {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} />}
+      {activeTab === 'announce' && <AnnouncementTab currentUser={currentUser} />}
 
       {dialog}
     </div>
