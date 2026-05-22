@@ -171,9 +171,10 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
 
 // ─── 프로젝트 관리 탭 ────────────────────────────────────────
 function ProjectsTab({ onDeleteProject }) {
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState('')
+  const [projects, setProjects]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [search, setSearch]           = useState('')
+  const [showTutorial, setShowTutorial] = useState(false)
 
   const fetchProjects = useCallback(async () => {
     setLoading(true)
@@ -190,14 +191,24 @@ function ProjectsTab({ onDeleteProject }) {
 
   useEffect(() => { fetchProjects() }, [fetchProjects])
 
-  const filtered = search
-    ? projects.filter((p) => p.name?.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search))
-    : projects
+  const tutorialCount = projects.filter((p) => p.isTutorial).length
+  const filtered = projects
+    .filter((p) => showTutorial || !p.isTutorial)
+    .filter((p) => !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.id.includes(search))
 
   return (
     <div className={styles.tabContent}>
-      <input className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)}
-        placeholder="프로젝트명 또는 ID 검색..." />
+      <div className={styles.subTabRow}>
+        <input className={styles.searchInput} style={{ flex: 1 }} value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder="프로젝트명 또는 ID 검색..." />
+        <button
+          className={`${styles.subTab} ${showTutorial ? styles.subTabActive : ''}`}
+          onClick={() => setShowTutorial((v) => !v)}
+        >
+          튜토리얼 {tutorialCount > 0 && <span className={styles.badge}>{tutorialCount}</span>}
+        </button>
+        <button className={styles.refreshBtn} onClick={fetchProjects}>↻</button>
+      </div>
       {loading ? <p className={styles.empty}>불러오는 중...</p> : (
         <div className={styles.list}>
           {filtered.map((p) => (
