@@ -17,23 +17,39 @@ const REASON_LABEL = {
   hate: '욕설 / 혐오 표현', other: '기타',
 }
 
-// 콜백 기반 confirm — Promise 없이 단순하게
 function useAdminConfirm() {
-  const [state, setState] = useState(null) // { message, onConfirm }
+  const [state, setState] = useState(null) // { message, onConfirm, error, loading }
 
   const ask = useCallback((message, onConfirm) => {
-    setState({ message, onConfirm })
+    setState({ message, onConfirm, error: null, loading: false })
   }, [])
 
   const dismiss = useCallback(() => setState(null), [])
+
+  const handleOk = useCallback(async () => {
+    if (!state) return
+    setState((s) => ({ ...s, loading: true, error: null }))
+    try {
+      await state.onConfirm()
+      setState(null)
+    } catch (err) {
+      const msg = err?.code === 'permission-denied'
+        ? '권한이 없어요. Firestore 규칙을 확인해주세요.'
+        : (err?.message || '오류가 발생했어요.')
+      setState((s) => ({ ...s, loading: false, error: msg }))
+    }
+  }, [state])
 
   const dialog = state ? createPortal(
     <div className={styles.confirmBackdrop} onClick={dismiss}>
       <div className={styles.confirmBox} onClick={(e) => e.stopPropagation()}>
         <p className={styles.confirmMsg}>{state.message}</p>
+        {state.error && <p className={styles.confirmError}>{state.error}</p>}
         <div className={styles.confirmBtns}>
-          <button className={styles.confirmCancel} onClick={dismiss}>취소</button>
-          <button className={styles.confirmOk} onClick={() => { state.onConfirm(); dismiss() }}>확인</button>
+          <button className={styles.confirmCancel} onClick={dismiss} disabled={state.loading}>취소</button>
+          <button className={styles.confirmOk} onClick={handleOk} disabled={state.loading}>
+            {state.loading ? '처리 중...' : '확인'}
+          </button>
         </div>
       </div>
     </div>,
@@ -48,6 +64,7 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   const [reports, setReports]   = useState([])
   const [loading, setLoading]   = useState(true)
   const [filter, setFilter]     = useState('pending')
+  const [actionError, setActionError] = useState(null)
 
   const fetchReports = useCallback(async () => {
     setLoading(true)
@@ -62,12 +79,22 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   useEffect(() => { fetchReports() }, [fetchReports])
 
   const handleResolve = async (reportId) => {
-    await updateDoc(doc(db, 'reports', reportId), { status: 'resolved' })
-    setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'resolved' } : r))
+    try {
+      await updateDoc(doc(db, 'reports', reportId), { status: 'resolved' })
+      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'resolved' } : r))
+      setActionError(null)
+    } catch (err) {
+      setActionError(err?.code === 'permission-denied' ? '권한이 없어요.' : (err?.message || '오류'))
+    }
   }
   const handleReopen = async (reportId) => {
-    await updateDoc(doc(db, 'reports', reportId), { status: 'pending' })
-    setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'pending' } : r))
+    try {
+      await updateDoc(doc(db, 'reports', reportId), { status: 'pending' })
+      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'pending' } : r))
+      setActionError(null)
+    } catch (err) {
+      setActionError(err?.code === 'permission-denied' ? '권한이 없어요.' : (err?.message || '오류'))
+    }
   }
 
   const filtered = filter === 'all' ? reports : reports.filter((r) => r.status === filter)
@@ -90,6 +117,7 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
         ))}
         <button className={styles.refreshBtn} onClick={fetchReports}>↻</button>
       </div>
+      {actionError && <p className={styles.tabError}>{actionError}</p>}
 
       {loading ? <p className={styles.empty}>불러오는 중...</p> : filtered.length === 0 ? (
         <p className={styles.empty}>{filter === 'pending' ? '처리할 신고가 없어요 ✅' : '신고 내역이 없어요'}</p>
