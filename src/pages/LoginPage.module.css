@@ -350,6 +350,22 @@
   animation: slideUp 0.2s ease;
 }
 
+.errorBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #92210F;
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  line-height: 1.5;
+  margin-bottom: 4px;
+  animation: slideUp 0.2s ease;
+}
+
 /* ── 약관 동의 ── */
 .agreeSection {
   display: flex;

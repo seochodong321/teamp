@@ -142,16 +142,22 @@ export default function LoginPage() {
       setNeedsUsernameSetup(true)
       navigate('/setup-username', { replace: true })
     } catch (e) {
+      console.error('[소셜 로그인 오류]', e.code, e.message)
       if (e.code === 'auth/unauthorized-domain') {
         const host = window.location.hostname
         if (host !== 'teamp.vercel.app' && host !== 'localhost') {
-          // preview URL → 안정 주소로 자동 이동
           window.location.replace('https://teamp.vercel.app' + window.location.pathname + window.location.search)
           return
         }
         setError(`이 주소(${host})는 Google 로그인이 허용되지 않아요. teamp.vercel.app 에서 시도해주세요.`)
-      } else if (e.code !== 'auth/popup-closed-by-user') {
-        setError(`소셜 로그인 실패: ${e.code || e.message}`)
+      } else if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        setError('팝업이 닫혔어요. 다시 시도하거나 팝업 차단을 해제해주세요.')
+      } else if (e.code === 'auth/popup-blocked') {
+        setError('브라우저가 팝업을 차단했어요. 주소창 오른쪽의 팝업 차단 아이콘을 클릭해 허용해주세요.')
+      } else if (e.code === 'auth/too-many-requests') {
+        setError('로그인 시도가 너무 많아 일시적으로 제한됐어요. 잠시 후 다시 시도해주세요.')
+      } else {
+        setError(`Google 로그인 실패: ${e.code || e.message}`)
       }
     } finally {
       setLoading(false)
@@ -226,6 +232,7 @@ export default function LoginPage() {
 
       navigate(redirectTo, { replace: true })
     } catch (err) {
+      console.error('[로그인 오류]', err.code, err.message)
       if (err.code === 'auth/email-already-in-use') {
         setEmailAlreadyInUse(true)
         setError('이미 가입된 이메일이에요. 로그인 탭에서 로그인해주세요.')
@@ -301,6 +308,12 @@ export default function LoginPage() {
             <TeampMark size={36} />
             <span className={styles.mobileName}>Teamp</span>
           </div>
+
+          {error && (
+            <div className={styles.errorBanner} role="alert">
+              <span>⚠️</span> {error}
+            </div>
+          )}
 
           <div className={styles.tabs}>
             <button className={`${styles.tab} ${mode === 'login'  ? styles.tabActive : ''}`}
