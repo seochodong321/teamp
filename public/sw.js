@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teamp-v3'
+const CACHE_NAME = 'teamp-v4'
 
 // 앱 셸 — 오프라인에서도 빈 화면 대신 앱 프레임을 보여주기 위해 캐시
 const APP_SHELL = ['/index.html', '/']
@@ -36,19 +36,33 @@ self.addEventListener('fetch', (e) => {
     return
   }
 
-  // JS/CSS/이미지 정적 에셋 — 캐시 우선, 없으면 네트워크
+  // JS/CSS/이미지 정적 에셋
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'image') {
-    e.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached
-        return fetch(request).then((response) => {
+    // 컨텐츠 해시 파일(예: index-abc123.js)은 URL이 바뀌면 새 파일이므로 캐시 우선
+    const isHashed = /\.[a-f0-9]{6,}\.(js|css)$/i.test(url.pathname)
+    if (isHashed) {
+      e.respondWith(
+        caches.match(request).then((cached) => {
+          if (cached) return cached
+          return fetch(request).then((response) => {
+            if (!response || response.status !== 200) return response
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+            return response
+          })
+        })
+      )
+    } else {
+      // 해시 없는 파일(개발 서버 등)은 네트워크 우선
+      e.respondWith(
+        fetch(request).then((response) => {
           if (!response || response.status !== 200) return response
           const clone = response.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
           return response
-        })
-      })
-    )
+        }).catch(() => caches.match(request))
+      )
+    }
   }
 })
 

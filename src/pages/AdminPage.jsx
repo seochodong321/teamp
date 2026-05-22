@@ -75,7 +75,8 @@ function StatsTab() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetch = async () => {
+    let cancelled = false
+    const fetchStats = async () => {
       setLoading(true)
       try {
         const [userSnap, projectSnap, matchSnap] = await Promise.all([
@@ -83,6 +84,7 @@ function StatsTab() {
           getDocs(collection(db, 'projects')),
           getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc'), limit(500))),
         ])
+        if (cancelled) return
 
         const users    = userSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
         const projects = projectSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -119,10 +121,11 @@ function StatsTab() {
           monthly,
         })
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
-    fetch()
+    fetchStats()
+    return () => { cancelled = true }
   }, [])
 
   if (loading) return <p className={styles.empty}>통계 불러오는 중...</p>
@@ -173,7 +176,7 @@ function AnnouncementTab({ currentUser }) {
       const usersSnap = await getDocs(collection(db, 'users'))
       const targets = usersSnap.docs
         .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((u) => u.id !== currentUser.uid)
+        .filter((u) => u.id !== currentUser.id)
 
       const now = new Date()
       const timeStr = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
@@ -185,7 +188,7 @@ function AnnouncementTab({ currentUser }) {
         targets.slice(i, i + CHUNK).forEach((user) => {
           const ref = doc(collection(db, 'notes'))
           batch.set(ref, {
-            fromUid:      currentUser.uid,
+            fromUid:      currentUser.id,
             fromName:     '📢 팀프 공식',
             fromUsername: '@teamp',
             toUid:        user.id,
@@ -193,7 +196,7 @@ function AnnouncementTab({ currentUser }) {
             toUsername:   user.username || '',
             subject,
             participants: [user.id],
-            messages: [{ senderUid: currentUser.uid, senderName: '📢 팀프 공식', text: body, time: timeStr }],
+            messages: [{ senderUid: currentUser.id, senderName: '📢 팀프 공식', text: body, time: timeStr }],
             read:         { [user.id]: false },
             isAnnouncement: true,
             createdAt:    serverTimestamp(),
@@ -263,19 +266,10 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
 
   useEffect(() => { fetchReports() }, [fetchReports])
 
-  const handleResolve = async (reportId) => {
+  const handleUpdateStatus = async (reportId, status) => {
     try {
-      await updateDoc(doc(db, 'reports', reportId), { status: 'resolved' })
-      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'resolved' } : r))
-      setActionError(null)
-    } catch (err) {
-      setActionError(err?.code === 'permission-denied' ? '권한이 없어요.' : (err?.message || '오류'))
-    }
-  }
-  const handleReopen = async (reportId) => {
-    try {
-      await updateDoc(doc(db, 'reports', reportId), { status: 'pending' })
-      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: 'pending' } : r))
+      await updateDoc(doc(db, 'reports', reportId), { status })
+      setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status } : r))
       setActionError(null)
     } catch (err) {
       setActionError(err?.code === 'permission-denied' ? '권한이 없어요.' : (err?.message || '오류'))
@@ -340,9 +334,9 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
                     <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, null, r.id)}>유저 블락</button>
                   )}
                   {r.status === 'pending' ? (
-                    <button className={styles.resolveBtn} onClick={() => handleResolve(r.id)}>처리 완료</button>
+                    <button className={styles.resolveBtn} onClick={() => handleUpdateStatus(r.id, 'resolved')}>처리 완료</button>
                   ) : (
-                    <button className={styles.reopenBtn} onClick={() => handleReopen(r.id)}>미처리로</button>
+                    <button className={styles.reopenBtn} onClick={() => handleUpdateStatus(r.id, 'pending')}>미처리로</button>
                   )}
                 </div>
               </div>
@@ -503,9 +497,10 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
-  const handleUnblock = async (uid) => {
-    await onUnblockUser(uid)
-    setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, banned: false } : u))
+  const handleUnblock = (uid, name) => {
+    onUnblockUser(uid, name, () => {
+      setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, banned: false } : u))
+    })
   }
 
   const filtered = search
@@ -547,7 +542,7 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
               )}
               <div className={styles.cardActions}>
                 {u.banned ? (
-                  <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id)}>블락 해제</button>
+                  <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id, u.name)}>블락 해제</button>
                 ) : (
                   <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name, () => {
                     setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, banned: true, bannedAt: { toDate: () => new Date() } } : x))
@@ -605,8 +600,11 @@ export default function AdminPage() {
   }
 
   // ── 액션: 유저 블락 해제
-  const handleUnblockUser = (uid) => {
-    updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
+  const handleUnblockUser = (uid, name, onSuccess) => {
+    ask(`"${name}" 계정의 블락을 해제할까요?`, async () => {
+      await updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
+      onSuccess?.()
+    })
   }
 
   const TABS = [

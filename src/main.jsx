@@ -12,7 +12,9 @@ if (savedTheme === 'dark') {
 // 서비스워커 등록 (PWA 오프라인 지원)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {})
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+      .then((reg) => reg.update())
+      .catch(() => {})
   })
 }
 
