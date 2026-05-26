@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
@@ -70,10 +70,12 @@ export default function MatchPage() {
   const [closedMyPosts, setClosedMyPosts] = useState([])
   const [showClosed, setShowClosed]       = useState(false)
 
-  const myLeaderProjects = projects.filter((p) =>
-    p.status === 'active' &&
-    p.members?.find((m) => m.id === currentUser?.id)?.role === 'leader'
-  )
+  const myLeaderProjects = useMemo(() =>
+    projects.filter((p) =>
+      p.status === 'active' &&
+      p.members?.find((m) => m.id === currentUser?.id)?.role === 'leader'
+    ),
+  [projects, currentUser?.id])
 
   useEffect(() => { fetchPosts(); markMatchSeen() }, [])
 
@@ -263,18 +265,18 @@ export default function MatchPage() {
   const q = searchQuery.trim().toLowerCase()
   const isSearching = q.length > 0
 
-  const myPosts = posts.filter((p) => p.leaderId === currentUser?.id)
+  const myPosts = useMemo(() => posts.filter((p) => p.leaderId === currentUser?.id), [posts, currentUser?.id])
   const pendingCount = myPosts.reduce((acc, p) =>
     acc + (p.applicants || []).filter((a) => a.status === 'pending').length, 0)
 
-  const poolPosts = (() => {
+  const poolPosts = useMemo(() => {
     const others = posts.filter((p) => p.leaderId !== currentUser?.id)
     if (!isSearching) return others.filter((p) => p.visibility !== 'keyword')
     return others.filter((p) => {
       const haystack = [p.title, p.description || '', p.projectName, ...(p.skills || []), ...(p.keywords || [])].join(' ').toLowerCase()
       return haystack.includes(q)
     })
-  })()
+  }, [posts, currentUser?.id, isSearching, q])
 
   const isMyPost  = selected && selected.leaderId === currentUser?.id
   const myApplied = selected && (selected.applicants || []).find((a) => a.userId === currentUser?.id)

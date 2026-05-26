@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, sendPasswordResetEmail } from 'firebase/auth'
 import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch } from 'firebase/firestore'
@@ -13,7 +13,10 @@ const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', membe
 export default function ProfilePage() {
   const navigate = useNavigate()
   const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm, deleteAccount } = useStore()
-  const myProjects = projects.filter((p) => p.members.some((m) => m.id === currentUser.id))
+  const myProjects = useMemo(
+    () => projects.filter((p) => p.members.some((m) => m.id === currentUser.id)),
+    [projects, currentUser.id]
+  )
 
   // 나의 여정 통계
   const [flowerSenders, setFlowerSenders] = useState(0)
@@ -21,9 +24,9 @@ export default function ProfilePage() {
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
 
-  const completedProjects = myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length
-  const doneTodos = myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length
-  const leaderProjects = myProjects.filter((p) => !p.isTutorial && p.members.find((m) => m.id === currentUser?.id)?.role === 'leader').length
+  const completedProjects = useMemo(() => myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length, [myProjects])
+  const doneTodos = useMemo(() => myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length, [myProjects])
+  const leaderProjects = useMemo(() => myProjects.filter((p) => !p.isTutorial && p.members.find((m) => m.id === currentUser.id)?.role === 'leader').length, [myProjects, currentUser.id])
 
   useEffect(() => {
     const fetchFlowers = async () => {
@@ -597,7 +600,7 @@ export default function ProfilePage() {
               </div>
             )
           })}
-          {myProjects.filter((p) => p.isPublic && !p.isTutorial).length === 0 && (
+          {!myProjects.some((p) => p.isPublic && !p.isTutorial) && (
             <p className={styles.emptyText}>공개된 프로젝트가 없어요</p>
           )}
         </div>

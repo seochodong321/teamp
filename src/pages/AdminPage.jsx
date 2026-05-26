@@ -248,6 +248,8 @@ function AnnouncementTab({ currentUser }) {
 }
 
 // ─── 신고 관리 탭 ─────────────────────────────────────────────
+const REPORT_FILTERS = [['pending', '미처리'], ['resolved', '처리 완료'], ['all', '전체']]
+
 function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   const [reports, setReports]   = useState([])
   const [loading, setLoading]   = useState(true)
@@ -288,10 +290,10 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
   return (
     <div className={styles.tabContent}>
       <div className={styles.subTabRow}>
-        {[['pending', `미처리`, pendingCount], ['resolved', '처리 완료', null], ['all', '전체', null]].map(([v, label, count]) => (
+        {REPORT_FILTERS.map(([v, label]) => (
           <button key={v} className={`${styles.subTab} ${filter === v ? styles.subTabActive : ''}`} onClick={() => setFilter(v)}>
             {label}
-            {count > 0 && <span className={styles.badge}>{count}</span>}
+            {v === 'pending' && pendingCount > 0 && <span className={styles.badge}>{pendingCount}</span>}
           </button>
         ))}
         <button className={styles.refreshBtn} onClick={fetchReports}>↻</button>
