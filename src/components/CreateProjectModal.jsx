@@ -63,7 +63,7 @@ export default function CreateProjectModal({ onClose }) {
   const [projectEndDate, setProjectEndDate]     = useState('')
   const [endTime, setEndTime]               = useState('')
   const [showEndTime, setShowEndTime]       = useState(false)
-  const [roomNames, setRoomNames]           = useState(['개발팀'])
+  const [roomNames, setRoomNames]           = useState([])
   const [newRoom, setNewRoom]               = useState('')
   const [created, setCreated]               = useState(null)
   const [dateError, setDateError]           = useState('')
@@ -212,7 +212,7 @@ export default function CreateProjectModal({ onClose }) {
                 <div className={styles.addRoomRow}>
                   <input className={styles.input} value={newRoom} onChange={(e) => setNewRoom(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addRoom() } }}
-                    placeholder="채팅방 이름 입력 (Enter)" />
+                    placeholder="팀별로 채팅방을 만들어보세요" />
                   <button type="button" className={styles.addRoomBtn} onClick={addRoom}>추가</button>
                 </div>
               </div>
