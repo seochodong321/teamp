@@ -64,9 +64,10 @@ export default function HomePage() {
     navigate(`/project/${p.id}`)
   }, [navigate])
 
-  const active     = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
-  const collecting = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
-  const archived   = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
+  const active          = useMemo(() => projects.filter((p) => p.status === 'active'),     [projects])
+  const collecting      = useMemo(() => projects.filter((p) => p.status === 'collecting'), [projects])
+  const archived        = useMemo(() => projects.filter((p) => p.status === 'archived'),   [projects])
+  const visibleArchived = useMemo(() => archived.filter((p) => !hiddenProjects.includes(p.id)), [archived, hiddenProjects])
 
   const todaySummary = useMemo(() => {
     const myId = currentUser?.id
@@ -256,7 +257,7 @@ export default function HomePage() {
                 <div className={styles.todayCell}>
                   <span className={styles.todayLabel}>완료됨</span>
                   <div className={styles.todayRow}>
-                    <span className={styles.todayBig}>{archived.filter((p) => !hiddenProjects.includes(p.id)).length}</span>
+                    <span className={styles.todayBig}>{visibleArchived.length}</span>
                     <span className={styles.todayUnit}>아카이브</span>
                   </div>
                   <div className={styles.todayLine}>회고 가능한 프로젝트</div>
@@ -319,15 +320,14 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── 진행 중 프로젝트 없을 때 ── */}
       {active.length === 0 && (archived.length > 0 || collecting.length > 0) && (
         <div className={styles.noActiveWrap}>
           <div className={styles.noActiveBanner}>
             <span className={styles.noActiveBannerEmoji}>🌱</span>
             <div className={styles.noActiveBannerBody}>
               <p className={styles.noActiveBannerTitle}>
-                {archived.filter((p) => !hiddenProjects.includes(p.id)).length > 0
-                  ? `${archived.filter((p) => !hiddenProjects.includes(p.id)).length}개 프로젝트를 완주했어요!`
+                {visibleArchived.length > 0
+                  ? `${visibleArchived.length}개 프로젝트를 완주했어요!`
                   : '새로운 여정을 시작할 시간이에요'}
               </p>
               <p className={styles.noActiveBannerSub}>다음 팀과 어떤 도전을 함께할까요?</p>
@@ -347,7 +347,7 @@ export default function HomePage() {
               <span className={styles.noActiveLinkLabel}>매치</span>
               <span className={styles.noActiveLinkSub}>팀에 합류하기</span>
             </button>
-            <button className={styles.noActiveLinkItem} onClick={() => currentUser?.username && navigate(`/u/${currentUser.username}`)}>
+            <button className={styles.noActiveLinkItem} onClick={() => { if (currentUser?.username) navigate(`/u/${currentUser.username}`) }}>
               <span className={styles.noActiveLinkIcon}>🌿</span>
               <span className={styles.noActiveLinkLabel}>팀프폴리오</span>
               <span className={styles.noActiveLinkSub}>내 기록 보기</span>
@@ -549,11 +549,11 @@ export default function HomePage() {
       )}
 
       {/* ── 완료됨 ── */}
-      {archived.filter((p) => !hiddenProjects.includes(p.id)).length > 0 && (
+      {visibleArchived.length > 0 && (
         <section>
           <div className={styles.archivedHeader}>
             <h2 className={styles.sectionTitle}>
-              완료됨 ({archived.filter((p) => !hiddenProjects.includes(p.id)).length})
+              완료됨 ({visibleArchived.length})
             </h2>
             <button className={styles.archivedToggle} onClick={() => setShowArchived((v) => !v)}>
               {showArchived ? '접기 ∧' : '펼치기 ∨'}
@@ -561,7 +561,7 @@ export default function HomePage() {
           </div>
           {showArchived && (
             <div className={styles.grid}>
-              {archived.filter((p) => !hiddenProjects.includes(p.id)).map((p) => (
+              {visibleArchived.map((p) => (
                 <div key={p.id} className={`${styles.card} ${styles.cardArchived}`}
                   onClick={() => p.wrapupId ? navigate(`/project/${p.id}/wrapup`) : navigate(`/project/${p.id}`)}
                   style={{ cursor: 'pointer', position: 'relative' }}>
