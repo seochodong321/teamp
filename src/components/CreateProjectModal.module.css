@@ -116,6 +116,37 @@
 .addRoomBtn { padding: 0 14px; height: 42px; background: var(--text); color: var(--bg); border-radius: 8px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: all var(--transition-fast); box-shadow: var(--shadow-sm); }
 .addRoomBtn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
 
+/* 한도 초과 화면 */
+.limitOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.limitOption {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-secondary);
+}
+.limitOption:last-child { background: var(--bg); }
+.limitOptionLabel { font-size: 13px; font-weight: 700; color: var(--text); margin: 0; }
+.limitOptionDesc  { font-size: 12px; color: var(--text-secondary); margin: 0 0 8px; line-height: 1.5; }
+.limitDivider {
+  padding: 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
 /* 완료 화면 */
 .done { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 0; }
 .doneIcon { width: 56px; height: 56px; border-radius: 50%; background: var(--teal-light); color: var(--teal); font-size: 24px; display: flex; align-items: center; justify-content: center; }

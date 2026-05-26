@@ -49,11 +49,31 @@ function PhasePreview({ start, end }) {
   )
 }
 
+const FREE_PROJECT_LIMIT = 3
+
 export default function CreateProjectPage() {
   const navigate = useNavigate()
   const createProject = useStore((s) => s.createProject)
-  const profiles = useStore((s) => s.profiles)
-  const showError = useStore((s) => s.showError)
+  const profiles      = useStore((s) => s.profiles)
+  const showError     = useStore((s) => s.showError)
+  const projects      = useStore((s) => s.projects)
+  const currentUser   = useStore((s) => s.currentUser)
+
+  const ownedCount      = projects.filter((p) => p.leaderId === currentUser?.id).length
+  const isLimitReached  = ownedCount >= FREE_PROJECT_LIMIT
+
+  if (isLimitReached) return (
+    <div style={{ maxWidth: 480, margin: '80px auto', padding: '0 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#FEF3C7', color: '#D97706', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔒</div>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>프로젝트 한도에 도달했어요</h2>
+      <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
+        무료 플랜은 최대 {FREE_PROJECT_LIMIT}개 프로젝트를 보유할 수 있어요.<br />
+        현재 <strong>{ownedCount}개</strong> 보유 중
+      </p>
+      <button onClick={() => navigate('/profile')} style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--text-secondary)' }}>프로젝트 관리 →</button>
+      <button onClick={() => navigate('/pricing')} style={{ padding: '10px 20px', background: 'var(--primary)', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 700 }}>요금제 보기 →</button>
+    </div>
+  )
 
   const [step, setStep]           = useState(0)
   const [linkCopied, setLinkCopied] = useState(false)

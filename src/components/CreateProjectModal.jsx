@@ -49,9 +49,17 @@ const EMOJI_OPTIONS = [
 ]
 const STEPS = ['기본 정보', '팀 구성', '완료']
 
+const FREE_PROJECT_LIMIT = 3
+
 export default function CreateProjectModal({ onClose }) {
   const navigate = useNavigate()
-  const { createProject, profiles, showError, showSuccess } = useStore((s) => ({ createProject: s.createProject, profiles: s.profiles, showError: s.showError, showSuccess: s.showSuccess }))
+  const { createProject, profiles, projects, currentUser, showError, showSuccess } = useStore((s) => ({
+    createProject: s.createProject, profiles: s.profiles, projects: s.projects,
+    currentUser: s.currentUser, showError: s.showError, showSuccess: s.showSuccess,
+  }))
+
+  const ownedCount = projects.filter((p) => p.leaderId === currentUser?.id).length
+  const isLimitReached = ownedCount >= FREE_PROJECT_LIMIT
 
   const [step, setStep]                     = useState(0)
   const [emoji, setEmoji]                   = useState('')
@@ -104,6 +112,40 @@ export default function CreateProjectModal({ onClose }) {
   const removeRoom = (i) => setRoomNames((prev) => prev.filter((_, j) => j !== i))
   const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin
   const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
+
+  if (isLimitReached) return (
+    <div className={styles.backdrop} onClick={onClose}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <div style={{ flex: 1 }} />
+          <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        </div>
+        <div className={styles.body}>
+          <div className={styles.done}>
+            <div className={styles.doneIcon} style={{ background: '#FEF3C7', color: '#D97706' }}>🔒</div>
+            <h2 className={styles.doneTitle}>프로젝트 한도에 도달했어요</h2>
+            <p className={styles.doneSub}>
+              무료 플랜은 최대 {FREE_PROJECT_LIMIT}개 프로젝트를 보유할 수 있어요.<br />
+              현재 <strong>{ownedCount}개</strong> 보유 중 (진행 중 + 완료됨 합산)
+            </p>
+            <div className={styles.limitOptions}>
+              <div className={styles.limitOption}>
+                <p className={styles.limitOptionLabel}>기존 프로젝트 삭제</p>
+                <p className={styles.limitOptionDesc}>완료된 프로젝트를 삭제하면 슬롯이 돌아와요</p>
+                <button className={styles.prevBtn} onClick={() => { onClose(); navigate('/profile') }}>프로젝트 관리 →</button>
+              </div>
+              <div className={styles.limitDivider}>또는</div>
+              <div className={styles.limitOption}>
+                <p className={styles.limitOptionLabel}>Pro 플랜으로 업그레이드</p>
+                <p className={styles.limitOptionDesc}>프로젝트 10개, 팀원 20명, 무제한 채팅 히스토리</p>
+                <button className={styles.nextBtn} onClick={() => { onClose(); navigate('/pricing') }}>요금제 보기 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <>
