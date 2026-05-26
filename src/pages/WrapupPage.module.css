@@ -742,31 +742,6 @@
 
 .trendCount { font-size: 11px; color: var(--text-tertiary); width: 24px; text-align: right; flex-shrink: 0; }
 
-/* 키워드 섹션 */
-.keywordSection { border-top: 1px solid var(--border-light); padding-top: 12px; }
-
-.keywordRow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-
-.keywordChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  background: var(--primary-soft);
-  border: 1px solid var(--primary-light);
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--primary-dark);
-}
-
-.keywordCount {
-  font-size: 10px;
-  font-weight: 700;
-  background: var(--primary-light);
-  padding: 1px 5px;
-  border-radius: var(--radius-full);
-}
 
 @media (max-width: 600px) {
   .tagGrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -63,30 +63,6 @@ export default function WrapupPage() {
 
   const getFeedbackFromMe = (toUserId) =>
     wrapup?.feedbacks?.find((f) => f.fromUserId === currentUser?.id && f.toUserId === toUserId)
-
-  // 자주 나온 키워드 — 할 일·마일스톤·공지·회고 텍스트에서 추출
-  const topKeywords = useMemo(() => {
-    if (!project || !wrapup) return []
-    const STOP = new Set([
-      '이','가','은','는','을','를','의','에','에서','으로','로','도','만','이다','있다','없다',
-      '하다','했다','할','것','수','때','더','잘','해','안','또','그','이번','우리','팀',
-      '프로젝트','활동','같은','같이','있어','없어','너무','정말','많이','조금','아직','계속',
-      '그리고','하지만','그래서','때문에','위해','통해','대해','관련','사용','진행','완료',
-      '추가','기능','작업','회의','내용','결과','방향','목표','계획',
-    ])
-    const raw = [
-      ...(project.todos || []).map((t) => t.title),
-      ...(project.milestones || []).map((m) => m.title),
-      ...(project.announcements || []).map((a) => `${a.title} ${a.content}`),
-      ...(wrapup.reflections || []).map((r) => r.text),
-    ].join(' ')
-    const counts = {}
-    raw.split(/[\s\n,.!?~·:()\[\]"']+/).forEach((w) => {
-      if (w.length < 2 || STOP.has(w) || /^[0-9]+$/.test(w)) return
-      counts[w] = (counts[w] || 0) + 1
-    })
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([word, count]) => ({ word, count }))
-  }, [project, wrapup])
 
   const fmtKorDate = (dateStr) => {
     if (!dateStr) return ''
@@ -352,18 +328,6 @@ export default function WrapupPage() {
                     </div>
                   )}
                 </div>
-                {topKeywords.length > 0 && (
-                  <div className={styles.keywordSection}>
-                    <p className={styles.insightLabel}>자주 나온 키워드</p>
-                    <div className={styles.keywordRow}>
-                      {topKeywords.map(({ word, count }) => (
-                        <span key={word} className={styles.keywordChip}>
-                          {word}<span className={styles.keywordCount}>{count}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
