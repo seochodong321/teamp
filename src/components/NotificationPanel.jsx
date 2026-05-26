@@ -15,6 +15,7 @@ const TYPE_ICONS = {
   mention: '🔔',
   dm: '💬',
   system: '🔔',
+  admin:  '🛡️',
 }
 
 function timeAgo(timestamp) {

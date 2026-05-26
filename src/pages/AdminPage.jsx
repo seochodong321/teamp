@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  collection, query, orderBy, getDocs, updateDoc, deleteDoc, doc,
-  serverTimestamp, limit, where, writeBatch,
+  collection, query, orderBy, getDocs, getDoc, updateDoc, deleteDoc, doc,
+  serverTimestamp, limit, where, writeBatch, addDoc,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -325,10 +325,12 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
                 </div>
                 <div className={styles.cardActions}>
                   {r.type === 'project' && (
-                    <button className={styles.dangerBtn} onClick={() => onDeleteProject(r.targetId, r.targetName, r.id)}>프로젝트 삭제</button>
+                    <button className={styles.dangerBtn} onClick={() => onDeleteProject(r.targetId, r.targetName, r.id,
+                      () => setReports((prev) => prev.map((x) => x.id === r.id ? { ...x, status: 'resolved' } : x)))}>프로젝트 삭제</button>
                   )}
                   {r.type === 'match' && (
-                    <button className={styles.dangerBtn} onClick={() => onDeleteMatch(r.targetId, r.targetName, r.id)}>모집글 삭제</button>
+                    <button className={styles.dangerBtn} onClick={() => onDeleteMatch(r.targetId, r.targetName, r.id,
+                      () => setReports((prev) => prev.map((x) => x.id === r.id ? { ...x, status: 'resolved' } : x)))}>모집글 삭제</button>
                   )}
                   {r.type === 'user' && (
                     <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, null, r.id)}>유저 블락</button>
@@ -409,7 +411,8 @@ function ProjectsTab({ onDeleteProject }) {
                 {p.purpose && <p className={styles.detail}>{p.purpose}</p>}
               </div>
               <div className={styles.cardActions}>
-                <button className={styles.dangerBtn} onClick={() => onDeleteProject(p.id, p.name)}>삭제</button>
+                <button className={styles.dangerBtn} onClick={() => onDeleteProject(p.id, p.name, null,
+                  () => setProjects((prev) => prev.filter((x) => x.id !== p.id)))}>삭제</button>
               </div>
             </div>
           ))}
@@ -465,10 +468,12 @@ function MatchTab({ onDeleteMatch, onCloseMatch }) {
               </div>
               <div className={styles.cardActions}>
                 {p.status === 'open' && (
-                  <button className={styles.warnBtn} onClick={() => onCloseMatch(p.id, p.title)}>강제 마감</button>
+                  <button className={styles.warnBtn} onClick={() => onCloseMatch(p.id, p.title,
+                    () => setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, status: 'closed' } : x)))}>강제 마감</button>
                 )}
                 {p.status === 'closed' && <span className={styles.closedTag}>마감됨</span>}
-                <button className={styles.dangerBtn} onClick={() => onDeleteMatch(p.id, p.title)}>삭제</button>
+                <button className={styles.dangerBtn} onClick={() => onDeleteMatch(p.id, p.title, null,
+                  () => setPosts((prev) => prev.filter((x) => x.id !== p.id)))}>삭제</button>
               </div>
             </div>
           ))}
@@ -568,18 +573,40 @@ export default function AdminPage() {
   if (!isAdmin) return <Navigate to="/home" replace />
 
   // ── 액션: 프로젝트 삭제
-  const handleDeleteProject = (projectId, name, reportId) => {
+  const handleDeleteProject = (projectId, name, reportId, onSuccess) => {
     ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`, async () => {
+      const snap = await getDoc(doc(db, 'projects', projectId))
+      const memberIds = snap.exists()
+        ? (snap.data().memberIds || (snap.data().members || []).map((m) => m.id))
+        : []
       await deleteDoc(doc(db, 'projects', projectId))
       if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+      await Promise.all(memberIds.map((uid) =>
+        addDoc(collection(db, 'notifications'), {
+          targetUserId: uid, type: 'admin', read: false,
+          text: `🛡️ 관리자에 의해 "${name}" 프로젝트가 삭제되었습니다.`,
+          link: '/help', createdAt: serverTimestamp(),
+        })
+      ))
+      onSuccess?.()
     })
   }
 
   // ── 액션: 매치 모집글 삭제
-  const handleDeleteMatch = (postId, title, reportId) => {
+  const handleDeleteMatch = (postId, title, reportId, onSuccess) => {
     ask(`"${title}" 모집글을 삭제할까요?`, async () => {
+      const snap = await getDoc(doc(db, 'matchPosts', postId))
+      const leaderId = snap.exists() ? snap.data().leaderId : null
       await deleteDoc(doc(db, 'matchPosts', postId))
       if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+      if (leaderId) {
+        await addDoc(collection(db, 'notifications'), {
+          targetUserId: leaderId, type: 'admin', read: false,
+          text: `🛡️ 관리자에 의해 "${title}" 모집글이 삭제되었습니다.`,
+          link: '/help', createdAt: serverTimestamp(),
+        })
+      }
+      onSuccess?.()
     })
   }
 
@@ -593,9 +620,19 @@ export default function AdminPage() {
   }
 
   // ── 액션: 매치 강제 마감
-  const handleCloseMatch = (postId, title) => {
+  const handleCloseMatch = (postId, title, onSuccess) => {
     ask(`"${title}" 모집글을 강제 마감할까요? 기존 지원자는 유지되고 새 지원은 받지 않아요.`, async () => {
+      const snap = await getDoc(doc(db, 'matchPosts', postId))
+      const leaderId = snap.exists() ? snap.data().leaderId : null
       await updateDoc(doc(db, 'matchPosts', postId), { status: 'closed' })
+      if (leaderId) {
+        await addDoc(collection(db, 'notifications'), {
+          targetUserId: leaderId, type: 'admin', read: false,
+          text: `🛡️ 관리자에 의해 "${title}" 모집글이 강제 마감되었습니다.`,
+          link: '/help', createdAt: serverTimestamp(),
+        })
+      }
+      onSuccess?.()
     })
   }
 
