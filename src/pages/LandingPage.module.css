@@ -281,6 +281,10 @@
   text-align: center;
   margin: 0 0 48px;
 }
+.sectionDescAccent {
+  color: var(--primary);
+  font-weight: 600;
+}
 
 /* ─── Why / Pain Points ─── */
 .whySection { background: #faf9ff; }

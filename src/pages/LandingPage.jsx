@@ -308,7 +308,8 @@ export default function LandingPage() {
           <h2 className={styles.sectionTitle}>프로젝트가 끝나도<br />기여는 남아요</h2>
           <p className={styles.sectionDesc}>
             완료된 프로젝트는 사라지지 않아요.<br />
-            여러분의 역할, 기여, 팀원들의 피드백이 이력으로 남아 있어요.
+            여러분의 역할, 기여, 팀원들의 피드백이 이력으로 남아 있어요.<br />
+            <span className={styles.sectionDescAccent}>팀프폴리오 공개 링크로 외부에도 자유롭게 공유할 수 있어요.</span>
           </p>
           <div className={styles.capsuleCards}>
             {[
