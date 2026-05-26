@@ -154,10 +154,12 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────
     // reports
-    //   어드민만 접근 가능
+    //   생성: 로그인된 모든 유저 (신고 접수)
+    //   읽기/수정/삭제: 어드민만
     // ──────────────────────────────────────────────
     match /reports/{reportId} {
-      allow read, write: if isAdmin();
+      allow create: if request.auth != null;
+      allow read, update, delete: if isAdmin();
     }
 
   }
