@@ -83,6 +83,8 @@ export const createWrapupSlice = (set, get) => ({
 
     const wrapupData = {
       projectId,
+      leaderId: project.leaderId,
+      memberIds: project.members.map((m) => m.id),
       projectName: project.name,
       projectEmoji: project.emoji || '',
       createdAt: serverTimestamp(),

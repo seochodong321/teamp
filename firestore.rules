@@ -134,7 +134,10 @@ service cloud.firestore {
     // ──────────────────────────────────────────────
     match /wrapups/{wrapupId} {
       allow read: if request.auth != null;
-      allow create, update: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.leaderId == request.auth.uid;
+      allow update: if request.auth != null &&
+        request.auth.uid in resource.data.memberIds;
     }
 
     // ──────────────────────────────────────────────
