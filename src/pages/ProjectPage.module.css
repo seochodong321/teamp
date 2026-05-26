@@ -101,7 +101,7 @@
   transition: all var(--transition-fast);
 }
 .addCoverBtn:hover { border-color: var(--primary); color: var(--primary); }
-.reportProjectBtn { padding: 4px 8px; border: 1px solid transparent; color: var(--text-tertiary); border-radius: 6px; font-size: 11px; cursor: pointer; background: none; transition: all var(--transition-fast); opacity: 0.55; }
+.reportProjectBtn { padding: 4px 8px; border: 1px dashed var(--border-strong); color: var(--text-tertiary); border-radius: 6px; font-size: 11px; cursor: pointer; background: none; transition: all var(--transition-fast); opacity: 0.55; }
 .reportProjectBtn:hover { border-color: var(--coral); color: var(--coral); opacity: 1; }
 
 /* 커버 피커 모달 */
