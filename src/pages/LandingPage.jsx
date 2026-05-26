@@ -148,6 +148,10 @@ export default function LandingPage() {
           <div className={styles.heroStat}><strong>마일스톤</strong><span>성장 타임라인</span></div>
           <div className={styles.heroStatDivider} />
           <div className={styles.heroStat}><strong>Wrap-up</strong><span>프로젝트 회고</span></div>
+          <div className={styles.heroStatDivider} />
+          <div className={styles.heroStat}><strong>매치</strong><span>팀원 모집·지원</span></div>
+          <div className={styles.heroStatDivider} />
+          <div className={styles.heroStat}><strong>팀프폴리오</strong><span>공개 포트폴리오</span></div>
         </div>
         <div className={styles.heroScroll} aria-hidden="true">
           <span />
