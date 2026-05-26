@@ -320,7 +320,7 @@ export default function HomePage() {
       )}
 
       {/* ── 진행 중 프로젝트 없을 때 ── */}
-      {active.length === 0 && projects.length > 0 && (
+      {active.length === 0 && (archived.length > 0 || collecting.length > 0) && (
         <div className={styles.noActiveWrap}>
           <div className={styles.noActiveBanner}>
             <span className={styles.noActiveBannerEmoji}>🌱</span>

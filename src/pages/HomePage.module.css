@@ -677,7 +677,7 @@
 .cardPreviewTime { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
 
 /* ── 진행 중 없음 빈 상태 ── */
-.noActiveWrap { display: flex; flex-direction: column; gap: 10px; animation: slideUp 0.35s ease; }
+.noActiveWrap { display: flex; flex-direction: column; gap: 10px; }
 
 .noActiveBanner {
   background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-secondary) 100%);
