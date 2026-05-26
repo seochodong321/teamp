@@ -57,6 +57,13 @@ export default function MessagesPage() {
     if (initTo) lookupUsername(initTo)
   }, [])
 
+  // 열려 있는 스레드를 notes 실시간 업데이트에 따라 갱신 (답장 후 즉시 반영)
+  useEffect(() => {
+    if (!selected) return
+    const updated = notes.find((n) => n.id === selected.id)
+    if (updated) setSelected(updated)
+  }, [notes])
+
   // 쪽지 읽음 처리
   const markRead = async (note) => {
     if (!note.read?.[currentUser.id]) {
@@ -79,9 +86,10 @@ export default function MessagesPage() {
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
       if (!snap.empty) {
-        const d = snap.docs[0].data()
-        if (d.uid === currentUser.id) { setToStatus('notfound'); setToUid(null); return }
-        setToUid(d.uid)
+        const docId = snap.docs[0].id   // UID = Firestore 문서 ID
+        const d     = snap.docs[0].data()
+        if (docId === currentUser.id) { setToStatus('notfound'); setToUid(null); return }
+        setToUid(docId)
         setToName(d.name)
         setToStatus('found')
       } else {
