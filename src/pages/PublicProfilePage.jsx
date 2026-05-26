@@ -61,6 +61,12 @@ export default function PublicProfilePage() {
         flowerTagSummary:  raw.flowerTagSummary  || {},
         flowerSenderUids:  raw.flowerSenderUids  || [],
         flowerSenderCount: raw.flowerSenderCount  || 0,
+        teamfolioSettings: {
+          published:    (raw.teamfolioSettings?.published)    !== false,
+          showFlowers:  (raw.teamfolioSettings?.showFlowers)  !== false,
+          showProjects: (raw.teamfolioSettings?.showProjects) !== false,
+          showStats:    (raw.teamfolioSettings?.showStats)    !== false,
+        },
       }
       setUser(userData)
     } catch (e) {
@@ -120,6 +126,31 @@ export default function PublicProfilePage() {
             <p className={styles.notFoundIcon}>👤</p>
             <p className={styles.notFoundTitle}>존재하지 않는 프로필이에요</p>
             <p className={styles.notFoundSub}>@{username}은 찾을 수 없어요.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 팀프폴리오 비공개 상태
+  if (user && !user.teamfolioSettings.published) {
+    return (
+      <div className={styles.shell}>
+        <div className={styles.topBar}>
+          <div className={styles.brandBlock}>
+            <TeampMark size={28}/>
+            <div className={styles.brandTexts}>
+              <span className={styles.brand}>팀프폴리오</span>
+              <span className={styles.brandSub}>기여와 관계의 기록</span>
+            </div>
+          </div>
+          <Link to="/home" className={styles.ctaBtn}>팀프 홈으로 →</Link>
+        </div>
+        <div className={styles.card}>
+          <div className={styles.notFound}>
+            <p className={styles.notFoundIcon}>🔒</p>
+            <p className={styles.notFoundTitle}>아직 공개되지 않은 팀프폴리오예요</p>
+            <p className={styles.notFoundSub}>이 사용자는 아직 팀프폴리오를 공개하지 않았어요.</p>
           </div>
         </div>
       </div>
@@ -189,41 +220,45 @@ export default function PublicProfilePage() {
           )}
 
           {/* 통계 */}
-          <div className={styles.statsRow}>
-            <div className={styles.statBox}>
-              <p className={styles.statNum}>{completedCount}</p>
-              <p className={styles.statLabel}>완료 프로젝트</p>
-            </div>
-            <div className={styles.statBox}>
-              <p className={styles.statNum}>{uniqueTeammates}</p>
-              <p className={styles.statLabel}>함께한 팀원</p>
-            </div>
-            <div className={styles.statBox}>
-              <p className={styles.statNum}>{user.flowerSenderUids.length || user.flowerSenderCount || totalFeedback}</p>
-              <p className={styles.statLabel}>받은 피드백</p>
-            </div>
-          </div>
-          {projects.length < allProjects.length && (
-            <p className={styles.statNote}>* 공개 설정된 프로젝트 기준이에요</p>
+          {user.teamfolioSettings.showStats && (
+            <>
+              <div className={styles.statsRow}>
+                <div className={styles.statBox}>
+                  <p className={styles.statNum}>{completedCount}</p>
+                  <p className={styles.statLabel}>완료 프로젝트</p>
+                </div>
+                <div className={styles.statBox}>
+                  <p className={styles.statNum}>{uniqueTeammates}</p>
+                  <p className={styles.statLabel}>함께한 팀원</p>
+                </div>
+              </div>
+              {projects.length < allProjects.length && (
+                <p className={styles.statNote}>* 공개 설정된 프로젝트 기준이에요</p>
+              )}
+            </>
           )}
 
-          {/* 팀원 평가 */}
-          {topFlowers.length > 0 && (
+          {/* 받은 꽃다발 */}
+          {user.teamfolioSettings.showFlowers && (
             <div>
-              <p className={styles.secTitle}>팀원이 전한 말</p>
-              <div className={styles.flowerRow}>
-                {topFlowers.map((t) => (
-                  <span key={t.id} className={styles.flowerChip}>
-                    {t.emoji} {t.label}
-                    <span className={styles.flowerCount}>{flowerTags[t.id]}</span>
-                  </span>
-                ))}
-              </div>
+              <p className={styles.secTitle}>🌸 받은 꽃다발</p>
+              {topFlowers.length > 0 ? (
+                <div className={styles.flowerRow}>
+                  {topFlowers.map((t) => (
+                    <span key={t.id} className={styles.flowerChip}>
+                      {t.emoji} {t.label}
+                      <span className={styles.flowerCount}>{flowerTags[t.id]}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className={styles.empty}>아직 받은 꽃다발이 없어요<br/><span style={{fontSize:12,color:'var(--text-tertiary)'}}>팀 프로젝트를 완료하고 랩업 피드백을 받으면 표시돼요</span></p>
+              )}
             </div>
           )}
 
           {/* 프로젝트 이력 */}
-          <div>
+          {user.teamfolioSettings.showProjects && <div>
             <p className={styles.secTitle}>프로젝트 이력</p>
             {projects.length === 0 ? (
               <p className={styles.empty}>
@@ -265,7 +300,7 @@ export default function PublicProfilePage() {
                 })}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       </div>
 

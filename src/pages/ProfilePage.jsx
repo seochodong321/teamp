@@ -88,6 +88,19 @@ export default function ProfilePage() {
   const [pwResetSent, setPwResetSent]         = useState(false)
   const [pwResetLoading, setPwResetLoading]   = useState(false)
 
+  // 팀프폴리오 설정
+  const [tfDraft, setTfDraft] = useState(() => {
+    const s = currentUser.teamfolioSettings || {}
+    return {
+      published:    s.published    !== false,
+      showFlowers:  s.showFlowers  !== false,
+      showProjects: s.showProjects !== false,
+      showStats:    s.showStats    !== false,
+    }
+  })
+  const [tfSaving, setTfSaving] = useState(false)
+  const [tfSaved,  setTfSaved]  = useState(false)
+
   const handleSendPasswordReset = async () => {
     if (!currentUser.email || !auth.currentUser) return
     setPwResetLoading(true)
@@ -161,6 +174,20 @@ export default function ProfilePage() {
     } finally {
       setPhotoUploading(false)
       e.target.value = ''
+    }
+  }
+
+  const saveTfSettings = async () => {
+    setTfSaving(true)
+    setTfSaved(false)
+    try {
+      await updateProfile({ teamfolioSettings: tfDraft })
+      setTfSaved(true)
+      setTimeout(() => setTfSaved(false), 2500)
+    } catch {
+      showError('저장에 실패했어요.')
+    } finally {
+      setTfSaving(false)
     }
   }
 
@@ -474,6 +501,77 @@ export default function ProfilePage() {
               ))}
           </div>
         )}
+      </div>
+
+      {/* 팀프폴리오 관리 */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>팀프폴리오 관리</h3>
+          <p className={styles.sectionDesc}>링크로 공유 가능한 나만의 포트폴리오 페이지예요</p>
+        </div>
+
+        <div className={styles.themeRow}>
+          <div className={styles.themeInfo}>
+            <span className={styles.themeIcon}>🗂️</span>
+            <div>
+              <p className={styles.themeName}>공개 여부</p>
+              <p className={styles.themeDesc}>{tfDraft.published ? '외부 링크에서 누구나 볼 수 있어요' : '링크로 접근해도 보이지 않아요'}</p>
+            </div>
+          </div>
+          <button
+            className={`${styles.toggle} ${tfDraft.published ? styles.toggleOn : styles.toggleOff}`}
+            onClick={() => setTfDraft((d) => ({ ...d, published: !d.published }))}
+          >
+            <span className={styles.toggleKnob} />
+            <span className={styles.toggleLabel}>{tfDraft.published ? 'ON' : 'OFF'}</span>
+          </button>
+        </div>
+
+        {tfDraft.published && (
+          <>
+            <p className={styles.tfLabel}>포함할 항목</p>
+            <div className={styles.tfChipRow}>
+              {[
+                { key: 'showFlowers',  icon: '🌸', label: '꽃다발' },
+                { key: 'showProjects', icon: '📁', label: '프로젝트 이력' },
+                { key: 'showStats',    icon: '📊', label: '통계' },
+              ].map(({ key, icon, label }) => (
+                <button
+                  key={key}
+                  className={`${styles.tfChip} ${tfDraft[key] ? styles.tfChipOn : ''}`}
+                  onClick={() => setTfDraft((d) => ({ ...d, [key]: !d[key] }))}
+                >
+                  {icon} {label}{tfDraft[key] && <span className={styles.tfChipCheck}>✓</span>}
+                </button>
+              ))}
+            </div>
+
+            {currentUser.username && (
+              <div className={styles.tfUrlRow}>
+                <span className={styles.tfUrl}>
+                  teamp.kr/u/{(currentUser.username || '').replace('@', '')}
+                </span>
+                <button className={styles.tfCopyBtn} onClick={() => {
+                  const url = `${window.location.origin}/u/${(currentUser.username || '').replace('@', '')}`
+                  navigator.clipboard.writeText(url).catch(() => {})
+                }}>🔗 복사</button>
+                <a
+                  href={`/u/${(currentUser.username || '').replace('@', '')}`}
+                  target="_blank" rel="noreferrer"
+                  className={styles.tfOpenBtn}
+                >열기 →</a>
+              </div>
+            )}
+          </>
+        )}
+
+        <button
+          className={`${styles.tfSaveBtn} ${tfSaved ? styles.tfSaveBtnDone : ''}`}
+          onClick={saveTfSettings}
+          disabled={tfSaving}
+        >
+          {tfSaving ? '저장 중...' : tfSaved ? '✓ 반영됨' : '반영하기'}
+        </button>
       </div>
 
       {/* 공개된 프로젝트 */}
