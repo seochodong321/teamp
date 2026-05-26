@@ -747,6 +747,7 @@
   .tagGrid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .banner { flex-wrap: wrap; gap: 10px; }
   .bannerName { font-size: 16px; }
+  .commentInput, .reflectionInput { font-size: 16px; }
 }
 
 @media (max-width: 480px) {
