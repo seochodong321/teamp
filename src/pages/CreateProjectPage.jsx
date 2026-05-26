@@ -60,7 +60,7 @@ export default function CreateProjectPage() {
   const currentUser   = useStore((s) => s.currentUser)
 
   const ownedCount      = projects.filter((p) => p.leaderId === currentUser?.id).length
-  const isPaidPlan      = ['pro', 'team', 'admin'].includes(currentUser?.plan)
+  const isPaidPlan      = ['pro', 'team', 'admin', 'student'].includes(currentUser?.plan)
   const isLimitReached  = !isPaidPlan && ownedCount >= FREE_PROJECT_LIMIT
 
   if (isLimitReached) return (

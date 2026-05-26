@@ -203,6 +203,42 @@
 .featureValue { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
 .featureDim .featureValue { color: var(--text-tertiary); font-weight: 400; }
 
+/* 학생 배너 */
+.studentBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1.5px solid #6EE7B7;
+  border-radius: 16px;
+  padding: 24px 28px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+.studentLeft { display: flex; align-items: flex-start; gap: 16px; flex: 1; }
+.studentIcon { font-size: 32px; flex-shrink: 0; }
+.studentTitle { font-size: 16px; font-weight: 800; color: #065F46; margin: 0 0 6px; }
+.studentDesc  { font-size: 13px; color: #047857; line-height: 1.6; margin: 0; }
+.studentBtn {
+  padding: 12px 24px;
+  background: #059669;
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+  flex-shrink: 0;
+}
+.studentBtn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4); }
+
+@media (max-width: 600px) {
+  .studentBanner { flex-direction: column; align-items: flex-start; }
+  .studentBtn { width: 100%; text-align: center; }
+}
+
 /* FAQ */
 .faq { max-width: 760px; margin: 0 auto; }
 .faqTitle {

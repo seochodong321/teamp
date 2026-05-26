@@ -148,6 +148,20 @@ export default function PricingPage() {
         ))}
       </div>
 
+      {/* 학생 플랜 */}
+      <div className={styles.studentBanner}>
+        <div className={styles.studentLeft}>
+          <span className={styles.studentIcon}>🎓</span>
+          <div>
+            <p className={styles.studentTitle}>재학생이라면 Pro를 무료로</p>
+            <p className={styles.studentDesc}>.ac.kr · .edu 학교 이메일로 인증하면 Pro 플랜을 1년간 무료로 사용할 수 있어요. 팀 프로젝트, 졸업작품, 스터디에 딱 맞아요.</p>
+          </div>
+        </div>
+        <button className={styles.studentBtn} onClick={() => navigate('/verify-student')}>
+          학생 인증하기 →
+        </button>
+      </div>
+
       {/* FAQ */}
       <div className={styles.faq}>
         <h2 className={styles.faqTitle}>자주 묻는 질문</h2>

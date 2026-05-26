@@ -487,10 +487,11 @@ function MatchTab({ onDeleteMatch, onCloseMatch }) {
 }
 
 const PLAN_META = {
-  free:  { label: 'Free',  color: '#6B7280', bg: '#F3F4F6' },
-  pro:   { label: 'Pro',   color: '#534AB7', bg: '#EEF2FF' },
-  team:  { label: 'Team',  color: '#0D9488', bg: '#CCFBF1' },
-  admin: { label: 'Admin', color: '#DC2626', bg: '#FEE2E2' },
+  free:    { label: 'Free',    color: '#6B7280', bg: '#F3F4F6' },
+  student: { label: 'Student', color: '#059669', bg: '#D1FAE5' },
+  pro:     { label: 'Pro',     color: '#534AB7', bg: '#EEF2FF' },
+  team:    { label: 'Team',    color: '#0D9488', bg: '#CCFBF1' },
+  admin:   { label: 'Admin',   color: '#DC2626', bg: '#FEE2E2' },
 }
 
 // ─── 유저 관리 탭 ────────────────────────────────────────────

@@ -1,0 +1,133 @@
+.page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--bg-secondary);
+}
+
+.card {
+  background: var(--bg);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+
+.backBtn {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: color 0.15s;
+}
+.backBtn:hover { color: var(--primary); }
+
+.iconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  text-align: center;
+}
+
+.sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.domainList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.domainChip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft, #f0effe);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.input {
+  height: 46px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-secondary);
+  padding: 0 14px;
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--primary); background: var(--bg); }
+
+.btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--primary);
+  color: white;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+.btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSecondary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.error {
+  font-size: 12px;
+  color: var(--coral);
+  margin: 0;
+}

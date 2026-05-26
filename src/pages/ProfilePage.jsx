@@ -765,14 +765,56 @@ export default function ProfilePage() {
       )}
 
       {/* 요금제 */}
-      <div className={styles.planCard}>
-        <div className={styles.planLeft}>
-          <span className={styles.planBadge}>Free</span>
-          <p className={styles.planTitle}>무료 플랜 사용 중</p>
-          <p className={styles.planDesc}>아카이브 500MB · 프로젝트 5개까지</p>
-        </div>
-        <button className={styles.upgradeBtn} onClick={() => navigate('/pricing')}>업그레이드 →</button>
-      </div>
+      {(() => {
+        const plan = currentUser?.plan || 'free'
+        const isStudent = plan === 'student'
+        const isPro = plan === 'pro' || plan === 'team' || plan === 'admin'
+        const studentVerifiedAt = currentUser?.studentVerifiedAt
+        const needsReVerify = isStudent && studentVerifiedAt &&
+          (Date.now() - new Date(studentVerifiedAt).getTime()) > 365 * 24 * 60 * 60 * 1000
+
+        return (
+          <>
+            {needsReVerify && (
+              <div className={styles.reVerifyBanner}>
+                <span>🎓 학생 인증이 1년이 지났어요.</span>
+                <button onClick={() => navigate('/verify-student')}>재인증하기 →</button>
+              </div>
+            )}
+            <div className={styles.planCard}>
+              <div className={styles.planLeft}>
+                <span className={styles.planBadge} style={
+                  isStudent ? { background: '#CCFBF1', color: '#0D9488' } :
+                  isPro     ? { background: '#EEF2FF', color: '#534AB7' } : {}
+                }>
+                  {plan === 'admin' ? 'Admin' : plan === 'team' ? 'Team' : plan === 'pro' ? 'Pro' : plan === 'student' ? 'Student' : 'Free'}
+                </span>
+                <p className={styles.planTitle}>
+                  {isPro ? `${plan === 'admin' ? 'Admin' : plan === 'team' ? 'Team' : 'Pro'} 플랜 사용 중` :
+                   isStudent ? '학생 플랜 사용 중 (Pro 동급)' : '무료 플랜 사용 중'}
+                </p>
+                <p className={styles.planDesc}>
+                  {isStudent
+                    ? (() => {
+                        const expiry = studentVerifiedAt
+                          ? new Date(new Date(studentVerifiedAt).getTime() + 365*24*60*60*1000).toLocaleDateString('ko-KR')
+                          : null
+                        return expiry ? `재학 중 무료 · ${expiry}까지` : '재학 중 무료'
+                      })()
+                    : isPro ? '프로젝트 무제한 · 팀원 무제한' : '프로젝트 3개 · 팀원 5명'}
+                </p>
+              </div>
+              {!isPro && !isStudent && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+                  <button className={styles.upgradeBtn} onClick={() => navigate('/pricing')}>업그레이드 →</button>
+                  <button style={{ fontSize: 12, color: 'var(--text-tertiary)', textDecoration: 'underline', textUnderlineOffset: 3 }}
+                    onClick={() => navigate('/verify-student')}>학생이에요 🎓</button>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      })()}
       
       {/* 환경 설정 */}
       <div className={styles.section}>
