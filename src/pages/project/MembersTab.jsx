@@ -53,7 +53,14 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
     try {
       const userSnap = await getDoc(doc(db, 'users', member.id))
       const ud = userSnap.exists() ? userSnap.data() : {}
-      setProfileExtra({ oneliner: ud.oneliner || '', username: ud.username || '' })
+      setProfileExtra({
+        oneliner:    ud.oneliner    || '',
+        username:    ud.username    || '',
+        name:        ud.name        || '',
+        affiliation: ud.affiliation || '',
+        email:       ud.email       || '',
+        photoURL:    ud.photoURL    || null,
+      })
       const projSnap = await getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', member.id)))
       setProfilePubs(
         projSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
@@ -81,12 +88,20 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
         <div className={styles.backdrop} onClick={() => { setProfileMember(null); setProfileExtra(null); setProfilePubs([]) }}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
             <button className={styles.profileClose} onClick={() => { setProfileMember(null); setProfileExtra(null); setProfilePubs([]) }}>✕</button>
-            <div className={styles.profileAvatar}>{(profileMember.id === currentUser.id ? currentUser.name : profileMember.name).charAt(0)}</div>
-            <h3 className={styles.profileName}>{profileMember.id === currentUser.id ? currentUser.name : profileMember.name}</h3>
+            <div className={styles.profileAvatar}>
+              {profileExtra?.photoURL
+                ? <img src={profileExtra.photoURL} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',display:'block'}} />
+                : (profileExtra?.name || (profileMember.id === currentUser.id ? currentUser.name : profileMember.name)).charAt(0)}
+            </div>
+            <h3 className={styles.profileName}>{profileExtra?.name || (profileMember.id === currentUser.id ? currentUser.name : profileMember.name)}</h3>
             <span className={styles.profileRole}>{ROLE_LABEL[profileMember.role]}</span>
             {profileExtra?.oneliner && <p className={styles.profileOneliner}>"{profileExtra.oneliner}"</p>}
-            {profileMember.affiliation && <p className={styles.profileAffil}>{profileMember.affiliation}</p>}
-            {profileMember.email && <p className={styles.profileEmail}>{profileMember.email}</p>}
+            {(profileExtra !== null ? profileExtra.affiliation : profileMember.affiliation) && (
+              <p className={styles.profileAffil}>{profileExtra !== null ? profileExtra.affiliation : profileMember.affiliation}</p>
+            )}
+            {(profileExtra !== null ? profileExtra.email : profileMember.email) && (
+              <p className={styles.profileEmail}>{profileExtra !== null ? profileExtra.email : profileMember.email}</p>
+            )}
             {profileMember.memo && (
               <div className={styles.memoBox}>
                 <span className={styles.memoLabel}>{project.name}</span>

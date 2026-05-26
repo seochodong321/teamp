@@ -58,8 +58,9 @@ export default function PublicProfilePage() {
         oneliner:         raw.oneliner         || '',
         affiliation:      raw.affiliation      || '',
         photoURL:         raw.photoURL         || null,
-        flowerTagSummary: raw.flowerTagSummary || {},
-        flowerSenderCount: raw.flowerSenderCount || 0,
+        flowerTagSummary:  raw.flowerTagSummary  || {},
+        flowerSenderUids:  raw.flowerSenderUids  || [],
+        flowerSenderCount: raw.flowerSenderCount  || 0,
       }
       setUser(userData)
     } catch (e) {
@@ -198,7 +199,7 @@ export default function PublicProfilePage() {
               <p className={styles.statLabel}>함께한 팀원</p>
             </div>
             <div className={styles.statBox}>
-              <p className={styles.statNum}>{user.flowerSenderCount || totalFeedback}</p>
+              <p className={styles.statNum}>{user.flowerSenderUids.length || user.flowerSenderCount || totalFeedback}</p>
               <p className={styles.statLabel}>받은 피드백</p>
             </div>
           </div>

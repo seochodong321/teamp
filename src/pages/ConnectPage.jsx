@@ -39,9 +39,12 @@ export default function ConnectPage() {
       const userData = userSnap.exists() ? userSnap.data() : {}
       setProfile({
         ...contact,
+        name:        userData.name        || contact.name        || '',
         affiliation: userData.affiliation || contact.affiliation || '',
+        email:       userData.email       || contact.email       || '',
         oneliner:    userData.oneliner    || '',
         username:    userData.username    || '',
+        photoURL:    userData.photoURL    || null,
       })
       // Firestore에서 해당 유저의 공개 프로젝트 직접 조회
       const projSnap = await getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id)))
@@ -89,7 +92,11 @@ export default function ConnectPage() {
         <div className={styles.backdrop} onClick={() => setProfile(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={() => setProfile(null)}>✕</button>
-            <div className={styles.profileAvatar}>{profile.name.charAt(0)}</div>
+            <div className={styles.profileAvatar}>
+              {profile.photoURL
+                ? <img src={profile.photoURL} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',display:'block'}} />
+                : profile.name.charAt(0)}
+            </div>
             <h3 className={styles.profileName}>{profile.name}</h3>
             {profile.oneliner && <p className={styles.profileOneliner}>"{profile.oneliner}"</p>}
             {profile.affiliation && <p className={styles.profileAffil}>{profile.affiliation}</p>}

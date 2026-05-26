@@ -302,7 +302,7 @@ export default function ChatPage() {
                 }
               </div>
               <div className={styles.ppInfo}>
-                <p className={styles.ppName}>{profilePopup.name}</p>
+                <p className={styles.ppName}>{pd.name || profilePopup.name}</p>
                 {pd.affiliation && <p className={styles.ppAffiliation}>🏢 {pd.affiliation}</p>}
               </div>
             </div>

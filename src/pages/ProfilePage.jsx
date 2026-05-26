@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, getDoc, updateDoc, query, collection, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -144,6 +144,18 @@ export default function ProfilePage() {
       const url = await getDownloadURL(sRef)
       await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
       updateProfile({ photoURL: url })
+      // 참여 중인 프로젝트의 members 배열에 photoURL 동기화
+      if (myProjects.length > 0) {
+        const batch = writeBatch(db)
+        myProjects.forEach((p) => {
+          batch.update(doc(db, 'projects', p.id), {
+            members: p.members.map((m) =>
+              m.id === currentUser.id ? { ...m, photoURL: url } : m
+            ),
+          })
+        })
+        await batch.commit()
+      }
     } catch {
       showError('업로드에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
@@ -207,6 +219,22 @@ export default function ProfilePage() {
           oneliner: editOneliner.trim(),
           birthday: newBirthday,
         })
+        // 참여 중인 프로젝트의 members 배열 동기화 (이름·소속 스냅샷 갱신)
+        const nameChanged = editName.trim() !== (currentUser.name || '')
+        const affiliationChanged = editAffiliation.trim() !== (currentUser.affiliation || '')
+        if ((nameChanged || affiliationChanged) && myProjects.length > 0) {
+          const batch = writeBatch(db)
+          myProjects.forEach((p) => {
+            batch.update(doc(db, 'projects', p.id), {
+              members: p.members.map((m) =>
+                m.id === currentUser.id
+                  ? { ...m, name: editName.trim(), affiliation: editAffiliation.trim() }
+                  : m
+              ),
+            })
+          })
+          await batch.commit()
+        }
       }
       // 로컬 상태 업데이트
       updateProfile({

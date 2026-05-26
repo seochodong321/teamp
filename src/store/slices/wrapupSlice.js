@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment,
+  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { txProject } from '../helpers.js'
@@ -162,9 +162,10 @@ export const createWrapupSlice = (set, get) => ({
       const tagUpdates = {}
       newTagIds.forEach((id) => { if (!oldTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(1) })
       oldTagIds.forEach((id) => { if (!newTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(-1) })
-      if (Object.keys(tagUpdates).length > 0) {
-        tx.update(doc(db, 'users', feedbackData.toUserId), tagUpdates)
-      }
+      tx.update(doc(db, 'users', feedbackData.toUserId), {
+        ...tagUpdates,
+        flowerSenderUids: arrayUnion(feedbackData.fromUserId),
+      })
     })
   },
 

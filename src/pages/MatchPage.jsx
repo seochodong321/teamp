@@ -720,8 +720,12 @@ export default function MatchPage() {
         <div className={styles.backdrop} onClick={() => setViewApplicant(null)}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
             <button className={`${styles.formClose} ${styles.profileCloseBtn}`} onClick={() => setViewApplicant(null)}>✕</button>
-            <div className={styles.profileAvatar}>{viewApplicant.userName.charAt(0)}</div>
-            <p className={styles.profileName}>{viewApplicant.userName}</p>
+            <div className={styles.profileAvatar}>
+              {applicantProfile?.photoURL
+                ? <img src={applicantProfile.photoURL} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',display:'block'}} />
+                : (applicantProfile?.name || viewApplicant.userName).charAt(0)}
+            </div>
+            <p className={styles.profileName}>{applicantProfile?.name || viewApplicant.userName}</p>
             {profileLoading ? (
               <p className={styles.profileLoading}>불러오는 중...</p>
             ) : applicantProfile ? (
