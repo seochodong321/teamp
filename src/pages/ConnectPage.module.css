@@ -67,7 +67,37 @@
 .pubMeta { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
 .pubMemo { font-size: 11px; color: var(--primary); font-style: italic; margin-top: 2px; }
 .pubRole { font-size: 13px; flex-shrink: 0; }
-.teamfolioLink { display: block; margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--primary); text-align: center; }
+.avatarImg { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
+/* 함께한 프로젝트 */
+.sharedSection { width: 100%; margin-top: 10px; }
+.sharedLabel { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.sharedEmpty { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 10px 0; }
+.sharedList { display: flex; flex-direction: column; gap: 6px; }
+.sharedItem { display: flex; align-items: center; gap: 10px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 9px 12px; }
+.sharedEmoji { font-size: 18px; flex-shrink: 0; }
+.sharedInfo { flex: 1; min-width: 0; }
+.sharedName { font-size: 13px; font-weight: 600; color: var(--text); }
+.sharedPeriod { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.tagDone   { font-size: 10px; font-weight: 600; background: var(--bg-tertiary, var(--bg)); border: 1px solid var(--border); color: var(--text-tertiary); padding: 1px 6px; border-radius: 4px; }
+.tagActive { font-size: 10px; font-weight: 600; background: var(--primary-light); color: var(--primary); padding: 1px 6px; border-radius: 4px; }
+
+.teamfolioLink { display: block; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--primary); text-align: center; }
 .teamfolioLink:hover { text-decoration: underline; }
-.dmBtn { width: 100%; margin-top: 12px; padding: 12px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
-.dmBtn:hover { opacity: 0.88; }
+
+.msgBtn { width: 100%; margin-top: 10px; padding: 12px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+.msgBtn:hover { opacity: 0.88; }
+
+/* 프로젝트 초대 */
+.inviteWrap { width: 100%; margin-top: 6px; }
+.inviteToggleBtn { width: 100%; padding: 10px; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; color: var(--text-secondary); background: transparent; transition: all 0.15s; }
+.inviteToggleBtn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.inviteList { display: flex; flex-direction: column; gap: 6px; }
+.inviteLabel { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+.inviteItem { width: 100%; text-align: left; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; font-weight: 500; color: var(--text); background: var(--bg-secondary); transition: all 0.15s; }
+.inviteItem:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+
+/* 카드 프로젝트 칩 */
+.projectChips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.projectChip { font-size: 11px; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border); padding: 2px 7px; border-radius: 5px; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.projectChipMore { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); padding: 2px 7px; border-radius: 5px; }

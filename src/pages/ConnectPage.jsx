@@ -1,28 +1,55 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ConnectPage.module.css'
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const { connects, removeConnect, currentUser, projects, getOrCreateDmRoom, showError, showConfirm } = useStore()
+  const { connects, removeConnect, currentUser, projects, showError, showConfirm } = useStore()
   const [search, setSearch] = useState('')
   const [profile, setProfile] = useState(null)
-  const [pubProjects, setPubProjects] = useState([])
   const [loadingProfile, setLoadingProfile] = useState(false)
+  const [showInvite, setShowInvite] = useState(false)
 
-  const filtered = connects.filter((c) =>
+  // 동일인이 여러 프로젝트에 걸쳐 있을 수 있으므로 ID 기준 dedup
+  const uniqueContacts = useMemo(() => {
+    const seen = new Set()
+    return connects.filter((c) => {
+      if (seen.has(c.id)) return false
+      seen.add(c.id)
+      return true
+    })
+  }, [connects])
+
+  const filtered = uniqueContacts.filter((c) =>
     c.name.includes(search) || c.affiliation?.includes(search)
   )
 
-  const grouped = filtered.reduce((acc, c) => {
-    const key = c.projectName || '기타'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(c)
-    return acc
-  }, {})
+  // 로컬 projects 스토어에서 함께한 프로젝트 목록
+  const getSharedProjects = (contactId) =>
+    projects.filter((p) =>
+      !p.isTutorial &&
+      p.members?.some((m) => m.id === currentUser.id) &&
+      p.members?.some((m) => m.id === contactId)
+    ).map((p) => ({
+      id: p.id,
+      name: p.name,
+      emoji: p.emoji || '📁',
+      startDate: p.startDate,
+      endDate: p.endDate,
+      status: p.status,
+    }))
+
+  // 초대 가능한 내 리더 프로젝트 (contact가 아직 없는 것만)
+  const getInviteableProjects = (contactId) =>
+    projects.filter((p) =>
+      p.status === 'active' &&
+      !p.isTutorial &&
+      p.members?.find((m) => m.id === currentUser.id)?.role === 'leader' &&
+      !p.members?.some((m) => m.id === contactId)
+    )
 
   const handleRemove = async (id, name) => {
     if (!await showConfirm(`${name} 님을 팀프 커넥트에서 제거할까요?\n상대방에게는 알림이 가지 않아요.`)) return
@@ -30,58 +57,35 @@ export default function ConnectPage() {
   }
 
   const openProfile = async (contact) => {
-    setProfile(contact)
-    setPubProjects([])
+    setProfile({ ...contact })
+    setShowInvite(false)
     setLoadingProfile(true)
     try {
-      // Firestore에서 최신 프로필 정보 (소속·원라이너) 읽기
       const userSnap = await getDoc(doc(db, 'users', contact.id))
-      const userData = userSnap.exists() ? userSnap.data() : {}
+      const ud = userSnap.exists() ? userSnap.data() : {}
       setProfile({
         ...contact,
-        name:        userData.name        || contact.name        || '',
-        affiliation: userData.affiliation || contact.affiliation || '',
-        email:       userData.email       || contact.email       || '',
-        oneliner:    userData.oneliner    || '',
-        username:    userData.username    || '',
-        photoURL:    userData.photoURL    || null,
+        name:        ud.name        || contact.name        || '',
+        affiliation: ud.affiliation || contact.affiliation || '',
+        email:       ud.email       || contact.email       || '',
+        oneliner:    ud.oneliner    || '',
+        username:    ud.username    || '',
+        photoURL:    ud.photoURL    || null,
       })
-      // Firestore에서 해당 유저의 공개 프로젝트 직접 조회
-      const projSnap = await getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', contact.id)))
-      const pubs = projSnap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((p) => p.isPublic && !p.isTutorial)
-        .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
-      setPubProjects(pubs)
-    } catch (e) {
-      console.error('[openProfile] 프로필 로드 실패:', e)
+    } catch {
+      // 프로필 로드 실패해도 connects 데이터로 표시
     }
     setLoadingProfile(false)
   }
 
-  // 공유 프로젝트에서 역할 메모 찾기
-  const getRoleMemo = (contactId) => {
-    for (const p of projects) {
-      const m = p.members?.find((m) => m.id === contactId)
-      if (m?.memo) return { memo: m.memo, projectName: p.name }
-    }
-    return null
-  }
+  const closeModal = () => { setProfile(null); setShowInvite(false) }
 
-  const handleDm = async () => {
+  const handleMessage = () => {
     if (!profile) return
-    const shared = projects.find((p) =>
-      p.memberIds?.includes(profile.id) || p.members?.some((m) => m.id === profile.id)
-    )
-    if (!shared) { showError('함께한 프로젝트를 찾을 수 없어요.'); return }
-    try {
-      const room = await getOrCreateDmRoom(shared.id, profile.id, profile.name)
-      setProfile(null)
-      navigate(`/project/${shared.id}/chat/${room.id}`)
-    } catch (e) {
-      console.error('[DM] 열기 실패:', e)
-      showError('대화방을 열 수 없어요. 잠시 후 다시 시도해주세요.')
-    }
+    const username = profile.username?.replace('@', '')
+    if (!username) { showError('상대방의 아이디를 찾을 수 없어요.'); return }
+    closeModal()
+    navigate(`/messages?compose=1&to=${username}`)
   }
 
   return (
@@ -89,56 +93,50 @@ export default function ConnectPage() {
 
       {/* 프로필 모달 */}
       {profile && (
-        <div className={styles.backdrop} onClick={() => setProfile(null)}>
+        <div className={styles.backdrop} onClick={closeModal}>
           <div className={styles.profileModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setProfile(null)}>✕</button>
+            <button className={styles.modalClose} onClick={closeModal}>✕</button>
+
             <div className={styles.profileAvatar}>
               {profile.photoURL
-                ? <img src={profile.photoURL} alt="" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',display:'block'}} />
+                ? <img src={profile.photoURL} alt="" className={styles.avatarImg} />
                 : profile.name.charAt(0)}
             </div>
             <h3 className={styles.profileName}>{profile.name}</h3>
             {profile.oneliner && <p className={styles.profileOneliner}>"{profile.oneliner}"</p>}
             {profile.affiliation && <p className={styles.profileAffil}>{profile.affiliation}</p>}
-            {profile.email && <p className={styles.profileEmail}>{profile.email}</p>}
 
+            {/* 함께한 프로젝트 */}
             {(() => {
-              const memoInfo = getRoleMemo(profile.id)
-              return memoInfo ? (
-                <div className={styles.memoBox}>
-                  <span className={styles.memoLabel}>{memoInfo.projectName}</span>
-                  <p className={styles.memoText}>"{memoInfo.memo}"</p>
-                </div>
-              ) : null
-            })()}
-
-            <div className={styles.pubProjectsSection}>
-              <p className={styles.pubProjectsLabel}>공개 프로젝트</p>
-              {loadingProfile ? (
-                <p className={styles.pubLoading}>불러오는 중...</p>
-              ) : pubProjects.length === 0 ? (
-                <p className={styles.pubEmpty}>공개된 프로젝트가 없어요</p>
-              ) : (
-                <div className={styles.pubList}>
-                  {pubProjects.map((p) => {
-                    const member = p.members?.find((m) => m.id === profile.id)
-                    return (
-                      <div key={p.id} className={styles.pubItem}>
-                        <span className={styles.pubEmoji}>{p.emoji || '📁'}</span>
-                        <div className={styles.pubInfo}>
-                          <p className={styles.pubName}>{p.name}</p>
-                          <p className={styles.pubMeta}>{p.category} · {p.startDate} ~ {p.endDate}</p>
-                          {member?.memo && <p className={styles.pubMemo}>"{member.memo}"</p>}
+              const shared = getSharedProjects(profile.id)
+              return (
+                <div className={styles.sharedSection}>
+                  <p className={styles.sharedLabel}>함께한 프로젝트</p>
+                  {loadingProfile ? (
+                    <p className={styles.sharedEmpty}>불러오는 중...</p>
+                  ) : shared.length === 0 ? (
+                    <p className={styles.sharedEmpty}>함께한 프로젝트 정보가 없어요</p>
+                  ) : (
+                    <div className={styles.sharedList}>
+                      {shared.map((p) => (
+                        <div key={p.id} className={styles.sharedItem}>
+                          <span className={styles.sharedEmoji}>{p.emoji}</span>
+                          <div className={styles.sharedInfo}>
+                            <p className={styles.sharedName}>{p.name}</p>
+                            <p className={styles.sharedPeriod}>
+                              {p.startDate}{p.endDate ? ` ~ ${p.endDate}` : ''}
+                              <span className={p.status === 'archived' ? styles.tagDone : styles.tagActive}>
+                                {p.status === 'archived' ? '완료' : '진행 중'}
+                              </span>
+                            </p>
+                          </div>
                         </div>
-                        <span className={styles.pubRole}>
-                          {member?.role === 'leader' ? '👑' : member?.role === 'sub-leader' ? '⭐' : '팀원'}
-                        </span>
-                      </div>
-                    )
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              )
+            })()}
 
             {profile.username && (
               <a
@@ -151,9 +149,35 @@ export default function ConnectPage() {
                 팀프폴리오 보기 →
               </a>
             )}
-            <button className={styles.dmBtn} onClick={handleDm}>
-              💬 1:1 대화하기
+
+            <button className={styles.msgBtn} onClick={handleMessage}>
+              ✉️ 쪽지 보내기
             </button>
+
+            {/* 프로젝트 초대 */}
+            {(() => {
+              const eligible = getInviteableProjects(profile.id)
+              if (eligible.length === 0) return null
+              return (
+                <div className={styles.inviteWrap}>
+                  {!showInvite ? (
+                    <button className={styles.inviteToggleBtn} onClick={() => setShowInvite(true)}>
+                      + 내 프로젝트로 초대하기
+                    </button>
+                  ) : (
+                    <div className={styles.inviteList}>
+                      <p className={styles.inviteLabel}>초대할 프로젝트 선택</p>
+                      {eligible.map((p) => (
+                        <button key={p.id} className={styles.inviteItem}
+                          onClick={() => { closeModal(); navigate(`/project/${p.id}`) }}>
+                          {p.emoji || '📁'} {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}
@@ -161,9 +185,9 @@ export default function ConnectPage() {
       <div className={styles.pageHeader}>
         <div>
           <h1 className={styles.title}>팀프 커넥트 🔗</h1>
-          <p className={styles.subtitle}>같은 프로젝트에서 함께한 사람들이에요</p>
+          <p className={styles.subtitle}>함께한 팀원들과 계속 연결되세요</p>
         </div>
-        <span className={styles.countBadge}>{connects.length}명</span>
+        <span className={styles.countBadge}>{uniqueContacts.length}명</span>
       </div>
 
       <div className={styles.searchWrap}>
@@ -171,7 +195,7 @@ export default function ConnectPage() {
           onChange={(e) => setSearch(e.target.value)} placeholder="이름 또는 소속으로 검색" />
       </div>
 
-      {connects.length === 0 && (
+      {uniqueContacts.length === 0 && (
         <div className={styles.empty}>
           <p className={styles.emptyIcon}>🔗</p>
           <p className={styles.emptyTitle}>아직 커넥트가 없어요</p>
@@ -179,31 +203,43 @@ export default function ConnectPage() {
         </div>
       )}
 
-      {Object.entries(grouped).map(([projectName, members]) => (
-        <div key={projectName} className={styles.group}>
-          <p className={styles.groupTitle}>📁 {projectName}</p>
-          <div className={styles.memberGrid}>
-            {members.map((c) => (
-              <div key={c.id} className={styles.memberCard} onClick={() => openProfile(c)}>
-                <div className={styles.memberAvatar}>{c.name.charAt(0)}</div>
-                <div className={styles.memberInfo}>
-                  <p className={styles.memberName}>{c.name}</p>
-                  {c.affiliation && <p className={styles.memberAffil}>{c.affiliation}</p>}
-                  {c.email && <p className={styles.memberEmail}>{c.email}</p>}
-                  <p className={styles.memberConnected}>연결됨 {c.connectedAt}</p>
-                </div>
-                <button
-                  className={styles.removeBtn}
-                  onClick={(e) => { e.stopPropagation(); handleRemove(c.id, c.name) }}
-                  title="커넥트에서 제거"
-                >✕</button>
+      <div className={styles.memberGrid}>
+        {filtered.map((c) => {
+          const shared = getSharedProjects(c.id)
+          return (
+            <div key={c.id} className={styles.memberCard} onClick={() => openProfile(c)}>
+              <div className={styles.memberAvatar}>{c.name.charAt(0)}</div>
+              <div className={styles.memberInfo}>
+                <p className={styles.memberName}>{c.name}</p>
+                {c.affiliation && <p className={styles.memberAffil}>{c.affiliation}</p>}
+                {shared.length > 0 ? (
+                  <div className={styles.projectChips}>
+                    {shared.slice(0, 2).map((p) => (
+                      <span key={p.id} className={styles.projectChip}>{p.emoji} {p.name}</span>
+                    ))}
+                    {shared.length > 2 && (
+                      <span className={styles.projectChipMore}>+{shared.length - 2}</span>
+                    )}
+                  </div>
+                ) : (
+                  c.projectName && (
+                    <div className={styles.projectChips}>
+                      <span className={styles.projectChip}>📁 {c.projectName}</span>
+                    </div>
+                  )
+                )}
               </div>
-            ))}
-          </div>
-        </div>
-      ))}
+              <button
+                className={styles.removeBtn}
+                onClick={(e) => { e.stopPropagation(); handleRemove(c.id, c.name) }}
+                title="커넥트에서 제거"
+              >✕</button>
+            </div>
+          )
+        })}
+      </div>
 
-      {filtered.length === 0 && connects.length > 0 && (
+      {filtered.length === 0 && uniqueContacts.length > 0 && (
         <div className={styles.empty}><p className={styles.emptyTitle}>검색 결과가 없어요</p></div>
       )}
     </div>
