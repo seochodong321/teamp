@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  collection, addDoc, query, where, orderBy, onSnapshot,
+  collection, addDoc, query, where, onSnapshot,
   updateDoc, doc, getDocs, serverTimestamp, arrayUnion,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
@@ -40,13 +40,19 @@ export default function MessagesPage() {
   // 쪽지 목록 실시간 구독
   useEffect(() => {
     if (!currentUser?.id) return
+    // orderBy 제거 → 복합 인덱스 불필요, 클라이언트 정렬
     const q = query(
       collection(db, 'notes'),
-      where('participants', 'array-contains', currentUser.id),
-      orderBy('lastMessageAt', 'desc')
+      where('participants', 'array-contains', currentUser.id)
     )
     const unsub = onSnapshot(q, (snap) => {
-      setNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+      const sorted = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.lastMessageAt?.seconds || 0) - (a.lastMessageAt?.seconds || 0))
+      setNotes(sorted)
+      setLoading(false)
+    }, (err) => {
+      console.error('[notes] 구독 실패:', err)
       setLoading(false)
     })
     return () => unsub()
