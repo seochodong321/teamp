@@ -99,8 +99,6 @@ export default function LandingPage() {
   const [capsuleRef, capsuleInView] = useInView()
   const [ctaRef, ctaInView] = useInView()
 
-  // activityIdx는 더 이상 사용 안 함 (카드 그리드로 변경)
-
   return (
     <div className={styles.page}>
       {/* ── 고정 네비게이션 ── */}
@@ -337,7 +335,7 @@ export default function LandingPage() {
         <div className={styles.ctaInner}>
           <p className={styles.ctaEyebrow}>지금 시작하세요</p>
           <h2 className={styles.ctaTitle}>기여와 관계의 기록,<br />팀프와 함께</h2>
-          <p className={styles.ctaDesc}>회원가입 없이 Google 계정으로 바로 시작해요.<br />무료로 사용할 수 있어요.</p>
+          <p className={styles.ctaDesc}>Google 또는 이메일로 바로 시작해요.<br />무료로 사용할 수 있어요.</p>
           <button className={styles.ctaBtn} onClick={() => navigate('/login?mode=signup')}>
             무료로 시작하기 →
           </button>
