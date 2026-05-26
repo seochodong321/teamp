@@ -319,6 +319,43 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── 진행 중 프로젝트 없을 때 ── */}
+      {active.length === 0 && projects.length > 0 && (
+        <div className={styles.noActiveWrap}>
+          <div className={styles.noActiveBanner}>
+            <span className={styles.noActiveBannerEmoji}>🌱</span>
+            <div className={styles.noActiveBannerBody}>
+              <p className={styles.noActiveBannerTitle}>
+                {archived.filter((p) => !hiddenProjects.includes(p.id)).length > 0
+                  ? `${archived.filter((p) => !hiddenProjects.includes(p.id)).length}개 프로젝트를 완주했어요!`
+                  : '새로운 여정을 시작할 시간이에요'}
+              </p>
+              <p className={styles.noActiveBannerSub}>다음 팀과 어떤 도전을 함께할까요?</p>
+            </div>
+            <button className={styles.noActiveCreateBtn} onClick={() => setShowModal(true)}>
+              새 프로젝트
+            </button>
+          </div>
+          <div className={styles.noActiveLinks}>
+            <button className={styles.noActiveLinkItem} onClick={() => navigate('/connect')}>
+              <span className={styles.noActiveLinkIcon}>🔗</span>
+              <span className={styles.noActiveLinkLabel}>커넥트</span>
+              <span className={styles.noActiveLinkSub}>새 팀원 찾기</span>
+            </button>
+            <button className={styles.noActiveLinkItem} onClick={() => navigate('/match')}>
+              <span className={styles.noActiveLinkIcon}>🤝</span>
+              <span className={styles.noActiveLinkLabel}>매치</span>
+              <span className={styles.noActiveLinkSub}>팀에 합류하기</span>
+            </button>
+            <button className={styles.noActiveLinkItem} onClick={() => currentUser?.username && navigate(`/u/${currentUser.username}`)}>
+              <span className={styles.noActiveLinkIcon}>🌿</span>
+              <span className={styles.noActiveLinkLabel}>팀프폴리오</span>
+              <span className={styles.noActiveLinkSub}>내 기록 보기</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── 진행 중 ── */}
       {active.length > 0 && (() => {
         const myId = currentUser?.id

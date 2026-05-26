@@ -676,6 +676,55 @@
 .cardPreviewText { font-size: 12px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cardPreviewTime { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
 
+/* ── 진행 중 없음 빈 상태 ── */
+.noActiveWrap { display: flex; flex-direction: column; gap: 10px; animation: slideUp 0.35s ease; }
+
+.noActiveBanner {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.noActiveBannerEmoji { font-size: 36px; flex-shrink: 0; }
+.noActiveBannerBody { flex: 1; min-width: 0; }
+.noActiveBannerTitle { font-size: 15px; font-weight: 700; color: var(--text); }
+.noActiveBannerSub { font-size: 13px; color: var(--text-secondary); margin-top: 3px; }
+.noActiveCreateBtn {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  background: var(--primary);
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(83,74,183,0.25);
+  white-space: nowrap;
+}
+.noActiveCreateBtn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(83,74,183,0.35); }
+
+.noActiveLinks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.noActiveLinkItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+.noActiveLinkItem:hover { border-color: var(--primary); background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.noActiveLinkIcon { font-size: 22px; }
+.noActiveLinkLabel { font-size: 13px; font-weight: 700; color: var(--text); }
+.noActiveLinkSub { font-size: 11px; color: var(--text-tertiary); }
+
 @media (max-width: 600px) {
   .dateRow { grid-template-columns: 1fr; }
   .modal { max-height: 95vh; }
@@ -691,6 +740,9 @@
   .todayCell:nth-child(2) { border-right: 0; }
   .todayCell:nth-child(3),
   .todayCell:nth-child(4) { border-top: 1px solid var(--border-light); }
+  /* 노액티브 배너 모바일 */
+  .noActiveBanner { flex-wrap: wrap; gap: 12px; }
+  .noActiveCreateBtn { width: 100%; text-align: center; }
 }
 
 /* ── 하단 법적 링크 ── */
