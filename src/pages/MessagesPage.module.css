@@ -151,9 +151,42 @@
 .sendBtn:hover:not(:disabled) { background: var(--primary-hover); }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.mobileBackBtn { display: none; }
+
 @media (max-width: 768px) {
   .title { display: none; }
-  .layout { grid-template-columns: 1fr; }
-  .listPanel { max-height: 260px; overflow-y: auto; }
-  .noteScrollArea { max-height: 300px; }
+  .layout { display: block; min-height: unset; }
+
+  /* 기본: 목록만 표시 */
+  .listPanel { max-height: unset; overflow-y: unset; }
+  .detailPanel { display: none; }
+
+  /* 쪽지 선택/작성 시: 목록 숨기고 상세만 표시 */
+  .layoutDetail .listPanel { display: none; }
+  .layoutDetail .detailPanel { display: flex; min-height: 60dvh; }
+
+  .mobileBackBtn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+
+  /* iOS 줌 방지: 입력창 16px */
+  .composeInlineInput { font-size: 16px; }
+  .composeTextarea    { font-size: 16px; }
+  .replyInput         { font-size: 16px; }
+
+  .noteScrollArea { max-height: unset; }
+  .composeWrap { padding: 16px; }
+  .noteViewMeta { padding: 14px 16px 10px; }
+  .noteScrollArea { padding: 14px 16px; }
+  .replyArea { padding: 12px 14px; }
 }

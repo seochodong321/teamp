@@ -109,6 +109,10 @@
   .card { padding: 20px 16px; gap: 18px; }
   .dateRow { grid-template-columns: 1fr; }
   .stepLabel { display: none; }
+
+  /* iOS 줌 방지 */
+  .input    { font-size: 16px; }
+  .textarea { font-size: 16px; }
 }
 /* 이모지 선택 */
 .emojiPreview {

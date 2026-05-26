@@ -295,7 +295,7 @@ export default function MatchPage() {
         )}
       </div>
 
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ${selected ? styles.layoutDetail : ''}`}>
         {/* 목록 */}
         <div className={styles.listPanel}>
           {/* 탭 */}
@@ -429,6 +429,9 @@ export default function MatchPage() {
 
         {/* 상세 */}
         <div className={styles.detailPanel}>
+          <button className={styles.mobileBackBtn} onClick={() => setSelected(null)}>
+            ← 목록으로
+          </button>
           {!selected ? (
             <div className={styles.detailEmpty}>
               <p>모집글을 선택하면 상세 내용을 볼 수 있어요</p>

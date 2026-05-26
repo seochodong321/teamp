@@ -97,9 +97,18 @@
 }
 @media (max-width: 768px) {
   .pageTitle { display: none; }
+  .profileCard { padding: 16px; gap: 14px; }
+  .profileActions { flex-direction: row; flex-wrap: wrap; }
+  .editBtn, .shareBtn, .logoutBtn { padding: 10px 14px; font-size: 14px; flex: 1; min-width: 0; text-align: center; }
+
+  /* iOS 줌 방지 */
+  .editInput { font-size: 16px; }
 }
 @media (max-width: 480px) {
   .journeyGrid { grid-template-columns: repeat(2, 1fr); }
+  .profileCard { flex-direction: column; align-items: center; text-align: center; }
+  .info { align-items: center; }
+  .oneliner { text-align: center; }
 }
 .journeyItem {
   display: flex; flex-direction: column; align-items: center; gap: 4px;

@@ -9,11 +9,37 @@
 
 .layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
 
+.mobileBackBtn { display: none; }
+
 @media (max-width: 768px) {
   .title { display: none; }
   .subtitle { display: none; }
-  .layout { grid-template-columns: 1fr; }
-  .listPanel { max-height: 300px; overflow-y: auto; }
+  .layout { display: block; }
+
+  .listPanel { max-height: unset; }
+  .detailPanel { display: none; }
+
+  .layoutDetail .listPanel { display: none; }
+  .layoutDetail .detailPanel { display: flex; }
+
+  .mobileBackBtn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+    padding: 10px 0 16px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* iOS 줌 방지 */
+  .formInput    { font-size: 16px !important; }
+  .formTextarea { font-size: 16px !important; }
+
+  .detailPanel { padding: 16px; min-height: unset; }
 }
 
 /* 목록 패널 */

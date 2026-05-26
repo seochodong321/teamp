@@ -38,3 +38,17 @@
 .footerText { font-size: 13px; color: var(--text-tertiary); }
 .footerBtn { font-size: 13px; color: var(--primary); font-weight: 500; padding: 6px 14px; border: 1px solid var(--primary); border-radius: var(--radius-sm); background: transparent; transition: background 0.15s; }
 .footerBtn:hover { background: var(--primary-light); }
+
+@media (max-width: 600px) {
+  .page { gap: 16px; }
+  .title { font-size: 18px; }
+  .flowBar { padding: 10px 14px; gap: 6px; }
+  .flowStep { font-size: 12px; }
+  .flowArrow { font-size: 12px; }
+  .sectionHeader { padding: 14px 16px; }
+  .sectionTitle { font-size: 13px; }
+  .step { padding: 12px 16px; gap: 10px; }
+  .stepLabel { font-size: 13px; }
+  .stepDesc { font-size: 13px; }
+  .tipBox { padding: 16px; }
+}

@@ -190,7 +190,7 @@ export default function MessagesPage() {
         </button>
       </div>
 
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ${(selected || showCompose) ? styles.layoutDetail : ''}`}>
         {/* 목록 패널 */}
         <div className={styles.listPanel}>
           <div className={styles.tabRow}>
@@ -241,6 +241,9 @@ export default function MessagesPage() {
 
         {/* 상세 / 작성 패널 */}
         <div className={styles.detailPanel}>
+          <button className={styles.mobileBackBtn} onClick={() => { setSelected(null); setShowCompose(false) }}>
+            ← 목록으로
+          </button>
           {showCompose ? (
             /* ── 쪽지 작성 ── */
             <div className={styles.composeWrap}>
