@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink,
-} from 'firebase/auth'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { doc, updateDoc } from 'firebase/firestore'
-import { auth, db } from '../firebase.js'
+import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import TeampMark from '../components/TeampMark.jsx'
 import styles from './StudentVerifyPage.module.css'
@@ -16,75 +13,17 @@ function isStudentEmail(email) {
 }
 
 export default function StudentVerifyPage() {
-  const navigate      = useNavigate()
-  const [params]      = useSearchParams()
-  const { currentUser, updateProfile } = useStore((s) => ({ currentUser: s.currentUser, updateProfile: s.updateProfile }))
+  const navigate = useNavigate()
+  const { currentUser, updateProfile } = useStore((s) => ({
+    currentUser: s.currentUser,
+    updateProfile: s.updateProfile,
+  }))
 
-  const [email,    setEmail]    = useState('')
-  const [sent,     setSent]     = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState('')
-  const [verified, setVerified] = useState(false)
+  const [email,   setEmail]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState('')
+  const [done,    setDone]    = useState(false)
 
-  // ── 이메일 링크 콜백 처리 ──────────────────────────────────
-  useEffect(() => {
-    if (!isSignInWithEmailLink(auth, window.location.href)) return
-
-    const savedEmail = window.localStorage.getItem('studentVerifyEmail')
-    const savedUid   = window.localStorage.getItem('studentVerifyUid')
-    if (!savedEmail || !savedUid) {
-      setError('인증 정보가 없어요. 다시 시도해주세요.')
-      return
-    }
-
-    setLoading(true)
-    signInWithEmailLink(auth, savedEmail, window.location.href)
-      .then(async () => {
-        await updateDoc(doc(db, 'users', savedUid), {
-          plan:               'student',
-          studentEmail:       savedEmail,
-          studentVerifiedAt:  new Date().toISOString(),
-        })
-        updateProfile({ plan: 'student', studentEmail: savedEmail })
-        window.localStorage.removeItem('studentVerifyEmail')
-        window.localStorage.removeItem('studentVerifyUid')
-        setVerified(true)
-      })
-      .catch(() => setError('인증에 실패했어요. 링크가 만료됐거나 이미 사용됐어요.'))
-      .finally(() => setLoading(false))
-  }, [updateProfile])
-
-  // ── 이메일 발송 ───────────────────────────────────────────
-  const handleSend = async (e) => {
-    e.preventDefault()
-    setError('')
-    const trimmed = email.trim().toLowerCase()
-    if (!trimmed) { setError('이메일을 입력해주세요.'); return }
-    if (!isStudentEmail(trimmed)) {
-      setError('학교 이메일(.ac.kr, .edu 등)만 인증할 수 있어요.')
-      return
-    }
-    if (!currentUser) { setError('로그인이 필요해요.'); return }
-
-    setLoading(true)
-    try {
-      const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin
-      await sendSignInLinkToEmail(auth, trimmed, {
-        url: `${appOrigin}/verify-student`,
-        handleCodeInApp: true,
-      })
-      window.localStorage.setItem('studentVerifyEmail', trimmed)
-      window.localStorage.setItem('studentVerifyUid',   currentUser.id)
-      setSent(true)
-    } catch (err) {
-      if (err.code === 'auth/invalid-email') setError('올바른 이메일 형식이 아니에요.')
-      else setError('발송에 실패했어요. 잠시 후 다시 시도해주세요.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // ── 이미 학생 플랜 ────────────────────────────────────────
   if (currentUser?.plan === 'student') return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -97,8 +36,7 @@ export default function StudentVerifyPage() {
     </div>
   )
 
-  // ── 인증 완료 ─────────────────────────────────────────────
-  if (verified) return (
+  if (done) return (
     <div className={styles.page}>
       <div className={styles.card}>
         <TeampMark size={40} />
@@ -110,31 +48,34 @@ export default function StudentVerifyPage() {
     </div>
   )
 
-  // ── 로딩 (콜백 처리 중) ──────────────────────────────────
-  if (loading && isSignInWithEmailLink(auth, window.location.href)) return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <TeampMark size={40} />
-        <p className={styles.sub}>인증 처리 중...</p>
-      </div>
-    </div>
-  )
+  const handleVerify = async (e) => {
+    e.preventDefault()
+    setError('')
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) { setError('이메일을 입력해주세요.'); return }
+    if (!isStudentEmail(trimmed)) {
+      setError('학교 이메일(.ac.kr, .edu 등)만 인증할 수 있어요.')
+      return
+    }
+    if (!currentUser) { setError('로그인이 필요해요.'); return }
 
-  // ── 발송 완료 ─────────────────────────────────────────────
-  if (sent) return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <TeampMark size={40} />
-        <div className={styles.iconWrap} style={{ background: '#FEF9C3', color: '#CA8A04' }}>✉️</div>
-        <h1 className={styles.title}>이메일을 확인해주세요</h1>
-        <p className={styles.sub}><strong>{email}</strong>으로 인증 링크를 보냈어요.<br />링크를 클릭하면 자동으로 인증돼요.</p>
-        <p className={styles.hint}>이메일이 안 보이면 스팸함을 확인해보세요.<br />링크는 1시간 후 만료돼요.</p>
-        <button className={styles.btnSecondary} onClick={() => setSent(false)}>다른 이메일로 다시 시도</button>
-      </div>
-    </div>
-  )
+    setLoading(true)
+    try {
+      const now = new Date().toISOString()
+      await updateDoc(doc(db, 'users', currentUser.id), {
+        plan:              'student',
+        studentEmail:      trimmed,
+        studentVerifiedAt: now,
+      })
+      updateProfile({ plan: 'student', studentEmail: trimmed, studentVerifiedAt: now })
+      setDone(true)
+    } catch {
+      setError('인증에 실패했어요. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  // ── 입력 폼 ───────────────────────────────────────────────
   return (
     <div className={styles.page}>
       <div className={styles.card}>
@@ -150,7 +91,7 @@ export default function StudentVerifyPage() {
           ))}
         </div>
 
-        <form className={styles.form} onSubmit={handleSend}>
+        <form className={styles.form} onSubmit={handleVerify}>
           <input
             className={styles.input}
             type="email"
@@ -162,7 +103,7 @@ export default function StudentVerifyPage() {
           />
           {error && <p className={styles.error}>{error}</p>}
           <button type="submit" className={styles.btn} disabled={loading || !email.trim()}>
-            {loading ? '발송 중...' : '인증 링크 받기'}
+            {loading ? '인증 중...' : '학생 인증하기'}
           </button>
         </form>
 

@@ -158,10 +158,11 @@ export default function PublicProfilePage() {
   }
 
   // 통계는 전체 참여 프로젝트 기준 (공개 여부 무관)
-  const completedCount  = allProjects.filter((p) => p.status === 'archived').length
-  const uniqueTeammates = new Set(
+  const completedCount    = allProjects.filter((p) => p.status === 'archived').length
+  const uniqueTeammates   = new Set(
     allProjects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
   ).size
+  const flowerSenderCount = user.flowerSenderUids?.length ?? user.flowerSenderCount ?? 0
   const totalFeedback   = Object.values(flowerTags).reduce((a, b) => a + b, 0)
   const topFlowers = FLOWER_TAGS
     .filter((t) => flowerTags[t.id])
@@ -231,6 +232,12 @@ export default function PublicProfilePage() {
                   <p className={styles.statNum}>{uniqueTeammates}</p>
                   <p className={styles.statLabel}>함께한 팀원</p>
                 </div>
+                {flowerSenderCount > 0 && (
+                  <div className={styles.statBox}>
+                    <p className={styles.statNum}>{flowerSenderCount}</p>
+                    <p className={styles.statLabel}>꽃다발 보낸 팀원</p>
+                  </div>
+                )}
               </div>
               {projects.length < allProjects.length && (
                 <p className={styles.statNote}>* 공개 설정된 프로젝트 기준이에요</p>

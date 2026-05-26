@@ -19,7 +19,7 @@ export default function ProfilePage() {
   )
 
   // 나의 여정 통계
-  const [flowerSenders, setFlowerSenders] = useState(0)
+  const [flowerSenders, setFlowerSenders] = useState(() => currentUser?.flowerSenderUids?.length ?? currentUser?.flowerSenderCount ?? 0)
   const [flowerTags, setFlowerTags] = useState({})
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
