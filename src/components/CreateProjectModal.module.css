@@ -55,7 +55,7 @@
   padding: 20px;
 }
 
-.form { display: flex; flex-direction: column; gap: 16px; }
+.form { display: flex; flex-direction: column; gap: 12px; }
 
 .field { display: flex; flex-direction: column; gap: 5px; }
 .label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
@@ -88,12 +88,15 @@
 
 /* 이모지 */
 .emojiPreview {
-  height: 46px; background: var(--primary-light); border-radius: var(--radius-md);
+  height: 40px; background: var(--primary-light); border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
 }
-.emojiBig { font-size: 28px; }
+.emojiBig { font-size: 26px; }
 .emojiPlaceholder { font-size: 12px; color: var(--text-tertiary); }
-.emojiGrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.emojiGrid {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px;
+  max-height: 116px; overflow-y: auto; padding-right: 2px;
+}
 .emojiBtn {
   aspect-ratio: 1; font-size: 17px; border-radius: var(--radius-sm);
   border: 1px solid transparent; background: var(--bg);
@@ -229,12 +232,12 @@
   .textarea { font-size: 16px; }
 
   /* 이모지 — 미리보기 축소 + 그리드 2줄로 제한 후 내부 스크롤 */
-  .emojiPreview { height: 44px; }
-  .emojiBig { font-size: 28px; }
+  .emojiPreview { height: 38px; }
+  .emojiBig { font-size: 24px; }
   .emojiGrid {
     grid-template-columns: repeat(8, 1fr);
     gap: 4px;
-    max-height: 100px;
+    max-height: 96px;
     overflow-y: auto;
   }
   .emojiBtn { font-size: 17px; }
