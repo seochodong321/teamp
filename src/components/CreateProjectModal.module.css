@@ -130,6 +130,24 @@
 .summaryKey { font-size: 12px; color: var(--text-secondary); }
 .summaryVal { font-size: 12px; font-weight: 600; color: var(--text); }
 
+/* 헤더 내 이전/다음 버튼 (기본 숨김 — 모바일에서만 표시) */
+.headerActions { display: none; align-items: center; gap: 6px; }
+.headerPrevBtn {
+  height: 30px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.headerPrevBtn:hover { border-color: var(--primary); color: var(--primary); }
+.headerNextBtn {
+  height: 30px; padding: 0 14px;
+  background: var(--text); color: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.headerNextBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 /* 푸터 */
 .footer {
   display: flex; align-items: center; gap: 8px;
@@ -192,6 +210,12 @@
 
   /* 날짜 세로 배치 */
   .dateRow { grid-template-columns: 1fr; gap: 6px; }
+
+  /* 헤더 버튼 표시 */
+  .headerActions { display: flex; }
+
+  /* 푸터 step 0/1 버튼 숨기기 (step 2 완료 버튼은 footerNavBtn 클래스 없으므로 유지) */
+  .footerNavBtn { display: none; }
 
   /* 푸터 */
   .footer {

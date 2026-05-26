@@ -124,6 +124,15 @@ export default function CreateProjectModal({ onClose }) {
                 </React.Fragment>
               ))}
             </div>
+            {/* 모바일: 헤더에 이전/다음 버튼 표시 */}
+            {step < 2 && (
+              <div className={styles.headerActions}>
+                {step > 0 && <button className={styles.headerPrevBtn} onClick={() => setStep((s) => s - 1)}>←</button>}
+                <button className={styles.headerNextBtn} onClick={goNext} disabled={loading}>
+                  {loading ? '…' : step === 1 ? '완료' : '다음'}
+                </button>
+              </div>
+            )}
             {step < 2 && <button className={styles.closeBtn} onClick={onClose}>✕</button>}
           </div>
 
@@ -232,10 +241,11 @@ export default function CreateProjectModal({ onClose }) {
 
           {/* 푸터 */}
           <div className={styles.footer}>
-            {step > 0 && step < 2 && <button className={styles.prevBtn} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
+            {/* step 0/1 이전/다음 — 모바일에서는 헤더 버튼으로 대체되므로 숨김 */}
+            {step > 0 && step < 2 && <button className={`${styles.prevBtn} ${styles.footerNavBtn}`} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
             <div style={{ flex: 1 }} />
             {step < 2 && (
-              <button className={styles.nextBtn} onClick={goNext} disabled={loading}>
+              <button className={`${styles.nextBtn} ${styles.footerNavBtn}`} onClick={goNext} disabled={loading}>
                 {loading ? '생성 중...' : step === 1 ? '완료하기' : '다음 →'}
               </button>
             )}
