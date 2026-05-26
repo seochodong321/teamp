@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { arrayUnion, collection, doc, getDoc, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, getDoc, limitToLast, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
@@ -110,7 +110,7 @@ export default function ChatPage() {
 
   // ─── Firestore 메시지 실시간 구독 ─────────────────────────────
   useEffect(() => {
-    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('createdAt', 'asc'))
+    const q = query(collection(db, 'rooms', roomId, 'messages'), orderBy('createdAt', 'asc'), limitToLast(100))
     const unsub = onSnapshot(q, (snap) => {
       setRoomMessages(roomId, snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     })
