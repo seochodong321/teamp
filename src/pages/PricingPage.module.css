@@ -1,0 +1,249 @@
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+/* 헤더 */
+.hero {
+  text-align: center;
+  padding: 8px 0 48px;
+  position: relative;
+}
+.backBtn {
+  position: absolute;
+  left: 0; top: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+.backBtn:hover { color: var(--primary); }
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 0 0 12px;
+}
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 10px;
+  line-height: 1.3;
+}
+.sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 28px;
+}
+
+/* 토글 */
+.toggle {
+  display: inline-flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.toggleBtn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.toggleActive {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.toggleSave {
+  font-size: 10px;
+  font-weight: 700;
+  background: #D1FAE5;
+  color: #059669;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* 카드 그리드 */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 64px;
+}
+
+.card {
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+
+.card_primary {
+  border-color: var(--primary);
+  background: var(--primary-soft, #f0effe);
+}
+.card_teal {
+  border-color: var(--teal);
+}
+
+.badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.card_primary .badge {
+  background: var(--primary);
+  color: white;
+}
+.card_teal .badge {
+  background: var(--teal);
+  color: white;
+}
+
+.cardTop { display: flex; flex-direction: column; gap: 6px; }
+.planName {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+.priceRow { display: flex; align-items: baseline; gap: 4px; margin-top: 4px; }
+.price {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text);
+}
+.priceUnit { font-size: 13px; color: var(--text-secondary); }
+.yearlyNote { font-size: 11px; color: var(--text-tertiary); margin: 0; }
+.planDesc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin: 4px 0 0; }
+
+/* CTA 버튼 */
+.cta {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all var(--transition-fast);
+}
+.cta_default {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.cta_default:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+.cta_primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.cta_primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.cta_primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.cta_teal {
+  background: var(--teal);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+.cta_teal:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 기능 목록 */
+.featureList {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-top: 1px solid var(--border-light);
+  padding-top: 16px;
+}
+.featureItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+  gap: 8px;
+}
+.featureItem:last-child { border-bottom: none; }
+.featureLabel { font-size: 12px; color: var(--text-secondary); }
+.featureValue { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.featureDim .featureValue { color: var(--text-tertiary); font-weight: 400; }
+
+/* FAQ */
+.faq { max-width: 760px; margin: 0 auto; }
+.faqTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 24px;
+  text-align: center;
+}
+.faqGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.faqItem {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-light);
+}
+.faqQ {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.faqA {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto 48px;
+  }
+  .title { font-size: 22px; }
+  .faqGrid { grid-template-columns: 1fr; }
+  .backBtn { position: static; margin-bottom: 20px; display: block; text-align: left; }
+  .hero { padding-top: 0; }
+}

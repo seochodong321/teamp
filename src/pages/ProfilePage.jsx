@@ -771,7 +771,7 @@ export default function ProfilePage() {
           <p className={styles.planTitle}>무료 플랜 사용 중</p>
           <p className={styles.planDesc}>아카이브 500MB · 프로젝트 5개까지</p>
         </div>
-        <button className={styles.upgradeBtn}>업그레이드 →</button>
+        <button className={styles.upgradeBtn} onClick={() => navigate('/pricing')}>업그레이드 →</button>
       </div>
       
       {/* 환경 설정 */}
