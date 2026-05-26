@@ -355,6 +355,21 @@
   padding: 24px;
 }
 
+/* ── 모바일 하단 탭바 ── */
+.mobileTabBar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  align-items: center;
+  justify-content: space-around;
+  z-index: 150;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
   .sidebar {
@@ -378,21 +393,6 @@
   .mobileLogo { font-size: 17px; }
   .createBtn { display: none; }
   .footer { display: none; }
-}
-
-/* ── 모바일 하단 탭바 ── */
-.mobileTabBar {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: calc(60px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  align-items: center;
-  justify-content: space-around;
-  z-index: 150;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
 }
 
 .mobileTab {
