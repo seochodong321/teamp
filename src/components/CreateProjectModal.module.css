@@ -88,14 +88,14 @@
 
 /* 이모지 */
 .emojiPreview {
-  height: 64px; background: var(--primary-light); border-radius: var(--radius-md);
+  height: 46px; background: var(--primary-light); border-radius: var(--radius-md);
   display: flex; align-items: center; justify-content: center;
 }
-.emojiBig { font-size: 40px; }
+.emojiBig { font-size: 28px; }
 .emojiPlaceholder { font-size: 12px; color: var(--text-tertiary); }
-.emojiGrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.emojiGrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
 .emojiBtn {
-  aspect-ratio: 1; font-size: 20px; border-radius: var(--radius-sm);
+  aspect-ratio: 1; font-size: 17px; border-radius: var(--radius-sm);
   border: 1px solid transparent; background: var(--bg);
   display: flex; align-items: center; justify-content: center;
   transition: all 0.15s; cursor: pointer;
