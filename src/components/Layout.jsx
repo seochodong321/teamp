@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { doc, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { auth, db, requestNotificationPermission } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import NotificationPanel from './NotificationPanel.jsx'
 import SearchModal from './SearchModal.jsx'
 import CreateProjectModal from './CreateProjectModal.jsx'
+import MobileMenuSheet from './MobileMenuSheet.jsx'
 import ChatToastContainer from './ChatToastContainer.jsx'
 import ErrorToastContainer from './ErrorToastContainer.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -18,10 +19,12 @@ export default function Layout() {
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen]           = useState(false)
+  const [showMobileMenu, setShowMobileMenu]   = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showSearch, setShowSearch]           = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [collapsedProjects, setCollapsedProjects] = useState({}) // { [projectId]: true }
+  const [collapsedProjects, setCollapsedProjects] = useState({})
+  const [noteUnread, setNoteUnread]           = useState(0)
 
   const navRef = useRef(null)
 
@@ -61,10 +64,22 @@ export default function Layout() {
 
   // 모바일 사이드바 열릴 때 nav 항상 맨 위로
   useEffect(() => {
-    if (mobileOpen && navRef.current) {
-      navRef.current.scrollTop = 0
-    }
+    if (mobileOpen && navRef.current) navRef.current.scrollTop = 0
   }, [mobileOpen])
+
+  // 쪽지 미읽음 카운트 (탭바 배지용)
+  useEffect(() => {
+    if (!currentUser?.id) return
+    const unsub = onSnapshot(
+      query(collection(db, 'notes'), where('recipientId', '==', currentUser.id)),
+      (snap) => {
+        const uid = currentUser.id
+        setNoteUnread(snap.docs.filter((d) => !d.data().read?.[uid]).length)
+      },
+      () => {}
+    )
+    return unsub
+  }, [currentUser?.id])
 
   const active         = useMemo(() => projects.filter((p) => p.status === 'active'), [projects])
   const unreadCount    = useMemo(() => (notifications || []).filter((n) => !n.read).length, [notifications])
@@ -278,16 +293,13 @@ export default function Layout() {
       {/* ── 메인 컨텐츠 ── */}
       <main className={styles.main}>
         <div className={styles.mobileHeader}>
-          {/* 햄버거 — 항상 표시 (어떤 페이지에서도 사이드바 접근 가능) */}
-          <button className={styles.menuBtn} onClick={() => setMobileOpen(true)}>☰</button>
+          <button className={styles.menuBtn} onClick={() => setShowSearch(true)}>🔍</button>
 
-          {/* 중앙: 홈이면 로고, 상세 페이지면 페이지명 */}
           {pageTitle
             ? <span className={styles.mobilePageTitle}>{pageTitle}</span>
             : <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
           }
 
-          {/* 우측: 알림 버튼만 */}
           <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
             ✦
             {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
@@ -332,14 +344,23 @@ export default function Layout() {
             <span className={styles.mobileTabLabel}>홈</span>
           </NavLink>
 
-          {/* 매치 */}
-          <NavLink to="/match" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+          {/* 커넥트 */}
+          <NavLink to="/connect" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
             <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
             </svg>
-            <span className={styles.mobileTabLabel}>매치</span>
+            <span className={styles.mobileTabLabel}>커넥트</span>
+          </NavLink>
+
+          {/* 쪽지 */}
+          <NavLink to="/messages" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
+            {noteUnread > 0 && <span className={styles.mobileTabBadge}>{noteUnread > 9 ? '9+' : noteUnread}</span>}
+            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <span className={styles.mobileTabLabel}>쪽지</span>
           </NavLink>
 
           {/* 캘린더 */}
@@ -353,37 +374,30 @@ export default function Layout() {
             <span className={styles.mobileTabLabel}>캘린더</span>
           </NavLink>
 
-          {/* + FAB */}
-          <button className={styles.mobileTabFab} onClick={openCreate} aria-label="새 프로젝트">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-
-          {/* 알림 */}
-          <button className={styles.mobileTab} onClick={() => setShowNotifications(true)}>
-            {unreadCount > 0 && <span className={styles.mobileTabBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+          {/* 전체메뉴 */}
+          <button
+            className={`${styles.mobileTab} ${showMobileMenu ? styles.mobileTabActive : ''}`}
+            onClick={() => setShowMobileMenu(true)}>
             <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
             </svg>
-            <span className={styles.mobileTabLabel}>알림</span>
+            <span className={styles.mobileTabLabel}>전체메뉴</span>
           </button>
-
-          {/* 나 */}
-          <NavLink to="/profile" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
-            <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-            <span className={styles.mobileTabLabel}>나</span>
-          </NavLink>
         </nav>
       </main>
 
       <NotificationPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
       <SearchModal open={showSearch} onClose={() => setShowSearch(false)} />
       {showCreateModal && <CreateProjectModal onClose={() => setShowCreateModal(false)} />}
+      {showMobileMenu && (
+        <MobileMenuSheet
+          onClose={() => setShowMobileMenu(false)}
+          onCreateProject={() => { setShowCreateModal(true) }}
+        />
+      )}
       <ChatToastContainer />
       <ErrorToastContainer />
       <ConfirmDialog />
