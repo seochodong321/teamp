@@ -24,6 +24,7 @@ export default function SetupUsernamePage() {
   const [agreedPrivacy,    setAgreedPrivacy]     = useState(false)
   const [agreedGuidelines, setAgreedGuidelines]  = useState(false)
   const [agreedAge,        setAgreedAge]         = useState(false)
+  const [showPlanIntro,    setShowPlanIntro]     = useState(false)
   const canSignup = agreedTerms && agreedPrivacy && agreedAge
 
   // Firebase 세션 없음 → 로그인
@@ -94,6 +95,7 @@ export default function SetupUsernamePage() {
         phone: '', bio: '',
         birthday,
         photoURL: user.photoURL || null,
+        plan: 'free',
         createdAt: new Date().toISOString(),
       })
 
@@ -102,15 +104,52 @@ export default function SetupUsernamePage() {
         affiliation: affiliation.trim(),
         birthday,
         photoURL: user.photoURL || null,
+        plan: 'free',
       })
       setNeedsUsernameSetup(false)
-      navigate('/home', { replace: true })
+      setShowPlanIntro(true)
     } catch (err) {
       setError('저장 중 오류가 발생했어요. 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }
   }
+
+  if (showPlanIntro) return (
+    <div className={styles.page}>
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <TeampMark size={44} />
+          <h1 className={styles.title}>환영해요! 🎉</h1>
+          <p className={styles.sub}>팀프는 무료로 시작할 수 있어요. 플랜을 확인해보세요.</p>
+        </div>
+        <div className={styles.planIntroGrid}>
+          {[
+            { name: 'Free', color: 'var(--text-secondary)', bg: 'var(--bg-secondary)', items: ['프로젝트 3개', '팀원 5명/프로젝트', '채팅 100개 제한', '기본 팀프폴리오'] },
+            { name: 'Pro', color: 'var(--primary)', bg: 'var(--primary-soft, #f0effe)', items: ['프로젝트 10개', '팀원 20명/프로젝트', '무제한 채팅', '스토리지 5GB'], badge: '₩5,900/월' },
+          ].map((p) => (
+            <div key={p.name} className={styles.planIntroCard} style={{ background: p.bg, borderColor: p.color }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontWeight: 800, fontSize: 15, color: p.color }}>{p.name}</span>
+                {p.badge && <span style={{ fontSize: 11, fontWeight: 700, color: p.color, background: 'white', padding: '2px 8px', borderRadius: 999, border: `1px solid ${p.color}` }}>{p.badge}</span>}
+              </div>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {p.items.map((item) => (
+                  <li key={item} style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ color: p.color, fontWeight: 700 }}>·</span>{item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p className={styles.planIntroHint}>프로젝트 3개를 만들면 슬롯이 꽉 차요. 기존 프로젝트를 삭제하거나 Pro로 업그레이드하면 더 만들 수 있어요.</p>
+        <button className={styles.submitBtn} onClick={() => navigate('/home', { replace: true })}>
+          무료로 시작하기 →
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className={styles.page}>

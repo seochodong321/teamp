@@ -486,11 +486,19 @@ function MatchTab({ onDeleteMatch, onCloseMatch }) {
   )
 }
 
+const PLAN_META = {
+  free:  { label: 'Free',  color: '#6B7280', bg: '#F3F4F6' },
+  pro:   { label: 'Pro',   color: '#534AB7', bg: '#EEF2FF' },
+  team:  { label: 'Team',  color: '#0D9488', bg: '#CCFBF1' },
+  admin: { label: 'Admin', color: '#DC2626', bg: '#FEE2E2' },
+}
+
 // ─── 유저 관리 탭 ────────────────────────────────────────────
 function UsersTab({ onBlockUser, onUnblockUser }) {
-  const [users, setUsers]     = useState([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch]   = useState('')
+  const [users, setUsers]         = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [search, setSearch]       = useState('')
+  const [planLoading, setPlanLoading] = useState(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -510,6 +518,16 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
     })
   }
 
+  const changePlan = async (uid, newPlan) => {
+    setPlanLoading(uid)
+    try {
+      await updateDoc(doc(db, 'users', uid), { plan: newPlan })
+      setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, plan: newPlan } : u))
+    } finally {
+      setPlanLoading(null)
+    }
+  }
+
   const filtered = search
     ? users.filter((u) => u.name?.includes(search) || u.email?.includes(search) || u.username?.includes(search))
     : users
@@ -523,41 +541,65 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
       </div>
       {loading ? <p className={styles.empty}>불러오는 중...</p> : (
         <div className={styles.list}>
-          {filtered.map((u) => (
-            <div key={u.id} className={`${styles.card} ${u.banned ? styles.cardBanned : ''}`}>
-              <div className={styles.cardTop}>
-                <div className={styles.cardMeta}>
-                  <span className={`${styles.typeBadge} ${styles.type_user}`}>유저</span>
-                  {u.banned && <span className={styles.bannedBadge}>블락됨</span>}
+          {filtered.map((u) => {
+            const plan = u.plan || 'free'
+            const pm = PLAN_META[plan] || PLAN_META.free
+            return (
+              <div key={u.id} className={`${styles.card} ${u.banned ? styles.cardBanned : ''}`}>
+                <div className={styles.cardTop}>
+                  <div className={styles.cardMeta}>
+                    <span className={`${styles.typeBadge} ${styles.type_user}`}>유저</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: pm.bg, color: pm.color }}>{pm.label}</span>
+                    {u.banned && <span className={styles.bannedBadge}>블락됨</span>}
+                  </div>
+                  <span className={styles.date}>{u.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || (typeof u.createdAt === 'string' ? u.createdAt.slice(0, 10) : '-')}</span>
                 </div>
-                <span className={styles.date}>{u.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || '-'}</span>
-              </div>
-              <div className={styles.cardBody}>
-                <p className={styles.targetName}>
-                  <strong>{u.name}</strong>
-                  <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{u.username}</span>
-                  {u.username && (
-                    <a href={`/u/${(u.username || '').replace('@', '')}`} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 프로필</a>
-                  )}
-                </p>
-                <p className={styles.reporter}>{u.email} {u.affiliation && `· ${u.affiliation}`}</p>
-              </div>
-              {u.banned && u.bannedAt && (
-                <p className={styles.bannedAt}>
-                  블락일: {u.bannedAt?.toDate?.()?.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) || '-'}
-                </p>
-              )}
-              <div className={styles.cardActions}>
-                {u.banned ? (
-                  <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id, u.name)}>블락 해제</button>
-                ) : (
-                  <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name, () => {
-                    setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, banned: true, bannedAt: { toDate: () => new Date() } } : x))
-                  })}>블락</button>
+                <div className={styles.cardBody}>
+                  <p className={styles.targetName}>
+                    <strong>{u.name}</strong>
+                    <span style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{u.username}</span>
+                    {u.username && (
+                      <a href={`/u/${(u.username || '').replace('@', '')}`} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 프로필</a>
+                    )}
+                  </p>
+                  <p className={styles.reporter}>{u.email} {u.affiliation && `· ${u.affiliation}`}</p>
+                </div>
+                {u.banned && u.bannedAt && (
+                  <p className={styles.bannedAt}>
+                    블락일: {u.bannedAt?.toDate?.()?.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) || '-'}
+                  </p>
                 )}
+                <div className={styles.cardActions}>
+                  {/* 플랜 변경 */}
+                  <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+                    {Object.entries(PLAN_META).map(([key, meta]) => (
+                      <button
+                        key={key}
+                        disabled={plan === key || planLoading === u.id}
+                        onClick={() => changePlan(u.id, key)}
+                        style={{
+                          fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6,
+                          background: plan === key ? meta.bg : 'var(--bg-secondary)',
+                          color: plan === key ? meta.color : 'var(--text-tertiary)',
+                          border: `1px solid ${plan === key ? meta.color : 'var(--border)'}`,
+                          cursor: plan === key ? 'default' : 'pointer',
+                          opacity: planLoading === u.id ? 0.5 : 1,
+                        }}
+                      >{meta.label}</button>
+                    ))}
+                  </div>
+                  {/* 블락 */}
+                  {u.banned ? (
+                    <button className={styles.unblockBtn} onClick={() => handleUnblock(u.id, u.name)}>블락 해제</button>
+                  ) : (
+                    <button className={styles.dangerBtn} onClick={() => onBlockUser(u.id, u.name, () => {
+                      setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, banned: true, bannedAt: { toDate: () => new Date() } } : x))
+                    })}>블락</button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
           {filtered.length === 0 && <p className={styles.empty}>검색 결과가 없어요</p>}
         </div>
       )}

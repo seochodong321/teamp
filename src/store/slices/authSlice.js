@@ -24,6 +24,7 @@ export const createAuthSlice = (set, get) => ({
       phone: extra.phone || '',
       birthday: extra.birthday || '',
       photoURL: extra.photoURL || null,
+      plan: extra.plan || 'free',
     }
     // 다른 유저가 로그인하면 이전 유저 데이터 초기화
     const prevUid = get().currentUser?.id
