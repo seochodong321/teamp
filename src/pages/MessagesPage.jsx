@@ -8,6 +8,13 @@ import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './MessagesPage.module.css'
 
+function formatDate(seconds) {
+  if (!seconds) return ''
+  return new Date(seconds * 1000).toLocaleDateString('ko-KR', {
+    month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+}
+
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -20,7 +27,7 @@ export default function MessagesPage() {
 
   const [notes, setNotes]   = useState([])
   const [selected, setSelected] = useState(null)
-  const [tab, setTab]       = useState('received') // received | sent
+  const [tab, setTab]       = useState('received')
   const [loading, setLoading] = useState(true)
 
   // 쪽지 쓰기
@@ -28,19 +35,19 @@ export default function MessagesPage() {
   const [toInput, setToInput]   = useState(initTo)
   const [toUid, setToUid]       = useState(null)
   const [toName, setToName]     = useState('')
-  const [toStatus, setToStatus] = useState('idle') // idle | checking | found | notfound
+  const [toStatus, setToStatus] = useState('idle')
   const [subject, setSubject]   = useState(matchTitle ? `[매치 문의] ${matchTitle}` : '')
   const [body, setBody]         = useState('')
   const [sending, setSending]   = useState(false)
 
   // 답장
+  const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [replying, setReplying]   = useState(false)
 
   // 쪽지 목록 실시간 구독
   useEffect(() => {
     if (!currentUser?.id) return
-    // orderBy 제거 → 복합 인덱스 불필요, 클라이언트 정렬
     const q = query(
       collection(db, 'notes'),
       where('participants', 'array-contains', currentUser.id)
@@ -63,7 +70,7 @@ export default function MessagesPage() {
     if (initTo) lookupUsername(initTo)
   }, [])
 
-  // 열려 있는 스레드를 notes 실시간 업데이트에 따라 갱신 (답장 후 즉시 반영)
+  // 열려 있는 쪽지를 notes 실시간 업데이트에 따라 갱신
   useEffect(() => {
     if (!selected) return
     const updated = notes.find((n) => n.id === selected.id)
@@ -82,6 +89,8 @@ export default function MessagesPage() {
   const selectNote = (note) => {
     setSelected(note)
     setShowCompose(false)
+    setShowReply(false)
+    setReplyText('')
     markRead(note)
   }
 
@@ -92,7 +101,7 @@ export default function MessagesPage() {
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
       if (!snap.empty) {
-        const docId = snap.docs[0].id   // UID = Firestore 문서 ID
+        const docId = snap.docs[0].id
         const d     = snap.docs[0].data()
         if (docId === currentUser.id) { setToStatus('notfound'); setToUid(null); return }
         setToUid(docId)
@@ -133,7 +142,7 @@ export default function MessagesPage() {
       setToInput(''); setToUid(null); setToName(''); setToStatus('idle')
       setSubject(''); setBody('')
       navigate('/messages', { replace: true })
-    } catch (e) {
+    } catch {
       showError('전송에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
       setSending(false)
@@ -156,6 +165,7 @@ export default function MessagesPage() {
         [`read.${currentUser.id}`]: true,
       })
       setReplyText('')
+      setShowReply(false)
     } catch {
       showError('답장 전송에 실패했어요.')
     } finally {
@@ -176,7 +186,7 @@ export default function MessagesPage() {
           <p className={styles.subtitle}>@아이디로 상대방에게 쪽지를 보낼 수 있어요</p>
         </div>
         <button className={styles.composeBtn} onClick={() => { setShowCompose(true); setSelected(null) }}>
-          + 쪽지 쓰기
+          ✏️ 쪽지 쓰기
         </button>
       </div>
 
@@ -203,11 +213,13 @@ export default function MessagesPage() {
             visibleNotes.map((note) => {
               const isUnread = tab === 'received' && !note.read?.[currentUser.id]
               const lastMsg = note.messages?.[note.messages.length - 1]
+              const hasReplies = (note.messages?.length || 0) > 1
               return (
                 <div key={note.id}
                   className={`${styles.noteCard} ${selected?.id === note.id ? styles.noteCardActive : ''} ${isUnread ? styles.noteUnread : ''}`}
                   onClick={() => selectNote(note)}>
                   <div className={styles.noteCardTop}>
+                    <span className={styles.noteCardIcon}>{isUnread ? '📩' : '📄'}</span>
                     <span className={styles.notePeer}>
                       {tab === 'received' ? note.fromUsername || note.fromName : note.toUsername || note.toName}
                     </span>
@@ -217,9 +229,10 @@ export default function MessagesPage() {
                   {note.matchTitle && (
                     <span className={styles.matchBadge}>🤝 {note.matchTitle}</span>
                   )}
-                  {lastMsg && (
-                    <p className={styles.notePreview}>{lastMsg.text}</p>
-                  )}
+                  <div className={styles.noteCardBottom}>
+                    {lastMsg && <p className={styles.notePreview}>{lastMsg.text}</p>}
+                    {hasReplies && <span className={styles.replyCount}>↩ {note.messages.length - 1}</span>}
+                  </div>
                 </div>
               )
             })
@@ -229,93 +242,141 @@ export default function MessagesPage() {
         {/* 상세 / 작성 패널 */}
         <div className={styles.detailPanel}>
           {showCompose ? (
+            /* ── 쪽지 작성 ── */
             <div className={styles.composeWrap}>
-              <h3 className={styles.composeTitle}>쪽지 쓰기</h3>
-
-              <div className={styles.composeField}>
-                <label className={styles.composeLabel}>받는 사람 (@아이디)</label>
-                <div style={{ position: 'relative' }}>
-                  <input className={styles.composeInput}
-                    value={toInput}
-                    onChange={(e) => { setToInput(e.target.value); lookupUsername(e.target.value) }}
-                    placeholder="@username"
-                  />
-                  {toStatus === 'found'    && <span className={styles.toFound}>✓ {toName}</span>}
-                  {toStatus === 'notfound' && <span className={styles.toNotFound}>찾을 수 없어요</span>}
-                  {toStatus === 'checking' && <span className={styles.toChecking}>검색 중…</span>}
-                </div>
+              <div className={styles.composeHeader}>
+                <span className={styles.composeIcon}>✏️</span>
+                <h3 className={styles.composeTitle}>새 쪽지 작성</h3>
               </div>
 
-              <div className={styles.composeField}>
-                <label className={styles.composeLabel}>제목</label>
-                <input className={styles.composeInput} value={subject}
-                  onChange={(e) => setSubject(e.target.value)} placeholder="제목을 입력하세요" />
-              </div>
-
-              {matchTitle && (
-                <div className={styles.matchContext}>
-                  🤝 <strong>{matchTitle}</strong> 모집글 관련 문의입니다
+              <div className={styles.composePaper}>
+                <div className={styles.composeRow}>
+                  <span className={styles.composeRowLabel}>보내는 이</span>
+                  <span className={styles.composeRowValue}>{currentUser.username || currentUser.name}</span>
                 </div>
-              )}
+                <div className={styles.composeDivider} />
 
-              <div className={styles.composeField}>
-                <label className={styles.composeLabel}>내용</label>
-                <textarea className={styles.composeTextarea} value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="전달할 내용을 입력하세요" rows={7} />
+                <div className={styles.composeRow}>
+                  <span className={styles.composeRowLabel}>받는 이</span>
+                  <div className={styles.composeRowInput} style={{ position: 'relative' }}>
+                    <input className={styles.composeInlineInput}
+                      value={toInput}
+                      onChange={(e) => { setToInput(e.target.value); lookupUsername(e.target.value) }}
+                      placeholder="@username"
+                    />
+                    {toStatus === 'found'    && <span className={styles.toFound}>✓ {toName}</span>}
+                    {toStatus === 'notfound' && <span className={styles.toNotFound}>찾을 수 없어요</span>}
+                    {toStatus === 'checking' && <span className={styles.toChecking}>검색 중…</span>}
+                  </div>
+                </div>
+                <div className={styles.composeDivider} />
+
+                <div className={styles.composeRow}>
+                  <span className={styles.composeRowLabel}>제목</span>
+                  <div className={styles.composeRowInput}>
+                    <input className={styles.composeInlineInput} value={subject}
+                      onChange={(e) => setSubject(e.target.value)} placeholder="제목을 입력하세요" />
+                  </div>
+                </div>
+
+                {matchTitle && (
+                  <div className={styles.matchContext}>
+                    🤝 <strong>{matchTitle}</strong> 모집글 관련 문의입니다
+                  </div>
+                )}
+
+                <div className={styles.composeBodyArea}>
+                  <textarea className={styles.composeTextarea} value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="전달할 내용을 적어주세요..." rows={8} />
+                </div>
               </div>
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <button className={styles.cancelBtn} onClick={() => { setShowCompose(false); navigate('/messages', { replace: true }) }}>취소</button>
+                <button className={styles.cancelBtn}
+                  onClick={() => { setShowCompose(false); navigate('/messages', { replace: true }) }}>
+                  취소
+                </button>
                 <button className={styles.sendBtn}
                   disabled={!toUid || !body.trim() || sending}
                   onClick={handleSend}>
-                  {sending ? '전송 중...' : '전송하기'}
+                  {sending ? '전송 중...' : '✉️ 쪽지 보내기'}
                 </button>
               </div>
             </div>
+
           ) : selected ? (
-            <div className={styles.threadWrap}>
-              <div className={styles.threadHeader}>
-                <div>
-                  <p className={styles.threadSubject}>{selected.subject}</p>
-                  {selected.matchTitle && (
-                    <span className={styles.matchBadge}>🤝 {selected.matchTitle}</span>
+            /* ── 쪽지 읽기 ── */
+            <div className={styles.noteView}>
+              <div className={styles.noteViewMeta}>
+                <p className={styles.noteViewSubject}>{selected.subject}</p>
+                {selected.matchTitle && (
+                  <span className={styles.matchBadge}>🤝 {selected.matchTitle}</span>
+                )}
+                <div className={styles.noteViewPeers}>
+                  <span className={styles.metaLabel}>보낸 이</span>
+                  <span className={styles.metaValue}>{selected.fromUsername || selected.fromName}</span>
+                  <span className={styles.metaArrow}>→</span>
+                  <span className={styles.metaLabel}>받는 이</span>
+                  <span className={styles.metaValue}>{selected.toUsername || selected.toName}</span>
+                  {selected.createdAt?.seconds && (
+                    <>
+                      <span className={styles.metaSep}>·</span>
+                      <span className={styles.metaDate}>{formatDate(selected.createdAt.seconds)}</span>
+                    </>
                   )}
-                  <p className={styles.threadPeers}>
-                    {selected.fromUsername} → {selected.toUsername}
-                  </p>
                 </div>
               </div>
-              <div className={styles.messages}>
+
+              <div className={styles.noteScrollArea}>
                 {(selected.messages || []).map((msg, i) => {
                   const isMine = msg.senderUid === currentUser.id
                   return (
-                    <div key={i} className={`${styles.msgRow} ${isMine ? styles.msgRowMine : ''}`}>
-                      {!isMine && (
-                        <div className={styles.msgAvatar}>{msg.senderName.charAt(0)}</div>
-                      )}
-                      <div className={styles.msgBubble}>
-                        {!isMine && <p className={styles.msgSender}>{msg.senderName}</p>}
-                        <p className={styles.msgText}>{msg.text}</p>
-                        <span className={styles.msgTime}>{msg.time}</span>
+                    <div key={i} className={styles.noteBlock}>
+                      <div className={styles.noteBlockMeta}>
+                        <span className={styles.noteBlockSender}>
+                          {isMine ? `나 (${currentUser.username || currentUser.name})` : `${msg.senderName}`}
+                          {i > 0 && <span className={styles.replyTag}>↩ 답장</span>}
+                        </span>
+                        <span className={styles.noteBlockTime}>{msg.time}</span>
+                      </div>
+                      <div className={`${styles.noteBlockContent} ${isMine ? styles.noteBlockMine : ''}`}>
+                        <p className={styles.noteBlockText}>{msg.text}</p>
                       </div>
                     </div>
                   )
                 })}
               </div>
-              <div className={styles.replyArea}>
-                <textarea className={styles.replyInput} value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="답장을 입력하세요" rows={3} />
-                <button className={styles.sendBtn} disabled={!replyText.trim() || replying}
-                  onClick={handleReply}>
-                  {replying ? '전송 중...' : '답장'}
-                </button>
-              </div>
+
+              {/* 답장 영역 */}
+              {showReply ? (
+                <div className={styles.replyArea}>
+                  <p className={styles.replyLabel}>↩ 답장 쓰기</p>
+                  <textarea className={styles.replyInput} value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="답장을 적어주세요..." rows={4}
+                    autoFocus
+                  />
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                    <button className={styles.cancelBtn} onClick={() => { setShowReply(false); setReplyText('') }}>취소</button>
+                    <button className={styles.sendBtn} disabled={!replyText.trim() || replying}
+                      onClick={handleReply}>
+                      {replying ? '전송 중...' : '↩ 답장 보내기'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.replyBarRow}>
+                  <button className={styles.replyBarBtn} onClick={() => setShowReply(true)}>
+                    ↩ 답장하기
+                  </button>
+                </div>
+              )}
             </div>
+
           ) : (
             <div className={styles.detailEmpty}>
+              <p className={styles.detailEmptyIcon}>📭</p>
               <p>쪽지를 선택하거나 새로 작성해보세요</p>
             </div>
           )}
