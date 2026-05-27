@@ -103,6 +103,7 @@
 
   /* iOS 줌 방지 */
   .editInput { font-size: 16px; }
+  .memoInput { font-size: 16px; }
 }
 @media (max-width: 480px) {
   .journeyGrid { grid-template-columns: repeat(2, 1fr); }

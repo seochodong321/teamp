@@ -19,6 +19,9 @@
   .listPanel { max-height: unset; }
   .detailPanel { display: none; }
 
+  /* 터치 영역 확보 */
+  .formClose { width: 44px; height: 44px; }
+
   .layoutDetail .listPanel { display: none; }
   .layoutDetail .detailPanel { display: flex; }
 

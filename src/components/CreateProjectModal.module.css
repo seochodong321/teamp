@@ -256,4 +256,7 @@
     padding: 10px 16px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   }
+
+  /* 터치 영역 확보 */
+  .closeBtn { width: 44px; height: 44px; }
 }

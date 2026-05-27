@@ -447,4 +447,7 @@
   .cell {
     min-height: 48px;
   }
+
+  /* 터치 영역 확보 */
+  .navBtn { width: 44px; height: 44px; }
 }

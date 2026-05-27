@@ -174,3 +174,7 @@
   cursor: pointer;
 }
 .doneBtn:hover { opacity: 0.88; }
+
+@media (max-width: 768px) {
+  .closeBtn { width: 44px; height: 44px; }
+}

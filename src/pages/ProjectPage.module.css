@@ -577,4 +577,8 @@
   .timelineLine { display: none; }
   .timelineDot  { display: none; }
   .msCard { margin-bottom: 0; }
+
+  /* 터치 영역 확보 */
+  .profileClose { width: 44px; height: 44px; }
+  .closeBtn     { width: 44px; height: 44px; }
 }
