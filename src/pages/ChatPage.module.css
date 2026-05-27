@@ -1,6 +1,6 @@
 .page {
   display: flex; flex-direction: column;
-  height: calc(100vh - 48px);
+  height: calc(100dvh - 48px);
   max-width: 880px;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -15,7 +15,7 @@
     position: fixed;
     top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
     left: 0; right: 0;
-    bottom: 60px; /* 탭바 높이 */
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px)); /* 탭바 + 홈 인디케이터 */
     height: auto;
     border-radius: 0;
     border: none;
@@ -25,11 +25,7 @@
   .messages { padding: 10px 14px; }
   .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
-  /* inputArea: 홈 인디케이터 위로 여백 */
-  .inputArea {
-    padding: 8px 10px;
-    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
-  }
+  .inputArea { padding: 8px 10px; }
   .input { font-size: 16px; } /* iOS zoom 방지 */
   .roomName { display: none; } /* Layout mobileHeader가 이미 표시 */
 }

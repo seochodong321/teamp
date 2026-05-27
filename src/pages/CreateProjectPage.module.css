@@ -1,4 +1,4 @@
-.page { display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px 48px; min-height: calc(100vh - 56px); }
+.page { display: flex; justify-content: center; align-items: flex-start; padding: 24px 16px 48px; min-height: calc(100dvh - 56px); }
 
 .card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 28px 32px; width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 22px; box-shadow: var(--shadow-md); }
 

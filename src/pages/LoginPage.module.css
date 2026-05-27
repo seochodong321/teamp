@@ -1,7 +1,7 @@
 /* ── 전체 레이아웃: 좌우 2분할 ── */
 .page {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* ── 왼쪽 소개 영역 ── */
