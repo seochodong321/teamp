@@ -661,12 +661,11 @@ export default function MatchPage() {
             {formError && <p className={styles.formError}>{formError}</p>}
             {(!formProject || !formTitle.trim() || !formDeadline) && (
               <p className={styles.formHint}>
-                {[
-                  !formProject    && '프로젝트 선택',
+                필수 항목을 채워주세요: {[
+                  !formProject      && '프로젝트 선택',
                   !formTitle.trim() && '모집 제목',
-                  !formDeadline   && '모집 기한',
+                  !formDeadline     && '모집 기한',
                 ].filter(Boolean).join(' · ')}
-                {' '}을(를) 입력해야 등록할 수 있어요.
               </p>
             )}
             <div className={styles.formFooter}>

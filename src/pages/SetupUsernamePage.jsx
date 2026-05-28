@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
@@ -15,6 +15,7 @@ export default function SetupUsernamePage() {
   const [username, setUsername]           = useState('')
   const [usernameStatus, setUsernameStatus] = useState('idle') // idle | checking | ok | taken
   const [usernameSuggestion, setUsernameSuggestion] = useState('')
+  const usernameDebounceRef = useRef(null)
   const [affiliation, setAffiliation]     = useState('')
   const [birthYear, setBirthYear]         = useState('')
   const [birthMonth, setBirthMonth]       = useState('')
@@ -35,29 +36,34 @@ export default function SetupUsernamePage() {
   // 이미 프로필 완성된 유저 → 홈으로
   if (isLoggedIn && !needsUsernameSetup) return <Navigate to="/home" replace />
 
-  const checkUsername = async (raw) => {
+  const checkUsername = (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return 'idle' }
-    if (containsProfanity(val)) { setUsernameStatus('taken'); setUsernameSuggestion(''); return 'taken' }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return Promise.resolve('idle') }
+    if (containsProfanity(val)) { setUsernameStatus('taken'); setUsernameSuggestion(''); return Promise.resolve('taken') }
     setUsernameStatus('checking')
-    try {
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      const status = snap.empty ? 'ok' : 'taken'
-      setUsernameStatus(status)
-      if (status === 'taken') {
-        setUsernameSuggestion('')
-        for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
-          const c = `${val}${s}`.slice(0, 20)
-          if (/^[a-z0-9_]{3,20}$/.test(c)) {
-            const cs = await getDocs(query(collection(db, 'users'), where('username', '==', `@${c}`)))
-            if (cs.empty) { setUsernameSuggestion(c); break }
+    clearTimeout(usernameDebounceRef.current)
+    return new Promise((resolve) => {
+      usernameDebounceRef.current = setTimeout(async () => {
+        try {
+          const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
+          const status = snap.empty ? 'ok' : 'taken'
+          setUsernameStatus(status)
+          if (status === 'taken') {
+            setUsernameSuggestion('')
+            for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
+              const c = `${val}${s}`.slice(0, 20)
+              if (/^[a-z0-9_]{3,20}$/.test(c)) {
+                const cs = await getDocs(query(collection(db, 'users'), where('username', '==', `@${c}`)))
+                if (cs.empty) { setUsernameSuggestion(c); break }
+              }
+            }
+          } else {
+            setUsernameSuggestion('')
           }
-        }
-      } else {
-        setUsernameSuggestion('')
-      }
-      return status
-    } catch { setUsernameStatus('idle'); setUsernameSuggestion(''); return 'idle' }
+          resolve(status)
+        } catch { setUsernameStatus('idle'); setUsernameSuggestion(''); resolve('idle') }
+      }, 400)
+    })
   }
 
   const handleSubmit = async (e) => {

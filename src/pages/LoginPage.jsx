@@ -246,7 +246,7 @@ export default function LoginPage() {
       const passErrors  = new Set(['auth/wrong-password', 'auth/weak-password'])
       if (emailErrors.has(err.code))      setErrorField('email')
       else if (passErrors.has(err.code))  setErrorField('password')
-      else                                setErrorField('email') // invalid-credential 등 — 둘 다 표시
+      else                                setErrorField('both') // invalid-credential: 어느 쪽이 틀렸는지 불명확
       const map = {
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
         'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
@@ -340,7 +340,7 @@ export default function LoginPage() {
             <div className={styles.field}>
               <label className={styles.label}>이메일 *</label>
               <input
-                className={`${styles.input} ${errorField === 'email' ? styles.inputError : ''}`}
+                className={`${styles.input} ${(errorField === 'email' || errorField === 'both') ? styles.inputError : ''}`}
                 type="email" value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrorField(null); setError('') }}
                 placeholder="example@email.com" autoComplete="email" disabled={loading} />
@@ -348,7 +348,7 @@ export default function LoginPage() {
             <div className={styles.field}>
               <label className={styles.label}>비밀번호 *</label>
               <input
-                className={`${styles.input} ${errorField === 'password' ? styles.inputError : ''}`}
+                className={`${styles.input} ${(errorField === 'password' || errorField === 'both') ? styles.inputError : ''}`}
                 type="password" value={password}
                 onChange={(e) => { setPassword(e.target.value); setErrorField(null); setError('') }}
                 placeholder="8자 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />

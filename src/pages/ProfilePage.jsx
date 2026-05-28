@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [flowerTags, setFlowerTags] = useState({})
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
+  const usernameDebounceRef = useRef(null)
 
   const completedProjects = useMemo(() => myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length, [myProjects])
   const doneTodos = useMemo(() => myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length, [myProjects])
@@ -197,29 +198,31 @@ export default function ProfilePage() {
     }
   }
 
-  const checkUsername = async (raw) => {
+  const checkUsername = (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
     const current = (currentUser.username || '').replace(/^@/, '')
     if (val === current) { setUsernameStatus('ok'); setUsernameSuggestion(''); return }
     if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return }
     setUsernameStatus('checking')
-    try {
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      if (snap.empty) {
-        setUsernameStatus('ok')
-        setUsernameSuggestion('')
-      } else {
-        setUsernameStatus('taken')
-        const suffixes = ['_', '1', '2', String(new Date().getFullYear()).slice(2)]
-        for (const s of suffixes) {
-          const candidate = `${val}${s}`.slice(0, 20)
-          if (/^[a-z0-9_]{3,20}$/.test(candidate)) {
-            const c = await getDocs(query(collection(db, 'users'), where('username', '==', `@${candidate}`)))
-            if (c.empty) { setUsernameSuggestion(candidate); break }
+    clearTimeout(usernameDebounceRef.current)
+    usernameDebounceRef.current = setTimeout(async () => {
+      try {
+        const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
+        if (snap.empty) {
+          setUsernameStatus('ok')
+          setUsernameSuggestion('')
+        } else {
+          setUsernameStatus('taken')
+          for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
+            const candidate = `${val}${s}`.slice(0, 20)
+            if (/^[a-z0-9_]{3,20}$/.test(candidate)) {
+              const c = await getDocs(query(collection(db, 'users'), where('username', '==', `@${candidate}`)))
+              if (c.empty) { setUsernameSuggestion(candidate); break }
+            }
           }
         }
-      }
-    } catch { setUsernameStatus('idle'); setUsernameSuggestion('') }
+      } catch { setUsernameStatus('idle'); setUsernameSuggestion('') }
+    }, 400)
   }
 
   const openEditModal = () => {
@@ -227,6 +230,7 @@ export default function ProfilePage() {
     const rawU = (currentUser.username || '').replace(/^@/, '')
     setEditUsername(rawU)
     setUsernameStatus(rawU ? 'ok' : 'idle')
+    setUsernameSuggestion('')
     setEditAffiliation(currentUser.affiliation || '')
     setEditPhone(currentUser.phone || '')
     setEditOneliner(currentUser.oneliner || '')
