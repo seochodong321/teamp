@@ -596,8 +596,9 @@ export default function HomePage() {
         <div className={styles.empty}>
           <div className={styles.emptyIcon}>🚀</div>
           <p className={styles.emptyTitle}>첫 번째 프로젝트를 시작해보세요</p>
-          <p className={styles.emptySub}>기여와 관계의 기록, 지금 시작해보세요</p>
+          <p className={styles.emptySub}>팀을 만들고, 함께 만들고, 기록으로 남기세요</p>
           <button className={styles.emptyBtn} onClick={() => setShowModal(true)}>+ 새 프로젝트 만들기</button>
+          <p className={styles.emptyHint}>초대 링크를 받았나요? 링크를 직접 열어 합류하세요</p>
         </div>
       )}
       </div>

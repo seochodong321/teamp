@@ -154,6 +154,7 @@ export default function ProfilePage() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0]
     if (!file) return
+    if (file.size > 5 * 1024 * 1024) { showError('이미지 크기는 5MB 이하여야 해요.'); e.target.value = ''; return }
     setPhotoUploading(true)
     try {
       const sRef = storageRef(storage, `users/${currentUser.id}/avatar.jpg`)
@@ -238,7 +239,8 @@ export default function ProfilePage() {
       ? `${editBirthYear}-${editBirthMonth}-${editBirthDay}`
       : (editBirthMonth && editBirthDay ? `${editBirthMonth}-${editBirthDay}` : '')
     const newUsername = editUsername.trim() ? `@${editUsername.trim().toLowerCase().replace(/^@/, '')}` : currentUser.username
-    if (usernameStatus === 'taken') { showError('이미 사용 중인 아이디예요.'); return }
+    if (usernameStatus === 'checking') { showError('아이디 중복 확인 중이에요. 잠시 후 다시 시도해주세요.'); setSaving(false); return }
+    if (usernameStatus === 'taken') { showError('이미 사용 중인 아이디예요.'); setSaving(false); return }
     try {
       // Firestore에 저장
       if (currentUser.id) {
@@ -433,7 +435,7 @@ export default function ProfilePage() {
             ? <img className={styles.avatarImg} src={currentUser.photoURL} alt={currentUser.name} />
             : <div className={styles.avatar}>{currentUser.name.charAt(0)}</div>
           }
-          <div className={styles.avatarEditOverlay}>{photoUploading ? '⏳' : '📷'}</div>
+          <div className={styles.avatarEditOverlay} style={photoUploading ? { opacity: 1 } : undefined}>{photoUploading ? '⏳' : '📷'}</div>
           <input type="file" accept="image/*" ref={photoFileRef} className={styles.hidden} onChange={handlePhotoUpload} />
         </div>
         <div className={styles.info}>

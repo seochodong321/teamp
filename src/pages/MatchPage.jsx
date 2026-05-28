@@ -62,6 +62,7 @@ export default function MatchPage() {
   const [applicantProfile, setApplicantProfile] = useState(null)
   const [applicantProjects, setApplicantProjects] = useState([])
   const [profileLoading, setProfileLoading]     = useState(false)
+  const [profileLoadFailed, setProfileLoadFailed] = useState(false)
 
   // 마감 확인 모달
   const [confirmClose, setConfirmClose] = useState(null) // postId | null
@@ -195,6 +196,7 @@ export default function MatchPage() {
     setApplicantProfile(null)
     setApplicantProjects([])
     setProfileLoading(true)
+    setProfileLoadFailed(false)
     try {
       const [userSnap, projSnap] = await Promise.all([
         getDoc(doc(db, 'users', applicant.userId)),
@@ -209,6 +211,7 @@ export default function MatchPage() {
       )
     } catch {
       setApplicantProfile(null)
+      setProfileLoadFailed(true)
     } finally {
       setProfileLoading(false)
     }
@@ -764,6 +767,8 @@ export default function MatchPage() {
                   </a>
                 )}
               </div>
+            ) : profileLoadFailed ? (
+              <p className={styles.profileEmpty}>프로필을 불러오지 못했어요. 네트워크를 확인해주세요.</p>
             ) : (
               <p className={styles.profileEmpty}>프로필 정보가 없어요</p>
             )}

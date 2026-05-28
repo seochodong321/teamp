@@ -113,7 +113,10 @@
 .pollSendBtn { align-self: flex-end; padding: 7px 18px; background: var(--primary); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 
 /* 입력창 */
-.inputArea { flex-shrink: 0; display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--bg); position: relative; }
+.inputArea { flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; padding: 6px 14px 10px; border-top: 1px solid var(--border); background: var(--bg); position: relative; }
+.inputRow  { display: flex; align-items: flex-end; gap: 8px; }
+.inputHint { font-size: 11px; color: var(--text-quaternary); text-align: right; padding-right: 2px; }
+@media (max-width: 768px) { .inputHint { display: none; } }
 .toolbarWrap { position: relative; }
 .toolBtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); font-size: 18px; font-weight: 300; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; transition: all 0.15s; background: var(--bg); }
 .toolBtn:hover, .toolBtnActive { border-color: var(--border-strong); color: var(--text); background: var(--bg-secondary); }
@@ -261,7 +264,17 @@
 .ppAffiliation { font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ppOneliner { font-size: 12px; color: var(--text-secondary); line-height: 1.55; font-style: italic; border-left: 2px solid var(--border); padding-left: 8px; }
-.ppLoading { font-size: 12px; color: var(--text-tertiary); }
+.ppLoading { font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; }
+.ppSpinner {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: ppSpin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes ppSpin { to { transform: rotate(360deg); } }
 .ppShared { font-size: 11px; color: var(--text-tertiary); background: var(--bg-secondary); border-radius: 6px; padding: 4px 8px; }
 
 .ppTeamfolio { font-size: 11px; font-weight: 600; color: var(--primary); text-align: center; }

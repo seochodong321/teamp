@@ -51,6 +51,18 @@ function linkify(text) {
 
 const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
 
+function calcPollPcts(options, total) {
+  if (total === 0) return options.map(() => 0)
+  const raw    = options.map((o) => (o.votes.length / total) * 100)
+  const floors = raw.map(Math.floor)
+  const rem    = 100 - floors.reduce((a, b) => a + b, 0)
+  raw.map((r, i) => ({ d: r - floors[i], i }))
+    .sort((a, b) => b.d - a.d)
+    .slice(0, rem)
+    .forEach(({ i }) => { floors[i]++ })
+  return floors
+}
+
 function ChatImage({ src, alt, className, onClick }) {
   const [broken, setBroken] = React.useState(false)
   if (broken) return (
@@ -323,7 +335,7 @@ export default function ChatPage() {
               </div>
             </div>
             {profilePopup.loading
-              ? <p className={styles.ppLoading}>불러오는 중...</p>
+              ? <p className={styles.ppLoading}><span className={styles.ppSpinner} /> 불러오는 중...</p>
               : pd.oneliner ? <p className={styles.ppOneliner}>"{pd.oneliner}"</p> : null
             }
             {sharedProjects.length > 0 && (
@@ -562,6 +574,7 @@ export default function ChatPage() {
           // 투표
           if (msg.type === 'poll') {
             const total = msg.options.reduce((s, o) => s + o.votes.length, 0)
+            const pcts  = calcPollPcts(msg.options, total)
             return (
               <React.Fragment key={msg.id}>
                 {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
@@ -574,8 +587,8 @@ export default function ChatPage() {
                     </div>
                     <p className={styles.pollQuestion}>{msg.text}</p>
                     <div className={styles.pollOptions}>
-                      {msg.options.map((opt) => {
-                        const pct   = total === 0 ? 0 : Math.round((opt.votes.length / total) * 100)
+                      {msg.options.map((opt, oi) => {
+                        const pct   = pcts[oi]
                         const voted = opt.votes.includes(currentUser.id)
                         return (
                           <button key={opt.id}
@@ -664,36 +677,39 @@ export default function ChatPage() {
         </div>
       ) : (
         <div className={styles.inputArea}>
-          <div className={styles.toolbarWrap}>
+          <div className={styles.inputRow}>
+            <div className={styles.toolbarWrap}>
+              <button
+                className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
+                onClick={() => setShowToolbar(!showToolbar)}>+</button>
+              {showToolbar && (
+                <div className={styles.toolMenu}>
+                  <button className={styles.toolItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
+                    📎 파일 공유
+                  </button>
+                  <button className={styles.toolItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
+                    📊 투표 만들기
+                  </button>
+                </div>
+              )}
+            </div>
+            <textarea
+              ref={textareaRef}
+              className={styles.input}
+              value={text}
+              onChange={handleTextChange}
+              onKeyDown={handleKey}
+              onCompositionStart={() => { isComposing.current = true }}
+              onCompositionEnd={() => { isComposing.current = false }}
+              placeholder="메시지를 입력하세요"
+              rows={1}
+            />
             <button
-              className={`${styles.toolBtn} ${showToolbar ? styles.toolBtnActive : ''}`}
-              onClick={() => setShowToolbar(!showToolbar)}>+</button>
-            {showToolbar && (
-              <div className={styles.toolMenu}>
-                <button className={styles.toolItem} onClick={() => { fileRef.current.click(); setShowToolbar(false) }}>
-                  📎 파일 공유
-                </button>
-                <button className={styles.toolItem} onClick={() => { setMode('poll'); setShowToolbar(false) }}>
-                  📊 투표 만들기
-                </button>
-              </div>
-            )}
+              className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
+              onClick={handleSend} disabled={!text.trim()}>↑</button>
+            <input ref={fileRef} type="file" accept="image/*,*/*" style={{ display: 'none' }} onChange={handleFile} />
           </div>
-          <textarea
-            ref={textareaRef}
-            className={styles.input}
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKey}
-            onCompositionStart={() => { isComposing.current = true }}
-            onCompositionEnd={() => { isComposing.current = false }}
-            placeholder="메시지 입력... (Enter 전송 / Shift+Enter 줄바꿈)"
-            rows={1}
-          />
-          <button
-            className={`${styles.sendBtn} ${!text.trim() ? styles.sendBtnOff : ''} ${sendPulseActive ? styles.sendBtnPulse : ''}`}
-            onClick={handleSend} disabled={!text.trim()}>↑</button>
-          <input ref={fileRef} type="file" accept="image/*,*/*" style={{ display: 'none' }} onChange={handleFile} />
+          <p className={styles.inputHint}>Enter 전송 · Shift+Enter 줄바꿈</p>
         </div>
       )}
     </div>
