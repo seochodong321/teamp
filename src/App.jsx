@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
@@ -379,16 +379,20 @@ export default function App() {
     const uid = useStore.getState().currentUser?.id
     if (!uid) return
 
+    const MAX_WATCHED_ROOMS = 20
     const roomProjectMap = {}
-    const allRoomIds = new Set()
+    // lastMessageAt 기준 최근 활동한 방 우선 최대 20개만 감시
+    const candidateRooms = []
     projects.forEach((project) => {
       ;(project.rooms || []).forEach((room) => {
         if (!room.isDm) {
-          allRoomIds.add(room.id)
           roomProjectMap[room.id] = { projectId: project.id, roomName: room.name }
+          candidateRooms.push({ id: room.id, lastMessageAt: room.lastMessageAt || '' })
         }
       })
     })
+    candidateRooms.sort((a, b) => (b.lastMessageAt > a.lastMessageAt ? 1 : -1))
+    const allRoomIds = new Set(candidateRooms.slice(0, MAX_WATCHED_ROOMS).map((r) => r.id))
 
     // 이미 없어진 방 구독 해제
     Object.keys(msgWatchersRef.current).forEach((roomId) => {
@@ -497,8 +501,16 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <ErrorBoundary>
-      <Suspense fallback={<Spinner />}>
+      <AppRoutes ready={ready} isLoggedIn={isLoggedIn} />
+    </BrowserRouter>
+  )
+}
+
+function AppRoutes({ ready, isLoggedIn }) {
+  const location = useLocation()
+  return (
+    <ErrorBoundary key={location.pathname}>
+      <Suspense fallback={<Spinner size={36} label="불러오는 중..." />}>
         <Routes>
           <Route path="/u/:username" element={<PublicProfilePage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -534,7 +546,6 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
-      </ErrorBoundary>
-    </BrowserRouter>
+    </ErrorBoundary>
   )
 }
