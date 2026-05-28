@@ -9,15 +9,29 @@ import styles from './WrapupPage.module.css'
 export default function WrapupPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
-  const { projects, currentUser, addReflection, addFeedback, checkAndArchive } = useStore()
+  const { projects, currentUser, addReflection, addFeedback, checkAndArchive, updateMemberMemo, showSuccess } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
   const [wrapup, setWrapup] = useState(null)
   const [tab, setTab] = useState('overview')
 
-  // 내 회고
-  const [reflectionText, setReflectionText] = useState('')
+  // 내 회고 (구조화)
+  const [reflection, setReflection] = useState({ q1: '', q2: '', q3: '' })
   const [reflectionSaving, setReflectionSaving] = useState(false)
+
+  // 기여 한 줄 (팀프폴리오용)
+  const myMember = project?.members?.find((m) => m.id === currentUser?.id)
+  const [contributionMemo, setContributionMemo] = useState(myMember?.memo || '')
+  const [memoSaving, setMemoSaving] = useState(false)
+
+  const handleMemoSave = async () => {
+    if (!contributionMemo.trim()) return
+    setMemoSaving(true)
+    try {
+      await updateMemberMemo(projectId, currentUser.id, contributionMemo.trim())
+      showSuccess('팀프폴리오에 기여 내용이 저장됐어요.')
+    } finally { setMemoSaving(false) }
+  }
 
   // 피드백 — 태그 + 한 줄 메시지
   const [feedbackTarget, setFeedbackTarget] = useState(null)
@@ -41,7 +55,13 @@ export default function WrapupPage() {
   useEffect(() => {
     if (!wrapup) return
     const mine = wrapup.reflections?.find((r) => r.userId === currentUser?.id)
-    if (mine) setReflectionText(mine.text)
+    if (!mine) return
+    if (mine.prompts) {
+      setReflection(mine.prompts)
+    } else if (mine.text) {
+      // 레거시 텍스트 → q1에 채워서 표시
+      setReflection({ q1: mine.text, q2: '', q3: '' })
+    }
   }, [wrapup, currentUser?.id])
 
   if (!project) return <div className={styles.notFound}>프로젝트를 찾을 수 없어요</div>
@@ -79,9 +99,9 @@ export default function WrapupPage() {
     wrapup?.feedbacks?.filter((f) => f.toUserId === userId) || []
 
   const handleReflectionSave = async () => {
-    if (!reflectionText.trim()) return
+    if (!reflection.q1.trim() && !reflection.q2.trim() && !reflection.q3.trim()) return
     setReflectionSaving(true)
-    try { await addReflection(wrapup.id, reflectionText.trim()) }
+    try { await addReflection(wrapup.id, reflection) }
     finally { setReflectionSaving(false) }
   }
 
@@ -242,17 +262,46 @@ export default function WrapupPage() {
                 })()}
 
                 <div className={styles.memberSection}>
-                  <h3 className={styles.sectionTitle}>팀원</h3>
-                  {wrapup.members.map((m) => (
-                    <div key={m.userId} className={styles.memberRow}>
-                      <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
-                      <span className={styles.memberName}>{m.name}</span>
-                      <span className={styles.memberRole}>
-                        {m.role === 'leader' ? '👑 리더' : m.role === 'sub-leader' ? '⭐ 부리더' : '팀원'}
-                      </span>
-                    </div>
-                  ))}
+                  <h3 className={styles.sectionTitle}>팀원별 기여</h3>
+                  {(wrapup.memberStats || wrapup.members).map((m) => {
+                    const stats = wrapup.memberStats?.find((s) => s.userId === m.userId) || null
+                    return (
+                      <div key={m.userId} className={styles.memberRow}>
+                        <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
+                        <div className={styles.memberInfo}>
+                          <div className={styles.memberNameRow}>
+                            <span className={styles.memberName}>{m.name}</span>
+                            <span className={styles.memberRole}>
+                              {m.role === 'leader' ? '👑 리더' : m.role === 'sub-leader' ? '⭐ 부리더' : '팀원'}
+                            </span>
+                          </div>
+                          {stats && (
+                            <div className={styles.memberContribBadges}>
+                              {stats.messageCount > 0 && (
+                                <span className={styles.contribBadge}>💬 {stats.messageCount}</span>
+                              )}
+                              {stats.todoCompletedCount > 0 && (
+                                <span className={styles.contribBadge}>✅ {stats.todoCompletedCount}/{stats.todoCount}</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
+
+                {/* 주간 목표 달성률 */}
+                {(wrapup.summary?.weeklyGoalsTotal > 0) && (
+                  <div className={styles.weeklyGoalSummary}>
+                    <h3 className={styles.sectionTitle}>📅 주간 목표 달성</h3>
+                    <p className={styles.statLineText}>
+                      총 <strong>{wrapup.summary.weeklyGoalsTotal}주</strong>의 목표 중{' '}
+                      <strong>{wrapup.summary.weeklyGoalsAchieved}주</strong>를 달성했어요
+                      {' '}({Math.round((wrapup.summary.weeklyGoalsAchieved / wrapup.summary.weeklyGoalsTotal) * 100)}%)
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -334,20 +383,60 @@ export default function WrapupPage() {
             {isMember && (
               <div className={styles.myReflection}>
                 <h3 className={styles.sectionTitle}>내 회고 작성</h3>
-                <textarea
-                  className={styles.reflectionInput}
-                  value={reflectionText}
-                  onChange={(e) => setReflectionText(e.target.value)}
-                  placeholder="이번 프로젝트에서 배운 점, 아쉬운 점, 느낀 점을 자유롭게 적어보세요"
-                  rows={5}
-                />
+                <div className={styles.reflectionPrompts}>
+                  {[
+                    { key: 'q1', emoji: '✅', label: '이번 프로젝트에서 가장 잘 한 점은?', placeholder: '예) 일정을 끝까지 지킨 것, 좋은 팀워크' },
+                    { key: 'q2', emoji: '🔄', label: '아쉬웠던 점, 다음엔 달리 할 것은?', placeholder: '예) 초반 기획이 부족했다, 소통이 더 필요했다' },
+                    { key: 'q3', emoji: '💡', label: '가장 의미 있었던 순간이나 배움은?', placeholder: '예) 처음으로 배포를 해본 것, 갈등 해결 경험' },
+                  ].map(({ key, emoji, label, placeholder }) => (
+                    <div key={key} className={styles.reflectionPromptItem}>
+                      <label className={styles.reflectionPromptLabel}>
+                        <span>{emoji}</span> {label}
+                      </label>
+                      <textarea
+                        className={styles.reflectionInput}
+                        value={reflection[key]}
+                        onChange={(e) => setReflection((prev) => ({ ...prev, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                </div>
                 <button
                   className={styles.saveBtn}
                   onClick={handleReflectionSave}
-                  disabled={!reflectionText.trim() || reflectionSaving}
+                  disabled={!reflection.q1.trim() && !reflection.q2.trim() && !reflection.q3.trim() || reflectionSaving}
                 >
-                  {reflectionSaving ? '저장 중...' : '저장하기'}
+                  {reflectionSaving ? '저장 중...' : '회고 저장하기'}
                 </button>
+              </div>
+            )}
+
+            {isMember && (
+              <div className={styles.contributionSection}>
+                <h3 className={styles.sectionTitle}>팀프폴리오 기여 한 줄</h3>
+                <p className={styles.contributionHint}>
+                  팀프폴리오 프로젝트 카드에 표시돼요 — 내가 이 프로젝트에서 맡은 역할을 간단히 써보세요
+                </p>
+                <div className={styles.contributionRow}>
+                  <input
+                    className={styles.contributionInput}
+                    value={contributionMemo}
+                    onChange={(e) => setContributionMemo(e.target.value.slice(0, 60))}
+                    placeholder="예) 전체 UI 디자인 및 프론트엔드 개발 담당"
+                    maxLength={60}
+                  />
+                  <button
+                    className={styles.saveBtn}
+                    onClick={handleMemoSave}
+                    disabled={!contributionMemo.trim() || memoSaving}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {memoSaving ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+                <span className={styles.contributionCount}>{contributionMemo.length}/60</span>
               </div>
             )}
 
@@ -363,7 +452,22 @@ export default function WrapupPage() {
                       <span className={styles.reflectionAuthor}>{r.name}</span>
                       <span className={styles.reflectionDate}>{r.createdAt?.slice(0, 10)}</span>
                     </div>
-                    <p className={styles.reflectionText}>{r.text}</p>
+                    {r.prompts ? (
+                      <div className={styles.reflectionStructured}>
+                        {[
+                          { emoji: '✅', key: 'q1', label: '잘 한 점' },
+                          { emoji: '🔄', key: 'q2', label: '개선할 점' },
+                          { emoji: '💡', key: 'q3', label: '의미 있었던 순간' },
+                        ].filter(({ key }) => r.prompts[key]?.trim()).map(({ emoji, key, label }) => (
+                          <div key={key} className={styles.reflectionStructuredItem}>
+                            <span className={styles.reflectionStructuredLabel}>{emoji} {label}</span>
+                            <p className={styles.reflectionText}>{r.prompts[key]}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={styles.reflectionText}>{r.text}</p>
+                    )}
                   </div>
                 ))
               )}

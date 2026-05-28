@@ -54,6 +54,29 @@ export const createWrapupSlice = (set, get) => ({
     )[0] || null
     const mostActiveUserName = project.members.find((m) => m.id === mostActiveUserId)?.name || null
 
+    // 멤버별 기여 집계
+    const memberStats = project.members.map((m) => {
+      const assignedTodos = (project.todos || []).filter((t) => {
+        const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
+        return assignees.length === 0 ? false : assignees.includes(m.id)
+      })
+      return {
+        userId:             m.id,
+        name:               m.name,
+        role:               m.role,
+        messageCount:       messageSenderCount[m.id] || 0,
+        todoCount:          assignedTodos.length,
+        todoCompletedCount: assignedTodos.filter((t) => t.status === 'done').length,
+      }
+    })
+    const topTodo = [...memberStats].sort((a, b) => b.todoCompletedCount - a.todoCompletedCount)[0]
+    const mostTodoCompletedUserId   = topTodo?.todoCompletedCount > 0 ? topTodo.userId   : null
+    const mostTodoCompletedUserName = topTodo?.todoCompletedCount > 0 ? topTodo.name     : null
+    // 주간 목표 달성률
+    const weeklyGoals = project.weeklyGoals || []
+    const weeklyGoalsTotal    = weeklyGoals.length
+    const weeklyGoalsAchieved = weeklyGoals.filter((g) => g.achieved).length
+
     // 인사이트 — 활발했던 날
     const dateEntries = Object.entries(messagesByDate)
     const busiestEntry = [...dateEntries].sort((a, b) => b[1].count - a[1].count)[0]
@@ -88,15 +111,16 @@ export const createWrapupSlice = (set, get) => ({
       projectName: project.name,
       projectEmoji: project.emoji || '',
       createdAt: serverTimestamp(),
-      summary: { totalMessages, totalTodos, completedTodos, totalFiles },
+      summary: { totalMessages, totalTodos, completedTodos, totalFiles, weeklyGoalsTotal, weeklyGoalsAchieved },
       highlights: {
         mostActiveUserId, mostActiveUserName,
-        mostTodoCompletedUserId: null, mostTodoCompletedUserName: null,
+        mostTodoCompletedUserId, mostTodoCompletedUserName,
         mostConnectedUserId: null, mostConnectedUserName: null,
         busiestDay,
         latestNightActivity,
         activityTrend,
       },
+      memberStats,
       members: project.members.map((m) => ({ userId: m.id, name: m.name, role: m.role })),
       reflections: [],
       feedbacks: [],
@@ -118,15 +142,27 @@ export const createWrapupSlice = (set, get) => ({
     })
   },
 
-  addReflection: async (wrapupId, text) => {
+  addReflection: async (wrapupId, payload) => {
+    // payload: string(레거시) or { q1, q2, q3 }
     const { currentUser } = get()
+    const isStructured = typeof payload === 'object'
+    const text = isStructured
+      ? [`잘 한 점: ${payload.q1}`, `개선할 점: ${payload.q2}`, `의미 있었던 순간: ${payload.q3}`]
+          .filter((l) => !l.endsWith(': ')).join('\n')
+      : payload
     await runTransaction(db, async (tx) => {
       const ref  = doc(db, 'wrapups', wrapupId)
       const snap = await tx.get(ref)
       if (!snap.exists()) return
       const data = snap.data()
       const reflections = (data.reflections || []).filter((r) => r.userId !== currentUser.id)
-      reflections.push({ userId: currentUser.id, name: currentUser.name, text, createdAt: new Date().toISOString() })
+      reflections.push({
+        userId: currentUser.id,
+        name: currentUser.name,
+        text,
+        prompts: isStructured ? payload : null,
+        createdAt: new Date().toISOString(),
+      })
       tx.update(ref, { reflections })
     })
   },
@@ -173,6 +209,14 @@ export const createWrapupSlice = (set, get) => ({
 
   setWeeklyGoalSchedule: async (projectId, schedule) => {
     await updateDoc(doc(db, 'projects', projectId), { weeklyGoalSchedule: schedule })
+  },
+
+  setWeeklyGoalAchieved: async (projectId, weekKey, achieved) => {
+    await txProject(projectId, (data) => ({
+      weeklyGoals: (data.weeklyGoals || []).map((g) =>
+        g.week === weekKey ? { ...g, achieved } : g
+      ),
+    }))
   },
 
   addWeeklyGoal: async (projectId, text) => {

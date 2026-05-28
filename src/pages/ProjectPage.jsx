@@ -27,7 +27,7 @@ export default function ProjectPage() {
     getProgress, getVisibleRooms, canManage,
     extendProject, endProject,
     isExpired, setCoverImage, updateProjectInfo, blockedUsers,
-    setWeeklyGoalSchedule, addWeeklyGoal, showSuccess, showError,
+    setWeeklyGoalSchedule, addWeeklyGoal, setWeeklyGoalAchieved, showSuccess, showError,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -494,10 +494,23 @@ export default function ProjectPage() {
                   </div>
                 </div>
               )}
-              {thisWeekGoal
-                ? <p className={styles.goalContent}>{thisWeekGoal.text}</p>
-                : <p className={styles.goalEmpty}>아직 이번 주 목표가 없어요{isLeader ? ' — 위에서 작성해보세요' : ''}</p>
-              }
+              {thisWeekGoal ? (
+                <div className={styles.goalContentRow}>
+                  <p className={styles.goalContent}>{thisWeekGoal.text}</p>
+                  <button
+                    className={`${styles.goalAchievedBtn} ${thisWeekGoal.achieved ? styles.goalAchievedOn : ''}`}
+                    onClick={() => {
+                      setWeeklyGoalAchieved(project.id, weekKey, !thisWeekGoal.achieved)
+                      if (!thisWeekGoal.achieved) showSuccess('이번 주 목표를 달성했어요! 🎉')
+                    }}
+                    title="이번 주 목표 달성 여부"
+                  >
+                    {thisWeekGoal.achieved ? '✓ 달성!' : '달성 체크'}
+                  </button>
+                </div>
+              ) : (
+                <p className={styles.goalEmpty}>아직 이번 주 목표가 없어요{isLeader ? ' — 위에서 작성해보세요' : ''}</p>
+              )}
             </div>
             <TodoBoard project={project} currentUser={currentUser} />
           </div>

@@ -214,8 +214,12 @@
 .goalForm { display: flex; flex-direction: column; gap: 8px; }
 .goalTextarea { border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; font-size: 13px; color: var(--text); resize: none; line-height: 1.6; width: 100%; font-family: inherit; }
 .goalTextarea:focus { border-color: var(--primary); background: var(--bg); }
-.goalContent { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; }
+.goalContentRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.goalContent { font-size: 14px; color: var(--text); line-height: 1.7; white-space: pre-wrap; flex: 1; }
 .goalEmpty { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+.goalAchievedBtn { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
+.goalAchievedBtn:hover { border-color: var(--teal); color: var(--teal); }
+.goalAchievedOn { background: var(--teal-light, #D1FAE5); border-color: var(--teal); color: #059669 !important; }
 
 /* 채팅방 */
 .roomList { display: flex; flex-direction: column; gap: 6px; }
