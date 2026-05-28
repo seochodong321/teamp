@@ -4,19 +4,11 @@ import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
+import { relativeTime } from '../utils/dateUtils.js'
 import CreateProjectModal from '../components/CreateProjectModal.jsx'
 import styles from './HomePage.module.css'
 
 const ITEM_ICON = { todo: '✅', event: '📅', milestone: '🏁' }
-function relativeTime(iso) {
-  if (!iso) return ''
-  const diff = Date.now() - new Date(iso).getTime()
-  if (diff < 60000)        return '방금'
-  if (diff < 3600000)      return `${Math.floor(diff / 60000)}분 전`
-  if (diff < 86400000)     return `${Math.floor(diff / 3600000)}시간 전`
-  if (diff < 172800000)    return '어제'
-  return `${Math.floor(diff / 86400000)}일 전`
-}
 
 
 export default function HomePage() {
@@ -517,8 +509,9 @@ export default function HomePage() {
       {collecting.length > 0 && (
         <section>
           <div className={styles.archivedHeader}>
-            <h2 className={styles.sectionTitle}>피드백 수집 중 ({collecting.length})</h2>
-            <button className={styles.archivedToggle} onClick={() => setShowCollecting((v) => !v)}>
+            <h2 className={styles.sectionTitle}>회고 진행 중 ({collecting.length})</h2>
+            <button className={styles.archivedToggle} onClick={() => setShowCollecting((v) => !v)}
+              title={showCollecting ? '목록 접기' : '목록 펼치기'}>
               {showCollecting ? '접기 ∧' : '펼치기 ∨'}
             </button>
           </div>
@@ -555,7 +548,8 @@ export default function HomePage() {
             <h2 className={styles.sectionTitle}>
               완료됨 ({visibleArchived.length})
             </h2>
-            <button className={styles.archivedToggle} onClick={() => setShowArchived((v) => !v)}>
+            <button className={styles.archivedToggle} onClick={() => setShowArchived((v) => !v)}
+              title={showArchived ? '목록 접기' : '목록 펼치기'}>
               {showArchived ? '접기 ∧' : '펼치기 ∨'}
             </button>
           </div>

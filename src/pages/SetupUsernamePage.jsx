@@ -14,6 +14,7 @@ export default function SetupUsernamePage() {
 
   const [username, setUsername]           = useState('')
   const [usernameStatus, setUsernameStatus] = useState('idle') // idle | checking | ok | taken
+  const [usernameSuggestion, setUsernameSuggestion] = useState('')
   const [affiliation, setAffiliation]     = useState('')
   const [birthYear, setBirthYear]         = useState('')
   const [birthMonth, setBirthMonth]       = useState('')
@@ -36,15 +37,27 @@ export default function SetupUsernamePage() {
 
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return 'idle' }
-    if (containsProfanity(val)) { setUsernameStatus('taken'); return 'taken' }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return 'idle' }
+    if (containsProfanity(val)) { setUsernameStatus('taken'); setUsernameSuggestion(''); return 'taken' }
     setUsernameStatus('checking')
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
       const status = snap.empty ? 'ok' : 'taken'
       setUsernameStatus(status)
+      if (status === 'taken') {
+        setUsernameSuggestion('')
+        for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
+          const c = `${val}${s}`.slice(0, 20)
+          if (/^[a-z0-9_]{3,20}$/.test(c)) {
+            const cs = await getDocs(query(collection(db, 'users'), where('username', '==', `@${c}`)))
+            if (cs.empty) { setUsernameSuggestion(c); break }
+          }
+        }
+      } else {
+        setUsernameSuggestion('')
+      }
       return status
-    } catch { setUsernameStatus('idle'); return 'idle' }
+    } catch { setUsernameStatus('idle'); setUsernameSuggestion(''); return 'idle' }
   }
 
   const handleSubmit = async (e) => {
@@ -192,6 +205,13 @@ export default function SetupUsernamePage() {
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                   </span>
                   <span style={{ fontSize: 11, color: 'var(--coral)', fontWeight: 700 }}>이미 사용 중</span>
+                  {usernameSuggestion && (
+                    <button type="button"
+                      style={{ fontSize: 11, fontWeight: 600, color: 'var(--primary)', background: 'var(--primary-light)', border: 'none', borderRadius: 4, padding: '2px 7px', cursor: 'pointer' }}
+                      onClick={() => { setUsername(usernameSuggestion); checkUsername(usernameSuggestion) }}>
+                      @{usernameSuggestion} 사용하기
+                    </button>
+                  )}
                 </span>
               )}
               {usernameStatus === 'checking' && (

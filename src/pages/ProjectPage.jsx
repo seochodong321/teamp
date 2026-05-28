@@ -238,7 +238,7 @@ export default function ProjectPage() {
 
       {/* ─── 커버 이미지 피커 ─── */}
       {showCoverPicker && (
-        <div className={styles.backdrop} onClick={() => setShowCoverPicker(false)}>
+        <div className={styles.backdrop} onClick={() => !coverUploading && setShowCoverPicker(false)}>
           <div className={styles.coverPickerModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.coverPickerHeader}>
               <span className={styles.modalTitle}>커버 이미지</span>

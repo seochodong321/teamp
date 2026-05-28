@@ -154,6 +154,11 @@ export default function ChatPage() {
     return () => document.removeEventListener('click', close)
   }, [profilePopup])
 
+  // 방 진입 즉시 미읽음 배지 초기화 (메시지 로드 전에도)
+  useEffect(() => {
+    markAsRead(roomId)
+  }, [roomId, markAsRead])
+
   // 새 메시지 → 스크롤 (nearBottom일 때만) + 읽음 처리
   useEffect(() => {
     if (!bottomRef.current) return
@@ -361,7 +366,7 @@ export default function ChatPage() {
 
       {/* DM 나가기 확인 모달 */}
       {showLeave && (
-        <div className={styles.leaveBackdrop} onClick={() => setShowLeave(false)}>
+        <div className={styles.leaveBackdrop} onClick={() => !leaving && setShowLeave(false)}>
           <div className={styles.leaveModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.leaveTitle}>대화방을 나갈까요?</p>
             <p className={styles.leaveDesc}>내 메시지가 모두 삭제되고, 상대방에게 퇴장 알림이 전송돼요.</p>

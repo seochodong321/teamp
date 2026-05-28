@@ -378,6 +378,8 @@
 .inputStatusIconTaken { background: var(--coral); }
 .inputStatusTextOk { font-size: 11px; font-weight: 700; color: var(--teal); }
 .inputStatusTextTaken { font-size: 11px; font-weight: 700; color: var(--coral); }
+.usernameSuggestBtn { font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: none; border-radius: 4px; padding: 2px 7px; cursor: pointer; white-space: nowrap; transition: opacity 0.15s; }
+.usernameSuggestBtn:hover { opacity: 0.8; }
 .inputSpinner { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); border-top-color: var(--primary); animation: spin 0.7s linear infinite; }
 .birthRow { display: flex; gap: 8px; }
 .birthYear { flex: 1.2; }

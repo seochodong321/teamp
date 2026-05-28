@@ -551,7 +551,7 @@ export default function MatchPage() {
 
       {/* 모집글 작성 모달 */}
       {showForm && (
-        <div className={styles.backdrop} onClick={() => setShowForm(false)}>
+        <div className={styles.backdrop} onClick={() => !formSubmitting && setShowForm(false)}>
           <div className={styles.formModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.formModalHeader}>
               <h3 className={styles.formModalTitle}>팀원 모집글 작성</h3>
@@ -682,7 +682,7 @@ export default function MatchPage() {
 
       {/* 지원하기 모달 */}
       {showApplyModal && applyTarget && (
-        <div className={styles.backdrop} onClick={() => setShowApplyModal(false)}>
+        <div className={styles.backdrop} onClick={() => !applying && setShowApplyModal(false)}>
           <div className={styles.applyModal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.formModalHeader}>
               <h3 className={styles.formModalTitle}>지원하기</h3>

@@ -66,6 +66,7 @@ export default function ProfilePage() {
   const [editName, setEditName]                 = useState('')
   const [editUsername, setEditUsername]         = useState('')
   const [usernameStatus, setUsernameStatus]     = useState('idle') // idle | checking | ok | taken
+  const [usernameSuggestion, setUsernameSuggestion] = useState('')
   const [editAffiliation, setEditAffiliation]   = useState('')
   const [editPhone, setEditPhone]               = useState('')
   const [editOneliner, setEditOneliner]         = useState('')
@@ -199,13 +200,26 @@ export default function ProfilePage() {
   const checkUsername = async (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
     const current = (currentUser.username || '').replace(/^@/, '')
-    if (val === current) { setUsernameStatus('ok'); return }
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); return }
+    if (val === current) { setUsernameStatus('ok'); setUsernameSuggestion(''); return }
+    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return }
     setUsernameStatus('checking')
     try {
       const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      setUsernameStatus(snap.empty ? 'ok' : 'taken')
-    } catch { setUsernameStatus('idle') }
+      if (snap.empty) {
+        setUsernameStatus('ok')
+        setUsernameSuggestion('')
+      } else {
+        setUsernameStatus('taken')
+        const suffixes = ['_', '1', '2', String(new Date().getFullYear()).slice(2)]
+        for (const s of suffixes) {
+          const candidate = `${val}${s}`.slice(0, 20)
+          if (/^[a-z0-9_]{3,20}$/.test(candidate)) {
+            const c = await getDocs(query(collection(db, 'users'), where('username', '==', `@${candidate}`)))
+            if (c.empty) { setUsernameSuggestion(candidate); break }
+          }
+        }
+      }
+    } catch { setUsernameStatus('idle'); setUsernameSuggestion('') }
   }
 
   const openEditModal = () => {
@@ -353,6 +367,14 @@ export default function ProfilePage() {
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
                       </span>
                       <span className={styles.inputStatusTextTaken}>이미 사용 중</span>
+                      {usernameSuggestion && (
+                        <button
+                          type="button"
+                          className={styles.usernameSuggestBtn}
+                          onClick={() => { setEditUsername(usernameSuggestion); checkUsername(usernameSuggestion) }}>
+                          @{usernameSuggestion} 사용하기
+                        </button>
+                      )}
                     </span>
                   )}
                   {usernameStatus === 'checking' && <span className={styles.inputSpinner} />}
