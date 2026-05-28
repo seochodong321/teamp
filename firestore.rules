@@ -9,11 +9,25 @@ service cloud.firestore {
     // ──────────────────────────────────────────────
     // users
     //   읽기: 인증된 모든 유저
-    //   쓰기: 본인 또는 어드민
+    //   생성: 본인 (isAdmin·plan 세팅 불가 — 가입 시 기본값만 허용)
+    //   수정: 본인(plan은 student로만 변경 가능, isAdmin 변경 불가) 또는 어드민
+    //   삭제: 어드민만
     // ──────────────────────────────────────────────
     match /users/{userId} {
-      allow read:  if request.auth != null;
-      allow write: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.auth.uid == userId &&
+        !request.resource.data.keys().hasAny(['isAdmin']) &&
+        (!request.resource.data.keys().hasAny(['plan']) ||
+          request.resource.data.plan == 'free');
+      allow update: if (
+        request.auth != null &&
+        request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) &&
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) ||
+          request.resource.data.plan == 'student')
+      ) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ──────────────────────────────────────────────
@@ -154,11 +168,15 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────
     // reports
-    //   생성: 로그인된 모든 유저 (신고 접수)
+    //   생성: 로그인된 유저 — reporterId 본인 검증 + 사유·상세 길이 제한
     //   읽기/수정/삭제: 어드민만
     // ──────────────────────────────────────────────
     match /reports/{reportId} {
-      allow create: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.reason in ['illegal', 'spam', 'false', 'hate', 'other'] &&
+        request.resource.data.detail is string &&
+        request.resource.data.detail.size() <= 300;
       allow read, update, delete: if isAdmin();
     }
 
