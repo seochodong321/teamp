@@ -103,6 +103,7 @@ export default function ChatPage() {
   const [leaving, setLeaving]             = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const [showMembersModal, setShowMembersModal] = useState(false)
+  const [reinviteDone, setReinviteDone] = useState(false)
 
   // ─── refs ──────────────────────────────────────────────────────
   const isComposing   = useRef(false)
@@ -265,8 +266,9 @@ export default function ChatPage() {
   }
 
   const handleReinvite = async () => {
-    // 같은 방에 상대방을 다시 초대 — 새 방이 아닌 기존 방 재활성화
     await reinviteToDm(roomId)
+    setReinviteDone(true)
+    setTimeout(() => setReinviteDone(false), 2000)
   }
 
   const handleLeaveDm = async () => {
@@ -511,8 +513,8 @@ export default function ChatPage() {
                   <div className={styles.systemMsg}>
                     <span>{msg.text}</span>
                     {isLeaveMsg && (
-                      <button className={styles.reinviteBtn} onClick={handleReinvite}>
-                        다시 초대하기
+                      <button className={styles.reinviteBtn} onClick={handleReinvite} disabled={reinviteDone}>
+                        {reinviteDone ? '✓ 초대 완료' : '다시 초대하기'}
                       </button>
                     )}
                   </div>
@@ -673,7 +675,9 @@ export default function ChatPage() {
       ) : otherLeft ? (
         <div className={styles.chatBlockedBar}>
           <span>{otherUserName}님이 대화를 나갔어요.</span>
-          <button className={styles.reinviteBarBtn} onClick={handleReinvite}>다시 초대하기</button>
+          <button className={styles.reinviteBarBtn} onClick={handleReinvite} disabled={reinviteDone}>
+            {reinviteDone ? '✓ 초대 완료' : '다시 초대하기'}
+          </button>
         </div>
       ) : (
         <div className={styles.inputArea}>

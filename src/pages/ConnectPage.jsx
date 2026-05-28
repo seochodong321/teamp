@@ -114,7 +114,9 @@ export default function ConnectPage() {
                 <div className={styles.sharedSection}>
                   <p className={styles.sharedLabel}>함께한 프로젝트</p>
                   {loadingProfile ? (
-                    <p className={styles.sharedEmpty}>불러오는 중...</p>
+                    <p className={styles.sharedEmpty}>
+                      <span className={styles.loadingSpinner} /> 불러오는 중...
+                    </p>
                   ) : shared.length === 0 ? (
                     <p className={styles.sharedEmpty}>함께한 프로젝트 정보가 없어요</p>
                   ) : (

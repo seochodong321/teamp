@@ -651,9 +651,8 @@ export default function ProfilePage() {
                           : `"${p.name}" 프로젝트에서 나갈까요?`
                         if (await showConfirm(msg)) leaveOrDeleteProject(p.id)
                       }}
-                      title="삭제 / 나가기"
                     >
-                      🗑
+                      {p.members.find((m) => m.id === currentUser.id)?.role === 'leader' ? '삭제' : '나가기'}
                     </button>
                   </div>
                 </div>

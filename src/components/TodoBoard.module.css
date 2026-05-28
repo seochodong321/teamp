@@ -90,7 +90,10 @@
 }
 .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); border-color: var(--border-strong); }
 .card:active { cursor: grabbing; }
-.cardOverdue { border-left: 3px solid var(--coral) !important; }
+.cardOverdue {
+  border-left: 3px solid var(--coral) !important;
+  background: var(--coral-soft, #FFF5F5) !important;
+}
 
 .cardTop { display: flex; align-items: center; justify-content: space-between; }
 .priority { font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: var(--radius-full); letter-spacing: 0.02em; }

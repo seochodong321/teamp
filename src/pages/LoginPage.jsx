@@ -46,6 +46,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [error, setError] = useState('')
+  const [errorField, setErrorField] = useState(null) // 'email' | 'password' | null
   const [loading, setLoading]         = useState(false)
   const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
@@ -241,6 +242,11 @@ export default function LoginPage() {
       }
       setEmailAlreadyInUse(false)
       if (err.code === 'auth/too-many-requests') { setShowForgot(true) }
+      const emailErrors = new Set(['auth/invalid-email', 'auth/user-not-found', 'auth/email-already-in-use'])
+      const passErrors  = new Set(['auth/wrong-password', 'auth/weak-password'])
+      if (emailErrors.has(err.code))      setErrorField('email')
+      else if (passErrors.has(err.code))  setErrorField('password')
+      else                                setErrorField('email') // invalid-credential 등 — 둘 다 표시
       const map = {
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
         'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
@@ -333,12 +339,18 @@ export default function LoginPage() {
 
             <div className={styles.field}>
               <label className={styles.label}>이메일 *</label>
-              <input className={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input
+                className={`${styles.input} ${errorField === 'email' ? styles.inputError : ''}`}
+                type="email" value={email}
+                onChange={(e) => { setEmail(e.target.value); setErrorField(null); setError('') }}
                 placeholder="example@email.com" autoComplete="email" disabled={loading} />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>비밀번호 *</label>
-              <input className={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              <input
+                className={`${styles.input} ${errorField === 'password' ? styles.inputError : ''}`}
+                type="password" value={password}
+                onChange={(e) => { setPassword(e.target.value); setErrorField(null); setError('') }}
                 placeholder="8자 이상" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={loading} />
               {mode === 'signup' && password.length > 0 && (() => {
                 const s = getPasswordStrength(password)

@@ -659,6 +659,16 @@ export default function MatchPage() {
               </div>
             </div>
             {formError && <p className={styles.formError}>{formError}</p>}
+            {(!formProject || !formTitle.trim() || !formDeadline) && (
+              <p className={styles.formHint}>
+                {[
+                  !formProject    && '프로젝트 선택',
+                  !formTitle.trim() && '모집 제목',
+                  !formDeadline   && '모집 기한',
+                ].filter(Boolean).join(' · ')}
+                {' '}을(를) 입력해야 등록할 수 있어요.
+              </p>
+            )}
             <div className={styles.formFooter}>
               <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>취소</button>
               <button className={styles.submitBtn} onClick={handleCreatePost}

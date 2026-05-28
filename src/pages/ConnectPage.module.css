@@ -72,7 +72,9 @@
 /* 함께한 프로젝트 */
 .sharedSection { width: 100%; margin-top: 10px; }
 .sharedLabel { font-size: 11px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-.sharedEmpty { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 10px 0; }
+.sharedEmpty { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 10px 0; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.loadingSpinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .sharedList { display: flex; flex-direction: column; gap: 6px; }
 .sharedItem { display: flex; align-items: center; gap: 10px; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 9px 12px; }
 .sharedEmoji { font-size: 18px; flex-shrink: 0; }

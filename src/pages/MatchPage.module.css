@@ -170,6 +170,7 @@
 .skillTagsMt { margin-top: 6px; }
 .skillTagsMtMd { margin-top: 8px; }
 .formError { color: var(--coral); font-size: 12px; padding: 0 20px 8px; margin: 0; }
+.formHint  { color: var(--text-tertiary); font-size: 12px; padding: 0 20px 8px; margin: 0; }
 .applyNoteField { margin-top: 16px; }
 .formLabelOptional { color: var(--text-tertiary); font-weight: 400; }
 .charCount { font-size: 11px; color: var(--text-tertiary); text-align: right; margin-top: 4px; }

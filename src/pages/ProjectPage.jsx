@@ -134,6 +134,7 @@ export default function ProjectPage() {
         projectStartDate: settingStart, projectEndDate: settingEnd,
       })
       setShowSettings(false)
+      showSuccess('프로젝트 설정이 저장됐어요.')
     } finally {
       setSettingSaving(false)
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import ProfileSelector from './ProfileSelector.jsx'
@@ -80,14 +80,17 @@ export default function CreateProjectModal({ onClose }) {
   const [linkCopied, setLinkCopied]         = useState(false)
   const [showProfileSel, setShowProfileSel] = useState(false)
   const [pendingData, setPendingData]       = useState(null)
+  const bodyRef = useRef(null)
 
   const finalCategory = category === '기타' ? (customCategory.trim() || '기타') : category
 
+  const scrollBodyTop = () => bodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+
   const goNext = async () => {
     if (step === 0) {
-      if (!emoji) { showError('이모지를 골라주세요!'); return }
-      if (!name.trim() || !projectStartDate || !projectEndDate) { showError('이름, 시작일, 종료일을 입력해주세요.'); return }
-      if (projectStartDate && projectEndDate && projectEndDate < projectStartDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); return }
+      if (!emoji) { showError('이모지를 골라주세요!'); scrollBodyTop(); return }
+      if (!name.trim() || !projectStartDate || !projectEndDate) { showError('이름, 시작일, 종료일을 입력해주세요.'); scrollBodyTop(); return }
+      if (projectStartDate && projectEndDate && projectEndDate < projectStartDate) { setDateError('종료일은 시작일보다 늦어야 해요.'); scrollBodyTop(); return }
       setDateError('')
     }
     if (step === 1) {
@@ -180,7 +183,7 @@ export default function CreateProjectModal({ onClose }) {
           </div>
 
           {/* 바디 */}
-          <div className={styles.body}>
+          <div className={styles.body} ref={bodyRef}>
             {step === 0 && (
               <div className={styles.form}>
                 <div className={styles.field}>
