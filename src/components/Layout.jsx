@@ -122,6 +122,8 @@ export default function Layout() {
   // 현재 경로가 해당 prefix로 시작하는지 확인
   const isAt = (prefix) => location.pathname.startsWith(prefix)
 
+  const isChatPage = /\/project\/[^/]+\/chat\/[^/]+/.test(location.pathname)
+
   return (
     <div className={styles.shell}>
       {mobileOpen && <div className={styles.overlay} onClick={close} />}
@@ -333,8 +335,8 @@ export default function Layout() {
           </span>
         </footer>
 
-        {/* ── 모바일 하단 탭바 ── */}
-        <nav className={styles.mobileTabBar}>
+        {/* ── 모바일 하단 탭바 — 채팅 페이지에서는 숨김 ── */}
+        <nav className={`${styles.mobileTabBar} ${isChatPage ? styles.mobileTabBarHidden : ''}`}>
           {/* 홈 */}
           <NavLink to="/home" className={({ isActive }) => `${styles.mobileTab} ${isActive ? styles.mobileTabActive : ''}`}>
             <svg className={styles.mobileTabIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">

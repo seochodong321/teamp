@@ -393,6 +393,7 @@
   .mobileLogo { font-size: 17px; }
   .createBtn { display: none; }
   .footer { display: none; }
+  .mobileTabBarHidden { display: none !important; }
 }
 
 .mobileTab {
