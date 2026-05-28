@@ -23,8 +23,9 @@ export default function ConnectPage() {
     })
   }, [connects])
 
+  const q = search.toLowerCase()
   const filtered = uniqueContacts.filter((c) =>
-    c.name.includes(search) || c.affiliation?.includes(search)
+    c.name.toLowerCase().includes(q) || c.affiliation?.toLowerCase().includes(q)
   )
 
   // 로컬 projects 스토어에서 함께한 프로젝트 목록

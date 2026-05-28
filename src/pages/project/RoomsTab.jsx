@@ -55,7 +55,7 @@ export default function RoomsTab({ project, currentUser, visibleRooms, iCanManag
                   <span className={styles.roomName}>{room.isDm ? room.name : `# ${room.name}`}</span>
                   {unread > 0 ? <span className={styles.unreadBadge}>{unread}</span> : <span className={styles.roomTime}>{room.time}</span>}
                 </div>
-                <span className={styles.roomLast}>{room.lastMessage}</span>
+                <span className={styles.roomLast}>{room.lastMessage || '아직 메시지가 없어요'}</span>
               </div>
             </div>
           )

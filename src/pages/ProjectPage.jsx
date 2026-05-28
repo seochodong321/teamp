@@ -27,7 +27,7 @@ export default function ProjectPage() {
     getProgress, getVisibleRooms, canManage,
     extendProject, endProject,
     isExpired, setCoverImage, updateProjectInfo, blockedUsers,
-    setWeeklyGoalSchedule, addWeeklyGoal,
+    setWeeklyGoalSchedule, addWeeklyGoal, showSuccess,
   } = useStore()
 
   const project = projects.find((p) => p.id === projectId)
@@ -472,6 +472,7 @@ export default function ProjectPage() {
                   <button className={styles.weeklyGoalSave} onClick={() => {
                     setWeeklyGoalSchedule(project.id, { day: scheduleDay, time: scheduleTime })
                     setShowScheduleForm(false)
+                    showSuccess(`매주 ${scheduleDay} ${scheduleTime} 목표 알림이 설정됐어요.`)
                   }}>저장</button>
                 </div>
               )}
@@ -481,7 +482,10 @@ export default function ProjectPage() {
                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                     <button className={styles.weeklyGoalBtn} onClick={() => setShowGoalForm(false)}>취소</button>
                     <button className={styles.weeklyGoalSave} onClick={() => {
-                      if (goalText.trim()) addWeeklyGoal(project.id, goalText.trim())
+                      if (goalText.trim()) {
+                        addWeeklyGoal(project.id, goalText.trim())
+                        showSuccess('이번 주 목표가 저장됐어요.')
+                      }
                       setShowGoalForm(false)
                     }}>저장</button>
                   </div>

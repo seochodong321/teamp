@@ -51,6 +51,16 @@ function linkify(text) {
 
 const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
 
+function ChatImage({ src, alt, className, onClick }) {
+  const [broken, setBroken] = React.useState(false)
+  if (broken) return (
+    <div className={className} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'var(--bg-secondary)', borderRadius: 8, fontSize: 12, color: 'var(--text-tertiary)', cursor: 'default' }}>
+      🖼️ <span>이미지를 불러올 수 없어요</span>
+    </div>
+  )
+  return <img src={src} alt={alt} className={className} loading="lazy" decoding="async" onError={() => setBroken(true)} onClick={onClick} />
+}
+
 export default function ChatPage() {
   const { projectId, roomId } = useParams()
   const navigate = useNavigate()
@@ -181,13 +191,19 @@ export default function ChatPage() {
     }
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!text.trim() || isSending.current) return
     isSending.current = true
-    sendMessage(roomId, text.trim())
+    const msg = text.trim()
     setText('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     setSendPulse(true)
+    try {
+      await sendMessage(roomId, msg)
+    } catch {
+      showError('메시지 전송에 실패했어요. 다시 시도해주세요.')
+      setText(msg)
+    }
     setTimeout(() => { setSendPulse(false); isSending.current = false }, 400)
   }
 
@@ -504,8 +520,7 @@ export default function ChatPage() {
                   {avatarEl}
                   <div className={styles.bubbleWrap}>
                     {nameEl}
-                    <img src={msg.fileUrl} alt={msg.text} className={styles.chatImg}
-                      loading="lazy" decoding="async"
+                    <ChatImage src={msg.fileUrl} alt={msg.text} className={styles.chatImg}
                       onClick={() => setLightbox({ url: msg.fileUrl, name: msg.text })} />
                     {(timeEl || (isMine && readCount > 0)) && (
                       <div className={styles.timeRow}>
@@ -639,7 +654,7 @@ export default function ChatPage() {
       {/* 입력창 */}
       {iBlocked ? (
         <div className={styles.chatBlockedBar}>
-          <span>차단한 사용자예요.</span>
+          <span>내가 차단한 사용자예요.</span>
           <button className={styles.unblockBtn} onClick={() => unblockUser(otherUserId)}>차단 해제</button>
         </div>
       ) : otherLeft ? (

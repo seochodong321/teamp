@@ -19,7 +19,7 @@ export default function ProfilePage() {
   )
 
   // 나의 여정 통계
-  const [flowerSenders, setFlowerSenders] = useState(() => currentUser?.flowerSenderUids?.length ?? currentUser?.flowerSenderCount ?? 0)
+  const [flowerSenders, setFlowerSenders] = useState(0)
   const [flowerTags, setFlowerTags] = useState({})
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
@@ -77,6 +77,7 @@ export default function ProfilePage() {
   const [editingMemo, setEditingMemo] = useState(null)
   const [memoText, setMemoText]       = useState('')
   const [copied, setCopied]           = useState(false)
+  const [copiedLink, setCopiedLink]   = useState(false)
 
   // 서브 프로필 관리 상태
   const [showProfileForm, setShowProfileForm] = useState(false)
@@ -325,7 +326,7 @@ export default function ProfilePage() {
                 <label className={styles.editLabel}>이름 *</label>
                 <input className={styles.editInput} value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="실명 또는 닉네임" />
+                  placeholder="실명 또는 닉네임" disabled={saving} />
               </div>
 
               <div className={styles.editField}>
@@ -335,7 +336,7 @@ export default function ProfilePage() {
                   <input className={`${styles.editInput} ${styles.editInputPadded}`}
                     value={editUsername}
                     onChange={(e) => { setEditUsername(e.target.value); checkUsername(e.target.value) }}
-                    placeholder="나만의 아이디" maxLength={20} />
+                    placeholder="나만의 아이디" maxLength={20} disabled={saving} />
                   {usernameStatus === 'ok' && (
                     <span className={styles.inputStatusRight}>
                       <span className={`${styles.inputStatusIcon} ${styles.inputStatusIconOk}`}>
@@ -363,7 +364,7 @@ export default function ProfilePage() {
                 </label>
                 <input className={styles.editInput} value={editOneliner}
                   onChange={(e) => setEditOneliner(e.target.value.slice(0, 50))}
-                  placeholder="예) 무엇이든 만들어보고 싶은 디자이너" maxLength={50} />
+                  placeholder="예) 무엇이든 만들어보고 싶은 디자이너" maxLength={50} disabled={saving} />
                 <span className={styles.editCount}>{editOneliner.length}/50</span>
               </div>
 
@@ -371,14 +372,14 @@ export default function ProfilePage() {
                 <label className={styles.editLabel}>소속</label>
                 <input className={styles.editInput} value={editAffiliation}
                   onChange={(e) => setEditAffiliation(e.target.value)}
-                  placeholder="예) OO대학교 컴퓨터공학과" />
+                  placeholder="예) OO대학교 컴퓨터공학과" disabled={saving} />
               </div>
 
               <div className={styles.editField}>
                 <label className={styles.editLabel}>핸드폰 번호</label>
                 <input className={styles.editInput} value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="010-0000-0000" type="tel" />
+                  placeholder="010-0000-0000" type="tel" disabled={saving} />
               </div>
 
               <div className={styles.editField}>
@@ -557,7 +558,9 @@ export default function ProfilePage() {
                 <button className={styles.tfCopyBtn} onClick={() => {
                   const url = `${window.location.origin}/u/${(currentUser.username || '').replace('@', '')}`
                   navigator.clipboard.writeText(url).catch(() => {})
-                }}>🔗 복사</button>
+                  setCopiedLink(true)
+                  setTimeout(() => setCopiedLink(false), 2000)
+                }}>{copiedLink ? '✓ 복사됨' : '🔗 복사'}</button>
                 <a
                   href={`/u/${(currentUser.username || '').replace('@', '')}`}
                   target="_blank" rel="noreferrer"
