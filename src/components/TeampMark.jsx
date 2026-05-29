@@ -32,11 +32,10 @@ export default function TeampMark({ size = 40 }) {
 
       <g transform="translate(256 296) scale(0.6)">
         <g transform="skewX(-10)">
-        <path d={P} transform="translate(8.5 8.5)" fill="#191247" />
-        <path d={P} transform="translate(6.8 6.8)" fill="#191247" />
-        <path d={P} transform="translate(5.1 5.1)" fill="#191247" />
-        <path d={P} transform="translate(3.4 3.4)" fill="#191247" />
-        <path d={P} transform="translate(1.7 1.7)" fill="#191247" />
+          {/* 입체 그림자 — 동일 path를 대각선으로 5겹 쌓아 압출 효과 */}
+          {[8.5, 6.8, 5.1, 3.4, 1.7].map((o) => (
+            <path key={o} d={P} transform={`translate(${o} ${o})`} fill="#191247" />
+          ))}
           <path d={P} fill="none" stroke="#191247" strokeWidth="48" strokeLinejoin="round" strokeLinecap="round" />
           <path d={P} fill="none" stroke="#D2CBFF" strokeWidth="34" strokeLinejoin="round" strokeLinecap="round" />
           <path d={P} fill="#FFFFFF" stroke="#191247" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round" paintOrder="stroke" />
