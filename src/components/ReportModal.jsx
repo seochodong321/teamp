@@ -26,6 +26,7 @@ export default function ReportModal({ type, targetId, targetName, onClose }) {
 
   const handleSubmit = async () => {
     if (!reason) return
+    if (!currentUser) { showError('신고하려면 로그인이 필요해요.'); return }
     setSending(true)
     try {
       await addDoc(collection(db, 'reports'), {

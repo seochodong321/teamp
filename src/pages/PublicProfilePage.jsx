@@ -59,7 +59,7 @@ export default function PublicProfilePage() {
         affiliation:      raw.affiliation      || '',
         photoURL:         raw.photoURL         || null,
         flowerTagSummary:  raw.flowerTagSummary  || {},
-        flowerSenderUids:  raw.flowerSenderUids  || [],
+        flowerSenderUids:  raw.flowerSenderUids  ?? null,
         flowerSenderCount: raw.flowerSenderCount  || 0,
         teamfolioSettings: {
           published:    (raw.teamfolioSettings?.published)    !== false,
