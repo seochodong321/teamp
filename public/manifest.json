@@ -49,7 +49,7 @@
       "name": "새 프로젝트",
       "short_name": "새 프로젝트",
       "description": "새 프로젝트 만들기",
-      "url": "/create",
+      "url": "/home?new=1",
       "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]

@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useLayoutEffect, useCallback } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState, useMemo, useLayoutEffect, useCallback, useEffect } from 'react'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
@@ -104,6 +104,17 @@ export default function HomePage() {
 
   const [showModal, setShowModal]           = useState(false)
   const [showPinPicker, setShowPinPicker]   = useState(false)
+
+  // PWA 단축아이콘 '새 프로젝트'(/home?new=1) → 생성 모달 자동 오픈
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowModal(true)
+      searchParams.delete('new')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
   const [showCollecting, setShowCollecting] = useState(true)
   const [showArchived, setShowArchived]     = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
