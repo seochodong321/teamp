@@ -94,6 +94,7 @@ export default function CreateProjectModal({ onClose }) {
       setDateError('')
     }
     if (step === 1) {
+      if (isLimitReached) { showError('프로젝트 한도에 도달했어요. 기존 프로젝트를 삭제하거나 Pro 플랜으로 업그레이드해주세요.'); return }
       const data = { name, emoji, purpose, category: finalCategory, projectStartDate, projectEndDate, endTime: endTime || null, roomNames }
       if (profiles.length > 0) { setPendingData(data); setShowProfileSel(true); return }
       await doCreate(data, 'default', null)
@@ -117,7 +118,7 @@ export default function CreateProjectModal({ onClose }) {
   const appOrigin = import.meta.env.VITE_APP_URL || window.location.origin
   const inviteLink = created ? `${appOrigin}/join/${created.id}` : ''
 
-  if (isLimitReached) return (
+  if (isLimitReached && !created) return (
     <div className={styles.backdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>

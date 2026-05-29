@@ -104,12 +104,15 @@
   /* iOS 줌 방지 */
   .editInput { font-size: 16px; }
   .memoInput { font-size: 16px; }
+
+  /* 팀프폴리오 URL 한 줄 유지 */
+  .tfCopyBtn, .tfOpenBtn { padding: 4px 8px; font-size: 11px; }
 }
 @media (max-width: 480px) {
   .journeyGrid { grid-template-columns: repeat(2, 1fr); }
   .profileCard { flex-direction: column; align-items: center; text-align: center; }
   .info { align-items: center; }
-  .oneliner { text-align: center; }
+  .oneliner { text-align: center; align-self: center; } /* align-self: flex-start 전역값 덮어씀 */
 }
 .journeyItem {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -554,12 +557,12 @@
 .tfUrlRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 6px;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  flex-wrap: wrap;
+  overflow: hidden;
 }
 .tfUrl {
   flex: 1;
