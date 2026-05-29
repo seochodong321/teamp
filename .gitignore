@@ -6,3 +6,8 @@ dist
 public/firebase-messaging-sw.js
 .DS_Store
 **/.DS_Store
+
+# 개발용 미리보기·스크래치 (배포 제외)
+public/*-preview.html
+public/brand-update.html
+public/icon-preview-copy.svg
