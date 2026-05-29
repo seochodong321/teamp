@@ -261,6 +261,8 @@ export const createProjectSlice = (set, get) => ({
     if (isLeader && otherLeaders.length === 0 && otherMembers.length > 0) {
       return { error: '리더가 혼자면 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.' }
     }
+    // 낙관적 업데이트 — Firestore onSnapshot 도착 전에도 즉시 카운트 반영
+    set((s) => ({ projects: s.projects.filter((p) => p.id !== projectId) }))
     try {
       if (isLeader && otherMembers.length === 0) {
         await deleteDoc(doc(db, 'projects', projectId))
@@ -271,6 +273,8 @@ export const createProjectSlice = (set, get) => ({
         })
       }
     } catch (e) {
+      // 실패 시 낙관적 업데이트 롤백
+      set((s) => ({ projects: [...s.projects, project] }))
       get().showError('프로젝트에서 나가지 못했어요.')
       throw e
     }

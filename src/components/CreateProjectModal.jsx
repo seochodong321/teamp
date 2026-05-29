@@ -58,7 +58,9 @@ export default function CreateProjectModal({ onClose }) {
     currentUser: s.currentUser, showError: s.showError, showSuccess: s.showSuccess,
   }))
 
-  const ownedCount = projects.filter((p) => p.leaderId === currentUser?.id).length
+  const ownedCount = projects.filter(
+    (p) => p.leaderId === currentUser?.id && !p.isTutorial
+  ).length
   const isPaidPlan = ['pro', 'team', 'admin', 'student'].includes(currentUser?.plan)
   const isLimitReached = !isPaidPlan && ownedCount >= FREE_PROJECT_LIMIT
 
