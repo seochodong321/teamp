@@ -261,10 +261,13 @@ export const createProjectSlice = (set, get) => ({
     if (isLeader && otherLeaders.length === 0 && otherMembers.length > 0) {
       return { error: '리더가 혼자면 나갈 수 없어요. 다른 멤버에게 공동리더 권한을 부여하거나 프로젝트를 마감하세요.' }
     }
-    // 낙관적 업데이트 — Firestore onSnapshot 도착 전에도 즉시 카운트 반영
-    set((s) => ({ projects: s.projects.filter((p) => p.id !== projectId) }))
+    const isSoloDelete = isLeader && otherMembers.length === 0
+    // 낙관적 업데이트 — 완전 삭제 케이스에만 적용 (나가기는 onSnapshot이 자동 드롭)
+    if (isSoloDelete) {
+      set((s) => ({ projects: s.projects.filter((p) => p.id !== projectId) }))
+    }
     try {
-      if (isLeader && otherMembers.length === 0) {
+      if (isSoloDelete) {
         await deleteDoc(doc(db, 'projects', projectId))
       } else {
         await updateDoc(doc(db, 'projects', projectId), {
@@ -273,8 +276,15 @@ export const createProjectSlice = (set, get) => ({
         })
       }
     } catch (e) {
-      // 실패 시 낙관적 업데이트 롤백
-      set((s) => ({ projects: [...s.projects, project] }))
+      // 실패 시 원래 위치에 복원 (순서 유지)
+      if (isSoloDelete) {
+        const idx = projects.findIndex((p) => p.id === projectId)
+        set((s) => {
+          const next = [...s.projects]
+          next.splice(idx >= 0 ? idx : next.length, 0, project)
+          return { projects: next }
+        })
+      }
       get().showError('프로젝트에서 나가지 못했어요.')
       throw e
     }

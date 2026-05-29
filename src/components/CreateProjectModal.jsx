@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store/useStore.js'
+import { useStore, FREE_PROJECT_LIMIT, countOwnedProjects } from '../store/useStore.js'
 import ProfileSelector from './ProfileSelector.jsx'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import styles from './CreateProjectModal.module.css'
@@ -49,8 +49,6 @@ const EMOJI_OPTIONS = [
 ]
 const STEPS = ['기본 정보', '팀 구성', '완료']
 
-const FREE_PROJECT_LIMIT = 3
-
 export default function CreateProjectModal({ onClose }) {
   const navigate = useNavigate()
   const { createProject, profiles, projects, currentUser, showError, showSuccess } = useStore((s) => ({
@@ -58,9 +56,7 @@ export default function CreateProjectModal({ onClose }) {
     currentUser: s.currentUser, showError: s.showError, showSuccess: s.showSuccess,
   }))
 
-  const ownedCount = projects.filter(
-    (p) => p.leaderId === currentUser?.id && !p.isTutorial
-  ).length
+  const ownedCount = countOwnedProjects(projects, currentUser?.id)
   const isPaidPlan = ['pro', 'team', 'admin', 'student'].includes(currentUser?.plan)
   const isLimitReached = !isPaidPlan && ownedCount >= FREE_PROJECT_LIMIT
 

@@ -10,6 +10,11 @@ import { createWrapupSlice }       from './slices/wrapupSlice.js'
 import { createNotificationSlice } from './slices/notificationSlice.js'
 import { createUiSlice }           from './slices/uiSlice.js'
 
+// 무료 플랜 프로젝트 한도 계산 — 튜토리얼 제외, 리더인 것만
+export const FREE_PROJECT_LIMIT = 3
+export const countOwnedProjects = (projects, userId) =>
+  projects.filter((p) => p.leaderId === userId && !p.isTutorial).length
+
 export const useStore = create(
   persist(
     (...a) => ({

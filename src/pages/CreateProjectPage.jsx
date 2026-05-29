@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store/useStore.js'
+import { useStore, FREE_PROJECT_LIMIT, countOwnedProjects } from '../store/useStore.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import styles from './CreateProjectPage.module.css'
@@ -49,8 +49,6 @@ function PhasePreview({ start, end }) {
   )
 }
 
-const FREE_PROJECT_LIMIT = 3
-
 export default function CreateProjectPage() {
   const navigate = useNavigate()
   const createProject = useStore((s) => s.createProject)
@@ -59,9 +57,7 @@ export default function CreateProjectPage() {
   const projects      = useStore((s) => s.projects)
   const currentUser   = useStore((s) => s.currentUser)
 
-  const ownedCount      = projects.filter(
-    (p) => p.leaderId === currentUser?.id && !p.isTutorial
-  ).length
+  const ownedCount      = countOwnedProjects(projects, currentUser?.id)
   const isPaidPlan      = ['pro', 'team', 'admin', 'student'].includes(currentUser?.plan)
   const isLimitReached  = !isPaidPlan && ownedCount >= FREE_PROJECT_LIMIT
 
