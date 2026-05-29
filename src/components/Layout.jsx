@@ -96,7 +96,6 @@ export default function Layout() {
     if (p === '/messages') return '쪽지함'
     if (p === '/connect')  return '팀프 커넥트'
     if (p === '/help')     return '도움말'
-    if (p === '/create')   return '새 프로젝트'
     const chatMatch = p.match(/^\/project\/([^/]+)\/chat\/([^/]+)/)
     if (chatMatch) {
       const proj = projects.find((x) => x.id === chatMatch[1])

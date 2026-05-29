@@ -25,7 +25,6 @@ const ProjectPage       = lazy(() => import('./pages/ProjectPage.jsx'))
 const ChatPage          = lazy(() => import('./pages/ChatPage.jsx'))
 const ProfilePage       = lazy(() => import('./pages/ProfilePage.jsx'))
 const ConnectPage       = lazy(() => import('./pages/ConnectPage.jsx'))
-const CreateProjectPage = lazy(() => import('./pages/CreateProjectPage.jsx'))
 const WrapupPage        = lazy(() => import('./pages/WrapupPage.jsx'))
 const MatchPage         = lazy(() => import('./pages/MatchPage.jsx'))
 const HelpPage          = lazy(() => import('./pages/HelpPage.jsx'))
@@ -533,7 +532,6 @@ function AppRoutes({ ready, isLoggedIn }) {
             <Route path="/project/:projectId"              element={<ProjectPage />} />
             <Route path="/project/:projectId/chat/:roomId" element={<ChatPage />} />
             <Route path="/project/:projectId/wrapup"       element={<WrapupPage />} />
-            <Route path="/create"                          element={<CreateProjectPage />} />
             <Route path="/profile"                         element={<ProfilePage />} />
             <Route path="/connect"                         element={<ConnectPage />} />
             <Route path="/match"                           element={<MatchPage />} />
