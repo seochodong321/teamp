@@ -390,7 +390,7 @@ export default function ChatPage() {
             </div>
             <div className={styles.membersList}>
               {project.members
-                .filter((m) => m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId))
+                .filter((m) => m.role === 'leader' || m.role === 'sub-leader' || (m.roomIds || []).includes(roomId))
                 .map((m) => {
                   const avStyle = avatarStyle(m.id)
                   return (
@@ -420,7 +420,7 @@ export default function ChatPage() {
           <span className={styles.roomName}>{isDm ? `💬 ${roomName}` : `# ${roomName}`}</span>
           {!isDm && project && (() => {
             const roomMembers = project.members.filter((m) =>
-              m.role === 'leader' || m.role === 'sub-leader' || m.roomIds.includes(roomId)
+              m.role === 'leader' || m.role === 'sub-leader' || (m.roomIds || []).includes(roomId)
             )
             return (
               <button className={styles.roomMetaBtn} onClick={() => setShowMembersModal(true)}>

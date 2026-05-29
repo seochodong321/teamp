@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { getWeekKey } from '../store/helpers.js'
 import { getCoverStyle, COVER_PRESETS } from '../constants.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import CalendarInline from '../components/CalendarInline.jsx'
@@ -434,10 +435,7 @@ export default function ProjectPage() {
       )}
 
       {tab === 'todo' && (() => {
-        const now = new Date()
-        const monday = new Date(now)
-        monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-        const weekKey = monday.toISOString().split('T')[0]
+        const weekKey = getWeekKey()
         const thisWeekGoal = (project.weeklyGoals || []).find((g) => g.week === weekKey)
         const schedule = project.weeklyGoalSchedule
         return (

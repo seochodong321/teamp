@@ -29,6 +29,13 @@ export const ROOM_COLORS = [
 
 export const todayStr = () => new Date().toISOString().split('T')[0]
 
+// 이번 주 월요일 키 (YYYY-MM-DD) — 주간 목표 식별용
+export const getWeekKey = (base = new Date()) => {
+  const monday = new Date(base)
+  monday.setDate(base.getDate() - ((base.getDay() + 6) % 7))
+  return monday.toISOString().split('T')[0]
+}
+
 export const txProject = async (projectId, updater) => {
   const ref = doc(db, 'projects', projectId)
   await runTransaction(db, async (tx) => {

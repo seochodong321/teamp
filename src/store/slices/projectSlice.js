@@ -101,7 +101,7 @@ export const createProjectSlice = (set, get) => ({
     if (!me) return []
     const visible = (me.role === 'leader' || me.role === 'sub-leader')
       ? project.rooms
-      : project.rooms.filter((r) => me.roomIds.includes(r.id))
+      : project.rooms.filter((r) => (me.roomIds || []).includes(r.id))
     const filtered = visible.filter((r) => {
       if (!r.isDm) return true
       if (r.ownerId) return r.ownerId === userId

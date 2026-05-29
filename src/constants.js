@@ -1,5 +1,8 @@
 // 앱 전체에서 공유하는 상수 모음
 
+// 프로젝트 멤버 역할 라벨 (이모지 + 한글)
+export const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
+
 export const FLOWER_TAGS = [
   { id: 'reliable',  emoji: '🌹', label: '믿음직한' },
   { id: 'energetic', emoji: '🌻', label: '에너지 넘치는' },

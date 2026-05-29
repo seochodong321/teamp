@@ -5,10 +5,8 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch }
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { FLOWER_TAGS } from '../constants.js'
+import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import styles from './ProfilePage.module.css'
-
-const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
 
 export default function ProfilePage() {
   const navigate = useNavigate()

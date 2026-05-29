@@ -3,12 +3,10 @@ import { useParams, Link } from 'react-router-dom'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../firebase.js'
-import { FLOWER_TAGS } from '../constants.js'
+import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import TeampMark from '../components/TeampMark.jsx'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './PublicProfilePage.module.css'
-
-const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
 
 export default function PublicProfilePage() {
   const { username } = useParams()

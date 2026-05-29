@@ -2,7 +2,7 @@ import {
   collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
-import { txProject } from '../helpers.js'
+import { txProject, getWeekKey } from '../helpers.js'
 
 export const createWrapupSlice = (set, get) => ({
   saveWrapupNote: async (projectId, note) => {
@@ -221,10 +221,7 @@ export const createWrapupSlice = (set, get) => ({
 
   addWeeklyGoal: async (projectId, text) => {
     const { currentUser } = get()
-    const now    = new Date()
-    const monday = new Date(now)
-    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7))
-    const weekKey = monday.toISOString().split('T')[0]
+    const weekKey = getWeekKey()
     await txProject(projectId, (data) => {
       const goals = (data.weeklyGoals || []).filter((g) => g.week !== weekKey)
       return {
