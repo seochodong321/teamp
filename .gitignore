@@ -4,3 +4,5 @@ node_modules
 .env.*.local
 dist
 public/firebase-messaging-sw.js
+.DS_Store
+**/.DS_Store
