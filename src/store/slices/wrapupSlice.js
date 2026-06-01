@@ -32,15 +32,18 @@ export const createWrapupSlice = (set, get) => ({
       snap.forEach((d) => {
         const msg = d.data()
         totalMessages++
-        if (msg.type === 'file') totalFiles++
+        if (msg.type === 'file' || msg.type === 'image') totalFiles++
         if (msg.senderId && msg.senderId !== 'system') {
           messageSenderCount[msg.senderId] = (messageSenderCount[msg.senderId] || 0) + 1
-          const date = msg.createdAt?.toDate?.()?.toISOString?.()?.slice(0, 10) || null
-          const time = msg.time || null
-          if (date) {
+          // 날짜·시각은 createdAt(현지 시각)에서 직접 계산.
+          // msg.time은 'PM 11:30'/'오후 11:30' 같은 현지화 문자열이라 '22:00' 비교가 깨짐.
+          const dt = msg.createdAt?.toDate?.()
+          if (dt) {
+            const date = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+            const time = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
             if (!messagesByDate[date]) messagesByDate[date] = { count: 0, latestTime: '00:00' }
             messagesByDate[date].count++
-            if (time && time > messagesByDate[date].latestTime) messagesByDate[date].latestTime = time
+            if (time > messagesByDate[date].latestTime) messagesByDate[date].latestTime = time
           }
         }
       })
