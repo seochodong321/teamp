@@ -24,6 +24,15 @@ export const createTaskSlice = (set, get) => ({
           const msgRef = doc(collection(db, 'rooms', r.id, 'messages'))
           batch.set(msgRef, { ...notifyMsg, id: msgRef.id })
         })
+        // 멤버에게 푸시 알림 (작성자 제외) — Cloud Function이 발송
+        project.members.filter((m) => m.id !== currentUser.id).forEach((m) => {
+          batch.set(doc(collection(db, 'notifications')), {
+            targetUserId: m.id, type: 'announcement',
+            text: `📢 새 공지: ${title}`,
+            link: `/project/${projectId}?tab=board`,
+            read: false, createdAt: serverTimestamp(),
+          })
+        })
         await batch.commit()
       }
     }
@@ -213,7 +222,7 @@ export const createTaskSlice = (set, get) => ({
   },
 
   updateMilestone: async (projectId, milestoneId, { action, note, ...changes }) => {
-    const { currentUser } = get()
+    const { currentUser, projects } = get()
     const now = new Date().toISOString()
     const entry = { action: action || 'modified', at: now, by: currentUser.id, byName: currentUser.name, note: note || '' }
     try {
@@ -222,6 +231,21 @@ export const createTaskSlice = (set, get) => ({
           m.id !== milestoneId ? m : { ...m, ...changes, history: [...(m.history || []), entry] }
         ),
       }))
+      // 마일스톤 달성 시 멤버에게 푸시 알림 (Cloud Function이 발송)
+      if (changes.status === 'done') {
+        const project = projects.find((p) => p.id === projectId)
+        const title = project?.milestones?.find((m) => m.id === milestoneId)?.title || '마일스톤'
+        const batch = writeBatch(db)
+        ;(project?.members || []).filter((m) => m.id !== currentUser.id).forEach((m) => {
+          batch.set(doc(collection(db, 'notifications')), {
+            targetUserId: m.id, type: 'milestone',
+            text: `🏁 마일스톤 달성: ${title}`,
+            link: `/project/${projectId}?tab=milestone`,
+            read: false, createdAt: serverTimestamp(),
+          })
+        })
+        await batch.commit()
+      }
     } catch {
       get().showError('마일스톤 업데이트에 실패했어요.')
     }

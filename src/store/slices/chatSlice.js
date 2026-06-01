@@ -21,16 +21,17 @@ export const createChatSlice = (set, get) => ({
     const { currentUser, projects } = get()
     const msgRef = doc(collection(db, 'rooms', roomId, 'messages'))
     const timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+    const project = projects.find(p => p.rooms.some(r => r.id === roomId))
 
     await setDoc(msgRef, {
       id: msgRef.id,
       senderId: currentUser.id, senderName: currentUser.name,
       type, text, time: timeStr,
+      projectId: project?.id || null,   // Cloud Function 푸시 발송용 (프로젝트 방 멤버 해석)
       readBy: [currentUser.id],
       createdAt: serverTimestamp(),
     })
 
-    const project = projects.find(p => p.rooms.some(r => r.id === roomId))
     if (project) {
       const lastText = type === 'image' ? '📷 사진'
         : type === 'file' ? '📎 파일'
@@ -49,7 +50,7 @@ export const createChatSlice = (set, get) => ({
   },
 
   sendFile: async (roomId, file) => {
-    const { currentUser } = get()
+    const { currentUser, projects } = get()
     const isImage = file.type?.startsWith('image/')
     let fileUrl = null
     if (isImage) {
@@ -57,6 +58,7 @@ export const createChatSlice = (set, get) => ({
       await uploadBytes(sRef, file)
       fileUrl = await getDownloadURL(sRef)
     }
+    const project = projects.find(p => p.rooms.some(r => r.id === roomId))
     const msgRef = doc(collection(db, 'rooms', roomId, 'messages'))
     await setDoc(msgRef, {
       id: msgRef.id,
@@ -64,6 +66,7 @@ export const createChatSlice = (set, get) => ({
       type: isImage ? 'image' : 'file',
       text: file.name,
       fileUrl: fileUrl || null,
+      projectId: project?.id || null,
       time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       readBy: [currentUser.id],
       createdAt: serverTimestamp(),
@@ -71,13 +74,15 @@ export const createChatSlice = (set, get) => ({
   },
 
   sendPoll: async (roomId, question, options) => {
-    const { currentUser } = get()
+    const { currentUser, projects } = get()
+    const project = projects.find(p => p.rooms.some(r => r.id === roomId))
     const msgRef = doc(collection(db, 'rooms', roomId, 'messages'))
     await setDoc(msgRef, {
       id: msgRef.id,
       senderId: currentUser.id, senderName: currentUser.name,
       type: 'poll', text: question,
       options: options.map((o, i) => ({ id: i, label: o, votes: [] })),
+      projectId: project?.id || null,
       time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       createdAt: serverTimestamp(),
     })
