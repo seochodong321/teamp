@@ -11,6 +11,7 @@ import MobileMenuSheet from './MobileMenuSheet.jsx'
 import ChatToastContainer from './ChatToastContainer.jsx'
 import ErrorToastContainer from './ErrorToastContainer.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import InstallPrompt from './InstallPrompt.jsx'
 import styles from './Layout.module.css'
 import TeampMark from './TeampMark.jsx'
 
@@ -315,6 +316,8 @@ export default function Layout() {
             <button className={styles.notiPromptDismiss} onClick={dismissNotiPrompt}>✕</button>
           </div>
         )}
+
+        <InstallPrompt />
 
         <div id="page-content" className={styles.content}>
           <Outlet />
