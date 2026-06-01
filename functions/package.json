@@ -2,7 +2,7 @@
   "name": "teamp-functions",
   "description": "Teamp 알림 발송 Cloud Functions (FCM 푸시)",
   "type": "module",
-  "engines": { "node": "20" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "scripts": {
     "deploy": "firebase deploy --only functions"
