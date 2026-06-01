@@ -13,6 +13,7 @@ export default function JoinPage() {
   const [project, setProject] = useState(null)
   const [status, setStatus]   = useState('idle')
   const [msg, setMsg]         = useState('')
+  const [joinedId, setJoinedId] = useState(null)
   const [showProfileSel, setShowProfileSel] = useState(false)
 
   useEffect(() => {
@@ -29,9 +30,10 @@ export default function JoinPage() {
     try {
       const result = await joinProjectByCode(code, profileId, profileAffiliation)
       if (result.success) {
+        setJoinedId(result.projectId)
         setStatus('done')
         setMsg(result.message || '프로젝트에 참여했어요!')
-        setTimeout(() => navigate(`/project/${result.projectId}`), 1500)
+        // 자동 이동 대신 환영·안내 화면을 보여주고 직접 입장하게 함
       } else {
         setStatus('error')
         setMsg(result.message || '참여에 실패했어요.')
@@ -103,9 +105,16 @@ export default function JoinPage() {
           </div>
         ) : status === 'done' ? (
           <div className={styles.doneWrap}>
-            <div className={styles.doneIcon}>✓</div>
-            <p className={styles.doneTitle}>{msg}</p>
-            <p className={styles.doneDesc}>프로젝트로 이동할게요...</p>
+            <div className={styles.doneIcon}>🎉</div>
+            <p className={styles.doneTitle}>{project?.name || '프로젝트'} 팀에 합류했어요!</p>
+            <ul className={styles.welcomeTips}>
+              <li>💬 <strong>채팅</strong>에서 팀원과 바로 소통해요</li>
+              <li>✅ <strong>할 일</strong> 탭에서 내게 배정된 일을 확인해요</li>
+              <li>🔔 <strong>프로필 → 알림</strong>을 켜면 새 소식을 놓치지 않아요</li>
+            </ul>
+            <button className={styles.loginBtn} onClick={() => navigate(`/project/${joinedId}`)}>
+              프로젝트 입장 →
+            </button>
           </div>
         ) : status === 'error' ? (
           <div className={styles.errorWrap}>

@@ -25,6 +25,9 @@
 .doneIcon { width: 56px; height: 56px; border-radius: 50%; background: #E1F5EE; color: #0F6E56; font-size: 24px; display: flex; align-items: center; justify-content: center; }
 .doneTitle { font-size: 16px; font-weight: 700; color: var(--text); text-align: center; }
 .doneDesc { font-size: 13px; color: var(--text-secondary); }
+.welcomeTips { list-style: none; margin: 4px 0 8px; padding: 14px 16px; width: 100%; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 10px; }
+.welcomeTips li { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.welcomeTips strong { color: var(--text); font-weight: 600; }
 
 .errorWrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0; text-align: center; }
 .errorIcon { font-size: 36px; }
