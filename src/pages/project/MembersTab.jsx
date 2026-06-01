@@ -25,6 +25,18 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
   const [leaveLoading, setLeaveLoading]   = useState(false)
   const [leaveError, setLeaveError]       = useState('')
 
+  // 모바일 네이티브 공유(카톡·메시지 등) — 지원 시에만 버튼 노출
+  const canShare = typeof navigator !== 'undefined' && !!navigator.share
+  const handleShareInvite = async () => {
+    try {
+      await navigator.share({
+        title: `${project.name} 팀 초대`,
+        text: `'${project.name}' 프로젝트에 초대해요. 링크로 참여하세요!`,
+        url: inviteLink,
+      })
+    } catch { /* 사용자가 공유 취소 — 무시 */ }
+  }
+
   const handleCopyInvite = async () => {
     try {
       if (navigator.clipboard) {
@@ -213,6 +225,11 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
               <div className={styles.inviteLinkBox}>
                 <span className={styles.inviteLinkText}>{inviteLink}</span>
               </div>
+              {canShare && (
+                <button className={styles.shareBtn} onClick={handleShareInvite}>
+                  📤 공유
+                </button>
+              )}
               <button className={`${styles.copyBtn} ${inviteCopied ? styles.copyBtnDone : ''}`}
                 onClick={handleCopyInvite}>
                 {inviteCopied ? '✅ 복사됨' : '🔗 복사'}

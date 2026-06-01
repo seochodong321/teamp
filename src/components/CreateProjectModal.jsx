@@ -270,6 +270,17 @@ export default function CreateProjectModal({ onClose }) {
                 <p className={styles.doneSub}>초대 링크를 복사해 팀원들에게 공유하세요</p>
                 <div className={styles.linkBox}>
                   <span className={styles.linkText}>{inviteLink}</span>
+                  {typeof navigator !== 'undefined' && navigator.share && (
+                    <button className={styles.linkShare} onClick={async () => {
+                      try {
+                        await navigator.share({
+                          title: `${created.name} 팀 초대`,
+                          text: `'${created.name}' 프로젝트에 초대해요. 링크로 참여하세요!`,
+                          url: inviteLink,
+                        })
+                      } catch { /* 취소 무시 */ }
+                    }}>📤 공유</button>
+                  )}
                   <button className={styles.linkCopy} onClick={() => { navigator.clipboard.writeText(inviteLink); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000) }}>{linkCopied ? '✓ 복사됨' : '복사'}</button>
                 </div>
                 <div className={styles.summary}>
