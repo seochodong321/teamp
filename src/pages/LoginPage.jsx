@@ -187,6 +187,8 @@ export default function LoginPage() {
         else localStorage.removeItem('teamp-saved-email')
         if (!autoLogin) localStorage.setItem('teamp-auto-login', 'false')
         else localStorage.removeItem('teamp-auto-login')
+        // 초대 링크 등 redirect를 온보딩(이메일 인증·아이디 설정) 너머까지 보존
+        if (redirectTo !== '/home') localStorage.setItem('teamp-post-auth-redirect', redirectTo)
         navigate('/verify-email', { replace: true })
         return
       } else {

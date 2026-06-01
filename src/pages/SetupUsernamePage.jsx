@@ -12,6 +12,13 @@ export default function SetupUsernamePage() {
   const navigate = useNavigate()
   const { login, setNeedsUsernameSetup, isLoggedIn, needsUsernameSetup } = useStore()
 
+  // 온보딩 완료 후 이동 — 초대 링크 등 보존된 redirect 우선, 없으면 홈
+  const goAfterOnboarding = () => {
+    const dest = localStorage.getItem('teamp-post-auth-redirect') || '/home'
+    localStorage.removeItem('teamp-post-auth-redirect')
+    navigate(dest, { replace: true })
+  }
+
   const [username, setUsername]           = useState('')
   const [usernameStatus, setUsernameStatus] = useState('idle') // idle | checking | ok | taken
   const [usernameSuggestion, setUsernameSuggestion] = useState('')
@@ -33,8 +40,8 @@ export default function SetupUsernamePage() {
   if (!auth.currentUser) return <Navigate to="/login" replace />
   // 이메일 미인증 → 인증 페이지 (이메일 가입 유저만 해당, Google은 항상 verified)
   if (!auth.currentUser.emailVerified) return <Navigate to="/verify-email" replace />
-  // 이미 프로필 완성된 유저 → 홈으로
-  if (isLoggedIn && !needsUsernameSetup) return <Navigate to="/home" replace />
+  // 이미 프로필 완성된 유저 → 홈으로 (단, 가입 직후 환영 화면은 띄워야 하므로 제외)
+  if (isLoggedIn && !needsUsernameSetup && !showPlanIntro) return <Navigate to="/home" replace />
 
   const checkUsername = (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
@@ -163,7 +170,7 @@ export default function SetupUsernamePage() {
           ))}
         </div>
         <p className={styles.planIntroHint}>프로젝트 3개를 만들면 슬롯이 꽉 차요. 기존 프로젝트를 삭제하거나 Pro로 업그레이드하면 더 만들 수 있어요.</p>
-        <button className={styles.submitBtn} onClick={() => navigate('/home', { replace: true })}>
+        <button className={styles.submitBtn} onClick={goAfterOnboarding}>
           무료로 시작하기 →
         </button>
       </div>
