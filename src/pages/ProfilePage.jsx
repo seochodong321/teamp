@@ -6,6 +6,7 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
+import NotificationSettings from '../components/NotificationSettings.jsx'
 import styles from './ProfilePage.module.css'
 
 export default function ProfilePage() {
@@ -531,6 +532,15 @@ export default function ProfilePage() {
               ))}
           </div>
         )}
+      </div>
+
+      {/* 알림 설정 */}
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>알림</h3>
+          <p className={styles.sectionDesc}>메시지·할 일·공지 알림을 받으려면 켜주세요</p>
+        </div>
+        <NotificationSettings />
       </div>
 
       {/* 팀프폴리오 관리 */}
