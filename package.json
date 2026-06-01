@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/gen-sw.mjs && vite",
-    "build": "node scripts/gen-sw.mjs && node scripts/gen-assets.mjs && vite build",
-    "build:ci": "node scripts/gen-sw.mjs --production && node scripts/gen-assets.mjs && vite build",
+    "build": "node scripts/gen-sw.mjs && vite build",
+    "build:ci": "node scripts/gen-sw.mjs --production && vite build",
     "preview": "vite preview",
     "gen-assets": "node scripts/gen-assets.mjs",
     "gen-sw": "node scripts/gen-sw.mjs"
