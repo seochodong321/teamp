@@ -17,11 +17,14 @@ export default function JoinPage() {
   const [showProfileSel, setShowProfileSel] = useState(false)
 
   useEffect(() => {
+    let ignore = false
+    setProject(null)
     const run = async () => {
       const p = await getProjectByInviteCode(code)
-      setProject(p)
+      if (!ignore) setProject(p)
     }
     run()
+    return () => { ignore = true }
   }, [code, isLoggedIn])
 
   const doJoin = async (profileId, profileAffiliation) => {

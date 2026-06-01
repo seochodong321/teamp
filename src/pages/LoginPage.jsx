@@ -140,6 +140,9 @@ export default function LoginPage() {
           return
         }
       }
+      // 초대 링크 등 redirect를 온보딩 너머까지 보존 (소셜 신규 가입도 이메일과 동일하게)
+      if (redirectTo !== '/home') localStorage.setItem('teamp-post-auth-redirect', redirectTo)
+      else localStorage.removeItem('teamp-post-auth-redirect')
       setNeedsUsernameSetup(true)
       navigate('/setup-username', { replace: true })
     } catch (e) {
@@ -189,6 +192,7 @@ export default function LoginPage() {
         else localStorage.removeItem('teamp-auto-login')
         // 초대 링크 등 redirect를 온보딩(이메일 인증·아이디 설정) 너머까지 보존
         if (redirectTo !== '/home') localStorage.setItem('teamp-post-auth-redirect', redirectTo)
+        else localStorage.removeItem('teamp-post-auth-redirect')
         navigate('/verify-email', { replace: true })
         return
       } else {

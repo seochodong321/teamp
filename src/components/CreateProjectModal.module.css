@@ -260,4 +260,8 @@
 
   /* 터치 영역 확보 */
   .closeBtn { width: 44px; height: 44px; }
+
+  /* 초대 링크박스 — 좁은 화면에서 링크 한 줄, 버튼 아래로 */
+  .linkBox { flex-wrap: wrap; }
+  .linkText { flex-basis: 100%; }
 }

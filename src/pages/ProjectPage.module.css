@@ -578,6 +578,7 @@
 .cmtSubmitBtn:not(:disabled):hover { opacity: 0.88; }
 
 @media (max-width: 768px) {
+  .modalInput { font-size: 16px; } /* iOS 입력 줌 방지 */
   .timeline { padding: 8px 0 16px; }
   .timelineItem { width: 100%; left: 0 !important; padding-right: 0; padding-left: 0; }
   .timelineLine { display: none; }

@@ -231,10 +231,11 @@ export const createTaskSlice = (set, get) => ({
           m.id !== milestoneId ? m : { ...m, ...changes, history: [...(m.history || []), entry] }
         ),
       }))
-      // 마일스톤 달성 시 멤버에게 푸시 알림 (Cloud Function이 발송)
-      if (changes.status === 'done') {
+      // 마일스톤 '달성으로 전환'될 때만 멤버에게 푸시 (재완료 토글 시 스팸 방지)
+      const prevMs = projects.find((p) => p.id === projectId)?.milestones?.find((m) => m.id === milestoneId)
+      if (changes.status === 'done' && prevMs?.status !== 'done') {
         const project = projects.find((p) => p.id === projectId)
-        const title = project?.milestones?.find((m) => m.id === milestoneId)?.title || '마일스톤'
+        const title = prevMs?.title || '마일스톤'
         const batch = writeBatch(db)
         ;(project?.members || []).filter((m) => m.id !== currentUser.id).forEach((m) => {
           batch.set(doc(collection(db, 'notifications')), {

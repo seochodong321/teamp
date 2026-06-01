@@ -24,9 +24,10 @@ export default function InstallPrompt() {
   const install = async () => {
     if (!deferred) return
     deferred.prompt()
-    try { await deferred.userChoice } catch {}
+    let outcome
+    try { ({ outcome } = await deferred.userChoice) } catch {}
     setDeferred(null)
-    close()
+    if (outcome === 'accepted') close() // 취소했으면 다음에 다시 보여줌
   }
 
   if (isStandalone || dismissed) return null
@@ -54,7 +55,7 @@ export default function InstallPrompt() {
       ) : (
         // iOS Safari 수동 안내
         <span style={txt}>
-          홈 화면에 추가하면 알림을 받을 수 있어요 — 하단 <strong>공유 버튼</strong>(􀈂) →
+          홈 화면에 추가하면 알림을 받을 수 있어요 — Safari 하단 <strong>공유</strong> →
           <strong> "홈 화면에 추가"</strong>를 눌러주세요.
         </span>
       )}
