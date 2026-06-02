@@ -45,7 +45,7 @@ public/  sw.js · firebase-messaging-sw.js · manifest.json · icons/ · splash/
 ```
 
 ## Firebase
-- 프로젝트 ID: `teamp-7923c` / 관리 계정: seobomin524@gmail.com
+- 프로젝트 ID: `teamp-7923c` (관리 계정은 Firebase 콘솔/메모리 참조 — 문서에 미기재)
 - **Auth**: 이메일·비밀번호 + Google
 - **Firestore**: asia-northeast3, offline persistence(persistentLocalCache) 활성화
 - **Storage**: Blaze, storage.rules (파일 타입·용량 제한)
