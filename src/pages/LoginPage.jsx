@@ -48,7 +48,8 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [errorField, setErrorField] = useState(null) // 'email' | 'password' | null
   const [loading, setLoading]         = useState(false)
-  const [rememberEmail, setRememberEmail] = useState(() => !!localStorage.getItem('teamp-saved-email'))
+  // 기본 ON — 명시적으로 끈 적 없으면 아이디 저장 (이전엔 저장된 이메일이 있어야만 켜져서 영영 안 켜지던 모순)
+  const [rememberEmail, setRememberEmail] = useState(() => localStorage.getItem('teamp-remember-email') !== 'false')
   const [autoLogin, setAutoLogin]         = useState(() => localStorage.getItem('teamp-auto-login') !== 'false')
   const [authReady, setAuthReady]         = useState(false)
 
@@ -186,8 +187,8 @@ export default function LoginPage() {
         const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
         await updateProfile(cred.user, { displayName: name.trim() })
         await sendEmailVerification(cred.user)
-        if (rememberEmail) localStorage.setItem('teamp-saved-email', email.trim())
-        else localStorage.removeItem('teamp-saved-email')
+        if (rememberEmail) { localStorage.setItem('teamp-saved-email', email.trim()); localStorage.removeItem('teamp-remember-email') }
+        else { localStorage.removeItem('teamp-saved-email'); localStorage.setItem('teamp-remember-email', 'false') }
         if (!autoLogin) localStorage.setItem('teamp-auto-login', 'false')
         else localStorage.removeItem('teamp-auto-login')
         // 초대 링크 등 redirect를 온보딩(이메일 인증·아이디 설정) 너머까지 보존
@@ -227,8 +228,10 @@ export default function LoginPage() {
       // 아이디 저장 처리
       if (rememberEmail) {
         localStorage.setItem('teamp-saved-email', email.trim())
+        localStorage.removeItem('teamp-remember-email')
       } else {
         localStorage.removeItem('teamp-saved-email')
+        localStorage.setItem('teamp-remember-email', 'false')
       }
       // 자동 로그인 설정 기억
       if (!autoLogin) {
