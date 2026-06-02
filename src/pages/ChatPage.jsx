@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { arrayUnion, collection, doc, getDoc, limitToLast, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import styles from './ChatPage.module.css'
@@ -262,7 +262,9 @@ export default function ChatPage() {
     const y = Math.min(rect.top, window.innerHeight - 260)
     setProfilePopup({ userId, name, avStyle, x, y, loading: true, data: null })
     try {
-      const snap = await getDoc(doc(db, 'users', userId))
+      // 서버 강제 조회 — 오프라인 캐시의 옛 프로필(원라이너 등) 방지
+      const ref = doc(db, 'users', userId)
+      const snap = await getDocFromServer(ref).catch(() => getDoc(ref))
       const data = snap.exists() ? snap.data() : {}
       setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data } : prev)
     } catch {

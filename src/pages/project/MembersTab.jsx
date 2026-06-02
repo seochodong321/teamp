@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
+import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { useStore } from '../../store/useStore.js'
 import styles from '../ProjectPage.module.css'
@@ -63,8 +63,16 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
     setProfilePubs([])
     setProfileLoading(true)
     try {
-      const userSnap = await getDoc(doc(db, 'users', member.id))
-      const ud = userSnap.exists() ? userSnap.data() : {}
+      let ud
+      if (member.id === currentUser.id) {
+        // 본인 — 방금 수정한 값이 바로 보이도록 live 스토어 사용
+        ud = currentUser
+      } else {
+        // 타인 — 서버 강제 조회로 오프라인 캐시의 옛 값 방지 (실패 시 캐시 폴백)
+        const ref = doc(db, 'users', member.id)
+        const snap = await getDocFromServer(ref).catch(() => getDoc(ref))
+        ud = snap.exists() ? snap.data() : {}
+      }
       setProfileExtra({
         oneliner:    ud.oneliner    || '',
         username:    ud.username    || '',

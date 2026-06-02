@@ -215,7 +215,7 @@ export default function LoginPage() {
               setLoading(false)
               return
             }
-            login(d.name, d.email, cred.user.uid, { affiliation: d.affiliation || '', phone: d.phone || '' })
+            login(d.name, d.email, cred.user.uid, d) // 전체 프로필(oneliner·birthday·photoURL·plan 등) 반영
           } else {
             login(cred.user.displayName || '사용자', cred.user.email, cred.user.uid)
           }
