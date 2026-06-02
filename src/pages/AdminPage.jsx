@@ -612,9 +612,19 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
 export default function AdminPage() {
   const { currentUser } = useStore()
   const [activeTab, setActiveTab] = useState('stats')
+  const [pendingReports, setPendingReports] = useState(0)
   const { ask, dialog } = useAdminConfirm()
 
   const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
+
+  // 대기 중인 신고 수 — 열자마자 처리할 일이 있는지 한눈에
+  useEffect(() => {
+    if (!isAdmin) return
+    getDocs(query(collection(db, 'reports'), where('status', '==', 'pending')))
+      .then((snap) => setPendingReports(snap.size))
+      .catch(() => {})
+  }, [isAdmin])
+
   if (!isAdmin) return <Navigate to="/home" replace />
 
   // ── 액션: 프로젝트 삭제
@@ -691,9 +701,9 @@ export default function AdminPage() {
 
   const TABS = [
     ['stats',    '📊 통계'],
-    ['reports',  '🚩 신고 관리'],
+    ['reports',  '🚩 신고'],
     ['projects', '📁 프로젝트'],
-    ['match',    '🤝 매치 모집글'],
+    ['match',    '🤝 매치'],
     ['users',    '👤 유저'],
     ['announce', '📢 공지'],
   ]
@@ -705,6 +715,11 @@ export default function AdminPage() {
           <h1 className={styles.title}>🛡️ 팀프 마스터</h1>
           <p className={styles.sub}>Teamp Admin · {currentUser?.email}</p>
         </div>
+        {pendingReports > 0 && (
+          <button className={styles.pendingPill} onClick={() => setActiveTab('reports')}>
+            🚩 처리할 신고 {pendingReports}건 →
+          </button>
+        )}
       </div>
 
       <div className={styles.mainTabs}>
@@ -712,6 +727,9 @@ export default function AdminPage() {
           <button key={key} className={`${styles.mainTab} ${activeTab === key ? styles.mainTabActive : ''}`}
             onClick={() => setActiveTab(key)}>
             {label}
+            {key === 'reports' && pendingReports > 0 && (
+              <span className={styles.tabBadge}>{pendingReports > 9 ? '9+' : pendingReports}</span>
+            )}
           </button>
         ))}
       </div>

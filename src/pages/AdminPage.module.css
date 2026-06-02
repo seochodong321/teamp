@@ -22,14 +22,35 @@
 
 .sub { font-size: 12px; color: var(--text-tertiary); margin: 0; }
 
+/* 처리할 신고 알림 pill (헤더 우측) */
+.pendingPill {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  background: var(--coral-soft, #FBF1F4);
+  color: var(--coral, #8A2A55);
+  border: 1px solid var(--coral, #8A2A55);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.pendingPill:hover { opacity: 0.85; }
+
 /* ── 메인 탭 ── */
 .mainTabs {
   display: flex;
   border-bottom: 2px solid var(--border);
   gap: 0;
+  overflow-x: auto;            /* 좁은 화면에서 줄바꿈 대신 가로 스크롤 */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.mainTabs::-webkit-scrollbar { display: none; }
 
 .mainTab {
+  position: relative;
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 500;
@@ -41,9 +62,27 @@
   margin-bottom: -2px;
   transition: all 0.15s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .mainTab:hover { color: var(--text); }
 .mainTabActive { color: var(--primary); font-weight: 700; border-bottom-color: var(--primary); }
+
+/* 신고 대기 수 배지 */
+.tabBadge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--coral, #8A2A55);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* ── 탭 컨텐츠 ── */
 .tabContent { display: flex; flex-direction: column; gap: 12px; }
@@ -482,6 +521,8 @@
 
 @media (max-width: 600px) {
   .page { padding: 20px 16px; }
+  .header { flex-wrap: wrap; gap: 10px; }
+  .pendingPill { width: 100%; text-align: center; }
   .mainTab { padding: 8px 12px; font-size: 13px; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
   .statValue { font-size: 22px; }
