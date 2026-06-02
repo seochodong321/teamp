@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { collection, getDocs, query, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { db, auth } from '../firebase.js'
@@ -10,6 +10,9 @@ import styles from './PublicProfilePage.module.css'
 
 export default function PublicProfilePage() {
   const { username } = useParams()
+  const navigate = useNavigate()
+  // 뒤로가기 — 히스토리 있으면 뒤로, 없으면(직접 링크 진입) 랜딩으로
+  const goBack = () => { if (window.history.length > 1) navigate(-1); else navigate('/') }
   const [user, setUser]             = useState(null)
   const [projects, setProjects]     = useState([])   // 공개 프로젝트 (목록 표시용)
   const [allProjects, setAllProjects] = useState([]) // 전체 참여 프로젝트 (통계용)
@@ -173,6 +176,7 @@ export default function PublicProfilePage() {
       {/* 상단 바 */}
       <div className={styles.topBar}>
         <div className={styles.brandBlock}>
+          <button className={styles.backBtn} onClick={goBack} aria-label="뒤로">←</button>
           <span className={styles.brand}>팀프폴리오</span>
           <span className={styles.brandSub}>기여와 관계의 기록</span>
         </div>
