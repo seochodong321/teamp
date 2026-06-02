@@ -475,8 +475,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   <div className={styles.progressBar}>
-                    <div className={styles.progressFill}
-                      style={{ width: `${progress}%`, background: progress >= 80 ? '#E24B4A' : progress >= 60 ? '#BA7517' : 'var(--primary)' }} />
+                    <div className={styles.progressFill} style={{ width: `${progress}%` }} />
                   </div>
                 )}
               </div>

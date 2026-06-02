@@ -513,8 +513,8 @@
 .collectingBadge {
   font-size: 11px;
   font-weight: 600;
-  background: var(--amber-light);
-  color: var(--amber);
+  background: var(--primary-light);
+  color: var(--primary);
   padding: 4px 10px;
   border-radius: var(--radius-full);
   white-space: nowrap;
@@ -541,14 +541,15 @@
 .cardCategory { font-size: 9.5px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.14em; display: block; margin-bottom: 4px; }
 .cardName { font-size: 14.5px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.2; }
 .dday { font-size: 10.5px; font-weight: 700; background: var(--primary-light); color: var(--primary); padding: 5px 8px; border-radius: 7px; white-space: nowrap; letter-spacing: -0.01em; }
+/* 색 통일: 보라(기본·긍정) · 코랄(마감 임박/초과) · 중립 그레이(차분) */
 .ddayBefore  { background: var(--primary-light); color: var(--primary); }
 .ddayPre     { background: var(--primary-light); color: var(--primary); }
-.ddayStart   { background: #D1FAE5; color: #059669; }
+.ddayStart   { background: var(--primary-light); color: var(--primary); }
 .ddayNormal  { background: var(--bg-secondary); color: var(--text-secondary); }
-.ddayWarning { background: #FEE2E2; color: #DC2626; }
-.ddayUrgent  { background: var(--amber-light); color: var(--amber); }
-.ddayOver    { background: var(--coral-light); color: var(--coral); }
-.ddayPost    { background: #D1FAE5; color: #059669; }
+.ddayWarning { background: var(--coral-soft); color: var(--coral); }
+.ddayUrgent  { background: var(--coral-soft); color: var(--coral); }
+.ddayOver    { background: var(--coral-soft); color: var(--coral); }
+.ddayPost    { background: var(--bg-secondary); color: var(--text-secondary); }
 .ddaySub     { display: block; font-size: 9px; font-weight: 500; opacity: 0.8; margin-top: 1px; }
 .archivedBadge { font-size: 10.5px; font-weight: 600; background: var(--bg-tertiary); color: var(--text-tertiary); padding: 5px 8px; border-radius: 7px; }
 
@@ -562,9 +563,9 @@
 .progressFill { height: 100%; border-radius: 2px; transition: width 0.5s ease; background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
 .phaseBar      { position: relative; height: 4px; }
 .phaseBarTrack { height: 100%; border-radius: 2px; display: flex; overflow: hidden; }
-.phaseSegPre   { height: 100%; background: #A0A7C4; flex-shrink: 0; }
-.phaseSegProj  { height: 100%; background: var(--primary); flex-shrink: 0; }
-.phaseSegPost  { height: 100%; background: #64C8A0; }
+.phaseSegPre   { height: 100%; background: #B8B2D8; flex-shrink: 0; }  /* 프리: 흐린 보라 */
+.phaseSegProj  { height: 100%; background: var(--primary); flex-shrink: 0; } /* 진행: 보라 */
+.phaseSegPost  { height: 100%; background: var(--border-strong); }      /* 포스트: 중립 그레이 */
 .todayDot      { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; border-radius: 50%; background: white; border: 2px solid var(--primary); z-index: 1; pointer-events: none; }
 
 .cardFooter { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; }
