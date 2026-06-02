@@ -1,5 +1,5 @@
 .page {
-  max-width: 800px;
+  max-width: 1160px;        /* 데스크톱 전용 — 넓은 화면 활용해 한눈에 더 많이 */
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
@@ -154,7 +154,13 @@
 }
 
 /* ── 카드 ── */
-.list { display: flex; flex-direction: column; gap: 10px; }
+/* 데스크톱에서 한 화면에 더 많이 — 폭에 따라 자동 다열(최소 360px) */
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
 
 .card {
   background: var(--bg);
@@ -524,6 +530,7 @@
   .header { flex-wrap: wrap; gap: 10px; }
   .pendingPill { width: 100%; text-align: center; }
   .mainTab { padding: 8px 12px; font-size: 13px; }
+  .list { grid-template-columns: 1fr; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
   .statValue { font-size: 22px; }
 }
