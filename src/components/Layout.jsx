@@ -32,25 +32,17 @@ export default function Layout() {
   const toggleCollapse = (projectId) =>
     setCollapsedProjects((s) => ({ ...s, [projectId]: !s[projectId] }))
 
-  // 알림 권한 배너
-  const [showNotiPrompt, setShowNotiPrompt] = useState(
-    () => typeof Notification !== 'undefined'
-      && Notification.permission === 'default'
-      && !localStorage.getItem('teamp-noti-dismissed')
-  )
-  const handleAllowNoti = async () => {
-    // 허용·거부 어느 쪽이든 다시 묻지 않도록 먼저 기록
-    localStorage.setItem('teamp-noti-dismissed', '1')
-    setShowNotiPrompt(false)
-    const token = await requestNotificationPermission()
-    if (token && currentUser?.id) {
-      updateDoc(doc(db, 'users', currentUser.id), { fcmToken: token }).catch(() => {})
-    }
-  }
-  const dismissNotiPrompt = () => {
-    localStorage.setItem('teamp-noti-dismissed', '1')
-    setShowNotiPrompt(false)
-  }
+  // 알림 권한 — 로그인 후 시스템 프롬프트를 바로(1회) 요청.
+  // 커스텀 배너 없이 한 번만 묻는다. 거부/무응답 시 ProfilePage 알림 섹션에서 재설정.
+  useEffect(() => {
+    if (!currentUser?.id) return
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return
+    if (localStorage.getItem('teamp-noti-asked')) return
+    localStorage.setItem('teamp-noti-asked', '1')
+    requestNotificationPermission().then((token) => {
+      if (token) updateDoc(doc(db, 'users', currentUser.id), { fcmToken: token }).catch(() => {})
+    }).catch(() => {})
+  }, [currentUser?.id])
 
   useEffect(() => {
     const handler = (e) => {
@@ -307,15 +299,6 @@ export default function Layout() {
             {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
           </button>
         </div>
-
-        {showNotiPrompt && (
-          <div className={styles.notiPrompt}>
-            <span className={styles.notiPromptIcon}>🔔</span>
-            <span className={styles.notiPromptText}>새 메시지·할 일 알림을 받을까요?</span>
-            <button className={styles.notiPromptAllow} onClick={handleAllowNoti}>허용</button>
-            <button className={styles.notiPromptDismiss} onClick={dismissNotiPrompt}>✕</button>
-          </div>
-        )}
 
         <InstallPrompt />
 
