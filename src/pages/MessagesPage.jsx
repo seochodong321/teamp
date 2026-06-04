@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   collection, addDoc, query, where, onSnapshot,
-  updateDoc, doc, getDocs, serverTimestamp, arrayUnion,
+  updateDoc, doc, getDocs, serverTimestamp, arrayUnion, arrayRemove,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -156,6 +156,7 @@ export default function MessagesPage() {
   const handleReply = async () => {
     if (!selected || !replyText.trim()) return
     setReplying(true)
+    const otherUid = selected.fromUid === currentUser.id ? selected.toUid : selected.fromUid
     try {
       await updateDoc(doc(db, 'notes', selected.id), {
         messages: arrayUnion({
@@ -165,8 +166,10 @@ export default function MessagesPage() {
           time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         }),
         lastMessageAt: serverTimestamp(),
-        [`read.${selected.fromUid === currentUser.id ? selected.toUid : selected.fromUid}`]: false,
+        [`read.${otherUid}`]: false,
         [`read.${currentUser.id}`]: true,
+        // 상대가 이 쪽지를 삭제(hiddenBy)했어도 새 답장이 오면 다시 보이게
+        hiddenBy: arrayRemove(otherUid),
       })
       setReplyText('')
       setShowReply(false)

@@ -123,6 +123,7 @@ export default function ChatPage() {
     const vv = window.visualViewport
     if (!vv) return
     const root = document.documentElement
+    const reset = () => { root.style.removeProperty('--app-height'); root.style.removeProperty('--kb-safe') }
     const apply = () => {
       const kb = window.innerHeight - vv.height - vv.offsetTop
       if (kb > 1) {
@@ -130,8 +131,7 @@ export default function ChatPage() {
         root.style.setProperty('--kb-safe', '0px')
         requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: 'end' }))
       } else {
-        root.style.removeProperty('--app-height')
-        root.style.removeProperty('--kb-safe')
+        reset()
       }
     }
     vv.addEventListener('resize', apply)
@@ -139,8 +139,7 @@ export default function ChatPage() {
     return () => {
       vv.removeEventListener('resize', apply)
       vv.removeEventListener('scroll', apply)
-      root.style.removeProperty('--app-height')
-      root.style.removeProperty('--kb-safe')
+      reset()
     }
   }, [])
 

@@ -2,10 +2,13 @@
   display: flex;
   height: 100vh;        /* 구형 브라우저 fallback */
   height: 100dvh;       /* Safari 주소창 포함 안되는 동적 높이 */
-  /* 채팅에서 키보드가 올라오면 ChatPage가 --app-height를 visualViewport 높이로 갱신 →
-     앱 전체가 보이는 영역으로 줄어들어 입력창이 키보드 위로 올라옴 */
-  height: var(--app-height, 100dvh);
   overflow: hidden;
+}
+/* 채팅 키보드 대응 — ChatPage가 --app-height를 visualViewport 높이로 갱신해 앱이
+   보이는 영역으로 줄어듦. @supports로 감싸야 dvh 미지원 구형 브라우저에서 var()가
+   무효값(100dvh)으로 resolve돼 height:auto로 붕괴하는 걸 방지(그땐 위의 100vh 사용) */
+@supports (height: 100dvh) {
+  .shell { height: var(--app-height, 100dvh); }
 }
 
 .sidebar {
