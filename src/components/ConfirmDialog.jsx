@@ -1,9 +1,12 @@
 import React from 'react'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './ConfirmDialog.module.css'
 
 export default function ConfirmDialog() {
-  const { confirmDialog, dismissConfirm } = useStore()
+  const { confirmDialog, dismissConfirm } = useStore(
+    useShallow((s) => ({ confirmDialog: s.confirmDialog, dismissConfirm: s.dismissConfirm }))
+  )
   if (!confirmDialog) return null
 
   return (

@@ -1,8 +1,11 @@
 import React from 'react'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 
 export default function ErrorToastContainer() {
-  const { errorToasts, dismissError, successToasts, dismissSuccess } = useStore()
+  const { errorToasts, dismissError, successToasts, dismissSuccess } = useStore(
+    useShallow((s) => ({ errorToasts: s.errorToasts, dismissError: s.dismissError, successToasts: s.successToasts, dismissSuccess: s.dismissSuccess }))
+  )
   if (!errorToasts.length && !successToasts.length) return null
 
   const toastStyle = (type) => ({

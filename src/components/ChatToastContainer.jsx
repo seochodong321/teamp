@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './ChatToastContainer.module.css'
 
 const isMobile = () => window.innerWidth <= 768
 
 export default function ChatToastContainer() {
-  const { chatToasts, removeChatToast, clearChatToasts } = useStore()
+  const { chatToasts, removeChatToast, clearChatToasts } = useStore(
+    useShallow((s) => ({ chatToasts: s.chatToasts, removeChatToast: s.removeChatToast, clearChatToasts: s.clearChatToasts }))
+  )
   const navigate = useNavigate()
   const [closingIds, setClosingIds] = useState(new Set())
   const [mobile, setMobile] = useState(isMobile)

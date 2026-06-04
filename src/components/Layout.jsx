@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth'
 import { collection, doc, onSnapshot, query, updateDoc, where } from 'firebase/firestore'
 import { auth, db, requestNotificationPermission } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import NotificationPanel from './NotificationPanel.jsx'
 import SearchModal from './SearchModal.jsx'
 import CreateProjectModal from './CreateProjectModal.jsx'
@@ -16,7 +17,15 @@ import styles from './Layout.module.css'
 import TeampMark from './TeampMark.jsx'
 
 export default function Layout() {
-  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme, matchPostCount, matchSeenCount } = useStore()
+  // 항상 떠있는 컴포넌트 — 필요한 필드만 shallow 구독해 무관한 스토어 변경(메시지 등)엔 리렌더 안 함
+  const { projects, currentUser, logout, formatUnread, notifications, dmRoomList, mutedProjects, toggleMuteProject, dmUnreadCounts, theme, toggleTheme, matchPostCount, matchSeenCount } = useStore(
+    useShallow((s) => ({
+      projects: s.projects, currentUser: s.currentUser, logout: s.logout, formatUnread: s.formatUnread,
+      notifications: s.notifications, dmRoomList: s.dmRoomList, mutedProjects: s.mutedProjects,
+      toggleMuteProject: s.toggleMuteProject, dmUnreadCounts: s.dmUnreadCounts, theme: s.theme,
+      toggleTheme: s.toggleTheme, matchPostCount: s.matchPostCount, matchSeenCount: s.matchSeenCount,
+    }))
+  )
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen]           = useState(false)
