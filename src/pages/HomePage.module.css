@@ -744,10 +744,12 @@
   .todayBig { font-size: 19px; }
   .todayUnit { font-size: 9px; }
   .todayLine { display: none; }            /* 리드·멤버 등 부가설명 — 두께 원인이라 모바일 숨김 */
-  .todayFeature { gap: 7px; }
-  .todayFeatureEmoji { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
-  .todayFeatureName { font-size: 12px; }
-  .todayFeatureMeta { font-size: 9px; }
+  /* 대표 프로젝트: [이모지 이름] 한 줄, 마감 pill은 아래 줄로 wrap (셀 높이 안정) */
+  .todayFeature { gap: 7px; flex-wrap: wrap; row-gap: 3px; }
+  .todayFeature .todayFeatureMeta { display: none; }  /* 핀 설정 시 종료일 숨김 — 마감 pill로 충분 */
+  .todayFeatureEmoji { width: 24px; height: 24px; font-size: 13px; border-radius: 7px; }
+  .todayFeatureName { font-size: 12.5px; }
+  .todayFeatureMeta { font-size: 9px; }    /* (미설정 CTA 버튼용) */
   .todayPill { font-size: 9px; padding: 1px 5px; }
   .pinSetBtn { font-size: 11px; }
   /* 노액티브 배너 모바일 */

@@ -122,10 +122,15 @@ export default function ChatPage() {
     if (!vv || !pageRef.current) return
     const onResize = () => {
       const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-      pageRef.current.style.bottom = kbHeight > 0
-        ? `${kbHeight}px`
-        : ''
-      if (kbHeight > 0) bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+      if (kbHeight > 0) {
+        // 키보드 높이만큼 페이지 바닥을 올리고, 입력창 하단 safe-area 패딩은 collapse
+        pageRef.current.style.bottom = `${kbHeight}px`
+        pageRef.current.style.setProperty('--safe-bottom', '0px')
+        bottomRef.current?.scrollIntoView({ behavior: 'instant' })
+      } else {
+        pageRef.current.style.bottom = ''
+        pageRef.current.style.removeProperty('--safe-bottom')
+      }
     }
     vv.addEventListener('resize', onResize)
     return () => vv.removeEventListener('resize', onResize)

@@ -10,23 +10,23 @@
 }
 
 @media (max-width: 768px) {
-  /* Layout 모바일 헤더를 숨기므로 상태바 바로 아래부터 화면 전체를 채움 */
+  /* 전체 뷰포트를 덮음 — 하단으로 다른 화면(푸터 등)이 새지 않게.
+     상태바·홈 인디케이터는 헤더/입력창 안쪽 padding(safe-area)으로 비켜준다 */
   .page {
     position: fixed;
-    top: 0;
-    left: 0; right: 0;
-    bottom: env(safe-area-inset-bottom, 0px); /* 탭바 숨김 — 홈 인디케이터만 */
+    inset: 0;
     height: auto;
     border-radius: 0;
     border: none;
     z-index: 5;
   }
-  /* 헤더 배경이 상태바(노치) 영역까지 채우고 내용은 그 아래로 */
+  /* 헤더: 내용은 상태바(노치) 아래로, 배경은 노치 영역까지 채움 — 기종 무관 유동 */
   .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 8px; }
   .messages { padding: 10px 14px; }
   .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
-  .inputArea { padding: 8px 10px; }
+  /* 입력창: 홈 인디케이터 위로 띄움. 키보드 열리면 JS가 --safe-bottom=0으로 collapse */
+  .inputArea { padding: 8px 10px; padding-bottom: calc(8px + var(--safe-bottom, env(safe-area-inset-bottom, 0px))); }
   .input { font-size: 16px; } /* iOS zoom 방지 */
   /* 한 줄 유지 — 뒤로(프로젝트명)·방이름 길어도 잘라서 넘침 방지 */
   .back { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
