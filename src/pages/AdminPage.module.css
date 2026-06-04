@@ -192,6 +192,21 @@
 .type_project { background: #EEF2FF; color: #4338CA; }
 .type_match   { background: #FDF4FF; color: #7C3AED; }
 .type_user    { background: #FFF7ED; color: #C2410C; }
+.type_note    { background: #ECFEFF; color: #0E7490; }
+
+.noteContent {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 4px 0;
+  line-height: 1.5;
+  max-height: 160px;
+  overflow-y: auto;
+}
 
 .reasonBadge {
   font-size: 11px;

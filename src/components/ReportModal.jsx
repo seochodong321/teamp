@@ -12,17 +12,18 @@ const REASONS = [
   { id: 'other',     label: '기타' },
 ]
 
-// type: 'project' | 'match' | 'user'
+// type: 'project' | 'match' | 'user' | 'note'
 // targetId: Firestore document ID
 // targetName: display name for the report
-export default function ReportModal({ type, targetId, targetName, onClose }) {
+// extra: 신고 컨텍스트(쪽지 발신/수신/내용 등) — 그대로 report 문서에 병합
+export default function ReportModal({ type, targetId, targetName, extra, onClose }) {
   const { currentUser, showError } = useStore()
   const [reason, setReason]   = useState('')
   const [detail, setDetail]   = useState('')
   const [sending, setSending] = useState(false)
   const [sent, setSent]       = useState(false)
 
-  const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필' }
+  const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필', note: '쪽지' }
 
   const handleSubmit = async () => {
     if (!reason) return
@@ -39,6 +40,7 @@ export default function ReportModal({ type, targetId, targetName, onClose }) {
         detail: detail.trim(),
         status: 'pending',
         createdAt: serverTimestamp(),
+        ...(extra || {}),
       })
       setSent(true)
     } catch {

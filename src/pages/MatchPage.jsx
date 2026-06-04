@@ -781,6 +781,17 @@ export default function MatchPage() {
             ) : (
               <p className={styles.profileEmpty}>프로필 정보가 없어요</p>
             )}
+            {/* 매치에서는 쪽지만 (1:1 실시간 대화는 합류 후 커넥트에서) */}
+            {applicantProfile?.username && (
+              <button className={styles.profileMsgBtn}
+                onClick={() => {
+                  const u = applicantProfile.username.replace('@', '')
+                  setViewApplicant(null)
+                  navigate(`/messages?compose=1&to=${u}`)
+                }}>
+                ✉️ 쪽지 보내기
+              </button>
+            )}
             <button className={`${styles.submitBtn} ${styles.profileJoinBtn}`}
               onClick={() => handleAccept(selected, viewApplicant)}>
               프로젝트에 합류시키기

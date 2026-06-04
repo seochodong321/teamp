@@ -61,13 +61,17 @@ export default function Layout() {
   }, [mobileOpen])
 
   // 쪽지 미읽음 카운트 (탭바 배지용)
+  // notes는 recipientId가 없고 participants/toUid 구조 — participants로 쿼리 후 내가 받은·안 읽은·안 숨긴 것만 카운트
   useEffect(() => {
     if (!currentUser?.id) return
     const unsub = onSnapshot(
-      query(collection(db, 'notes'), where('recipientId', '==', currentUser.id)),
+      query(collection(db, 'notes'), where('participants', 'array-contains', currentUser.id)),
       (snap) => {
         const uid = currentUser.id
-        setNoteUnread(snap.docs.filter((d) => !d.data().read?.[uid]).length)
+        setNoteUnread(snap.docs.filter((d) => {
+          const n = d.data()
+          return n.toUid === uid && !n.read?.[uid] && !(n.hiddenBy || []).includes(uid)
+        }).length)
       },
       () => {}
     )

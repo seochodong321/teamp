@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import ReportModal from '../components/ReportModal.jsx'
 import styles from './MessagesPage.module.css'
 
 function formatDate(seconds) {
@@ -18,7 +19,7 @@ function formatDate(seconds) {
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { currentUser, showError } = useStore()
+  const { currentUser, showError, showConfirm } = useStore()
 
   const composeMode = searchParams.get('compose') === '1'
   const initTo      = searchParams.get('to') || ''
@@ -44,6 +45,9 @@ export default function MessagesPage() {
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [replying, setReplying]   = useState(false)
+
+  // 신고
+  const [reportNote, setReportNote] = useState(null)
 
   // 쪽지 목록 실시간 구독
   useEffect(() => {
@@ -173,8 +177,36 @@ export default function MessagesPage() {
     }
   }
 
-  const receivedNotes = notes.filter((n) => n.toUid === currentUser.id)
-  const sentNotes     = notes.filter((n) => n.fromUid === currentUser.id)
+  // 내 쪽지함에서 삭제 — 상대방 쪽엔 남는 소프트 삭제(hiddenBy)
+  const handleDelete = async (note) => {
+    if (!await showConfirm('이 쪽지를 삭제할까요?\n내 쪽지함에서만 사라지고 상대방에게는 그대로 남아요.')) return
+    try {
+      await updateDoc(doc(db, 'notes', note.id), { hiddenBy: arrayUnion(currentUser.id) })
+      setSelected(null)
+    } catch {
+      showError('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')
+    }
+  }
+
+  const openReport = (note) => {
+    const content = (note.messages || []).map((m) => `${m.senderName}: ${m.text}`).join('\n').slice(0, 1000)
+    setReportNote({
+      targetId: note.id,
+      targetName: `쪽지: ${note.subject}`,
+      extra: {
+        noteFromUid:  note.fromUid,
+        noteFromName: note.fromName,
+        noteToName:   note.toName,
+        noteSubject:  note.subject,
+        noteContent:  content,
+      },
+    })
+  }
+
+  // 숨김 처리한 쪽지는 내 목록에서 제외
+  const visibleAll    = notes.filter((n) => !(n.hiddenBy || []).includes(currentUser.id))
+  const receivedNotes = visibleAll.filter((n) => n.toUid === currentUser.id)
+  const sentNotes     = visibleAll.filter((n) => n.fromUid === currentUser.id)
   const visibleNotes  = tab === 'received' ? receivedNotes : sentNotes
   const unreadCount   = receivedNotes.filter((n) => !n.read?.[currentUser.id]).length
 
@@ -373,6 +405,12 @@ export default function MessagesPage() {
                   <button className={styles.replyBarBtn} onClick={() => setShowReply(true)}>
                     ↩ 답장하기
                   </button>
+                  <div className={styles.noteActionsRight}>
+                    {selected.fromUid !== currentUser.id && (
+                      <button className={styles.noteActionBtn} onClick={() => openReport(selected)}>🚩 신고</button>
+                    )}
+                    <button className={`${styles.noteActionBtn} ${styles.noteDeleteBtn}`} onClick={() => handleDelete(selected)}>🗑 삭제</button>
+                  </div>
                 </div>
               )}
             </div>
@@ -385,6 +423,16 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      {reportNote && (
+        <ReportModal
+          type="note"
+          targetId={reportNote.targetId}
+          targetName={reportNote.targetName}
+          extra={reportNote.extra}
+          onClose={() => setReportNote(null)}
+        />
+      )}
     </div>
   )
 }

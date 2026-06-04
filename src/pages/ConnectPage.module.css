@@ -87,8 +87,11 @@
 .teamfolioLink { display: block; margin-top: 12px; font-size: 12px; font-weight: 600; color: var(--primary); text-align: center; }
 .teamfolioLink:hover { text-decoration: underline; }
 
-.msgBtn { width: 100%; margin-top: 10px; padding: 12px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
-.msgBtn:hover { opacity: 0.88; }
+.contactActions { display: flex; gap: 8px; width: 100%; margin-top: 10px; }
+.dmBtn { flex: 1; padding: 12px; background: var(--primary); color: white; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+.dmBtn:hover { opacity: 0.88; }
+.msgBtn { flex: 1; padding: 12px; background: var(--primary-light); color: var(--primary-dark); border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: opacity 0.15s; }
+.msgBtn:hover { opacity: 0.85; }
 
 /* 프로젝트 초대 */
 .inviteWrap { width: 100%; margin-top: 6px; }

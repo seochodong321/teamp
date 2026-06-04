@@ -7,7 +7,7 @@ import styles from './ConnectPage.module.css'
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const { connects, removeConnect, currentUser, projects, showError, showConfirm } = useStore()
+  const { connects, removeConnect, currentUser, projects, showError, showConfirm, getOrCreateDmRoom } = useStore()
   const [search, setSearch] = useState('')
   const [profile, setProfile] = useState(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
@@ -89,6 +89,20 @@ export default function ConnectPage() {
     navigate(`/messages?compose=1&to=${username}`)
   }
 
+  // 1:1 실시간 대화 — 함께한 프로젝트를 컨텍스트로 DM 방 생성/재사용
+  const handleDm = async () => {
+    if (!profile) return
+    const shared = getSharedProjects(profile.id)
+    const projId = shared[0]?.id
+    if (!projId) { showError('함께한 프로젝트가 있어야 1:1 대화를 시작할 수 있어요.'); return }
+    try {
+      const room = await getOrCreateDmRoom(projId, profile.id, profile.name)
+      if (room) { closeModal(); navigate(`/project/${projId}/chat/${room.id}`) }
+    } catch {
+      showError('대화방을 열지 못했어요. 잠시 후 다시 시도해주세요.')
+    }
+  }
+
   return (
     <div className={styles.page}>
 
@@ -153,9 +167,15 @@ export default function ConnectPage() {
               </a>
             )}
 
-            <button className={styles.msgBtn} onClick={handleMessage}>
-              ✉️ 쪽지 보내기
-            </button>
+            {/* 1:1 대화(실시간) + 쪽지 — 커넥트는 둘 다 가능 */}
+            <div className={styles.contactActions}>
+              <button className={styles.dmBtn} onClick={handleDm}>
+                💬 1:1 대화
+              </button>
+              <button className={styles.msgBtn} onClick={handleMessage}>
+                ✉️ 쪽지
+              </button>
+            </div>
 
             {/* 프로젝트 초대 */}
             {(() => {

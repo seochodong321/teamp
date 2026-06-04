@@ -291,27 +291,26 @@ export default function CreateProjectModal({ onClose }) {
                     </div>
                   ))}
                 </div>
+                {/* 이동 버튼은 body 안에 둠 — 모바일에서 푸터가 잘려도 항상 보이도록 */}
+                <div className={styles.doneActions}>
+                  <button className={styles.doneHomeBtn} onClick={() => { onClose(); navigate('/home') }}>홈으로</button>
+                  <button className={styles.doneGoBtn} onClick={() => { onClose(); navigate(`/project/${created.id}`) }}>프로젝트로 가기 →</button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 푸터 */}
-          <div className={styles.footer}>
-            {/* step 0/1 이전/다음 — 모바일에서는 헤더 버튼으로 대체되므로 숨김 */}
-            {step > 0 && step < 2 && <button className={`${styles.prevBtn} ${styles.footerNavBtn}`} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
-            <div style={{ flex: 1 }} />
-            {step < 2 && (
+          {/* 푸터 — step 0/1 전용 (완료 화면은 body 안 버튼 사용) */}
+          {step < 2 && (
+            <div className={styles.footer}>
+              {/* 이전/다음 — 모바일에서는 헤더 버튼으로 대체되므로 숨김 */}
+              {step > 0 && <button className={`${styles.prevBtn} ${styles.footerNavBtn}`} onClick={() => setStep((s) => s - 1)}>← 이전</button>}
+              <div style={{ flex: 1 }} />
               <button className={`${styles.nextBtn} ${styles.footerNavBtn}`} onClick={goNext} disabled={loading}>
                 {loading ? '생성 중...' : step === 1 ? '완료하기' : '다음 →'}
               </button>
-            )}
-            {step === 2 && (
-              <>
-                <button className={styles.prevBtn} onClick={() => { onClose(); navigate('/home') }}>홈으로</button>
-                <button className={styles.nextBtn} onClick={() => { onClose(); navigate(`/project/${created.id}`) }}>바로 가기 →</button>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

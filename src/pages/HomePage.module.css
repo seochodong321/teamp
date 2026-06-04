@@ -737,11 +737,19 @@
   .cardName { font-size: 15px; }
   .inviteBanner { flex-direction: column; align-items: flex-start; }
   .quickActions { grid-template-columns: 1fr; }
-  /* 4분할 → 2×2 */
-  .todayStrip { grid-template-columns: 1fr 1fr; }
-  .todayCell:nth-child(2) { border-right: 0; }
-  .todayCell:nth-child(3),
-  .todayCell:nth-child(4) { border-top: 1px solid var(--border-light); }
+  /* 웹처럼 한 줄(4분할) 유지 — 부가 설명줄 숨겨 얇게 */
+  .todayStrip { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
+  .todayCell { padding: 10px 7px; gap: 3px; }
+  .todayLabel { font-size: 8.5px; letter-spacing: 0.05em; }
+  .todayBig { font-size: 19px; }
+  .todayUnit { font-size: 9px; }
+  .todayLine { display: none; }            /* 리드·멤버 등 부가설명 — 두께 원인이라 모바일 숨김 */
+  .todayFeature { gap: 7px; }
+  .todayFeatureEmoji { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
+  .todayFeatureName { font-size: 12px; }
+  .todayFeatureMeta { font-size: 9px; }
+  .todayPill { font-size: 9px; padding: 1px 5px; }
+  .pinSetBtn { font-size: 11px; }
   /* 노액티브 배너 모바일 */
   .noActiveBanner { flex-wrap: wrap; gap: 12px; }
   .noActiveCreateBtn { width: 100%; text-align: center; }

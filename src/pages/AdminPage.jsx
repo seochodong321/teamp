@@ -11,7 +11,7 @@ import styles from './AdminPage.module.css'
 
 const ADMIN_EMAILS = ['seobomin524@gmail.com']
 
-const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필' }
+const TYPE_LABEL = { project: '프로젝트', match: '매치 모집글', user: '유저 프로필', note: '쪽지' }
 const REASON_LABEL = {
   illegal: '불법 콘텐츠', spam: '스팸 / 홍보', false: '허위 정보',
   hate: '욕설 / 혐오 표현', other: '기타',
@@ -323,6 +323,12 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
                     {link && <a href={link} target="_blank" rel="noopener noreferrer" className={styles.targetLink}>→ 바로가기</a>}
                   </p>
                   <p className={styles.reporter}><strong>신고자:</strong> {r.reporterName}</p>
+                  {r.type === 'note' && (
+                    <>
+                      <p className={styles.reporter}><strong>발신:</strong> {r.noteFromName} → <strong>수신:</strong> {r.noteToName}</p>
+                      {r.noteContent && <p className={styles.noteContent}>{r.noteContent}</p>}
+                    </>
+                  )}
                   {r.detail && <p className={styles.detail}>"{r.detail}"</p>}
                 </div>
                 <div className={styles.cardActions}>
@@ -336,6 +342,9 @@ function ReportsTab({ onDeleteProject, onDeleteMatch, onBlockUser }) {
                   )}
                   {r.type === 'user' && (
                     <button className={styles.dangerBtn} onClick={() => onBlockUser(r.targetId, r.targetName, null, r.id)}>유저 블락</button>
+                  )}
+                  {r.type === 'note' && r.noteFromUid && (
+                    <button className={styles.dangerBtn} onClick={() => onBlockUser(r.noteFromUid, r.noteFromName, null, r.id)}>발신자 블락</button>
                   )}
                   {r.status === 'pending' ? (
                     <button className={styles.resolveBtn} onClick={() => handleUpdateStatus(r.id, 'resolved')}>처리 완료</button>
