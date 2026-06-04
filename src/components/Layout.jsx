@@ -313,7 +313,7 @@ export default function Layout() {
         {/* ── 하단 푸터 (데스크탑 전용) ── */}
         <footer className={styles.footer}>
           <span className={styles.footerLegal}>
-            서비스명: 팀프&nbsp;·&nbsp;대표자: 준비중&nbsp;·&nbsp;사업자등록번호: 미등록&nbsp;·&nbsp;이메일: 준비중
+            팀프&nbsp;·&nbsp;기여와 관계의 기록&nbsp;·&nbsp;문의 support@teamp.kr
           </span>
           <span className={styles.footerRight}>
             <NavLink to="/terms" className={styles.footerLink}>이용약관</NavLink>

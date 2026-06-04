@@ -427,7 +427,7 @@ export default function LoginPage() {
               </>
             )}
 
-            {error && <p className={styles.error}>{error}</p>}
+            {/* 에러는 카드 상단 errorBanner 한 곳에서만 표시 (중복 제거) */}
             {emailAlreadyInUse && mode === 'signup' && (
               <button type="button" className={styles.resendBtn}
                 onClick={() => { setMode('login'); setError(''); setEmailAlreadyInUse(false); setPasswordConfirm('') }}>
