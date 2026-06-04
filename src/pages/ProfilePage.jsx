@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch }
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { resizeImage } from '../utils/image.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import NotificationSettings from '../components/NotificationSettings.jsx'
 import styles from './ProfilePage.module.css'
@@ -158,8 +159,10 @@ export default function ProfilePage() {
     if (file.size > 5 * 1024 * 1024) { showError('이미지 크기는 5MB 이하여야 해요.'); e.target.value = ''; return }
     setPhotoUploading(true)
     try {
+      // 아바타는 최대 72px로 표시 — 320px JPEG로 축소해 저장·다운로드 비용 절감
+      const resized = await resizeImage(file, { maxSize: 320, quality: 0.85 })
       const sRef = storageRef(storage, `users/${currentUser.id}/avatar.jpg`)
-      await uploadBytes(sRef, file)
+      await uploadBytes(sRef, resized)
       const url = await getDownloadURL(sRef)
       await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
       updateProfile({ photoURL: url })
