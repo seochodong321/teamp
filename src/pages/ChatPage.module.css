@@ -10,10 +10,10 @@
 }
 
 @media (max-width: 768px) {
-  /* 헤더 아래~탭바 위 공간을 뷰포트 기준으로 정확히 채움 */
+  /* Layout 모바일 헤더를 숨기므로 상태바 바로 아래부터 화면 전체를 채움 */
   .page {
     position: fixed;
-    top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+    top: 0;
     left: 0; right: 0;
     bottom: env(safe-area-inset-bottom, 0px); /* 탭바 숨김 — 홈 인디케이터만 */
     height: auto;
@@ -21,13 +21,18 @@
     border: none;
     z-index: 5;
   }
-  .header { padding: 10px 14px; }
+  /* 헤더 배경이 상태바(노치) 영역까지 채우고 내용은 그 아래로 */
+  .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 8px; }
   .messages { padding: 10px 14px; }
   .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
   .inputArea { padding: 8px 10px; }
   .input { font-size: 16px; } /* iOS zoom 방지 */
-  .roomName { display: none; } /* Layout mobileHeader가 이미 표시 */
+  /* 한 줄 유지 — 뒤로(프로젝트명)·방이름 길어도 잘라서 넘침 방지 */
+  .back { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+  .headerCenter { min-width: 0; }
+  .roomName { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Layout 헤더 숨김 → 방 이름 표시 */
+  .headerSpacer { width: 0; }  /* 균형용 spacer 제거해 제목 공간 확보 */
 }
 
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }

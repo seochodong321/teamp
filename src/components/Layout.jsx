@@ -290,19 +290,22 @@ export default function Layout() {
 
       {/* ── 메인 컨텐츠 ── */}
       <main className={styles.main}>
-        <div className={styles.mobileHeader}>
-          <button className={styles.menuBtn} onClick={() => setShowSearch(true)}>🔍</button>
+        {/* 채팅 페이지는 ChatPage 자체 헤더(뒤로·방이름·인원)를 쓰므로 모바일 헤더 숨김 */}
+        {!isChatPage && (
+          <div className={styles.mobileHeader}>
+            <button className={styles.menuBtn} onClick={() => setShowSearch(true)}>🔍</button>
 
-          {pageTitle
-            ? <span className={styles.mobilePageTitle}>{pageTitle}</span>
-            : <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
-          }
+            {pageTitle
+              ? <span className={styles.mobilePageTitle}>{pageTitle}</span>
+              : <span className={styles.mobileLogo} onClick={() => navigate('/home')}>Teamp</span>
+            }
 
-          <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
-            ✦
-            {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
-          </button>
-        </div>
+            <button className={styles.mobileNotiBtn} onClick={() => setShowNotifications(true)}>
+              ✦
+              {unreadCount > 0 && <span className={styles.mobileNotiBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+            </button>
+          </div>
+        )}
 
         <InstallPrompt />
 

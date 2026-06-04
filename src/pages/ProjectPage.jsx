@@ -414,14 +414,16 @@ export default function ProjectPage() {
       </div>
 
       {/* ─── 탭 바 ─── */}
-      <div className={styles.tabs}>
-        {TABS.map(([key, label]) => (
-          <button key={key}
-            className={`${styles.tab} ${tab === key ? styles.tabActive : ''}`}
-            onClick={() => setTab(key)}>
-            {label}
-          </button>
-        ))}
+      <div className={styles.tabsWrap}>
+        <div className={styles.tabs}>
+          {TABS.map(([key, label]) => (
+            <button key={key}
+              className={`${styles.tab} ${tab === key ? styles.tabActive : ''}`}
+              onClick={() => setTab(key)}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* ─── 탭 콘텐츠 ─── */}
