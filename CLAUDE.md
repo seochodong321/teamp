@@ -67,7 +67,9 @@ public/  sw.js · firebase-messaging-sw.js · manifest.json · icons/ · splash/
 
 ## 모바일 / PWA — 실제 겪은 회귀
 - 높이 `100dvh`, 하단 `env(safe-area-inset-bottom)`. `100vh` 금지.
-- 하단 탭바 항상 표시 — 다른 fixed 요소는 `bottom: calc(60px + env(safe-area-inset-bottom))` 위로. 채팅 페이지만 탭바 숨김.
+- **⚠️ iOS 설치형 PWA에서 `position: fixed` 신뢰 금지** — 채팅이 상하로 잘리고 탭바가 바닥까지 안 닿던 근본 원인. 해결: `.shell`(`height: var(--app-height,100dvh)`) → `.main`(flex 컬럼) 안에서 **flex로 채움**. 탭바=flex-shrink:0 맨 아래, 채팅=`.contentChat`(flex) 안 `.page`(flex:1). 상태바/홈인디케이터는 헤더/입력창의 safe-area 패딩으로 비킨다.
+- 키보드: ChatPage가 `visualViewport.height`로 `--app-height` 축소 → 입력창이 키보드 위로. `--kb-safe=0`으로 입력창 하단 패딩 collapse.
+- 하단 탭바 항상 표시 — 채팅 페이지만 숨김(`isChatPage` → 탭바·모바일헤더 숨기고 `.contentChat`). fixed 토스트류는 `bottom: calc(60px + env(safe-area-inset-bottom))` 위로.
 - **`interactive-widget=resizes-content` viewport 옵션 금지** — iOS 키보드 닫힐 때 탭바 아래 흰 공백 회귀로 되돌린 전례.
 - 모바일 input `font-size: 16px`(iOS 줌 방지), 터치 타깃 ≥ 44×44px.
 - iOS 홈화면 설치 아이콘/스플래시는 설치 시점에 OS가 구움 — 변경해도 기존 설치 유저는 재설치 전까지 안 바뀜(정상).
