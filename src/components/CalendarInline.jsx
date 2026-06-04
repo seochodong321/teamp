@@ -31,8 +31,8 @@ export default function CalendarInline({ project, currentUser }) {
   const [isPersonal, setIsPersonal] = useState(false)
 
   // 안전장치
-  if (!project)      return <div style={{ padding: 20, color: '#6B6B6B' }}>프로젝트 정보를 불러오는 중...</div>
-  if (!currentUser)  return <div style={{ padding: 20, color: '#6B6B6B' }}>사용자 정보를 불러오는 중...</div>
+  if (!project)      return <div style={{ padding: 20, color: 'var(--text-secondary)' }}>프로젝트 정보를 불러오는 중...</div>
+  if (!currentUser)  return <div style={{ padding: 20, color: 'var(--text-secondary)' }}>사용자 정보를 불러오는 중...</div>
 
   const events = Array.isArray(project.events) ? project.events : []
   const rooms  = Array.isArray(project.rooms)  ? project.rooms  : []
