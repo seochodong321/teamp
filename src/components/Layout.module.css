@@ -353,34 +353,6 @@
 }
 
 /* 반응형 */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    height: 100dvh;
-    z-index: 200;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    box-shadow: var(--shadow-lg);
-  }
-
-  .sidebarOpen { transform: translateX(0); }
-  .overlay { display: block; }
-  .mobileHeader { display: flex; }
-  .mobileTabBar { display: flex; }
-
-  /* 탭바가 flex 컬럼 안에 있으므로 content는 탭바 높이만큼 비울 필요 없음 */
-  .content { padding: 10px 12px 12px; }
-  /* 채팅: content를 flex 컨테이너로 — ChatPage가 화면을 꽉 채우고 내부에서 스크롤 */
-  .contentChat { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
-  .mobileLogo { font-size: 17px; }
-  .createBtn { display: none; }
-  .footer { display: none; }
-  .mobileTabBarHidden { display: none !important; }
-}
-
 .mobileTab {
   display: flex;
   flex-direction: column;
@@ -621,5 +593,35 @@
   transition: color 0.15s;
 }
 .footerLink:hover { color: var(--primary); }
+
+/* ⚠️ 모바일 오버라이드는 파일 끝에 — base 규칙(.footer 등)보다 뒤여야 source-order로
+   이김. 위에 두면 base .footer{display:flex}가 덮어써서 모바일에 푸터가 뜨는 버그 발생함 */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebarOpen { transform: translateX(0); }
+  .overlay { display: block; }
+  .mobileHeader { display: flex; }
+  .mobileTabBar { display: flex; }
+
+  /* 탭바가 flex 컬럼 안에 있으므로 content는 탭바 높이만큼 비울 필요 없음 */
+  .content { padding: 10px 12px 12px; }
+  /* 채팅: content를 flex 컨테이너로 — ChatPage가 화면을 꽉 채우고 내부에서 스크롤 */
+  .contentChat { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .mobileLogo { font-size: 17px; }
+  .createBtn { display: none; }
+  .footer { display: none; }
+  .mobileTabBarHidden { display: none !important; }
+}
 
 .footerDot { opacity: 0.5; }

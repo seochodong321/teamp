@@ -9,34 +9,6 @@
   box-shadow: var(--shadow-xs);
 }
 
-@media (max-width: 768px) {
-  /* position:fixed 안 씀 — 홈 화면처럼 flex로 .contentChat를 꽉 채움.
-     (fixed가 iOS PWA에서 안 먹어 채팅이 잘리던 문제 해결) */
-  .page {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-    max-width: none;
-    height: auto;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-  }
-  /* 헤더(고정): 내용은 상태바(노치) 아래로, 배경은 노치까지 채움 */
-  .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 6px; }
-  .messages { padding: 10px 14px; min-height: 0; }  /* 중첩 flex 스크롤 위해 min-height:0 */
-  .bubbleWrap { max-width: 82%; }
-  .pollCard { max-width: 280px; }
-  /* 입력창(고정): 홈 인디케이터 위로. 키보드 열리면 JS가 --kb-safe=0으로 collapse */
-  .inputArea { padding: 8px 10px; padding-bottom: calc(8px + var(--kb-safe, env(safe-area-inset-bottom, 0px))); }
-  .input { font-size: 16px; } /* iOS zoom 방지 */
-  /* 카카오톡식: ← 뒤로(좌) · 방 이름 가운데 · 액션(우) */
-  .back { flex-shrink: 0; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
-  .headerCenter { flex: 1; min-width: 0; justify-content: center; }
-  .roomName { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .headerSpacer { width: 28vw; max-width: 28vw; }  /* 좌측 뒤로와 균형 → 이름 가운데 */
-}
-
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }
 
 .header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg); }
@@ -304,3 +276,32 @@
 .leaveCancelBtn { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
 .leaveConfirmBtn { flex: 1; height: 40px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 .leaveConfirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ⚠️ 모바일 오버라이드는 파일 끝에 — base 규칙(.header·.inputArea 등)보다 뒤여야
+   source-order로 이김. 위에 두면 base가 덮어써서 헤더가 상태바에 겹치는 버그 발생함 */
+@media (max-width: 768px) {
+  /* position:fixed 안 씀 — 홈 화면처럼 flex로 .contentChat를 꽉 채움 */
+  .page {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+  /* 헤더(고정): 내용은 상태바(노치) 아래로, 배경은 노치까지 채움 */
+  .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 6px; }
+  .messages { padding: 10px 14px; min-height: 0; }  /* 중첩 flex 스크롤 위해 min-height:0 */
+  .bubbleWrap { max-width: 82%; }
+  .pollCard { max-width: 280px; }
+  /* 입력창(고정): 홈 인디케이터 위로. 키보드 열리면 JS가 --kb-safe=0으로 collapse */
+  .inputArea { padding: 8px 10px; padding-bottom: calc(8px + var(--kb-safe, env(safe-area-inset-bottom, 0px))); }
+  .input { font-size: 16px; } /* iOS zoom 방지 */
+  /* 카카오톡식: ← 뒤로(좌) · 방 이름 가운데 · 액션(우) */
+  .back { flex-shrink: 0; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
+  .headerCenter { flex: 1; min-width: 0; justify-content: center; }
+  .roomName { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .headerSpacer { width: 28vw; max-width: 28vw; }  /* 좌측 뒤로와 균형 → 이름 가운데 */
+}
