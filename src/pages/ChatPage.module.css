@@ -14,8 +14,8 @@
      상태바·홈 인디케이터는 헤더/입력창 안쪽 padding(safe-area)으로 비켜준다 */
   .page {
     position: fixed;
-    inset: 0;
-    height: auto;
+    top: 0; left: 0; right: 0; bottom: 0;  /* inset:0 대신 명시 — 구형 iOS·웹뷰 호환 */
+    height: 100%;
     border-radius: 0;
     border: none;
     z-index: 5;
