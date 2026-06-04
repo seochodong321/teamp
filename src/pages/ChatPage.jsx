@@ -114,7 +114,6 @@ export default function ChatPage() {
   const messagesRef   = useRef(null)
   const isInitialRef  = useRef(true)
   const nearBottomRef = useRef(true)
-  const pageRef       = useRef(null)
 
   // ─── iOS PWA 키보드 대응 ──
   // 채팅은 .shell(height: var(--app-height,100dvh)) 안의 flex로 채워짐.
@@ -319,7 +318,7 @@ export default function ChatPage() {
   const backPath      = isDm ? '/home' : `/project/${projectId}`
 
   return (
-    <div className={styles.page} ref={pageRef}>
+    <div className={styles.page}>
       {/* 라이트박스 */}
       {lightbox && (
         <div className={styles.lightbox} onClick={() => setLightbox(null)}>
