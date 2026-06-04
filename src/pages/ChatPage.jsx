@@ -116,28 +116,33 @@ export default function ChatPage() {
   const nearBottomRef = useRef(true)
   const pageRef       = useRef(null)
 
-  // ─── iOS PWA 키보드 대응: visualViewport 변화 시 채팅 영역 재조정 ──
-  // iOS는 키보드가 올라와도 레이아웃 뷰포트(innerHeight)는 그대로고 visualViewport만 줄어듦.
-  // 그 차이만큼 페이지 바닥을 올려 입력창을 키보드 위로 띄운다. resize·scroll 둘 다 청취.
+  // ─── iOS PWA 키보드 대응 ──
+  // 채팅은 .shell(height: var(--app-height,100dvh)) 안의 flex로 채워짐.
+  // 키보드가 올라오면 visualViewport.height로 --app-height를 줄여 앱이 보이는 영역에 맞춰지고
+  // → 입력창이 키보드 바로 위로 올라온다. --kb-safe=0으로 입력창 하단 패딩도 collapse.
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
+    const root = document.documentElement
     const apply = () => {
-      const el = pageRef.current
-      if (!el) return
-      const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-      if (kbHeight > 1) {
-        el.style.bottom = `${kbHeight}px`
-        el.style.setProperty('--safe-bottom', '0px')  // 키보드 위에선 홈 인디케이터 패딩 불필요
+      const kb = window.innerHeight - vv.height - vv.offsetTop
+      if (kb > 1) {
+        root.style.setProperty('--app-height', `${Math.round(vv.height)}px`)
+        root.style.setProperty('--kb-safe', '0px')
         requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: 'end' }))
       } else {
-        el.style.bottom = ''
-        el.style.removeProperty('--safe-bottom')
+        root.style.removeProperty('--app-height')
+        root.style.removeProperty('--kb-safe')
       }
     }
     vv.addEventListener('resize', apply)
     vv.addEventListener('scroll', apply)
-    return () => { vv.removeEventListener('resize', apply); vv.removeEventListener('scroll', apply) }
+    return () => {
+      vv.removeEventListener('resize', apply)
+      vv.removeEventListener('scroll', apply)
+      root.style.removeProperty('--app-height')
+      root.style.removeProperty('--kb-safe')
+    }
   }, [])
 
   // ─── Firestore 메시지 실시간 구독 ─────────────────────────────

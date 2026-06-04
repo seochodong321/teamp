@@ -316,9 +316,9 @@ export default function Layout() {
           </div>
         )}
 
-        <InstallPrompt />
+        {!isChatPage && <InstallPrompt />}
 
-        <div id="page-content" className={styles.content}>
+        <div id="page-content" className={`${styles.content} ${isChatPage ? styles.contentChat : ''}`}>
           <Outlet />
         </div>
 

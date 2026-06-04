@@ -10,29 +10,31 @@
 }
 
 @media (max-width: 768px) {
-  /* 전체 뷰포트를 덮음 — 하단으로 다른 화면(푸터 등)이 새지 않게.
-     상태바·홈 인디케이터는 헤더/입력창 안쪽 padding(safe-area)으로 비켜준다 */
+  /* position:fixed 안 씀 — 홈 화면처럼 flex로 .contentChat를 꽉 채움.
+     (fixed가 iOS PWA에서 안 먹어 채팅이 잘리던 문제 해결) */
   .page {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;  /* inset:0 대신 명시 — 구형 iOS·웹뷰 호환 */
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    height: auto;
     border-radius: 0;
     border: none;
-    z-index: 5;
+    box-shadow: none;
   }
-  /* 헤더: 내용은 상태바(노치) 아래로, 배경은 노치 영역까지 채움 — 기종 무관 유동 */
-  .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 8px; }
-  .messages { padding: 10px 14px; }
+  /* 헤더(고정): 내용은 상태바(노치) 아래로, 배경은 노치까지 채움 */
+  .header { padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); gap: 6px; }
+  .messages { padding: 10px 14px; min-height: 0; }  /* 중첩 flex 스크롤 위해 min-height:0 */
   .bubbleWrap { max-width: 82%; }
   .pollCard { max-width: 280px; }
-  /* 입력창: 홈 인디케이터 위로 띄움. 키보드 열리면 JS가 --safe-bottom=0으로 collapse */
-  .inputArea { padding: 8px 10px; padding-bottom: calc(8px + var(--safe-bottom, env(safe-area-inset-bottom, 0px))); }
+  /* 입력창(고정): 홈 인디케이터 위로. 키보드 열리면 JS가 --kb-safe=0으로 collapse */
+  .inputArea { padding: 8px 10px; padding-bottom: calc(8px + var(--kb-safe, env(safe-area-inset-bottom, 0px))); }
   .input { font-size: 16px; } /* iOS zoom 방지 */
-  /* 한 줄 유지 — 뒤로(프로젝트명)·방이름 길어도 잘라서 넘침 방지 */
-  .back { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
-  .headerCenter { min-width: 0; }
-  .roomName { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Layout 헤더 숨김 → 방 이름 표시 */
-  .headerSpacer { width: 0; }  /* 균형용 spacer 제거해 제목 공간 확보 */
+  /* 카카오톡식: ← 뒤로(좌) · 방 이름 가운데 · 액션(우) */
+  .back { flex-shrink: 0; max-width: 28vw; overflow: hidden; text-overflow: ellipsis; }
+  .headerCenter { flex: 1; min-width: 0; justify-content: center; }
+  .roomName { font-size: 15px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .headerSpacer { width: 28vw; max-width: 28vw; }  /* 좌측 뒤로와 균형 → 이름 가운데 */
 }
 
 .notFound { padding: 40px; text-align: center; color: var(--text-secondary); }

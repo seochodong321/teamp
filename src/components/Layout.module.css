@@ -2,6 +2,9 @@
   display: flex;
   height: 100vh;        /* 구형 브라우저 fallback */
   height: 100dvh;       /* Safari 주소창 포함 안되는 동적 높이 */
+  /* 채팅에서 키보드가 올라오면 ChatPage가 --app-height를 visualViewport 높이로 갱신 →
+     앱 전체가 보이는 영역으로 줄어들어 입력창이 키보드 위로 올라옴 */
+  height: var(--app-height, 100dvh);
   overflow: hidden;
 }
 
@@ -358,15 +361,13 @@
 /* ── 모바일 하단 탭바 ── */
 .mobileTabBar {
   display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
+  flex-shrink: 0;   /* position:fixed 대신 flex 컬럼 맨 아래 — iOS PWA fixed 비신뢰 회피 */
   height: calc(60px + env(safe-area-inset-bottom, 0px));
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--bg);
   border-top: 1px solid var(--border);
   align-items: center;
   justify-content: space-around;
-  z-index: 150;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
 }
 
@@ -389,7 +390,10 @@
   .mobileHeader { display: flex; }
   .mobileTabBar { display: flex; }
 
-  .content { padding: 10px 12px 0; padding-bottom: calc(60px + 20px + env(safe-area-inset-bottom, 0px)); }
+  /* 탭바가 flex 컬럼 안에 있으므로 content는 탭바 높이만큼 비울 필요 없음 */
+  .content { padding: 10px 12px 12px; }
+  /* 채팅: content를 flex 컨테이너로 — ChatPage가 화면을 꽉 채우고 내부에서 스크롤 */
+  .contentChat { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
   .mobileLogo { font-size: 17px; }
   .createBtn { display: none; }
   .footer { display: none; }
