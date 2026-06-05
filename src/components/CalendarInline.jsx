@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore.js'
+import { HOLIDAYS, ymd } from '../utils/holidays.js'
 import styles from './CalendarInline.module.css'
 
 function isSameDay(a, b) {
@@ -110,8 +111,8 @@ export default function CalendarInline({ project, currentUser }) {
           </div>
 
           <div className={styles.weekRow}>
-            {['일','월','화','수','목','금','토'].map((d) => (
-              <div key={d} className={styles.weekDay}>{d}</div>
+            {['일','월','화','수','목','금','토'].map((d, i) => (
+              <div key={d} className={`${styles.weekDay} ${i === 0 ? styles.weekDaySun : i === 6 ? styles.weekDaySat : ''}`}>{d}</div>
             ))}
           </div>
 
@@ -122,13 +123,17 @@ export default function CalendarInline({ project, currentUser }) {
             {days.map((day) => {
               const evs = eventsOnDay(day)
               const sel = selected && isSameDay(day, selected)
+              const hol = HOLIDAYS[ymd(day)]
+              const dow = day.getDay()
+              const dayCls = (hol || dow === 0) ? styles.dayNumRed : dow === 6 ? styles.dayNumBlue : ''
               return (
                 <button
                   key={day.toISOString()}
                   className={`${styles.cell} ${isToday(day) ? styles.cellToday : ''} ${sel ? styles.cellSelected : ''}`}
                   onClick={() => { setSelected(day); setShowForm(false) }}
                 >
-                  <span className={styles.dayNum}>{day.getDate()}</span>
+                  <span className={`${styles.dayNum} ${dayCls}`}>{day.getDate()}</span>
+                  {hol && <span className={styles.holidayName}>{hol}</span>}
                   {evs.slice(0, 2).map((e) => {
                     const lbl = getLabel(e)
                     return (

@@ -23,6 +23,8 @@
 
   --coral: #8A2A55;
   --coral-light: #F7E9EE;
+  --cal-red: #E5484D;   /* 캘린더 일요일·공휴일 */
+  --cal-blue: #3E63DD;  /* 캘린더 토요일 */
   --coral-soft: #FBF1F4;
 
   --rose: #8A2A55;
@@ -97,6 +99,8 @@ html.dark {
 
   --coral: #F2A0BE;
   --coral-light: #2A1A24;
+  --cal-red: #FF6B6B;
+  --cal-blue: #7B9CFF;
   --coral-soft: #1F1218;
 
   --rose: #F2A0BE;

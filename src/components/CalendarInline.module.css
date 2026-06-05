@@ -60,6 +60,8 @@
   color: var(--text-tertiary);
   padding: 5px 0;
 }
+.weekDaySun { color: var(--cal-red); }
+.weekDaySat { color: var(--cal-blue); }
 
 .grid {
   display: grid;
@@ -112,6 +114,21 @@
 .cellSelected .dayNum {
   background: var(--primary);
   color: #fff;
+}
+
+/* 일요일·공휴일=빨강, 토요일=파랑 (오늘·선택 동그라미가 우선) */
+.dayNumRed { color: var(--cal-red); }
+.dayNumBlue { color: var(--cal-blue); }
+
+.holidayName {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--cal-red);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.3;
 }
 
 .evDot {
