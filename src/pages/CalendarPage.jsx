@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { HOLIDAYS } from '../utils/holidays.js'
 import styles from './CalendarPage.module.css'
 
 const DAYS_SHORT = ['일', '월', '화', '수', '목', '금', '토']
@@ -185,6 +186,7 @@ export default function CalendarPage() {
                 const isToday    = key === todayStr
                 const isSel      = key !== null && key === selected
                 const dow        = idx % 7
+                const holiday    = key ? HOLIDAYS[key] : null
                 const isPast     = key && key < todayStr
                 const todoEvs    = events.filter((e) => e.type === 'todo')
                 const otherEvs   = events.filter((e) => e.type !== 'todo')
@@ -208,9 +210,11 @@ export default function CalendarPage() {
                     <span className={[
                       styles.dayNum,
                       isOverflow  ? styles.dayNumOverflow : '',
-                      dow===0 && !isOverflow ? styles.sunNum : dow===6 && !isOverflow ? styles.satNum : '',
+                      (holiday || dow===0) && !isOverflow ? styles.sunNum : dow===6 && !isOverflow ? styles.satNum : '',
                       isToday ? styles.dayNumToday : '',
                     ].filter(Boolean).join(' ')}>{d}</span>
+
+                    {!isOverflow && holiday && <span className={styles.holName}>{holiday}</span>}
 
                     {!isOverflow && (
                       <>

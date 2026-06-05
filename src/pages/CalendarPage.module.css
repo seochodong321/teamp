@@ -188,6 +188,18 @@
   font-weight: 700;
 }
 
+/* 공휴일 이름 */
+.holName {
+  font-size: 10px;
+  font-weight: 600;
+  color: #E04343;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.3;
+}
+
 /* 이벤트 pills (데스크탑) */
 .pills {
   display: flex;
