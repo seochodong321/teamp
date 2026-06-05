@@ -89,23 +89,29 @@
   background: var(--bg-secondary);
 }
 
-.cellToday {
-  background: var(--primary-light);
-}
-
-.cellSelected {
-  border-color: var(--primary) !important;
-  background: var(--primary-light);
-}
-
+/* 오늘·선택은 숫자에만 동그라미 표시 (셀 전체 배경 X) — 빈 셀이 커도 한쪽으로
+   쏠려 보이지 않게. 구글 캘린더식 */
 .dayNum {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
 }
 
 .cellToday .dayNum {
+  background: var(--primary-light);
   color: var(--primary);
+}
+
+.cellSelected .dayNum {
+  background: var(--primary);
+  color: #fff;
 }
 
 .evDot {
