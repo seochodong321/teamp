@@ -143,6 +143,16 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* 앱 셸(Layout) 진입 시 문서 자체를 잠금 — iOS 고무줄 스크롤로 헤더·입력창·탭바가
+   같이 움직이던 문제 차단. 안쪽 .content/.messages만 스크롤됨.
+   (랜딩·약관 등 Layout 밖 페이지는 잠그지 않아 정상 스크롤) */
+body.appLocked {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* 탭 시 파란 하이라이트 제거 */
 * {
   -webkit-tap-highlight-color: transparent;

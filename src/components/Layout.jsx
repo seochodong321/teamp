@@ -64,6 +64,12 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+  // 앱 셸 동안 문서 잠금 — iOS 고무줄 스크롤 차단 (안쪽 영역만 스크롤). 언마운트 시 해제
+  useEffect(() => {
+    document.body.classList.add('appLocked')
+    return () => document.body.classList.remove('appLocked')
+  }, [])
+
   // 모바일 사이드바 열릴 때 nav 항상 맨 위로
   useEffect(() => {
     if (mobileOpen && navRef.current) navRef.current.scrollTop = 0

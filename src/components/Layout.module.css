@@ -339,6 +339,7 @@
 .content {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;  /* 끝까지 스크롤해도 문서로 전파 안 됨 */
   padding: 24px;
 }
 
