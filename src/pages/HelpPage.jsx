@@ -168,7 +168,11 @@ export default function HelpPage() {
       </div>
 
       <div className={styles.footer}>
-        <p className={styles.footerText}>더 궁금한 점이 있다면</p>
+        <p className={styles.footerText}>
+          더 궁금한 점이 있다면{' '}
+          <button className={styles.footerLink} onClick={() => navigate('/messages?compose=1&to=teamp')}>@teamp</button>
+          로 메시지를 보내주세요
+        </p>
         <button className={styles.footerBtn} onClick={() => navigate('/home')}>← 홈으로 돌아가기</button>
       </div>
     </div>
