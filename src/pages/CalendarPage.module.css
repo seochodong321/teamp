@@ -112,8 +112,8 @@
   padding: 8px 0;
   text-transform: uppercase;
 }
-.sun { color: #E04343; }
-.sat { color: var(--primary); }
+.sun { color: var(--cal-red); }
+.sat { color: var(--cal-blue); }
 
 /* 날짜 그리드 */
 .grid {
@@ -180,8 +180,8 @@
   flex-shrink: 0;
   line-height: 1;
 }
-.sunNum { color: #E04343; }
-.satNum { color: var(--primary); }
+.sunNum { color: var(--cal-red); }
+.satNum { color: var(--cal-blue); }
 .dayNumToday {
   background: var(--primary);
   color: white !important;
@@ -192,7 +192,7 @@
 .holName {
   font-size: 10px;
   font-weight: 600;
-  color: #E04343;
+  color: var(--cal-red);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
