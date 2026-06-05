@@ -62,12 +62,12 @@ export default function CalendarInline({ project, currentUser }) {
   const selectedEvents = selected ? eventsOnDay(selected) : []
 
   const getLabel = (e) => {
-    if (e.isPersonal) return { text: '나만', bg: '#F1F1EE', color: '#6B6B6B' }
-    if (e.scope === 'all') return { text: '전체', bg: '#EEEDFE', color: '#534AB7' }
+    if (e.isPersonal) return { text: '나만', bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' }
+    if (e.scope === 'all') return { text: '전체', bg: 'var(--primary-light)', color: 'var(--primary)' }
     const r = rooms.find((r) => r.id === (e.roomIds && e.roomIds[0]))
     return r
-      ? { text: `#${r.name}`, bg: r.colorBg || '#EEEDFE', color: r.color || '#534AB7' }
-      : { text: '팀별', bg: '#F7F7F5', color: '#6B6B6B' }
+      ? { text: `#${r.name}`, bg: r.colorBg || 'var(--primary-light)', color: r.color || 'var(--primary)' }
+      : { text: '팀별', bg: 'var(--bg-secondary)', color: 'var(--text-secondary)' }
   }
 
   const handleAdd = () => {
@@ -148,7 +148,7 @@ export default function CalendarInline({ project, currentUser }) {
 
           <div className={styles.legend}>
             <div className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ background: '#534AB7' }} />
+              <span className={styles.legendDot} style={{ background: 'var(--primary)' }} />
               <span>전체</span>
             </div>
             {rooms.filter((r) => !r.isDm).map((r) => (
@@ -158,7 +158,7 @@ export default function CalendarInline({ project, currentUser }) {
               </div>
             ))}
             <div className={styles.legendItem}>
-              <span className={styles.legendDot} style={{ background: '#F1F1EE', border: '1px solid #E5E5DF' }} />
+              <span className={styles.legendDot} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)' }} />
               <span>나만보기</span>
             </div>
           </div>

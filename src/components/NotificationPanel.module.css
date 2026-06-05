@@ -37,6 +37,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
+  /* 상태바(노치) 아래로 — X 버튼이 상태바에 가려 안 눌리던 문제 */
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
   border-bottom: 1px solid var(--border);
 }
 
@@ -213,5 +215,5 @@
 .deleteBtn:hover { color: var(--coral); border-color: var(--coral); }
 
 @media (max-width: 600px) {
-  .panel { width: 100%; }
+  .panel { width: 100%; max-width: 100%; }  /* 좌측 여백·X 잘림 방지 — 전체폭 */
 }

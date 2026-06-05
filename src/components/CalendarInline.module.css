@@ -8,8 +8,8 @@
 
 .cal {
   flex: 1;
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
   min-width: 0;
@@ -26,25 +26,25 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid #E5E5DF;
-  background: #FFFFFF;
+  border: 1px solid var(--border);
+  background: var(--bg);
   font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .navBtn:hover {
-  border-color: #534AB7;
-  color: #534AB7;
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .monthLabel {
   font-size: 15px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text);
 }
 
 .weekRow {
@@ -57,22 +57,20 @@
   text-align: center;
   font-size: 11px;
   font-weight: 600;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
   padding: 5px 0;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 64px;   /* 행 높이 고정 — 일정·할 일이 셀을 늘리지 않게 */
   gap: 2px;
 }
 
-.cellEmpty {
-  min-height: 64px;
-}
+.cellEmpty {}
 
 .cell {
-  min-height: 64px;
   border-radius: 6px;
   padding: 4px;
   display: flex;
@@ -84,6 +82,7 @@
   background: transparent;
   transition: background 0.12s;
   text-align: left;
+  overflow: hidden;       /* 고정 높이 초과 일정은 클립 (+N로 표시) */
 }
 
 .cell:hover {
@@ -91,22 +90,22 @@
 }
 
 .cellToday {
-  background: #EEEDFE;
+  background: var(--primary-light);
 }
 
 .cellSelected {
-  border-color: #534AB7 !important;
-  background: #EEEDFE;
+  border-color: var(--primary) !important;
+  background: var(--primary-light);
 }
 
 .dayNum {
   font-size: 12px;
   font-weight: 600;
-  color: #1A1A1A;
+  color: var(--text);
 }
 
 .cellToday .dayNum {
-  color: #534AB7;
+  color: var(--primary);
 }
 
 .evDot {
@@ -122,7 +121,7 @@
 
 .moreDot {
   font-size: 9px;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
 }
 
 .legend {
@@ -139,7 +138,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: #6B6B6B;
+  color: var(--text-secondary);
 }
 
 .legendDot {
@@ -161,8 +160,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 14px;
 }
@@ -170,13 +169,13 @@
 .panelDate {
   font-size: 12px;
   font-weight: 700;
-  color: #1A1A1A;
+  color: var(--text);
 }
 
 .addBtn {
   font-size: 12px;
   font-weight: 600;
-  color: #534AB7;
+  color: var(--primary);
   white-space: nowrap;
   background: transparent;
   border: none;
@@ -184,8 +183,8 @@
 }
 
 .form {
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
   display: flex;
@@ -200,18 +199,18 @@
   background: var(--bg-secondary);
   padding: 0 10px;
   font-size: 13px;
-  color: #1A1A1A;
+  color: var(--text);
   width: 100%;
 }
 
 .formInput:focus {
-  border-color: #534AB7;
+  border-color: var(--primary);
   outline: none;
 }
 
 .formSubmit {
   height: 36px;
-  background: #534AB7;
+  background: var(--primary);
   color: white;
   border-radius: 6px;
   font-size: 13px;
@@ -238,7 +237,7 @@
 .scopeLabel {
   font-size: 11px;
   font-weight: 600;
-  color: #6B6B6B;
+  color: var(--text-secondary);
 }
 
 .scopeRow {
@@ -252,12 +251,12 @@
   align-items: center;
   gap: 3px;
   font-size: 11px;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   padding: 4px 9px;
   border-radius: 999px;
-  border: 1px solid #E5E5DF;
+  border: 1px solid var(--border);
   cursor: pointer;
-  background: #FFFFFF;
+  background: var(--bg);
 }
 
 .scopeBtn input {
@@ -265,15 +264,15 @@
 }
 
 .scopeOn {
-  background: #EEEDFE;
-  border-color: #534AB7;
-  color: #534AB7;
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
   font-weight: 600;
 }
 
 .scopeHint {
   font-size: 11px;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
 }
 
 .roomPicks {
@@ -290,9 +289,9 @@
   cursor: pointer;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid #E5E5DF;
-  color: #6B6B6B;
-  background: #FFFFFF;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg);
 }
 
 .roomPick input {
@@ -305,7 +304,7 @@
 
 .noEvent {
   font-size: 12px;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
   text-align: center;
   padding: 12px;
 }
@@ -317,9 +316,9 @@
 }
 
 .evCard {
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
-  border-left: 3px solid #534AB7;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
   border-radius: 6px;
   padding: 8px 10px;
   display: flex;
@@ -337,7 +336,7 @@
 .evTime {
   font-size: 11px;
   font-weight: 600;
-  color: #6B6B6B;
+  color: var(--text-secondary);
 }
 
 .evBadge {
@@ -350,7 +349,7 @@
 .evTitle {
   font-size: 13px;
   font-weight: 500;
-  color: #1A1A1A;
+  color: var(--text);
 }
 
 .removeBtn {
@@ -358,30 +357,30 @@
   top: 6px;
   right: 6px;
   font-size: 11px;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
   background: transparent;
   border: none;
   cursor: pointer;
 }
 
 .removeBtn:hover {
-  color: #E24B4A;
+  color: var(--coral);
 }
 
 .panelEmpty {
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 28px 12px;
   text-align: center;
   font-size: 12px;
-  color: #9A9A9A;
+  color: var(--text-tertiary);
   line-height: 1.8;
 }
 
 .upcoming {
-  background: #FFFFFF;
-  border: 1px solid #E5E5DF;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
   display: flex;
@@ -392,7 +391,7 @@
 .upcomingTitle {
   font-size: 12px;
   font-weight: 600;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
@@ -411,7 +410,7 @@
 .upcomingDate {
   font-size: 10px;
   font-weight: 600;
-  color: #534AB7;
+  color: var(--primary);
   min-width: 68px;
   flex-shrink: 0;
 }
@@ -426,7 +425,7 @@
 .upcomingName {
   font-size: 12px;
   font-weight: 500;
-  color: #1A1A1A;
+  color: var(--text);
 }
 
 .upcomingBadge {
@@ -444,9 +443,7 @@
   .panel {
     width: 100%;
   }
-  .cell {
-    min-height: 48px;
-  }
+  .grid { grid-auto-rows: 52px; }
 
   /* 터치 영역 확보 */
   .navBtn { width: 44px; height: 44px; }
