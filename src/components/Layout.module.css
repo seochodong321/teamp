@@ -348,8 +348,10 @@
 .mobileTabBar {
   display: none;
   flex-shrink: 0;   /* position:fixed 대신 flex 컬럼 맨 아래 — iOS PWA fixed 비신뢰 회피 */
-  height: calc(60px + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* 높이 고정 안 함 — 아이콘+패딩에 딱 맞게. env(safe-area) 전체(~34px)를 패딩으로 쓰면
+     홈인디케이터 영역만큼 흰 띠가 생겨 보임 → 최소 여백(~16px)만 남기고 줄임. */
+  padding-top: 6px;
+  padding-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) - 18px));
   background: var(--bg);
   border-top: 1px solid var(--border);
   align-items: center;
