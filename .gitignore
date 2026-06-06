@@ -16,3 +16,6 @@ public/icon-preview-copy.svg
 
 # run-teamp 스킬 산출물
 .claude/skills/run-teamp/screenshot.png
+
+# Claude 에이전트 격리 워크트리 (메인 repo에 추적 금지)
+.claude/worktrees/
