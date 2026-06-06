@@ -135,6 +135,15 @@ export default function Layout() {
 
   const isChatPage = /\/project\/[^/]+\/chat\/[^/]+/.test(location.pathname)
 
+  // 채팅이 아닌 페이지에선 키보드용 --app-height를 강제로 비움 — 채팅에서 키보드 띄웠던
+  // 높이가 남아 .shell(height: var(--app-height,100%))을 짧게 만들어 탭바가 떠 보이던 회귀 차단.
+  useEffect(() => {
+    if (!isChatPage) {
+      document.documentElement.style.removeProperty('--app-height')
+      document.documentElement.style.removeProperty('--kb-safe')
+    }
+  }, [isChatPage])
+
   return (
     <div className={styles.shell}>
       {mobileOpen && <div className={styles.overlay} onClick={close} />}
