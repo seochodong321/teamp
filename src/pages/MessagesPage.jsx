@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { notifyUser } from '../store/helpers.js'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './MessagesPage.module.css'
 
@@ -142,6 +143,11 @@ export default function MessagesPage() {
         lastMessageAt: serverTimestamp(),
         read: { [currentUser.id]: true, [toUid]: false },
       })
+      await notifyUser(toUid, {
+        type: 'note',
+        text: `✉️ ${currentUser.name}님이 쪽지를 보냈어요: ${subject.trim() || '(제목 없음)'}`,
+        link: '/messages',
+      })
       setShowCompose(false)
       setToInput(''); setToUid(null); setToName(''); setToStatus('idle')
       setSubject(''); setBody('')
@@ -170,6 +176,11 @@ export default function MessagesPage() {
         [`read.${currentUser.id}`]: true,
         // 상대가 이 쪽지를 삭제(hiddenBy)했어도 새 답장이 오면 다시 보이게
         hiddenBy: arrayRemove(otherUid),
+      })
+      await notifyUser(otherUid, {
+        type: 'note',
+        text: `✉️ ${currentUser.name}님이 쪽지에 답장했어요: ${selected.subject || ''}`,
+        link: '/messages',
       })
       setReplyText('')
       setShowReply(false)

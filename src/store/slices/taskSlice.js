@@ -1,6 +1,6 @@
 import { collection, doc, addDoc, writeBatch, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase.js'
-import { txProject, todayStr } from '../helpers.js'
+import { txProject, todayStr, notifyUser } from '../helpers.js'
 
 export const createTaskSlice = (set, get) => ({
   addAnnouncement: async (projectId, { title, content, isGlobal, fileName }) => {
@@ -272,12 +272,25 @@ export const createTaskSlice = (set, get) => ({
       createdAt: new Date().toISOString(),
       replies: [],
     }
+    let annAuthorId = null
     try {
-      await txProject(projectId, (data) => ({
-        announcements: data.announcements.map((a) =>
-          a.id !== annId ? a : { ...a, comments: [...(a.comments || []), comment] }
-        ),
-      }))
+      await txProject(projectId, (data) => {
+        annAuthorId = data.announcements.find((a) => a.id === annId)?.authorId || null
+        return {
+          announcements: data.announcements.map((a) =>
+            a.id !== annId ? a : { ...a, comments: [...(a.comments || []), comment] }
+          ),
+        }
+      })
+      // 글 작성자에게 댓글 알림 (본인 댓글 제외)
+      if (annAuthorId && annAuthorId !== currentUser.id) {
+        await notifyUser(annAuthorId, {
+          type: 'comment',
+          text: `💬 ${currentUser.name}님이 회원님의 게시글에 댓글을 남겼어요`,
+          link: `/project/${projectId}?tab=board`,
+          projectId,
+        })
+      }
     } catch {
       get().showError('댓글 등록에 실패했어요.')
     }
@@ -304,16 +317,30 @@ export const createTaskSlice = (set, get) => ({
       content,
       createdAt: new Date().toISOString(),
     }
+    let cmtAuthorId = null
     try {
-      await txProject(projectId, (data) => ({
-        announcements: data.announcements.map((a) =>
-          a.id !== annId ? a : {
-            ...a, comments: (a.comments || []).map((c) =>
-              c.id !== commentId ? c : { ...c, replies: [...(c.replies || []), reply] }
-            ),
-          }
-        ),
-      }))
+      await txProject(projectId, (data) => {
+        const ann = data.announcements.find((a) => a.id === annId)
+        cmtAuthorId = ann?.comments?.find((c) => c.id === commentId)?.authorId || null
+        return {
+          announcements: data.announcements.map((a) =>
+            a.id !== annId ? a : {
+              ...a, comments: (a.comments || []).map((c) =>
+                c.id !== commentId ? c : { ...c, replies: [...(c.replies || []), reply] }
+              ),
+            }
+          ),
+        }
+      })
+      // 댓글 작성자에게 답글 알림 (본인 답글 제외)
+      if (cmtAuthorId && cmtAuthorId !== currentUser.id) {
+        await notifyUser(cmtAuthorId, {
+          type: 'comment',
+          text: `💬 ${currentUser.name}님이 회원님의 댓글에 답글을 남겼어요`,
+          link: `/project/${projectId}?tab=board`,
+          projectId,
+        })
+      }
     } catch {
       get().showError('대댓글 등록에 실패했어요.')
     }

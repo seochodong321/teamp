@@ -3,7 +3,7 @@ import {
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
-import { ROOM_COLORS, todayStr } from '../helpers.js'
+import { ROOM_COLORS, todayStr, notifyUser } from '../helpers.js'
 
 export const createInviteSlice = (set, get) => ({
   invites: [],
@@ -33,6 +33,15 @@ export const createInviteSlice = (set, get) => ({
           }
           const newConnects = project.members.filter((m) => m.id !== currentUser.id && !connects.find((c) => c.id === m.id)).map((m) => ({ id: m.id, name: m.name, affiliation: m.affiliation || '', email: m.email || '', projectName: project.name, connectedAt: todayStr() }))
           if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
+          // 리더에게 합류 알림 — joinProjectByCode와 일관(배너 수락도 동일하게)
+          if (project.leaderId && project.leaderId !== currentUser.id) {
+            await notifyUser(project.leaderId, {
+              type: 'join',
+              text: `🎉 ${currentUser.name}님이 ${project.name}에 합류했어요`,
+              link: `/project/${project.id}`,
+              projectId: project.id,
+            })
+          }
         }
       }
     } catch (e) { console.error('초대 수락 오류:', e) }
@@ -82,11 +91,12 @@ export const createInviteSlice = (set, get) => ({
       createdAt: serverTimestamp(),
     }
     await addDoc(collection(db, 'projectInvites'), inviteDoc)
-    await addDoc(collection(db, 'notifications'), {
-      targetUserId: invitee.id,
+    // link:'/home' — 초대 수락/거절 배너가 홈에 떠서, 알림 클릭 시 그리로 이동
+    await notifyUser(invitee.id, {
       type: 'projectInvite',
       text: `📨 ${currentUser.name}님이 "${project.name}"에 초대했어요`,
-      projectId, read: false, createdAt: serverTimestamp(),
+      link: '/home',
+      projectId,
     })
     return { success: true }
   },
@@ -156,13 +166,11 @@ export const createInviteSlice = (set, get) => ({
     }
 
     if (project.leaderId && project.leaderId !== currentUser.id) {
-      await addDoc(collection(db, 'notifications'), {
-        targetUserId: project.leaderId,
+      await notifyUser(project.leaderId, {
         type: 'join',
         text: `🎉 ${currentUser.name}님이 ${project.name}에 합류했어요`,
-        projectId: project.id,
         link: `/project/${project.id}`,
-        read: false, createdAt: serverTimestamp(),
+        projectId: project.id,
       })
     }
 

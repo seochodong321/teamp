@@ -2,7 +2,7 @@ import {
   collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
-import { txProject, getWeekKey } from '../helpers.js'
+import { txProject, getWeekKey, notifyUser } from '../helpers.js'
 
 export const createWrapupSlice = (set, get) => ({
   saveWrapupNote: async (projectId, note) => {
@@ -172,6 +172,7 @@ export const createWrapupSlice = (set, get) => ({
 
   addFeedback: async (wrapupId, feedbackData) => {
     const { currentUser } = get()
+    let isNewFeedback = false
     await runTransaction(db, async (tx) => {
       const ref  = doc(db, 'wrapups', wrapupId)
       const snap = await tx.get(ref)
@@ -182,6 +183,7 @@ export const createWrapupSlice = (set, get) => ({
       const oldFeedback = (data.feedbacks || []).find(
         (f) => f.fromUserId === currentUser.id && f.toUserId === feedbackData.toUserId
       )
+      isNewFeedback = !oldFeedback
       const feedbacks = (data.feedbacks || []).filter(
         (f) => !(f.fromUserId === currentUser.id && f.toUserId === feedbackData.toUserId)
       )
@@ -208,6 +210,16 @@ export const createWrapupSlice = (set, get) => ({
         flowerSenderUids: arrayUnion(feedbackData.fromUserId),
       })
     })
+
+    // 새 피드백일 때만 받는 사람에게 알림 (수정 시 재알림 방지, 본인 제외, 익명 존중)
+    if (isNewFeedback && feedbackData.toUserId !== currentUser.id) {
+      const who = feedbackData.isAnonymous ? '누군가가' : `${currentUser.name}님이`
+      await notifyUser(feedbackData.toUserId, {
+        type: 'flower',
+        text: `🌷 ${who} 당신에게 꽃과 피드백을 남겼어요`,
+        link: '/profile',
+      })
+    }
   },
 
   setWeeklyGoalSchedule: async (projectId, schedule) => {

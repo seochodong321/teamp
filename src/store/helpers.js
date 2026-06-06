@@ -1,6 +1,22 @@
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
-import { doc, runTransaction, collection } from 'firebase/firestore'
+import { doc, runTransaction, collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase.js'
+
+// 인앱 알림 1건 발행 — notifications 컬렉션에 쓰면 받는 사람의
+// App.jsx onSnapshot이 종 알림 패널로 가져옴(크로스 디바이스). 빈 targetUserId면 무시.
+export const notifyUser = async (targetUserId, { type, text, link, projectId } = {}) => {
+  if (!targetUserId) return
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      targetUserId, type, text,
+      ...(link ? { link } : {}),
+      ...(projectId ? { projectId } : {}),
+      read: false, createdAt: serverTimestamp(),
+    })
+  } catch (e) {
+    console.error('[notifyUser] 알림 발행 실패:', e)
+  }
+}
 
 export function calcProgress(startDate, endDate) {
   const now   = new Date()

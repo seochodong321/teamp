@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { notifyUser } from '../store/helpers.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './MatchPage.module.css'
@@ -170,6 +171,14 @@ export default function MatchPage() {
           note: note.trim(),
         }),
       })
+      // 모집글 리더에게 새 지원 알림
+      if (post.leaderId && post.leaderId !== currentUser.id) {
+        await notifyUser(post.leaderId, {
+          type: 'apply',
+          text: `🙋 ${currentUser.name}님이 "${post.title}"에 지원했어요`,
+          link: '/match',
+        })
+      }
       const updated = await fetchPosts()
       if (selected?.id === post.id) {
         const fresh = updated.find((p) => p.id === post.id)
@@ -229,6 +238,15 @@ export default function MatchPage() {
         applicants: data.applicants.map((a) =>
           a.userId === applicant.userId ? { ...a, status: 'accepted' } : a
         ),
+      })
+    }
+    // 지원자에게 수락 알림
+    if (applicant.userId && applicant.userId !== currentUser.id) {
+      await notifyUser(applicant.userId, {
+        type: 'join',
+        text: `🎉 "${post.title}" 지원이 수락되어 ${post.projectName}에 합류했어요`,
+        link: `/project/${post.projectId}`,
+        projectId: post.projectId,
       })
     }
     setViewApplicant(null)
