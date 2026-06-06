@@ -349,9 +349,9 @@
   display: none;
   flex-shrink: 0;   /* position:fixed 대신 flex 컬럼 맨 아래 — iOS PWA fixed 비신뢰 회피 */
   /* 높이 고정 안 함 — 아이콘+패딩에 딱 맞게. env(safe-area) 전체(~34px)를 패딩으로 쓰면
-     홈인디케이터 영역만큼 흰 띠가 생겨 보임 → 최소 여백(~16px)만 남기고 줄임. */
-  padding-top: 6px;
-  padding-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) - 18px));
+     홈인디케이터 영역만큼 흰 띠가 생김 → 최소 클리어런스(~10px)만 남기고 줄임.
+     상단 여백은 .mobileTab의 padding-top이 담당(active 인디케이터를 탭바 상단선에 붙이려). */
+  padding-bottom: max(6px, calc(env(safe-area-inset-bottom, 0px) - 24px));
   background: var(--bg);
   border-top: 1px solid var(--border);
   align-items: center;
@@ -366,8 +366,6 @@
   align-items: center;
   gap: 4px;
   flex: 1;
-  height: 60px;
-  justify-content: center;
   color: var(--text-quaternary);
   transition: color 0.15s;
   text-decoration: none;
