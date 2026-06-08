@@ -156,7 +156,12 @@ export default function Layout() {
             <span className={styles.logoText}>Teamp</span>
           </div>
           <div className={styles.logoActions}>
-            <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">🔍</button>
+            <button className={styles.searchBtn} onClick={() => setShowSearch(true)} title="검색 (⌘K)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
             <button className={styles.notiBtn} onClick={() => setShowNotifications(true)} title="알림">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -320,7 +325,12 @@ export default function Layout() {
         {/* 채팅 페이지는 ChatPage 자체 헤더(뒤로·방이름·인원)를 쓰므로 모바일 헤더 숨김 */}
         {!isChatPage && (
           <div className={styles.mobileHeader}>
-            <button className={styles.menuBtn} onClick={() => setShowSearch(true)}>🔍</button>
+            <button className={styles.menuBtn} onClick={() => setShowSearch(true)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
 
             {pageTitle
               ? <span className={styles.mobilePageTitle}>{pageTitle}</span>
