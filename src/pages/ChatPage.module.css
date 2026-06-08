@@ -38,9 +38,6 @@
   .notifyCard.notifyTodo  { background: #0A2E25; border-color: #0F6E56; }
   .notifyCard.notifyEvent { background: #0A1F35; border-color: #185FA5; }
 }
-.reinviteBtn { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid #C9C4F0; border-radius: var(--radius-full); padding: 4px 14px; transition: all 0.15s; }
-.reinviteBtn:hover { background: var(--primary); color: white; }
-
 .row { display: flex; align-items: flex-end; gap: 8px; }
 .rowMine { flex-direction: row-reverse; }
 .rowGrouped { margin-top: -4px; } /* 연속 메시지 간격 줄이기 */
@@ -262,10 +259,8 @@
 .ppBlockBtn:hover { color: #E24B4A; }
 .ppUnblockBtn { font-size: 11px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 3px 10px; transition: background 0.12s; }
 .ppUnblockBtn:hover { background: #FDEDED; }
-/* 하단 상태 바 (나갔을 때 / 차단했을 때) */
+/* 하단 상태 바 (차단했을 때) */
 .chatBlockedBar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-light); background: var(--bg-secondary); font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
-.reinviteBarBtn { font-size: 12px; font-weight: 600; color: var(--primary); background: var(--primary-light); border: 1px solid #C9C4F0; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
-.reinviteBarBtn:hover { background: var(--primary); color: white; }
 .unblockBtn { font-size: 12px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
 .unblockBtn:hover { background: #FDEDED; }
 .leaveBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }

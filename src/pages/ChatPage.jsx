@@ -80,7 +80,7 @@ export default function ChatPage() {
     projects, messages, currentUser,
     sendMessage, sendFile, sendPoll, votePoll, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
-    leaveDmRoom, reinviteToDm, blockUser, unblockUser, blockedUsers,
+    leaveDmRoom, blockUser, unblockUser, blockedUsers,
     removeChatToastsByRoom, showError,
   } = useStore()
 
@@ -89,6 +89,18 @@ export default function ChatPage() {
     || Object.values(dmRooms).find((r) => r.id === roomId) || null
   const room = project?.rooms.find((r) => r.id === roomId) || dmRoom
   const roomMessages = messages[roomId] || []
+  // 카톡식 나가기 — 내 clearedAt(나간 시점) 이후 메시지만 보임. 상대는 워터마크 없어 전부 유지.
+  const myClearedMs = (() => {
+    const c = dmRoom?.clearedAt?.[currentUser?.id]
+    return c?.toMillis ? c.toMillis() : (c?.seconds ? c.seconds * 1000 : 0)
+  })()
+  const visibleMessages = myClearedMs
+    ? roomMessages.filter((m) => {
+        const t = m.createdAt?.toMillis ? m.createdAt.toMillis()
+          : (m.createdAt?.seconds ? m.createdAt.seconds * 1000 : Date.now())
+        return t > myClearedMs
+      })
+    : roomMessages
 
   // ─── state ─────────────────────────────────────────────────────
   const [text, setText]                   = useState('')
@@ -103,7 +115,6 @@ export default function ChatPage() {
   const [leaving, setLeaving]             = useState(false)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const [showMembersModal, setShowMembersModal] = useState(false)
-  const [reinviteDone, setReinviteDone] = useState(false)
 
   // ─── refs ──────────────────────────────────────────────────────
   const isComposing   = useRef(false)
@@ -284,12 +295,6 @@ export default function ChatPage() {
     }
   }
 
-  const handleReinvite = async () => {
-    await reinviteToDm(roomId)
-    setReinviteDone(true)
-    setTimeout(() => setReinviteDone(false), 2000)
-  }
-
   const handleLeaveDm = async () => {
     setLeaving(true)
     try {
@@ -311,7 +316,6 @@ export default function ChatPage() {
   const otherUserId   = isDm ? (dmRoom?.participants || []).find((id) => id !== currentUser.id) : null
   const otherUserName = isDm ? (dmRoom?.participantNames?.[otherUserId] || '상대방') : null
   const roomName      = isDm ? (otherUserName || '1:1 대화') : room?.name
-  const otherLeft     = isDm && (dmRoom?.left || []).includes(otherUserId)
   const iBlocked      = isDm && (blockedUsers || []).includes(otherUserId)
   const backLabel     = isDm ? '← 홈' : `← ${project?.name || ''}`
   const backPath      = isDm ? '/home' : `/project/${projectId}`
@@ -383,7 +387,7 @@ export default function ChatPage() {
         <div className={styles.leaveBackdrop} onClick={() => !leaving && setShowLeave(false)}>
           <div className={styles.leaveModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.leaveTitle}>대화방을 나갈까요?</p>
-            <p className={styles.leaveDesc}>내 메시지가 모두 삭제되고, 상대방에게 퇴장 알림이 전송돼요.</p>
+            <p className={styles.leaveDesc}>이 대화가 내 목록에서 사라져요. 상대방에게는 그대로 남고, 알림도 가지 않아요.</p>
             <div className={styles.leaveBtns}>
               <button className={styles.leaveCancelBtn} onClick={() => setShowLeave(false)}>취소</button>
               <button className={styles.leaveConfirmBtn} disabled={leaving} onClick={handleLeaveDm}>
@@ -451,7 +455,7 @@ export default function ChatPage() {
 
       {/* 메시지 목록 */}
       <div className={styles.messages} ref={messagesRef} onScroll={handleMessagesScroll}>
-        {roomMessages.length === 0 && (
+        {visibleMessages.length === 0 && (
           <div className={styles.emptyMessages}>
             <div className={styles.emptyIcon}>{isDm ? '💬' : '#'}</div>
             <p className={styles.emptyTitle}>{isDm ? `${roomName}와의 대화` : `# ${roomName}`}</p>
@@ -460,7 +464,7 @@ export default function ChatPage() {
           </div>
         )}
 
-        {roomMessages.map((msg, index) => {
+        {visibleMessages.map((msg, index) => {
           const isMine     = msg.senderId === currentUser.id
           const isSystem   = msg.senderId === 'system'
           const member     = project?.members.find((m) => m.id === msg.senderId)
@@ -468,8 +472,8 @@ export default function ChatPage() {
             ? (currentUser.name || msg.senderName || '알 수 없음')
             : (msg.senderName || '알 수 없음')
 
-          const prevMsg  = index > 0 ? roomMessages[index - 1] : null
-          const nextMsg  = index < roomMessages.length - 1 ? roomMessages[index + 1] : null
+          const prevMsg  = index > 0 ? visibleMessages[index - 1] : null
+          const nextMsg  = index < visibleMessages.length - 1 ? visibleMessages[index + 1] : null
           const msgDate  = getMsgDate(msg)
           const prevDate = prevMsg ? getMsgDate(prevMsg) : null
           const nextDate = nextMsg ? getMsgDate(nextMsg) : null
@@ -514,7 +518,6 @@ export default function ChatPage() {
 
           // 시스템 알림
           if (isSystem || msg.type === 'notify') {
-            const isLeaveMsg = isDm && otherLeft && msg.text?.includes('퇴장')
             const sn = msg.senderName || ''
             const isAnn   = sn.includes('공지')
             const isTodo  = sn.includes('할 일')
@@ -531,11 +534,6 @@ export default function ChatPage() {
                 ) : (
                   <div className={styles.systemMsg}>
                     <span>{msg.text}</span>
-                    {isLeaveMsg && (
-                      <button className={styles.reinviteBtn} onClick={handleReinvite} disabled={reinviteDone}>
-                        {reinviteDone ? '✓ 초대 완료' : '다시 초대하기'}
-                      </button>
-                    )}
                   </div>
                 )}
               </React.Fragment>
@@ -690,13 +688,6 @@ export default function ChatPage() {
         <div className={styles.chatBlockedBar}>
           <span>내가 차단한 사용자예요.</span>
           <button className={styles.unblockBtn} onClick={() => unblockUser(otherUserId)}>차단 해제</button>
-        </div>
-      ) : otherLeft ? (
-        <div className={styles.chatBlockedBar}>
-          <span>{otherUserName}님이 대화를 나갔어요.</span>
-          <button className={styles.reinviteBarBtn} onClick={handleReinvite} disabled={reinviteDone}>
-            {reinviteDone ? '✓ 초대 완료' : '다시 초대하기'}
-          </button>
         </div>
       ) : (
         <div className={styles.inputArea}>

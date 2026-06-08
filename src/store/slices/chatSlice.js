@@ -1,10 +1,10 @@
 import {
-  collection, doc, addDoc, getDoc, getDocs, setDoc, query, where,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, arrayRemove,
   serverTimestamp, writeBatch,
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../../firebase.js'
-import { txProject, txMessage } from '../helpers.js'
+import { txProject, txMessage, notifyUser } from '../helpers.js'
 
 export const createChatSlice = (set, get) => ({
   messages: {},
@@ -45,6 +45,26 @@ export const createChatSlice = (set, get) => ({
         }))
       } catch (e) {
         console.error('[sendMessage] lastMessage 업데이트 실패:', e)
+      }
+    }
+
+    // DM: 상대가 나갔던 방이면 카톡식으로 되살림 — 상대 목록에 다시 띄우고 새 메시지 알림.
+    // (상대 clearedAt 워터마크는 유지돼 상대는 이 새 메시지부터만 보임)
+    if (!project) {
+      const dm = get().dmRoomList.find((r) => r.id === roomId)
+        || Object.values(get().dmRooms).find((r) => r.id === roomId)
+      const otherId = dm?.isDirect && (dm.participants || []).find((id) => id !== currentUser.id)
+      if (otherId && (dm.left || []).includes(otherId)) {
+        try {
+          await updateDoc(doc(db, 'dmRooms', roomId), { left: arrayRemove(otherId) })
+          await notifyUser(otherId, {
+            type: 'dm',
+            text: `💬 ${currentUser.name}님이 메시지를 보냈어요`,
+            link: `/project/${dm.projectId}/chat/${roomId}`,
+          })
+        } catch (e) {
+          console.error('[DM] 상대 재노출 실패:', e)
+        }
       }
     }
   },
@@ -167,37 +187,23 @@ export const createChatSlice = (set, get) => ({
     }
 
     if (dmSnap?.exists()) {
-      const data    = { id: roomId, ...dmSnap.data() }
-      const leftArr = data.left || []
-      const hadLeft = leftArr.length > 0
+      const data  = { id: roomId, ...dmSnap.data() }
+      const iLeft = (data.left || []).includes(currentUser.id)
 
-      if (hadLeft) {
-        // 한쪽이 나간 뒤 재개 → 메시지 초기화 + 알림
+      if (iLeft) {
+        // 내가 나갔던 방을 내가 다시 엶 → 나만 목록에 되살림(clearedAt 워터마크는 유지해
+        // 나간 시점 이후 메시지만 보이게). 공유 메시지·상대 화면은 그대로. 알림 없음.
         try {
-          const msgsRef     = collection(db, 'rooms', roomId, 'messages')
-          const allMsgsSnap = await getDocs(msgsRef)
-          const batch       = writeBatch(db)
-          allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-          batch.update(dmRef, { left: [], createdBy: currentUser.id })
-          await batch.commit()
+          await updateDoc(dmRef, { left: arrayRemove(currentUser.id) })
         } catch (e) {
-          console.error('[DM] 메시지 초기화 오류:', e)
+          console.error('[DM] 재개 오류:', e)
         }
-        addDoc(collection(db, 'notifications'), {
-          targetUserId: otherUserId, type: 'dm',
-          text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
-          link: `/project/${projectId}/chat/${roomId}`,
-          read: false, createdAt: serverTimestamp(),
-        }).catch(() => {})
-        const freshRoom = { ...data, left: [], createdBy: currentUser.id }
-        set((s) => ({
-          dmRooms:  { ...s.dmRooms,  [dmKey]: freshRoom },
-          messages: { ...s.messages, [roomId]: [] },
-        }))
-        return freshRoom
+        const revived = { ...data, left: (data.left || []).filter((id) => id !== currentUser.id) }
+        set((s) => ({ dmRooms: { ...s.dmRooms, [dmKey]: revived } }))
+        return revived
       }
 
-      // 양쪽 모두 나간 적 없음 → 기존 메시지 유지
+      // 기존 방 — 메시지·상태 그대로 유지
       set((s) => ({ dmRooms: { ...s.dmRooms, [dmKey]: data } }))
       return data
     }
@@ -216,12 +222,11 @@ export const createChatSlice = (set, get) => ({
       console.error('[DM] 방 생성 오류:', e)
       throw e
     }
-    addDoc(collection(db, 'notifications'), {
-      targetUserId: otherUserId, type: 'dm',
+    notifyUser(otherUserId, {
+      type: 'dm',
       text: `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`,
       link: `/project/${projectId}/chat/${roomId}`,
-      read: false, createdAt: serverTimestamp(),
-    }).catch(() => {})
+    })
     set((s) => ({
       dmRooms:  { ...s.dmRooms,  [dmKey]: newRoom },
       messages: { ...s.messages, [roomId]: [] },
@@ -229,36 +234,30 @@ export const createChatSlice = (set, get) => ({
     return newRoom
   },
 
+  // 카톡식 1:1 나가기 — 나간 사람만 목록에서 숨기고, 이 시점 이후 메시지만 보이도록
+  // clearedAt 워터마크를 남긴다. 공유 메시지·상대 화면은 그대로. 시스템 메시지·알림 없음.
   leaveDmRoom: async (roomId) => {
     const { currentUser } = get()
-    const msgsRef = collection(db, 'rooms', roomId, 'messages')
-
-    const myMsgsSnap = await getDocs(query(msgsRef, where('senderId', '==', currentUser.id)))
-    const batch = writeBatch(db)
-    myMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-    const sysRef = doc(collection(db, 'rooms', roomId, 'messages'))
-    batch.set(sysRef, {
-      senderId: 'system', type: 'notify',
-      text: `${currentUser.name}님이 퇴장하셨습니다`,
-      time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      createdAt: serverTimestamp(),
-    })
-
     const dmRef  = doc(db, 'dmRooms', roomId)
     const dmSnap = await getDoc(dmRef)
     if (dmSnap.exists()) {
-      const dmData = dmSnap.data()
+      const dmData  = dmSnap.data()
       const newLeft = [...new Set([...(dmData.left || []), currentUser.id])]
       if (newLeft.length >= (dmData.participants || []).length) {
-        const allMsgsSnap = await getDocs(msgsRef)
+        // 둘 다 나감 → 메시지는 정리하고 방 문서는 left로 닫아 둔다.
+        // (firestore.rules상 dmRooms delete 불가 + 양쪽 목록에서 이미 숨겨짐)
+        const batch = writeBatch(db)
+        const allMsgsSnap = await getDocs(collection(db, 'rooms', roomId, 'messages'))
         allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-        batch.delete(dmRef)
-      } else {
         batch.update(dmRef, { left: newLeft })
+        await batch.commit()
+      } else {
+        await updateDoc(dmRef, {
+          left: newLeft,
+          [`clearedAt.${currentUser.id}`]: serverTimestamp(),
+        })
       }
     }
-    await batch.commit()
-
     set((s) => {
       const newDmRooms = { ...s.dmRooms }
       const key = Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
@@ -267,38 +266,4 @@ export const createChatSlice = (set, get) => ({
     })
   },
 
-  reinviteToDm: async (roomId) => {
-    const { currentUser } = get()
-    const dmRef  = doc(db, 'dmRooms', roomId)
-    const dmSnap = await getDoc(dmRef)
-    if (!dmSnap.exists()) return null
-    const data = dmSnap.data()
-    const otherUserId = (data.participants || []).find((id) => id !== currentUser.id)
-    const dmKey = data.dmKey
-
-    const msgsRef     = collection(db, 'rooms', roomId, 'messages')
-    const allMsgsSnap = await getDocs(msgsRef)
-    const batch = writeBatch(db)
-    allMsgsSnap.docs.forEach((d) => batch.delete(d.ref))
-    batch.update(dmRef, { left: [] })
-
-    const notiRef = doc(collection(db, 'notifications'))
-    batch.set(notiRef, {
-      targetUserId: otherUserId,
-      type: 'dm',
-      text: `💬 ${currentUser.name}님이 대화를 다시 시작했어요`,
-      link: `/project/${data.projectId}/chat/${roomId}`,
-      read: false,
-      createdAt: serverTimestamp(),
-    })
-    await batch.commit()
-
-    set((s) => {
-      const newDmRooms = { ...s.dmRooms }
-      const key = dmKey || Object.keys(newDmRooms).find((k) => newDmRooms[k].id === roomId)
-      if (key && newDmRooms[key]) newDmRooms[key] = { ...newDmRooms[key], left: [] }
-      return { dmRooms: newDmRooms, messages: { ...s.messages, [roomId]: [] } }
-    })
-    return { id: roomId, ...data, left: [] }
-  },
 })
