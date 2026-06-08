@@ -36,7 +36,7 @@ export default function GuideTab({ onGotoBoard, onGotoManage, onGotoMembers, onG
         <p className={styles.guideCardBody}>
           <b>초대 링크</b> — 멤버 탭에서 링크를 복사해 공유하거나, 커넥트에 있는 사람을 직접 초대할 수 있어요.<br />
           <b>팀프 매치</b> — 사이드바 '팀프 매치'에서 모집글을 올리면 지원자를 확인하고 바로 프로젝트에 합류시킬 수 있어요.<br />
-          <b>방출</b> — 권한 관리 탭 → 멤버 카드의 방출 버튼. 방출된 멤버는 다시 초대를 받아야 참여할 수 있어요.
+          <b>내보내기</b> — 권한 관리 탭 → 멤버 카드의 내보내기 버튼. 내보내기된 멤버는 다시 초대를 받아야 참여할 수 있어요.
         </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className={styles.guideShortcut} onClick={() => onGotoMembers()}>초대하러 가기 →</button>
@@ -62,7 +62,7 @@ export default function GuideTab({ onGotoBoard, onGotoManage, onGotoMembers, onG
           <div className={styles.guideRoleRow}>
             <span className={styles.guideRoleLabel}>리더만 할 수 있는 것</span>
             <div className={styles.guideRoleTags}>
-              {['전체 공지', '팀원 방출', '역할 변경', '리더 양도', '이번 주 팀 목표 설정', '프로젝트 마무리'].map((t) => (
+              {['전체 공지', '팀원 내보내기', '역할 변경', '리더 양도', '이번 주 팀 목표 설정', '프로젝트 마무리'].map((t) => (
                 <span key={t} className={styles.guideTagCant}>{t}</span>
               ))}
             </div>

@@ -208,7 +208,7 @@
 .section { display: flex; flex-direction: column; gap: 12px; }
 .hint { font-size: 12px; color: var(--text-tertiary); }
 
-/* 방출 버튼 */
+/* 내보내기 버튼 */
 .kickBtn { padding: 4px 10px; border: 1px solid #E24B4A; color: #E24B4A; border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; background: transparent; transition: all 0.15s; }
 .kickBtn:hover { background: #FCEBEB; }
 
