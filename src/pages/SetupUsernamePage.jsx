@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { claimUsername } from '../store/helpers.js'
+import { claimUsername, USERNAME_RE } from '../store/helpers.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
 import { getYearRange } from '../utils/dateUtils.js'
 import styles from './SetupUsernamePage.module.css'
@@ -46,7 +46,7 @@ export default function SetupUsernamePage() {
 
   const checkUsername = (raw) => {
     const val = raw.toLowerCase().replace(/^@/, '')
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return Promise.resolve('idle') }
+    if (!val || !USERNAME_RE.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return Promise.resolve('idle') }
     if (containsProfanity(val)) { setUsernameStatus('taken'); setUsernameSuggestion(''); return Promise.resolve('taken') }
     setUsernameStatus('checking')
     clearTimeout(usernameDebounceRef.current)
@@ -60,7 +60,7 @@ export default function SetupUsernamePage() {
             setUsernameSuggestion('')
             for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
               const c = `${val}${s}`.slice(0, 20)
-              if (/^[a-z0-9_]{3,20}$/.test(c)) {
+              if (USERNAME_RE.test(c)) {
                 const cs = await getDocs(query(collection(db, 'users'), where('username', '==', `@${c}`)))
                 if (cs.empty) { setUsernameSuggestion(c); break }
               }
@@ -78,7 +78,7 @@ export default function SetupUsernamePage() {
     e.preventDefault()
     setError('')
     const uname = username.trim().toLowerCase().replace(/^@/, '')
-    if (!uname || !/^[a-z0-9_]{3,20}$/.test(uname)) {
+    if (!uname || !USERNAME_RE.test(uname)) {
       setError('@아이디는 영문·숫자·_ 만 사용, 3~20자로 입력해주세요.')
       return
     }

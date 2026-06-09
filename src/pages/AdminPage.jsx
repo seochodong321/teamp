@@ -629,7 +629,7 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser }) {
 
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
-  const { currentUser } = useStore()
+  const { currentUser, showError } = useStore()
   const [activeTab, setActiveTab] = useState('stats')
   const [pendingReports, setPendingReports] = useState(0)
   const { ask, dialog } = useAdminConfirm()
@@ -725,12 +725,12 @@ export default function AdminPage() {
         const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'adminDeleteUser')
         const res = await call({ uid })
         if (res?.data?.authDeleted === false) {
-          window.alert('데이터는 삭제했지만 인증 계정은 이미 없거나 삭제하지 못했어요.')
+          showError('데이터는 삭제했지만 인증 계정은 이미 없거나 삭제하지 못했어요.')
         }
         onSuccess?.()
       } catch (e) {
         console.error('[adminDeleteUser]', e)
-        window.alert(`삭제에 실패했어요: ${e?.message || '알 수 없는 오류'}\n(Cloud Functions 배포가 필요할 수 있어요)`)
+        showError(`삭제에 실패했어요: ${e?.message || '알 수 없는 오류'} (함수 배포가 필요할 수 있어요)`)
       }
     })
   }

@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch }
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { claimUsername, releaseUsername } from '../store/helpers.js'
+import { claimUsername, releaseUsername, USERNAME_RE } from '../store/helpers.js'
 import { resizeImage } from '../utils/image.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import NotificationSettings from '../components/NotificationSettings.jsx'
@@ -205,7 +205,7 @@ export default function ProfilePage() {
     const val = raw.toLowerCase().replace(/^@/, '')
     const current = (currentUser.username || '').replace(/^@/, '')
     if (val === current) { setUsernameStatus('ok'); setUsernameSuggestion(''); return }
-    if (!val || !/^[a-z0-9_]{3,20}$/.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return }
+    if (!val || !USERNAME_RE.test(val)) { setUsernameStatus('idle'); setUsernameSuggestion(''); return }
     setUsernameStatus('checking')
     clearTimeout(usernameDebounceRef.current)
     usernameDebounceRef.current = setTimeout(async () => {
@@ -218,7 +218,7 @@ export default function ProfilePage() {
           setUsernameStatus('taken')
           for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
             const candidate = `${val}${s}`.slice(0, 20)
-            if (/^[a-z0-9_]{3,20}$/.test(candidate)) {
+            if (USERNAME_RE.test(candidate)) {
               const c = await getDocs(query(collection(db, 'users'), where('username', '==', `@${candidate}`)))
               if (c.empty) { setUsernameSuggestion(candidate); break }
             }
