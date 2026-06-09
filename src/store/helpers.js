@@ -1,5 +1,5 @@
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
-import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc } from 'firebase/firestore'
+import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc, query, where } from 'firebase/firestore'
 import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase.js'
 
@@ -24,7 +24,12 @@ export const deleteProjectDeep = async (project) => {
       await Promise.all(listing.items.map((it) => deleteObject(it).catch(() => {})))
     } catch { /* 파일 없음/권한 등은 무시 */ }
   }
-  // 3) 프로젝트 문서 삭제
+  // 3) 이 프로젝트로 올린 팀프매치 모집글 정리 — 안 지우면 죽은 프로젝트에 지원이 몰림
+  try {
+    const posts = await getDocs(query(collection(db, 'matchPosts'), where('projectId', '==', project.id)))
+    await Promise.all(posts.docs.map((d) => deleteDoc(d.ref).catch(() => {})))
+  } catch (e) { console.error('[deleteProjectDeep] 모집글 정리 실패:', e) }
+  // 4) 프로젝트 문서 삭제
   await deleteDoc(doc(db, 'projects', project.id))
 }
 
