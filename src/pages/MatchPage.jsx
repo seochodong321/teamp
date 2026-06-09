@@ -767,7 +767,7 @@ export default function MatchPage() {
               <div className={styles.profileInfo}>
                 {applicantProfile.oneliner && <p className={styles.profileOneliner}>"{applicantProfile.oneliner}"</p>}
                 {applicantProfile.affiliation && <p className={styles.profileDetail}>{applicantProfile.affiliation}</p>}
-                {applicantProfile.email && <p className={styles.profileDetail}>{applicantProfile.email}</p>}
+                {applicantProfile.username && <p className={styles.profileHandle}>@{applicantProfile.username.replace('@', '')}</p>}
                 {applicantProjects.length > 0 && (
                   <div className={styles.profileProjects}>
                     <p className={styles.profileProjectsLabel}>공개 프로젝트</p>

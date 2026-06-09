@@ -38,6 +38,11 @@
 .profileOneliner { font-size: 13px; color: var(--text-secondary); font-style: italic; text-align: center; }
 .profileAffil    { font-size: 13px; color: var(--text-secondary); text-align: center; }
 .profileEmail    { font-size: 12px; color: var(--text-tertiary); text-align: center; }
+.profileUsername { font-size: 13px; color: var(--primary); font-weight: 600; text-align: center; }
+.profileActions  { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+.profileActions > button { flex: 1; margin-top: 0; }
+.noteBtn { height: 42px; background: var(--bg-secondary); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 14px; font-weight: 600; transition: all var(--transition-fast); }
+.noteBtn:hover { border-color: var(--primary); color: var(--primary); }
 .memoBox { width: 100%; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 10px 14px; }
 .memoLabel { font-size: 11px; font-weight: 600; color: var(--primary); display: block; margin-bottom: 4px; }
 .memoText  { font-size: 13px; color: var(--text); }

@@ -144,6 +144,7 @@
 .profileInfo { width: 100%; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .profileOneliner { font-size: 13px; color: var(--text-secondary); text-align: center; font-style: italic; }
 .profileDetail { font-size: 12px; color: var(--text-tertiary); text-align: center; }
+.profileHandle { font-size: 13px; color: var(--primary); font-weight: 600; text-align: center; }
 .profileProjects { width: 100%; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
 .profileProjectsLabel { font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
 .profileProjectItem { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }

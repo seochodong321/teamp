@@ -119,8 +119,8 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
             {(profileExtra !== null ? profileExtra.affiliation : profileMember.affiliation) && (
               <p className={styles.profileAffil}>{profileExtra !== null ? profileExtra.affiliation : profileMember.affiliation}</p>
             )}
-            {(profileExtra !== null ? profileExtra.email : profileMember.email) && (
-              <p className={styles.profileEmail}>{profileExtra !== null ? profileExtra.email : profileMember.email}</p>
+            {profileExtra?.username && (
+              <p className={styles.profileUsername}>@{profileExtra.username.replace('@', '')}</p>
             )}
             {profileMember.memo && (
               <div className={styles.memoBox}>
@@ -161,9 +161,17 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
               </a>
             )}
             {profileMember.id !== currentUser.id && (
-              <button className={styles.dmBtn} onClick={() => handleDm(profileMember)}>
-                💬 1:1 대화하기
-              </button>
+              <div className={styles.profileActions}>
+                <button className={styles.dmBtn} onClick={() => handleDm(profileMember)}>
+                  💬 1:1 대화
+                </button>
+                {profileExtra?.username && (
+                  <button className={styles.noteBtn}
+                    onClick={() => navigate(`/messages?compose=1&to=${profileExtra.username.replace('@', '')}`)}>
+                    ✉️ 쪽지
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
