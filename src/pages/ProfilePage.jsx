@@ -309,6 +309,8 @@ export default function ProfilePage() {
       setShowEditModal(false)
     } catch (err) {
       console.error(err)
+      // user 문서 쓰기 실패 시 방금 선점한 새 닉네임 롤백 (orphan 방지)
+      if (usernameChanged) await releaseUsername(currentUser.id, newUsername).catch(() => {})
       showError('저장에 실패했어요. 다시 시도해주세요.')
     } finally {
       setSaving(false)

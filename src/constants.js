@@ -3,6 +3,9 @@
 // 프로젝트 멤버 역할 라벨 (이모지 + 한글)
 export const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더', member: '팀원' }
 
+// 정지(banned)된 계정 안내 — 로그인·세션복원 어디서든 동일 문구
+export const BANNED_MESSAGE = '이 계정은 이용이 제한됐어요. 문의: support@teamp.kr'
+
 export const FLOWER_TAGS = [
   { id: 'reliable',  emoji: '🌹', label: '믿음직한' },
   { id: 'energetic', emoji: '🌻', label: '에너지 넘치는' },

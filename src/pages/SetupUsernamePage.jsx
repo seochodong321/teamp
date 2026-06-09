@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { claimUsername, USERNAME_RE } from '../store/helpers.js'
+import { claimUsername, releaseUsername, USERNAME_RE } from '../store/helpers.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
 import { getYearRange } from '../utils/dateUtils.js'
 import styles from './SetupUsernamePage.module.css'
@@ -96,6 +96,7 @@ export default function SetupUsernamePage() {
     if (!canSignup) { setError('이용약관 및 개인정보처리방침에 동의해주세요.'); return }
 
     setLoading(true)
+    let claimed = null  // 선점한 닉네임 — 이후 user 문서 쓰기 실패 시 롤백용
     try {
       const user     = auth.currentUser
       const uid      = user.uid
@@ -107,6 +108,7 @@ export default function SetupUsernamePage() {
       // 닉네임 원자적 선점 — usernames 컬렉션으로 진짜 유니크 보장(레이스·중복 차단)
       try {
         await claimUsername(uid, finalUsername)
+        claimed = { uid, name: finalUsername }
       } catch {
         setUsernameStatus('taken')
         setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
@@ -135,6 +137,8 @@ export default function SetupUsernamePage() {
       setNeedsUsernameSetup(false)
       setShowPlanIntro(true)
     } catch (err) {
+      // user 문서 쓰기 실패 시 선점한 닉네임 롤백 (orphan 방지)
+      if (claimed) await releaseUsername(claimed.uid, claimed.name).catch(() => {})
       setError('저장 중 오류가 발생했어요. 다시 시도해주세요.')
     } finally {
       setLoading(false)

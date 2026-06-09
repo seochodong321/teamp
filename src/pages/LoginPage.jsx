@@ -9,6 +9,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { BANNED_MESSAGE } from '../constants.js'
 import styles from './LoginPage.module.css'
 import TeampMark from '../components/TeampMark.jsx'
 import Spinner from '../components/Spinner.jsx'
@@ -131,7 +132,7 @@ export default function LoginPage() {
         const d = snap.data()
         if (d.banned) {
           await signOut(auth)
-          setError('이 계정은 이용이 제한됐어요. 문의: support@teamp.kr')
+          setError(BANNED_MESSAGE)
           setLoading(false)
           return
         }
@@ -212,7 +213,7 @@ export default function LoginPage() {
             const d = snap.data()
             if (d.banned) {
               await signOut(auth)
-              setError('이 계정은 이용이 제한됐어요. 문의: support@teamp.kr')
+              setError(BANNED_MESSAGE)
               setLoading(false)
               return
             }

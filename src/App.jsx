@@ -4,6 +4,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
+import { BANNED_MESSAGE } from './constants.js'
 import Spinner from './components/Spinner.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
@@ -185,7 +186,7 @@ export default function App() {
             if (d.banned) {
               signOut(auth).catch(() => {})
               logout()
-              window.alert('이 계정은 이용이 정지되었어요.\n문의가 있다면 운영팀에 연락해주세요.')
+              window.alert(BANNED_MESSAGE)
               return
             }
             login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
