@@ -81,7 +81,7 @@ export default function ChatPage() {
     sendMessage, sendFile, sendPoll, votePoll, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
     leaveDmRoom, blockUser, unblockUser, blockedUsers,
-    toggleMuteDm, mutedDms,
+    toggleMuteDm, mutedDms, getOrCreateDmRoom,
     removeChatToastsByRoom, showError,
   } = useStore()
 
@@ -296,6 +296,19 @@ export default function ChatPage() {
     }
   }
 
+  // 프로필 팝업 → 1:1 대화 (그룹방에선 새 DM, 이미 그 사람과의 DM이면 동일방)
+  const handlePopupDm = async (popup) => {
+    const name = popup.data?.name || popup.name
+    setProfilePopup(null)
+    try {
+      const room = await getOrCreateDmRoom(dmRoom?.projectId || projectId, popup.userId, name)
+      if (room) navigate(`/project/${dmRoom?.projectId || projectId}/chat/${room.id}`)
+    } catch (e) {
+      console.error('[프로필 팝업 DM] 오류:', e)
+      showError('대화를 열지 못했어요. 다시 시도해주세요.')
+    }
+  }
+
   const handleLeaveDm = async () => {
     setLeaving(true)
     try {
@@ -358,6 +371,7 @@ export default function ChatPage() {
               </div>
               <div className={styles.ppInfo}>
                 <p className={styles.ppName}>{pd.name || profilePopup.name}</p>
+                {pd.username && <p className={styles.ppUsername}>@{pd.username.replace('@', '')}</p>}
                 {pd.affiliation && <p className={styles.ppAffiliation}>🏢 {pd.affiliation}</p>}
               </div>
             </div>
@@ -373,6 +387,17 @@ export default function ChatPage() {
                 className={styles.ppTeamfolio} onClick={(e) => e.stopPropagation()}>
                 팀프폴리오 보기 →
               </a>
+            )}
+            {!isBlocked && !profilePopup.loading && (
+              <div className={styles.ppActions}>
+                <button className={styles.ppDmBtn} onClick={() => handlePopupDm(profilePopup)}>💬 1:1 대화</button>
+                {pd.username && (
+                  <button className={styles.ppNoteBtn}
+                    onClick={() => { setProfilePopup(null); navigate(`/messages?compose=1&to=${pd.username.replace('@', '')}`) }}>
+                    ✉️ 쪽지
+                  </button>
+                )}
+              </div>
             )}
             <div className={styles.ppFooter}>
               {isBlocked

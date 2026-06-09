@@ -120,6 +120,7 @@ export default function ConnectPage() {
             <h3 className={styles.profileName}>{profile.name}</h3>
             {profile.oneliner && <p className={styles.profileOneliner}>"{profile.oneliner}"</p>}
             {profile.affiliation && <p className={styles.profileAffil}>{profile.affiliation}</p>}
+            {profile.username && <p className={styles.profileUsername}>@{profile.username.replace('@', '')}</p>}
 
             {/* 함께한 프로젝트 */}
             {(() => {
