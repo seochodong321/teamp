@@ -242,7 +242,7 @@ export default function ChatPage() {
     try {
       await sendMessage(roomId, msg)
     } catch {
-      showError('메시지 전송에 실패했어요. 다시 시도해주세요.')
+      showError('메시지를 보내지 못했어요. 다시 시도해주세요.')
       setText(msg)
     }
     setTimeout(() => { setSendPulse(false); isSending.current = false }, 400)
@@ -263,7 +263,7 @@ export default function ChatPage() {
     try {
       await sendFile(roomId, file)
     } catch {
-      showError('파일 전송에 실패했어요.')
+      showError('파일을 보내지 못했어요. 다시 시도해주세요.')
     }
   }
 
@@ -274,7 +274,7 @@ export default function ChatPage() {
       await sendPoll(roomId, pollQ.trim(), valid)
       setPollQ(''); setPollOptions(['', '']); setMode('text'); setShowToolbar(false)
     } catch {
-      showError('투표 등록에 실패했어요.')
+      showError('투표를 올리지 못했어요. 다시 시도해주세요.')
     }
   }
 

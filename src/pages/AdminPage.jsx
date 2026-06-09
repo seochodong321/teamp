@@ -481,7 +481,7 @@ function MatchTab({ onDeleteMatch, onCloseMatch }) {
               <div className={styles.cardActions}>
                 {p.status === 'open' && (
                   <button className={styles.warnBtn} onClick={() => onCloseMatch(p.id, p.title,
-                    () => setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, status: 'closed' } : x)))}>강제 마감</button>
+                    () => setPosts((prev) => prev.map((x) => x.id === p.id ? { ...x, status: 'closed' } : x)))}>마감 처리</button>
                 )}
                 {p.status === 'closed' && <span className={styles.closedTag}>마감됨</span>}
                 <button className={styles.dangerBtn} onClick={() => onDeleteMatch(p.id, p.title, null,
@@ -686,14 +686,14 @@ export default function AdminPage() {
 
   // ── 액션: 매치 강제 마감
   const handleCloseMatch = (postId, title, onSuccess) => {
-    ask(`"${title}" 모집글을 강제 마감할까요? 기존 지원자는 유지되고 새 지원은 받지 않아요.`, async () => {
+    ask(`"${title}" 모집글을 마감 처리할까요? 기존 지원자는 유지되고 새 지원은 받지 않아요.`, async () => {
       const snap = await getDoc(doc(db, 'matchPosts', postId))
       const leaderId = snap.exists() ? snap.data().leaderId : null
       await updateDoc(doc(db, 'matchPosts', postId), { status: 'closed' })
       if (leaderId) {
         await addDoc(collection(db, 'notifications'), {
           targetUserId: leaderId, type: 'admin', read: false,
-          text: `🛡️ 관리자에 의해 "${title}" 모집글이 강제 마감되었습니다.`,
+          text: `🛡️ 관리자에 의해 "${title}" 모집글이 마감 처리되었습니다.`,
           link: '/help', createdAt: serverTimestamp(),
         })
       }

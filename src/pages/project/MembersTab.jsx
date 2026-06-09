@@ -190,7 +190,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
                     if (result?.error) { setLeaveError(result.error); return }
                     navigate('/home')
                   } catch {
-                    setLeaveError('오류가 발생했어요. 다시 시도해주세요.')
+                    setLeaveError('나가지 못했어요. 잠시 후 다시 시도해주세요.')
                   } finally {
                     setLeaveLoading(false)
                   }
@@ -266,7 +266,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
                           className={`${styles.connectInviteBtn} ${state === 'sent' ? styles.connectInviteBtnDone : ''}`}
                           onClick={() => handleDirectInvite(c)}
                           disabled={!!state}>
-                          {state === 'sending' ? '...' : state === 'sent' ? '✅ 전송됨' : state === 'error' ? '오류' : '초대'}
+                          {state === 'sending' ? '...' : state === 'sent' ? '✅ 전송됨' : state === 'error' ? '다시 시도' : '초대'}
                         </button>
                       </div>
                     )
