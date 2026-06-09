@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, orderBy, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, doc, getDoc, orderBy, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -93,14 +93,14 @@ export default function MatchPage() {
 
       await Promise.all(snap.docs.map(async (d) => {
         const data = { id: d.id, ...d.data() }
-        // 마감된 모집글은 삭제하지 않고 보관, open 상태의 기한 초과만 삭제 (본인 글만)
-        if (!data.deadline || (data.deadline < today && data.status === 'open')) {
-          if (data.leaderId === uid) {
-            try { await deleteDoc(doc(db, 'matchPosts', d.id)) } catch {}
-          }
-          return
+        const expired = data.deadline && data.deadline < today
+        // 기한 지난 내 open 모집글은 삭제하지 않고 '마감'으로 전환해 보관(지원자 note 기록 보존)
+        if (expired && data.status === 'open' && data.leaderId === uid) {
+          try { await updateDoc(doc(db, 'matchPosts', d.id), { status: 'closed' }) } catch {}
+          data.status = 'closed'
         }
-        if (data.status === 'open' && !blocked.includes(data.leaderId)) validOpen.push(data)
+        if (!data.deadline) return  // 기한 없는 비정상 글은 목록에서만 제외(삭제하지 않음)
+        if (data.status === 'open' && !expired && !blocked.includes(data.leaderId)) validOpen.push(data)
         if (data.status === 'closed' && data.leaderId === uid) validClosed.push(data)
       }))
 

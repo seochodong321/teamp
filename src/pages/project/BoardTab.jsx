@@ -12,7 +12,7 @@ const fmtDate = (iso) => {
 }
 
 export default function BoardTab({ project, currentUser, isLeader, defaultView = 'list', defaultGlobal = false }) {
-  const { addAnnouncement, deleteAnnouncement, addComment, deleteComment, addReply, deleteReply } = useStore()
+  const { addAnnouncement, deleteAnnouncement, addComment, deleteComment, addReply, deleteReply, showConfirm } = useStore()
 
   const [boardView, setBoardView]     = useState(defaultView)
   const [selectedAnnId, setSelectedAnnId] = useState(null)
@@ -182,7 +182,11 @@ export default function BoardTab({ project, currentUser, isLeader, defaultView =
             {(liveAnn.authorId === currentUser.id || isLeader) && (
               <div className={styles.detailActions}>
                 <button className={styles.deleteBtn}
-                  onClick={() => { deleteAnnouncement(project.id, liveAnn.id); setBoardView('list') }}>
+                  onClick={async () => {
+                    if (await showConfirm('이 공지를 삭제할까요?\n달린 댓글·답글도 함께 사라져요.')) {
+                      deleteAnnouncement(project.id, liveAnn.id); setBoardView('list')
+                    }
+                  }}>
                   🗑️ 삭제하기
                 </button>
               </div>

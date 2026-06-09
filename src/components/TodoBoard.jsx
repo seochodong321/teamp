@@ -32,7 +32,7 @@ function getAssignees(todo) {
 }
 
 export default function TodoBoard({ project, currentUser }) {
-  const { addTodo, updateTodo, deleteTodo } = useStore()
+  const { addTodo, updateTodo, deleteTodo, showConfirm } = useStore()
   const todos = project.todos || []
 
   const [showForm, setShowForm]       = useState(false)
@@ -106,6 +106,7 @@ export default function TodoBoard({ project, currentUser }) {
   }
 
   const handleDeleteFromModal = async () => {
+    if (!await showConfirm('이 할 일을 삭제할까요?')) return
     await deleteTodo(project.id, selectedTodo.id)
     setSelectedTodo(null)
   }
@@ -355,7 +356,7 @@ export default function TodoBoard({ project, currentUser }) {
                             {pri.dot} {pri.label}
                           </span>
                           <button className={styles.delete}
-                            onClick={(e) => { e.stopPropagation(); deleteTodo(project.id, todo.id) }}>✕</button>
+                            onClick={async (e) => { e.stopPropagation(); if (await showConfirm('이 할 일을 삭제할까요?')) deleteTodo(project.id, todo.id) }}>✕</button>
                         </div>
                         <p className={styles.title}>{todo.title}</p>
                         <div className={styles.cardBottom}>
