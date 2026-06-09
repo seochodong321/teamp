@@ -259,6 +259,20 @@
 }
 .dangerBtn:hover { opacity: 0.85; }
 
+/* 유저 완전 삭제 — 블락(솔리드)보다 신중하게 아웃라인→채움 */
+.deleteUserBtn {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--coral);
+  border: 1px solid var(--coral);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.deleteUserBtn:hover { background: var(--coral); color: white; }
+
 .resolveBtn {
   padding: 6px 14px;
   background: var(--primary);

@@ -10,13 +10,16 @@
  * 배포: firebase deploy --only functions  (Blaze 요금제 필요)
  */
 import { onDocumentCreated } from 'firebase-functions/v2/firestore'
+import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getMessaging } from 'firebase-admin/messaging'
+import { getAuth } from 'firebase-admin/auth'
 
 initializeApp()
 const db = getFirestore()
 const REGION = 'asia-northeast3'
+const ADMIN_EMAIL = 'seobomin524@gmail.com'
 
 // 유저 uid 목록 → 유효한 fcmToken 목록 (중복·빈 값 제거)
 async function tokensFor(uids) {
@@ -113,3 +116,65 @@ export const pushOnChatMessage = onDocumentCreated(
     })
   }
 )
+
+// 컬렉션 청크 삭제 (배치 500 한도 대비)
+async function deleteCollection(colRef, batchSize = 400) {
+  while (true) {
+    const snap = await colRef.limit(batchSize).get()
+    if (snap.empty) break
+    const batch = db.batch()
+    snap.docs.forEach((d) => batch.delete(d.ref))
+    await batch.commit()
+    if (snap.size < batchSize) break
+  }
+}
+
+// ── 함수 C: 어드민 유저 완전 삭제 (Firebase Auth + Firestore) ──────
+// 클라에선 다른 유저의 Auth를 못 지우므로 Admin SDK로 처리. 어드민 이메일만 호출 가능.
+export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
+  if (request.auth?.token?.email !== ADMIN_EMAIL) {
+    throw new HttpsError('permission-denied', '관리자만 사용할 수 있어요.')
+  }
+  const uid = request.data?.uid
+  if (!uid) throw new HttpsError('invalid-argument', 'uid가 필요해요.')
+  if (uid === request.auth.uid) {
+    throw new HttpsError('failed-precondition', '본인 계정은 여기서 삭제할 수 없어요.')
+  }
+
+  // 1) 참여 프로젝트 정리 — 혼자인 건 메시지까지 완전 삭제, 아니면 명단에서 빼고 formerMembers 보존
+  const projSnap = await db.collection('projects').where('memberIds', 'array-contains', uid).get()
+  for (const pd of projSnap.docs) {
+    const p = pd.data()
+    const leaving = (p.members || []).find((m) => m.id === uid)
+    const others  = (p.members || []).filter((m) => m.id !== uid)
+    if (others.length === 0) {
+      for (const room of (p.rooms || [])) {
+        await deleteCollection(db.collection('rooms').doc(room.id).collection('messages'))
+      }
+      await pd.ref.delete()
+    } else {
+      const former = (p.formerMembers || []).filter((m) => m.id !== uid)
+      if (leaving) former.push({ id: leaving.id, name: leaving.name, role: leaving.role, affiliation: leaving.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'deleted' })
+      const updates = { memberIds: others.map((m) => m.id), members: others, formerMembers: former }
+      if (p.leaderId === uid) {
+        const newLeader = others.find((m) => m.role === 'sub-leader') || others[0]
+        updates.leaderId = newLeader.id
+        updates.members  = others.map((m) => m.id === newLeader.id ? { ...m, role: 'leader' } : m)
+      }
+      await pd.ref.update(updates)
+    }
+  }
+
+  // 2) 이 유저가 올린 매치 모집글 삭제 (죽은 모집글 방지)
+  const mpSnap = await db.collection('matchPosts').where('leaderId', '==', uid).get()
+  await Promise.all(mpSnap.docs.map((d) => d.ref.delete().catch(() => {})))
+
+  // 3) users 문서 삭제
+  await db.collection('users').doc(uid).delete().catch(() => {})
+
+  // 4) Firebase Auth 계정 삭제
+  let authDeleted = true
+  try { await getAuth().deleteUser(uid) } catch { authDeleted = false }
+
+  return { ok: true, authDeleted }
+})

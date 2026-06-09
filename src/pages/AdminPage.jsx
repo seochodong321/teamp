@@ -4,6 +4,8 @@ import {
   collection, query, orderBy, getDocs, getDoc, updateDoc, deleteDoc, doc,
   serverTimestamp, limit, where, writeBatch, addDoc,
 } from 'firebase/firestore'
+import { getApp } from 'firebase/app'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { deleteProjectDeep } from '../store/helpers.js'
@@ -505,7 +507,7 @@ const PLAN_META = {
 }
 
 // ─── 유저 관리 탭 ────────────────────────────────────────────
-function UsersTab({ onBlockUser, onUnblockUser }) {
+function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser }) {
   const [users, setUsers]         = useState([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
@@ -526,6 +528,12 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
   const handleUnblock = (uid, name) => {
     onUnblockUser(uid, name, () => {
       setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, banned: false } : u))
+    })
+  }
+
+  const handleDelete = (uid, name) => {
+    onDeleteUser(uid, name, () => {
+      setUsers((prev) => prev.filter((u) => u.id !== uid))
     })
   }
 
@@ -607,6 +615,7 @@ function UsersTab({ onBlockUser, onUnblockUser }) {
                       setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, banned: true, bannedAt: { toDate: () => new Date() } } : x))
                     })}>블락</button>
                   )}
+                  <button className={styles.deleteUserBtn} onClick={() => handleDelete(u.id, u.name)}>탈퇴 처리</button>
                 </div>
               </div>
             )
@@ -709,6 +718,23 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: 유저 완전 삭제 (Auth + Firestore) — Cloud Function 호출
+  const handleDeleteUser = (uid, name, onSuccess) => {
+    ask(`"${name}" 계정을 완전히 삭제할까요?\nFirebase 인증·프로필·데이터가 모두 사라지고 되돌릴 수 없어요.`, async () => {
+      try {
+        const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'adminDeleteUser')
+        const res = await call({ uid })
+        if (res?.data?.authDeleted === false) {
+          window.alert('데이터는 삭제했지만 인증 계정은 이미 없거나 삭제하지 못했어요.')
+        }
+        onSuccess?.()
+      } catch (e) {
+        console.error('[adminDeleteUser]', e)
+        window.alert(`삭제에 실패했어요: ${e?.message || '알 수 없는 오류'}\n(Cloud Functions 배포가 필요할 수 있어요)`)
+      }
+    })
+  }
+
   const TABS = [
     ['stats',    '📊 통계'],
     ['reports',  '🚩 신고'],
@@ -754,7 +780,7 @@ export default function AdminPage() {
       )}
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
       {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} onCloseMatch={handleCloseMatch} />}
-      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} />}
+      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} onDeleteUser={handleDeleteUser} />}
       {activeTab === 'announce' && <AnnouncementTab currentUser={currentUser} />}
 
       {dialog}
