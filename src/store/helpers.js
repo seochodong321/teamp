@@ -1,6 +1,32 @@
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
-import { doc, runTransaction, collection, addDoc, serverTimestamp } from 'firebase/firestore'
-import { db } from '../firebase.js'
+import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc } from 'firebase/firestore'
+import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
+import { db, storage } from '../firebase.js'
+
+// 프로젝트 완전 삭제 — 문서만 지우면 방 메시지·올린 파일이 고아로 남으므로 함께 비운다.
+// (삭제는 '혼자인 프로젝트'에서만 일어나므로 보존할 '함께한 사람'이 없음 = 영구 삭제가 맞음)
+export const deleteProjectDeep = async (project) => {
+  if (!project) return
+  for (const room of (project.rooms || [])) {
+    // 1) 방 메시지 서브컬렉션 비우기 (배치 한도 500 대비 청크)
+    try {
+      const snap = await getDocs(collection(db, 'rooms', room.id, 'messages'))
+      let batch = writeBatch(db), n = 0
+      for (const d of snap.docs) {
+        batch.delete(d.ref); n++
+        if (n >= 450) { await batch.commit(); batch = writeBatch(db); n = 0 }
+      }
+      if (n > 0) await batch.commit()
+    } catch (e) { console.error('[deleteProjectDeep] 메시지 삭제 실패:', room.id, e) }
+    // 2) 방에 올린 파일(Storage) 정리 — best effort
+    try {
+      const listing = await listAll(storageRef(storage, `chat/${room.id}`))
+      await Promise.all(listing.items.map((it) => deleteObject(it).catch(() => {})))
+    } catch { /* 파일 없음/권한 등은 무시 */ }
+  }
+  // 3) 프로젝트 문서 삭제
+  await deleteDoc(doc(db, 'projects', project.id))
+}
 
 // 인앱 알림 1건 발행 — notifications 컬렉션에 쓰면 받는 사람의
 // App.jsx onSnapshot이 종 알림 패널로 가져옴(크로스 디바이스). 빈 targetUserId면 무시.

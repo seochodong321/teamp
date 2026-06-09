@@ -1,6 +1,7 @@
-import { arrayRemove, arrayUnion, deleteDoc, doc, updateDoc, writeBatch } from 'firebase/firestore'
+import { arrayRemove, arrayUnion, doc, updateDoc, writeBatch } from 'firebase/firestore'
 import { deleteUser } from 'firebase/auth'
 import { db, auth } from '../../firebase.js'
+import { deleteProjectDeep } from '../helpers.js'
 
 export const createAuthSlice = (set, get) => ({
   isLoggedIn: false,
@@ -131,6 +132,7 @@ export const createAuthSlice = (set, get) => ({
     if (!currentUser) return
     const uid = currentUser.id
     const batch = writeBatch(db)
+    const soloProjects = []
 
     for (const project of (projects || [])) {
       if (!project.memberIds?.includes(uid)) continue
@@ -139,8 +141,8 @@ export const createAuthSlice = (set, get) => ({
       const otherMemberIds  = (project.memberIds || []).filter((id) => id !== uid)
 
       if (otherMembers.length === 0) {
-        // 혼자인 프로젝트 — 함께 삭제
-        batch.delete(doc(db, 'projects', project.id))
+        // 혼자인 프로젝트 — 메시지·파일까지 완전 삭제 (배치 커밋 후 처리)
+        soloProjects.push(project)
       } else {
         // 탈퇴자의 PII는 지우되, 함께한 명단(formerMembers)엔 남겨 랩업에서 증발하지 않게
         const leaving = (project.members || []).find((m) => m.id === uid)
@@ -162,6 +164,11 @@ export const createAuthSlice = (set, get) => ({
     // 유저 문서 삭제
     batch.delete(doc(db, 'users', uid))
     await batch.commit()
+
+    // 혼자인 프로젝트는 메시지·파일까지 완전 삭제 (고아 데이터 방지)
+    for (const p of soloProjects) {
+      try { await deleteProjectDeep(p) } catch (e) { console.error('[deleteAccount] 프로젝트 완전 삭제 실패:', e) }
+    }
 
     // Firebase Auth 계정 삭제 (최근 로그인이 오래됐으면 실패할 수 있음)
     try {

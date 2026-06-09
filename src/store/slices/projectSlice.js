@@ -1,10 +1,10 @@
 import {
-  collection, doc, addDoc, setDoc, getDoc, updateDoc, deleteDoc,
+  collection, doc, addDoc, setDoc, getDoc, updateDoc,
   arrayUnion, arrayRemove, writeBatch, serverTimestamp,
 } from 'firebase/firestore'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, todayStr, txProject, makeTutorialProject, makeTutorialMessages } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, todayStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -268,7 +268,7 @@ export const createProjectSlice = (set, get) => ({
     }
     try {
       if (isSoloDelete) {
-        await deleteDoc(doc(db, 'projects', projectId))
+        await deleteProjectDeep(project)  // 메시지·파일까지 완전 삭제
       } else {
         await updateDoc(doc(db, 'projects', projectId), {
           memberIds: arrayRemove(currentUser.id),

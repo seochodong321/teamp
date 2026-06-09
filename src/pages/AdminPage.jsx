@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { deleteProjectDeep } from '../store/helpers.js'
 import { Navigate } from 'react-router-dom'
 import styles from './AdminPage.module.css'
 
@@ -643,7 +644,7 @@ export default function AdminPage() {
       const memberIds = snap.exists()
         ? (snap.data().memberIds || (snap.data().members || []).map((m) => m.id))
         : []
-      await deleteDoc(doc(db, 'projects', projectId))
+      if (snap.exists()) await deleteProjectDeep({ id: projectId, ...snap.data() })  // 메시지·파일까지 완전 삭제
       if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
       await Promise.all(memberIds.map((uid) =>
         addDoc(collection(db, 'notifications'), {
