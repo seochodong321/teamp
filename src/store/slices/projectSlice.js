@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, todayStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, todayStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -319,6 +319,9 @@ export const createProjectSlice = (set, get) => ({
   },
 
   kickMember: async (projectId, memberId) => {
+    const proj = get().projects.find((p) => p.id === projectId)
+    const projectName = proj?.name || '프로젝트'
+    const wasMember = (proj?.members || []).some((m) => m.id === memberId)
     await txProject(projectId, (data) => {
       const leaving = (data.members || []).find((m) => m.id === memberId)
       if (!leaving) return {}
@@ -331,6 +334,14 @@ export const createProjectSlice = (set, get) => ({
         formerMembers: former,
       }
     })
+    // 조용히 사라지지 않게 — 당사자에게 1회 담담한 안내(평가 아님)
+    if (wasMember) {
+      await notifyUser(memberId, {
+        type: 'system',
+        text: `🍃 "${projectName}" 프로젝트에서 나가게 되었어요`,
+        link: '/home',
+      })
+    }
   },
 
   addMemberToProject: async (projectId, userId, userName) => {

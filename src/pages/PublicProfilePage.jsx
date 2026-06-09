@@ -158,10 +158,10 @@ export default function PublicProfilePage() {
     )
   }
 
-  // 통계는 전체 참여 프로젝트 기준 (공개 여부 무관)
-  const completedCount    = allProjects.filter((p) => p.status === 'archived').length
+  // 통계는 공개 설정된 프로젝트만 기준 — 비공개 프로젝트의 활동 규모·인맥이 외부로 새지 않게
+  const completedCount    = projects.filter((p) => p.status === 'archived').length
   const uniqueTeammates   = new Set(
-    allProjects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
+    projects.flatMap((p) => (p.members || []).map((m) => m.id)).filter((id) => id !== user.id)
   ).size
   const flowerSenderCount = user.flowerSenderUids?.length ?? user.flowerSenderCount ?? 0
   const totalFeedback   = Object.values(flowerTags).reduce((a, b) => a + b, 0)
