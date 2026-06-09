@@ -15,11 +15,13 @@ import { initializeApp } from 'firebase-admin/app'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getMessaging } from 'firebase-admin/messaging'
 import { getAuth } from 'firebase-admin/auth'
+import { getStorage } from 'firebase-admin/storage'
 
 initializeApp()
 const db = getFirestore()
 const REGION = 'asia-northeast3'
 const ADMIN_EMAIL = 'seobomin524@gmail.com'
+const STORAGE_BUCKET = 'teamp-7923c.firebasestorage.app' // 클라 업로드 버킷(공개 식별자)
 
 // 유저 uid 목록 → 유효한 fcmToken 목록 (중복·빈 값 제거)
 async function tokensFor(uids) {
@@ -150,6 +152,8 @@ export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
     if (others.length === 0) {
       for (const room of (p.rooms || [])) {
         await deleteCollection(db.collection('rooms').doc(room.id).collection('messages'))
+        // 방에 올린 Storage 파일 정리 (클라 deleteProjectDeep과 동일) — best-effort
+        try { await getStorage().bucket(STORAGE_BUCKET).deleteFiles({ prefix: `chat/${room.id}/` }) } catch { /* 없거나 권한 — 무시 */ }
       }
       await pd.ref.delete()
     } else {
