@@ -72,7 +72,7 @@ export default function ManageTab({ project, currentUser, isLeader }) {
                   )}
                   {isLeader && (
                     <button className={styles.kickBtn}
-                      onClick={async () => { if (await showConfirm(`${m.name} 님을 프로젝트에서 내보내기할까요?`)) kickMember(project.id, m.id) }}>
+                      onClick={async () => { if (await showConfirm(`${m.name} 님을 프로젝트에서 내보낼까요?`)) kickMember(project.id, m.id) }}>
                       내보내기
                     </button>
                   )}

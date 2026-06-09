@@ -196,7 +196,7 @@ export default function MembersTab({ project, currentUser, isLeader, canInvite, 
                   }
                 }}
               >
-                {leaveLoading ? '처리 중...' : '나가기'}
+                {leaveLoading ? '나가는 중...' : '나가기'}
               </button>
             </div>
           </div>

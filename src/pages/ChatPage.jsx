@@ -391,7 +391,7 @@ export default function ChatPage() {
             <div className={styles.leaveBtns}>
               <button className={styles.leaveCancelBtn} onClick={() => setShowLeave(false)}>취소</button>
               <button className={styles.leaveConfirmBtn} disabled={leaving} onClick={handleLeaveDm}>
-                {leaving ? '처리 중...' : '나가기'}
+                {leaving ? '나가는 중...' : '나가기'}
               </button>
             </div>
           </div>

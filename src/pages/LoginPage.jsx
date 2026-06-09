@@ -162,7 +162,7 @@ export default function LoginPage() {
       } else if (e.code === 'auth/too-many-requests') {
         setError('로그인 시도가 너무 많아 일시적으로 제한됐어요. 잠시 후 다시 시도해주세요.')
       } else {
-        setError(`Google 로그인 실패: ${e.code || e.message}`)
+        setError('Google 로그인에 실패했어요. 잠시 후 다시 시도해주세요.')
       }
     } finally {
       setLoading(false)
@@ -260,7 +260,7 @@ export default function LoginPage() {
         'auth/invalid-email':          '이메일 형식이 올바르지 않아요.',
         'auth/weak-password':          '비밀번호는 8자 이상 입력해주세요.',
         'auth/user-not-found':         '등록되지 않은 이메일이에요.',
-        'auth/wrong-password':         '비밀번호가 틀렸어요.',
+        'auth/wrong-password':         '비밀번호가 맞지 않아요.',
         'auth/invalid-credential':     '이메일 또는 비밀번호가 올바르지 않아요.',
         'auth/too-many-requests':      '로그인 시도가 너무 많아 일시적으로 제한됐어요. 잠시 후 다시 시도하거나 아래에서 비밀번호를 재설정해주세요.',
         'auth/network-request-failed': '네트워크 연결을 확인해주세요.',

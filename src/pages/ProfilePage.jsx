@@ -314,7 +314,7 @@ export default function ProfilePage() {
   }
 
   const handleDeleteAccount = async () => {
-    const confirmed = await showConfirm('정말로 탈퇴하시겠어요?\n계정과 모든 데이터가 즉시 삭제되며 복구할 수 없습니다.')
+    const confirmed = await showConfirm('정말로 탈퇴하시겠어요?\n계정과 모든 데이터가 즉시 사라지고 복구할 수 없어요.')
     if (!confirmed) return
     setDeleting(true)
     try {
@@ -324,7 +324,7 @@ export default function ProfilePage() {
       if (e.code === 'requires-recent-login') {
         showError('보안을 위해 로그아웃 후 다시 로그인한 뒤 탈퇴해주세요.')
       } else {
-        showError('탈퇴 처리 중 오류가 발생했어요. 다시 시도해주세요.')
+        showError('탈퇴하지 못했어요. 잠시 후 다시 시도해주세요.')
       }
       setDeleting(false)
     }

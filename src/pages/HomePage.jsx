@@ -154,14 +154,14 @@ export default function HomePage() {
       {confirmDeleteId && (
         <div className={styles.backdrop} onClick={() => setConfirmDeleteId(null)}>
           <div className={styles.extendModal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>프로젝트 삭제</h3>
-            <p className={styles.extendDesc}>내 목록에서 삭제할까요?<br />삭제 후에는 되돌릴 수 없습니다.</p>
+            <h3 className={styles.modalTitle}>프로젝트 숨기기</h3>
+            <p className={styles.extendDesc}>완료한 프로젝트를 내 홈 목록에서 숨겨요.<br />기록 자체는 지워지지 않아요.</p>
             <div className={styles.modalFooter} style={{ paddingTop: 4, border: 'none' }}>
               <button className={styles.prevBtn} onClick={() => setConfirmDeleteId(null)}>취소</button>
               <div style={{ flex: 1 }} />
               <button className={styles.deleteConfirmBtn}
                 onClick={() => { hideProject(confirmDeleteId); setConfirmDeleteId(null) }}>
-                삭제
+                숨기기
               </button>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function HomePage() {
                   {showPinPicker && (
                     <div className={styles.pinPicker}>
                       {active.length === 0
-                        ? <span className={styles.pinPickerEmpty}>진행 중인 프로젝트 없음</span>
+                        ? <span className={styles.pinPickerEmpty}>진행 중인 프로젝트가 없어요</span>
                         : active.map((p) => (
                           <button key={p.id} className={`${styles.pinPickerItem} ${p.id === pinnedId ? styles.pinPickerActive : ''}`}
                             onClick={() => setPinned(p.id)}>
