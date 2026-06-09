@@ -262,33 +262,20 @@ export default function WrapupPage() {
                 })()}
 
                 <div className={styles.memberSection}>
-                  <h3 className={styles.sectionTitle}>팀원별 기여</h3>
-                  {(wrapup.memberStats || wrapup.members).map((m) => {
-                    const stats = wrapup.memberStats?.find((s) => s.userId === m.userId) || null
-                    return (
-                      <div key={m.userId} className={styles.memberRow}>
-                        <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
-                        <div className={styles.memberInfo}>
-                          <div className={styles.memberNameRow}>
-                            <span className={styles.memberName}>{m.name}</span>
-                            <span className={styles.memberRole}>
-                              {m.role === 'leader' ? '👑 리더' : m.role === 'sub-leader' ? '⭐ 부리더' : '팀원'}
-                            </span>
-                          </div>
-                          {stats && (
-                            <div className={styles.memberContribBadges}>
-                              {stats.messageCount > 0 && (
-                                <span className={styles.contribBadge}>💬 {stats.messageCount}</span>
-                              )}
-                              {stats.todoCompletedCount > 0 && (
-                                <span className={styles.contribBadge}>✅ {stats.todoCompletedCount}/{stats.todoCount}</span>
-                              )}
-                            </div>
-                          )}
+                  <h3 className={styles.sectionTitle}>함께한 팀원</h3>
+                  {(wrapup.memberStats || wrapup.members).map((m) => (
+                    <div key={m.userId} className={styles.memberRow}>
+                      <div className={styles.memberAvatar}>{m.name.charAt(0)}</div>
+                      <div className={styles.memberInfo}>
+                        <div className={styles.memberNameRow}>
+                          <span className={styles.memberName}>{m.name}</span>
+                          <span className={styles.memberRole}>
+                            {m.role === 'leader' ? '👑 리더' : m.role === 'sub-leader' ? '⭐ 부리더' : '팀원'}
+                          </span>
                         </div>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
                 </div>
 
                 {/* 주간 목표 달성률 */}
@@ -297,8 +284,7 @@ export default function WrapupPage() {
                     <h3 className={styles.sectionTitle}>📅 주간 목표 달성</h3>
                     <p className={styles.statLineText}>
                       총 <strong>{wrapup.summary.weeklyGoalsTotal}주</strong>의 목표 중{' '}
-                      <strong>{wrapup.summary.weeklyGoalsAchieved}주</strong>를 달성했어요
-                      {' '}({Math.round((wrapup.summary.weeklyGoalsAchieved / wrapup.summary.weeklyGoalsTotal) * 100)}%)
+                      <strong>{wrapup.summary.weeklyGoalsAchieved}주</strong>를 함께 이뤘어요
                     </p>
                   </div>
                 )}
@@ -312,7 +298,6 @@ export default function WrapupPage() {
           <div className={styles.reflectionTab}>
             {/* 팀 인사이트 */}
             {wrapup && (
-              wrapup.highlights?.mostActiveUserName ||
               wrapup.highlights?.busiestDay ||
               wrapup.highlights?.latestNightActivity ||
               wrapup.highlights?.activityTrend ||
@@ -321,13 +306,6 @@ export default function WrapupPage() {
               <div className={styles.insightSection}>
                 <h3 className={styles.sectionTitle}>이번 프로젝트 돌아보기</h3>
                 <div className={styles.insightGrid}>
-                  {wrapup.highlights?.mostActiveUserName && (
-                    <div className={styles.insightCard}>
-                      <span className={styles.insightIcon}>🏆</span>
-                      <p className={styles.insightLabel}>가장 활발한 팀원</p>
-                      <p className={styles.insightValue}>{wrapup.highlights.mostActiveUserName}</p>
-                    </div>
-                  )}
                   {wrapup.highlights?.busiestDay && (
                     <div className={styles.insightCard}>
                       <span className={styles.insightIcon}>🔥</span>

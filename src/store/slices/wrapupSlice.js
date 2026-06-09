@@ -52,12 +52,7 @@ export const createWrapupSlice = (set, get) => ({
     const totalTodos     = project.todos?.length ?? 0
     const completedTodos = project.todos?.filter((t) => t.status === 'done').length ?? 0
 
-    const mostActiveUserId   = Object.keys(messageSenderCount).sort(
-      (a, b) => (messageSenderCount[b] || 0) - (messageSenderCount[a] || 0)
-    )[0] || null
-    const mostActiveUserName = project.members.find((m) => m.id === mostActiveUserId)?.name || null
-
-    // 멤버별 기여 집계
+    // 멤버별 집계 — 명단·역할용. 개인 순위/시상은 만들지 않는다 (점수·순위 없음 철학).
     const memberStats = project.members.map((m) => {
       const assignedTodos = (project.todos || []).filter((t) => {
         const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
@@ -72,9 +67,6 @@ export const createWrapupSlice = (set, get) => ({
         todoCompletedCount: assignedTodos.filter((t) => t.status === 'done').length,
       }
     })
-    const topTodo = [...memberStats].sort((a, b) => b.todoCompletedCount - a.todoCompletedCount)[0]
-    const mostTodoCompletedUserId   = topTodo?.todoCompletedCount > 0 ? topTodo.userId   : null
-    const mostTodoCompletedUserName = topTodo?.todoCompletedCount > 0 ? topTodo.name     : null
     // 주간 목표 달성률
     const weeklyGoals = project.weeklyGoals || []
     const weeklyGoalsTotal    = weeklyGoals.length
@@ -116,9 +108,6 @@ export const createWrapupSlice = (set, get) => ({
       createdAt: serverTimestamp(),
       summary: { totalMessages, totalTodos, completedTodos, totalFiles, weeklyGoalsTotal, weeklyGoalsAchieved },
       highlights: {
-        mostActiveUserId, mostActiveUserName,
-        mostTodoCompletedUserId, mostTodoCompletedUserName,
-        mostConnectedUserId: null, mostConnectedUserName: null,
         busiestDay,
         latestNightActivity,
         activityTrend,
