@@ -5,6 +5,7 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch }
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { claimUsername, releaseUsername } from '../store/helpers.js'
 import { resizeImage } from '../utils/image.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import NotificationSettings from '../components/NotificationSettings.jsx'
@@ -261,6 +262,11 @@ export default function ProfilePage() {
     const newUsername = editUsername.trim() ? `@${editUsername.trim().toLowerCase().replace(/^@/, '')}` : currentUser.username
     if (usernameStatus === 'checking') { showError('아이디 중복 확인 중이에요. 잠시 후 다시 시도해주세요.'); setSaving(false); return }
     if (usernameStatus === 'taken') { showError('이미 사용 중인 아이디예요.'); setSaving(false); return }
+    const usernameChanged = newUsername !== currentUser.username
+    if (usernameChanged) {
+      try { await claimUsername(currentUser.id, newUsername) }
+      catch { showError('이미 사용 중인 아이디예요.'); setSaving(false); return }
+    }
     try {
       // Firestore에 저장
       if (currentUser.id) {
@@ -288,6 +294,8 @@ export default function ProfilePage() {
           })
           await batch.commit()
         }
+        // 닉네임 변경 성공 → 옛 이름 반환(다른 사람이 쓸 수 있게)
+        if (usernameChanged) await releaseUsername(currentUser.id, currentUser.username)
       }
       // 로컬 상태 업데이트
       updateProfile({

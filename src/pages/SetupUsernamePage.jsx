@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { claimUsername } from '../store/helpers.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
 import { getYearRange } from '../utils/dateUtils.js'
 import styles from './SetupUsernamePage.module.css'
@@ -103,16 +104,15 @@ export default function SetupUsernamePage() {
       const finalUsername = `@${uname}`
       const birthday = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
 
-      // 제출 직전 최종 중복 확인
+      // 닉네임 원자적 선점 — usernames 컬렉션으로 진짜 유니크 보장(레이스·중복 차단)
       try {
-        const check = await getDocs(query(collection(db, 'users'), where('username', '==', finalUsername)))
-        if (!check.empty) {
-          setUsernameStatus('taken')
-          setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
-          setLoading(false)
-          return
-        }
-      } catch {}
+        await claimUsername(uid, finalUsername)
+      } catch {
+        setUsernameStatus('taken')
+        setError('이미 사용 중인 아이디예요. 다른 아이디를 입력해주세요.')
+        setLoading(false)
+        return
+      }
 
       await setDoc(doc(db, 'users', uid), {
         uid, name, email,

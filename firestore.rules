@@ -31,6 +31,17 @@ service cloud.firestore {
     }
 
     // ──────────────────────────────────────────────
+    // usernames — 닉네임 유일성 (문서ID = 소문자 닉네임)
+    //   선점=create(자기 uid로만, 이미 있으면 create 실패 → 중복 불가),
+    //   반환=delete(그 닉네임 소유 본인만). update는 막음.
+    // ──────────────────────────────────────────────
+    match /usernames/{name} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // ──────────────────────────────────────────────
     // projects
     //   읽기: 멤버이거나 isPublic == true 또는 어드민
     //   생성: 인증된 유저 (자신을 memberIds에 포함해야 함)

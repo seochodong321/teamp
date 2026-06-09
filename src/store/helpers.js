@@ -3,6 +3,43 @@ import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writ
 import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
 import { db, storage } from '../firebase.js'
 
+export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
+
+// 닉네임 유니크 선점 — usernames/{이름}(문서ID=소문자 닉네임)로 원자적 차지.
+// Firestore가 문서 ID 유일성을 보장하므로 동시 신규 선점도 트랜잭션이 직렬화해 중복 불가.
+// 추가로 기존 유저(이미 저장된 닉네임)도 query로 막아 백필 없이 안전. 실패 시 throw.
+export const claimUsername = async (uid, username) => {
+  const name = (username || '').replace(/^@/, '').toLowerCase()
+  if (!USERNAME_RE.test(name)) throw new Error('invalid-username')
+  // 1) 기존 유저가 이미 쓰는 닉네임인지 (미마이그레이션 데이터 대비)
+  const q = await getDocs(query(collection(db, 'users'), where('username', '==', `@${name}`)))
+  if (q.docs.some((d) => d.id !== uid)) throw new Error('username-taken')
+  // 2) usernames/{name} 원자적 선점 — 이미 다른 uid면 거부
+  await runTransaction(db, async (tx) => {
+    const ref  = doc(db, 'usernames', name)
+    const snap = await tx.get(ref)
+    if (snap.exists()) {
+      if (snap.data().uid !== uid) throw new Error('username-taken')
+      return // 이미 내 것
+    }
+    tx.set(ref, { uid })
+  })
+  return `@${name}`
+}
+
+// 닉네임 변경 시 옛 이름 반환(다른 사람이 쓸 수 있게)
+export const releaseUsername = async (uid, oldUsername) => {
+  const name = (oldUsername || '').replace(/^@/, '').toLowerCase()
+  if (!USERNAME_RE.test(name)) return
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref  = doc(db, 'usernames', name)
+      const snap = await tx.get(ref)
+      if (snap.exists() && snap.data().uid === uid) tx.delete(ref)
+    })
+  } catch { /* 실패해도 치명적 아님 */ }
+}
+
 // 프로젝트 완전 삭제 — 문서만 지우면 방 메시지·올린 파일이 고아로 남으므로 함께 비운다.
 // (삭제는 '혼자인 프로젝트'에서만 일어나므로 보존할 '함께한 사람'이 없음 = 영구 삭제가 맞음)
 export const deleteProjectDeep = async (project) => {
