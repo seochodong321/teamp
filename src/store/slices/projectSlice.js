@@ -10,6 +10,7 @@ export const createProjectSlice = (set, get) => ({
   projects: [],
   roomOrders: {},
   mutedProjects: [],
+  mutedDms: [],
   hiddenProjects: [],
   pinnedId: null,
 
@@ -128,6 +129,13 @@ export const createProjectSlice = (set, get) => ({
     mutedProjects: s.mutedProjects.includes(projectId)
       ? s.mutedProjects.filter((id) => id !== projectId)
       : [...s.mutedProjects, projectId],
+  })),
+
+  // 차단보다 약한 단계 — 특정 1:1 대화 알림만 끄기(메시지는 그대로 옴)
+  toggleMuteDm: (roomId) => set((s) => ({
+    mutedDms: s.mutedDms.includes(roomId)
+      ? s.mutedDms.filter((id) => id !== roomId)
+      : [...s.mutedDms, roomId],
   })),
 
   setPinnedId: (id) => set({ pinnedId: id }),

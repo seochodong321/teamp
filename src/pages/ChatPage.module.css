@@ -209,6 +209,9 @@
 @keyframes sendPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
 
 /* DM 나가기 */
+.dmHeaderActions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.dmMuteBtn { font-size: 14px; line-height: 1; width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; transition: all 0.15s; }
+.dmMuteBtn:hover { border-color: var(--primary); }
 .dmLeaveBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
 .dmLeaveBtn:hover { border-color: #E24B4A; color: #E24B4A; }
 /* 아바타 클릭 → 미니 프로필 카드 */

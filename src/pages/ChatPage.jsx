@@ -81,6 +81,7 @@ export default function ChatPage() {
     sendMessage, sendFile, sendPoll, votePoll, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
     leaveDmRoom, blockUser, unblockUser, blockedUsers,
+    toggleMuteDm, mutedDms,
     removeChatToastsByRoom, showError,
   } = useStore()
 
@@ -317,6 +318,7 @@ export default function ChatPage() {
   const otherUserName = isDm ? (dmRoom?.participantNames?.[otherUserId] || '상대방') : null
   const roomName      = isDm ? (otherUserName || '1:1 대화') : room?.name
   const iBlocked      = isDm && (blockedUsers || []).includes(otherUserId)
+  const isMuted       = isDm && (mutedDms || []).includes(roomId)
   const backLabel     = isDm ? '← 홈' : `← ${project?.name || ''}`
   const backPath      = isDm ? '/home' : `/project/${projectId}`
 
@@ -447,10 +449,17 @@ export default function ChatPage() {
             )
           })()}
         </div>
-        {isDm
-          ? <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
-          : <div className={styles.headerSpacer} />
-        }
+        {isDm ? (
+          <div className={styles.dmHeaderActions}>
+            <button className={styles.dmMuteBtn} onClick={() => toggleMuteDm(roomId)}
+              title={isMuted ? '알림 켜기' : '알림 끄기'}>
+              {isMuted ? '🔕' : '🔔'}
+            </button>
+            <button className={styles.dmLeaveBtn} onClick={() => setShowLeave(true)}>나가기</button>
+          </div>
+        ) : (
+          <div className={styles.headerSpacer} />
+        )}
       </div>
 
       {/* 메시지 목록 */}

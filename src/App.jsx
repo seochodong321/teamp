@@ -477,6 +477,7 @@ export default function App() {
             if (!currentUser || msg.senderId === currentUser.id) return
             if (msg.senderId === 'system' || msg.type === 'notify') return
             if (window.location.pathname.includes(`/chat/${room.id}`)) return
+            if ((useStore.getState().mutedDms || []).includes(room.id)) return  // 음소거된 DM
             incrementUnread(room.id)
             const preview = msg.type === 'image' ? '📷 사진'
               : msg.type === 'file' ? '📎 파일'

@@ -2,8 +2,13 @@ export const createNotificationSlice = (set, get) => ({
   notifications: [],
 
   addNotification: (noti) => {
-    const { mutedProjects } = get()
+    const { mutedProjects, mutedDms } = get()
     if (noti.projectId && mutedProjects.includes(noti.projectId)) return
+    // 음소거된 1:1 대화 알림 차단 — dm 링크(.../chat/{roomId})에서 방 id 추출
+    if (noti.type === 'dm' && noti.link) {
+      const rid = noti.link.split('/chat/')[1]
+      if (rid && (mutedDms || []).includes(rid)) return
+    }
     set((s) => ({
       notifications: [
         { id: `noti_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, read: false, createdAt: Date.now(), ...noti },

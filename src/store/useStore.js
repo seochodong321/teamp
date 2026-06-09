@@ -38,6 +38,7 @@ export const useStore = create(
         invites:        state.invites,
         theme:          state.theme,
         mutedProjects:  state.mutedProjects,
+        mutedDms:       state.mutedDms,
         hiddenProjects: state.hiddenProjects,
         dmUnreadCounts: state.dmUnreadCounts,
         pinnedId:       state.pinnedId,
