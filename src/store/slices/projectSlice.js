@@ -273,6 +273,8 @@ export const createProjectSlice = (set, get) => ({
         await updateDoc(doc(db, 'projects', projectId), {
           memberIds: arrayRemove(currentUser.id),
           members: arrayRemove(me),
+          // 함께한 기록 보존 — 나가도 formerMembers에 남겨 랩업·명단에 유지
+          formerMembers: arrayUnion({ id: me.id, name: me.name, role: me.role, affiliation: me.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'left' }),
         })
       }
     } catch (e) {
@@ -317,10 +319,18 @@ export const createProjectSlice = (set, get) => ({
   },
 
   kickMember: async (projectId, memberId) => {
-    await txProject(projectId, (data) => ({
-      members: data.members.filter((m) => m.id !== memberId),
-      memberIds: (data.memberIds || []).filter((id) => id !== memberId),
-    }))
+    await txProject(projectId, (data) => {
+      const leaving = (data.members || []).find((m) => m.id === memberId)
+      if (!leaving) return {}
+      // 함께한 기록 보존 — members에서 빼되 formerMembers에 남겨 랩업·명단에 유지
+      const former = (data.formerMembers || []).filter((m) => m.id !== memberId)
+      former.push({ id: leaving.id, name: leaving.name, role: leaving.role, affiliation: leaving.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'removed' })
+      return {
+        members: data.members.filter((m) => m.id !== memberId),
+        memberIds: (data.memberIds || []).filter((id) => id !== memberId),
+        formerMembers: former,
+      }
+    })
   },
 
   addMemberToProject: async (projectId, userId, userName) => {

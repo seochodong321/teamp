@@ -52,8 +52,18 @@ export const createWrapupSlice = (set, get) => ({
     const totalTodos     = project.todos?.length ?? 0
     const completedTodos = project.todos?.filter((t) => t.status === 'done').length ?? 0
 
+    // 함께한 사람은 사라지지 않게 — 나갔거나 내보내진 멤버(formerMembers)도 명단·집계에 포함.
+    // id 기준 dedup(재합류·중복 나감 대비), 현재 멤버 우선.
+    const seenIds = new Set(project.members.map((m) => m.id))
+    const formerMembers = (project.formerMembers || []).filter((fm) => {
+      if (seenIds.has(fm.id)) return false
+      seenIds.add(fm.id)
+      return true
+    })
+    const allParticipants = [...project.members, ...formerMembers]
+
     // 멤버별 집계 — 명단·역할용. 개인 순위/시상은 만들지 않는다 (점수·순위 없음 철학).
-    const memberStats = project.members.map((m) => {
+    const memberStats = allParticipants.map((m) => {
       const assignedTodos = (project.todos || []).filter((t) => {
         const assignees = Array.isArray(t.assignees) ? t.assignees : (t.assignee ? [t.assignee] : [])
         return assignees.length === 0 ? false : assignees.includes(m.id)
@@ -113,7 +123,7 @@ export const createWrapupSlice = (set, get) => ({
         activityTrend,
       },
       memberStats,
-      members: project.members.map((m) => ({ userId: m.id, name: m.name, role: m.role })),
+      members: allParticipants.map((m) => ({ userId: m.id, name: m.name, role: m.role })),
       reflections: [],
       feedbacks: [],
     }
