@@ -41,6 +41,7 @@ export const useStore = create(
         hiddenProjects: state.hiddenProjects,
         dmUnreadCounts: state.dmUnreadCounts,
         pinnedId:       state.pinnedId,
+        portfolioNoticeSeen: state.portfolioNoticeSeen,
       }),
     }
   )

@@ -62,6 +62,10 @@ export const createUiSlice = (set, get) => ({
 
   setPinnedId: (id) => set({ pinnedId: id }),
 
+  // 팀프폴리오 첫 안내 — 기본 공개라 '놀라지 않게' 1회 안내 후 닫음(기기별)
+  portfolioNoticeSeen: false,
+  dismissPortfolioNotice: () => set({ portfolioNoticeSeen: true }),
+
   addChatToast: (toast) => {
     set((s) => ({ chatToasts: [toast, ...s.chatToasts].slice(0, 5) }))
   },

@@ -142,7 +142,11 @@ export const createAuthSlice = (set, get) => ({
         // 혼자인 프로젝트 — 함께 삭제
         batch.delete(doc(db, 'projects', project.id))
       } else {
-        const updates = { memberIds: otherMemberIds, members: otherMembers }
+        // 탈퇴자의 PII는 지우되, 함께한 명단(formerMembers)엔 남겨 랩업에서 증발하지 않게
+        const leaving = (project.members || []).find((m) => m.id === uid)
+        const former  = (project.formerMembers || []).filter((m) => m.id !== uid)
+        if (leaving) former.push({ id: leaving.id, name: leaving.name, role: leaving.role, affiliation: leaving.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'deleted' })
+        const updates = { memberIds: otherMemberIds, members: otherMembers, formerMembers: former }
         if (project.leaderId === uid) {
           // 부리더 → 첫 번째 멤버 순으로 리더 이전
           const newLeader = otherMembers.find((m) => m.role === 'sub-leader') || otherMembers[0]

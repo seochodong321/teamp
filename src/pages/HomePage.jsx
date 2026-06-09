@@ -20,6 +20,7 @@ export default function HomePage() {
     archiveProject, extendProject,
     hiddenProjects, hideProject,
     pinnedId, setPinnedId,
+    portfolioNoticeSeen, dismissPortfolioNotice,
   } = useStore()
 
   // 홈 카드 활동 감지 — localStorage에 마지막 클릭 시각 저장
@@ -294,6 +295,28 @@ export default function HomePage() {
           </div>
         </div>
       ))}
+
+      {/* ── 팀프폴리오 첫 안내 (기본 공개라 1회 안내) ── */}
+      {currentUser && !portfolioNoticeSeen && (
+        <div className={styles.portfolioNotice}>
+          <div className={styles.portfolioNoticeBody}>
+            <span className={styles.portfolioNoticeIcon}>🌱</span>
+            <div>
+              <p className={styles.portfolioNoticeTitle}>팀프폴리오는 기본 공개로 시작돼요</p>
+              <p className={styles.portfolioNoticeSub}>
+                완료한 프로젝트와 받은 꽃다발이 외부 링크로 보여요. 프로필에서 공개 범위를 바꿀 수 있어요.
+              </p>
+            </div>
+          </div>
+          <div className={styles.portfolioNoticeBtns}>
+            <button className={styles.portfolioNoticeManage}
+              onClick={() => { dismissPortfolioNotice(); navigate('/profile') }}>
+              공개 설정 관리
+            </button>
+            <button className={styles.portfolioNoticeClose} onClick={dismissPortfolioNotice} aria-label="닫기">✕</button>
+          </div>
+        </div>
+      )}
 
       {/* ── 오늘·내일 일정 요약 ── */}
       {todaySummary.length > 0 && (
