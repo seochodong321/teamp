@@ -23,7 +23,9 @@ const LOG_ACTION = {
   block: '🚫 블락', unblock: '✅ 블락 해제', 'delete-user': '🗑️ 유저 탈퇴',
   plan: '💳 요금제 변경', 'delete-project': '📁 프로젝트 삭제',
   'delete-match': '🤝 모집글 삭제', 'close-match': '🤝 모집 마감',
+  promote: '🛡️ 어드민 승급', demote: '🔻 어드민 해제',
 }
+const SELECTABLE_PLANS = ['free', 'student', 'pro', 'team']  // 'admin'은 요금제 아님(권한 토글로 분리)
 const PLAN_KO = { free: '무료', student: '학생', pro: '프로', team: '팀' }
 const tsMs  = (ts) => ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : 0)
 const fmtTs = (ts) => {
@@ -519,7 +521,7 @@ const PLAN_META = {
 }
 
 // ─── 유저 관리 탭 ────────────────────────────────────────────
-function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
+function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, onToggleAdmin, isBootstrap, logAdmin }) {
   const [users, setUsers]         = useState([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
@@ -546,6 +548,12 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
   const handleDelete = (uid, name) => {
     onDeleteUser(uid, name, () => {
       setUsers((prev) => prev.filter((u) => u.id !== uid))
+    })
+  }
+
+  const handleToggleAdmin = (uid, name, makeAdmin) => {
+    onToggleAdmin(uid, name, makeAdmin, () => {
+      setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, isAdmin: makeAdmin } : u))
     })
   }
 
@@ -586,6 +594,7 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
                     <span className={`${styles.typeBadge} ${styles.type_user}`}>유저</span>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: pm.bg, color: pm.color }}>{pm.label}</span>
                     {u.banned && <span className={styles.bannedBadge}>블락됨</span>}
+                    {u.isAdmin && <span className={styles.adminBadge}>🛡️ 어드민</span>}
                   </div>
                   <span className={styles.date}>{u.createdAt?.toDate?.()?.toLocaleDateString('ko-KR') || (typeof u.createdAt === 'string' ? u.createdAt.slice(0, 10) : '-')}</span>
                 </div>
@@ -607,7 +616,7 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
                 <div className={styles.cardActions}>
                   {/* 플랜 변경 */}
                   <div style={{ display: 'flex', gap: 4, flex: 1 }}>
-                    {Object.entries(PLAN_META).map(([key, meta]) => (
+                    {SELECTABLE_PLANS.map((key) => [key, PLAN_META[key]]).map(([key, meta]) => (
                       <button
                         key={key}
                         disabled={plan === key || planLoading === u.id}
@@ -632,6 +641,11 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
                     })}>블락</button>
                   )}
                   <button className={styles.deleteUserBtn} onClick={() => handleDelete(u.id, u.name)}>탈퇴 처리</button>
+                  {isBootstrap && (
+                    <button className={styles.adminToggleBtn} onClick={() => handleToggleAdmin(u.id, u.name, !u.isAdmin)}>
+                      {u.isAdmin ? '🔻 어드민 해제' : '🛡️ 어드민 승급'}
+                    </button>
+                  )}
                 </div>
               </div>
             )
@@ -713,7 +727,8 @@ export default function AdminPage() {
   const [pendingReports, setPendingReports] = useState(0)
   const { ask, dialog } = useAdminConfirm()
 
-  const isAdmin = ADMIN_EMAILS.includes(currentUser?.email)
+  const isBootstrap = ADMIN_EMAILS.includes(currentUser?.email)  // 루트 — 승급/강등 권한
+  const isAdmin = isBootstrap || currentUser?.isAdmin === true   // 어드민 = 루트 또는 승급된 유저
 
   // 대기 중인 신고 수 — 열자마자 처리할 일이 있는지 한눈에
   useEffect(() => {
@@ -828,6 +843,20 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: 어드민 권한 부여/해제 (부트스트랩만 — 규칙도 동일하게 강제)
+  const handleToggleAdmin = (uid, name, makeAdmin, onSuccess) => {
+    ask(`"${name}" 님을 ${makeAdmin ? '어드민으로 승급할까요? 다른 유저를 관리할 수 있게 돼요.' : '어드민에서 해제할까요?'}`, async () => {
+      try {
+        await updateDoc(doc(db, 'users', uid), { isAdmin: makeAdmin })
+        logAdmin({ type: makeAdmin ? 'promote' : 'demote', targetId: uid, targetName: name })
+        onSuccess?.()
+      } catch (e) {
+        console.error('[toggleAdmin]', e)
+        showError('권한 변경에 실패했어요.')
+      }
+    })
+  }
+
   const TABS = [
     ['stats',    '📊 통계'],
     ['reports',  '🚩 신고'],
@@ -874,7 +903,7 @@ export default function AdminPage() {
       )}
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
       {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} onCloseMatch={handleCloseMatch} />}
-      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} onDeleteUser={handleDeleteUser} logAdmin={logAdmin} />}
+      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} onDeleteUser={handleDeleteUser} onToggleAdmin={handleToggleAdmin} isBootstrap={isBootstrap} logAdmin={logAdmin} />}
       {activeTab === 'logs'     && <LogsTab />}
       {activeTab === 'announce' && <AnnouncementTab currentUser={currentUser} />}
 

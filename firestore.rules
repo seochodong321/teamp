@@ -2,8 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
+    // 부트스트랩(루트) 어드민 — 하드코딩 이메일. 항상 어드민이고 승급/강등 권한 보유.
+    function isBootstrap() {
       return request.auth != null && request.auth.token.email == 'seobomin524@gmail.com';
+    }
+    // 어드민 = 부트스트랩 또는 승급된 유저(users.isAdmin == true)
+    function isAdmin() {
+      return isBootstrap() || (
+        request.auth != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
     }
 
     // ──────────────────────────────────────────────
@@ -26,7 +35,11 @@ service cloud.firestore {
         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) &&
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) ||
           request.resource.data.plan == 'student')
-      ) || isAdmin();
+      )
+      // 부트스트랩만 isAdmin 변경(승급/강등) 가능
+      || isBootstrap()
+      // 승급된 어드민은 다른 필드(banned·plan 등)는 수정하되 isAdmin은 못 건드림
+      || (isAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']));
       allow delete: if isAdmin();
     }
 

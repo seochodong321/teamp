@@ -131,10 +131,18 @@ async function deleteCollection(colRef, batchSize = 400) {
   }
 }
 
+// 호출자가 어드민인지 — 부트스트랩 이메일 또는 승급된 유저(users.isAdmin == true)
+async function isCallerAdmin(auth) {
+  if (!auth?.uid) return false
+  if (auth.token?.email === ADMIN_EMAIL) return true
+  const snap = await db.collection('users').doc(auth.uid).get()
+  return snap.exists && snap.data()?.isAdmin === true
+}
+
 // ── 함수 C: 어드민 유저 완전 삭제 (Firebase Auth + Firestore) ──────
-// 클라에선 다른 유저의 Auth를 못 지우므로 Admin SDK로 처리. 어드민 이메일만 호출 가능.
+// 클라에선 다른 유저의 Auth를 못 지우므로 Admin SDK로 처리. 어드민(루트·승급)만 호출 가능.
 export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
-  if (request.auth?.token?.email !== ADMIN_EMAIL) {
+  if (!(await isCallerAdmin(request.auth))) {
     throw new HttpsError('permission-denied', '관리자만 사용할 수 있어요.')
   }
   const uid = request.data?.uid

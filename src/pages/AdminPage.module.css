@@ -273,6 +273,11 @@
 }
 .deleteUserBtn:hover { background: var(--coral); color: white; }
 
+/* 어드민 권한 뱃지·토글 (어드민 레드) */
+.adminBadge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #FEE2E2; color: #DC2626; }
+.adminToggleBtn { padding: 6px 14px; background: transparent; color: #DC2626; border: 1px solid #DC2626; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.adminToggleBtn:hover { background: #DC2626; color: white; }
+
 .resolveBtn {
   padding: 6px 14px;
   background: var(--primary);
