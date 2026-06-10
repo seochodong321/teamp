@@ -191,5 +191,13 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // ──────────────────────────────────────────────
+    // adminLogs — 어드민 활동 감사 로그 (블락·탈퇴·요금제 변경)
+    //   읽기·생성: 어드민만. 수정·삭제 없음(append-only로 무결성).
+    // ──────────────────────────────────────────────
+    match /adminLogs/{logId} {
+      allow read, create: if isAdmin();
+    }
+
   }
 }

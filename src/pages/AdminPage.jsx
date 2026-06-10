@@ -19,6 +19,18 @@ const REASON_LABEL = {
   illegal: '불법 콘텐츠', spam: '스팸 / 홍보', false: '허위 정보',
   hate: '욕설 / 혐오 표현', other: '기타',
 }
+const LOG_ACTION = {
+  block: '🚫 블락', unblock: '✅ 블락 해제', 'delete-user': '🗑️ 유저 탈퇴',
+  plan: '💳 요금제 변경', 'delete-project': '📁 프로젝트 삭제',
+  'delete-match': '🤝 모집글 삭제', 'close-match': '🤝 모집 마감',
+}
+const PLAN_KO = { free: '무료', student: '학생', pro: '프로', team: '팀' }
+const tsMs  = (ts) => ts?.toMillis ? ts.toMillis() : (ts?.seconds ? ts.seconds * 1000 : 0)
+const fmtTs = (ts) => {
+  const ms = tsMs(ts)
+  if (!ms) return '-'
+  return new Date(ms).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
 
 function useAdminConfirm() {
   const [state, setState] = useState(null) // { message, onConfirm, error, loading }
@@ -507,7 +519,7 @@ const PLAN_META = {
 }
 
 // ─── 유저 관리 탭 ────────────────────────────────────────────
-function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser }) {
+function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser, logAdmin }) {
   const [users, setUsers]         = useState([])
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
@@ -538,10 +550,14 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser }) {
   }
 
   const changePlan = async (uid, newPlan) => {
+    const target = users.find((u) => u.id === uid)
+    const before = target?.plan || 'free'
+    if (before === newPlan) return
     setPlanLoading(uid)
     try {
       await updateDoc(doc(db, 'users', uid), { plan: newPlan })
       setUsers((prev) => prev.map((u) => u.id === uid ? { ...u, plan: newPlan } : u))
+      logAdmin?.({ type: 'plan', targetId: uid, targetName: target?.name || '', before, after: newPlan })
     } finally {
       setPlanLoading(null)
     }
@@ -627,6 +643,69 @@ function UsersTab({ onBlockUser, onUnblockUser, onDeleteUser }) {
   )
 }
 
+// ─── 로그 탭 ─────────────────────────────────────────────────
+// 신고(reports) + 어드민 활동(adminLogs)을 시각순 한 표로
+function LogsTab() {
+  const [rows, setRows]       = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [logSnap, repSnap] = await Promise.all([
+          getDocs(query(collection(db, 'adminLogs'), orderBy('createdAt', 'desc'), limit(200))),
+          getDocs(query(collection(db, 'reports'),   orderBy('createdAt', 'desc'), limit(200))),
+        ])
+        const logs = logSnap.docs.map((d) => {
+          const x = d.data()
+          return {
+            id: `l_${d.id}`, ts: x.createdAt, actor: x.actorEmail || '관리자',
+            action: LOG_ACTION[x.type] || x.type,
+            target: x.targetName || x.targetId || '-',
+            detail: x.type === 'plan' ? `${PLAN_KO[x.before] || x.before} → ${PLAN_KO[x.after] || x.after}` : '',
+          }
+        })
+        const reps = repSnap.docs.map((d) => {
+          const x = d.data()
+          return {
+            id: `r_${d.id}`, ts: x.createdAt, actor: x.reporterName || '익명',
+            action: '🚩 신고', target: x.targetName || '-',
+            detail: `${TYPE_LABEL[x.type] || x.type} · ${REASON_LABEL[x.reason] || x.reason}${x.status === 'resolved' ? ' · 처리됨' : ''}`,
+          }
+        })
+        setRows([...logs, ...reps].sort((a, b) => tsMs(b.ts) - tsMs(a.ts)))
+      } finally { setLoading(false) }
+    })()
+  }, [])
+
+  if (loading) return <p className={styles.empty}>불러오는 중...</p>
+  if (rows.length === 0) return <p className={styles.empty}>아직 기록된 로그가 없어요</p>
+
+  return (
+    <div className={styles.logWrap}>
+      <p className={styles.logHint}>신고·블락·탈퇴·요금제 변경 등 운영 활동 (최근 200건씩)</p>
+      <div className={styles.logScroll}>
+        <table className={styles.logTable}>
+          <thead>
+            <tr><th>시각</th><th>행위자</th><th>액션</th><th>대상</th><th>상세</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td className={styles.logTime}>{fmtTs(r.ts)}</td>
+                <td className={styles.logActor}>{r.actor}</td>
+                <td className={styles.logAction}>{r.action}</td>
+                <td>{r.target}</td>
+                <td className={styles.logDetail}>{r.detail}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
   const { currentUser, showError } = useStore()
@@ -646,6 +725,14 @@ export default function AdminPage() {
 
   if (!isAdmin) return <Navigate to="/home" replace />
 
+  // 어드민 활동 로그 1건 기록 (append-only 감사 로그)
+  const logAdmin = (entry) =>
+    addDoc(collection(db, 'adminLogs'), {
+      actorEmail: currentUser?.email || '',
+      ...entry,
+      createdAt: serverTimestamp(),
+    }).catch(() => {})
+
   // ── 액션: 프로젝트 삭제
   const handleDeleteProject = (projectId, name, reportId, onSuccess) => {
     ask(`"${name}" 프로젝트를 삭제할까요? 되돌릴 수 없어요.`, async () => {
@@ -662,6 +749,7 @@ export default function AdminPage() {
           link: '/help', createdAt: serverTimestamp(),
         })
       ))
+      logAdmin({ type: 'delete-project', targetId: projectId, targetName: name })
       onSuccess?.()
     })
   }
@@ -680,6 +768,7 @@ export default function AdminPage() {
           link: '/help', createdAt: serverTimestamp(),
         })
       }
+      logAdmin({ type: 'delete-match', targetId: postId, targetName: title })
       onSuccess?.()
     })
   }
@@ -689,6 +778,7 @@ export default function AdminPage() {
     ask(`"${name}" 계정을 블락할까요? 해당 유저는 로그인할 수 없게 돼요.`, async () => {
       await updateDoc(doc(db, 'users', uid), { banned: true, bannedAt: serverTimestamp() })
       if (reportId) await updateDoc(doc(db, 'reports', reportId), { status: 'resolved', resolvedAt: serverTimestamp() })
+      logAdmin({ type: 'block', targetId: uid, targetName: name })
       onSuccess?.()
     })
   }
@@ -706,6 +796,7 @@ export default function AdminPage() {
           link: '/help', createdAt: serverTimestamp(),
         })
       }
+      logAdmin({ type: 'close-match', targetId: postId, targetName: title })
       onSuccess?.()
     })
   }
@@ -714,6 +805,7 @@ export default function AdminPage() {
   const handleUnblockUser = (uid, name, onSuccess) => {
     ask(`"${name}" 계정의 블락을 해제할까요?`, async () => {
       await updateDoc(doc(db, 'users', uid), { banned: false, bannedAt: null })
+      logAdmin({ type: 'unblock', targetId: uid, targetName: name })
       onSuccess?.()
     })
   }
@@ -727,6 +819,7 @@ export default function AdminPage() {
         if (res?.data?.authDeleted === false) {
           showError('데이터는 삭제했지만 인증 계정은 이미 없거나 삭제하지 못했어요.')
         }
+        logAdmin({ type: 'delete-user', targetId: uid, targetName: name })
         onSuccess?.()
       } catch (e) {
         console.error('[adminDeleteUser]', e)
@@ -741,6 +834,7 @@ export default function AdminPage() {
     ['projects', '📁 프로젝트'],
     ['match',    '🤝 매치'],
     ['users',    '👤 유저'],
+    ['logs',     '📜 로그'],
     ['announce', '📢 공지'],
   ]
 
@@ -780,7 +874,8 @@ export default function AdminPage() {
       )}
       {activeTab === 'projects' && <ProjectsTab onDeleteProject={handleDeleteProject} />}
       {activeTab === 'match'    && <MatchTab    onDeleteMatch={handleDeleteMatch} onCloseMatch={handleCloseMatch} />}
-      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} onDeleteUser={handleDeleteUser} />}
+      {activeTab === 'users'    && <UsersTab    onBlockUser={handleBlockUser} onUnblockUser={handleUnblockUser} onDeleteUser={handleDeleteUser} logAdmin={logAdmin} />}
+      {activeTab === 'logs'     && <LogsTab />}
       {activeTab === 'announce' && <AnnouncementTab currentUser={currentUser} />}
 
       {dialog}
