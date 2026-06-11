@@ -65,6 +65,11 @@ public/  sw.js · firebase-messaging-sw.js · manifest.json · icons/ · splash/
 - **`scripts/gen-sw.mjs`는 빌드 필수** — FCM용 `firebase-messaging-sw.js`를 env에서 생성. 빌드에서 빼지 말 것.
 - **아이콘/스플래시는 손으로 교체하는 정적 파일**(`public/icons`·`public/splash`). 과거 `gen-assets.mjs`가 빌드마다 덮어써 제거함 — **다시 추가 금지**(커스텀 이미지 날아감).
 
+## 테스트 — 푸시 전 `npm test`
+- **`npm test`** — vitest 순수 로직(닉네임 형식·진행률 등). Java 불필요, 즉시. **푸시 전 돌릴 것.**
+- **`npm run test:rules`** — Firestore 보안 규칙(에뮬레이터). 로컬은 **Java 21+** 필요(`brew install openjdk` → `PATH=/opt/homebrew/opt/openjdk/bin:$PATH`). `--project demo-teamp` 필수.
+- **CI**(`.github/workflows/test.yml`): push/PR마다 둘 다 자동(node 24, java 21). 함정·CI 로그 읽는 법은 메모리 `project_test_infra` 참조.
+
 ## 모바일 / PWA — 실제 겪은 회귀
 - 높이 `100dvh`, 하단 `env(safe-area-inset-bottom)`. `100vh` 금지.
 - **⚠️ iOS 설치형 PWA에서 `position: fixed` 신뢰 금지** — 채팅이 상하로 잘리고 탭바가 바닥까지 안 닿던 근본 원인. 해결: `.shell`(`height: var(--app-height,100dvh)`) → `.main`(flex 컬럼) 안에서 **flex로 채움**. 탭바=flex-shrink:0 맨 아래, 채팅=`.contentChat`(flex) 안 `.page`(flex:1). 상태바/홈인디케이터는 헤더/입력창의 safe-area 패딩으로 비킨다.
