@@ -33,4 +33,12 @@ jobs:
           java-version: 17
       - run: npm ci
       - run: npm install -g firebase-tools
-      - run: npm run test:rules
+      - name: test:rules (실패 시 에러 annotation)
+        shell: bash
+        run: |
+          set +e
+          npm run test:rules 2>&1 | tee /tmp/r.log
+          code=${PIPESTATUS[0]}
+          [ "$code" = "0" ] && exit 0
+          tail -30 /tmp/r.log | while IFS= read -r l; do echo "::error::$l"; done
+          exit "$code"
