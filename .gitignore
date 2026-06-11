@@ -5,6 +5,9 @@ functions/node_modules
 .env.*.local
 dist
 public/firebase-messaging-sw.js
+
+# Firebase 에뮬레이터 디버그 로그 (test:rules 실행 산출물)
+*-debug.log
 .DS_Store
 **/.DS_Store
 
