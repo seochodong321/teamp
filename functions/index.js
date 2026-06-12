@@ -168,6 +168,25 @@ export const aggregateFlowerFeedback = onDocumentWritten(
   }
 )
 
+// ── 함수 E: 학생 인증 → plan='student' (서버 권한) ──────────────
+// 클라가 users.plan을 직접 못 쓰게 규칙으로 막고(자가 결제 우회 차단),
+// 학교 이메일 도메인 검증을 서버에서 수행해 plan을 부여한다(Admin SDK가 규칙 우회).
+// ⚠️ 이메일 "소유" 증명은 아직 없음(타이핑한 도메인만 확인) — 추후 OTP로 강화 가능.
+const STUDENT_DOMAINS = ['.ac.kr', '.edu', '.ac.jp', '.ac.uk', '.edu.au']
+export const verifyStudent = onCall({ region: REGION }, async (request) => {
+  if (!request.auth?.uid) throw new HttpsError('unauthenticated', '로그인이 필요해요.')
+  const email = String(request.data?.email || '').trim().toLowerCase()
+  if (!email || !STUDENT_DOMAINS.some((d) => email.endsWith(d))) {
+    throw new HttpsError('invalid-argument', '학교 이메일(.ac.kr, .edu 등)만 인증할 수 있어요.')
+  }
+  await db.doc(`users/${request.auth.uid}`).set({
+    plan: 'student',
+    studentEmail: email,
+    studentVerifiedAt: new Date().toISOString(),
+  }, { merge: true })
+  return { ok: true, plan: 'student' }
+})
+
 // 컬렉션 청크 삭제 (배치 500 한도 대비)
 async function deleteCollection(colRef, batchSize = 400) {
   while (true) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, updateDoc } from 'firebase/firestore'
-import { db } from '../firebase.js'
+import { getApp } from 'firebase/app'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 import { useStore } from '../store/useStore.js'
 import TeampMark from '../components/TeampMark.jsx'
 import styles from './StudentVerifyPage.module.css'
@@ -61,16 +61,14 @@ export default function StudentVerifyPage() {
 
     setLoading(true)
     try {
+      // 결제 우회 차단 — plan은 클라가 직접 못 쓰고 서버 함수(verifyStudent)가 도메인 검증 후 부여
+      const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'verifyStudent')
+      await call({ email: trimmed })
       const now = new Date().toISOString()
-      await updateDoc(doc(db, 'users', currentUser.id), {
-        plan:              'student',
-        studentEmail:      trimmed,
-        studentVerifiedAt: now,
-      })
       updateProfile({ plan: 'student', studentEmail: trimmed, studentVerifiedAt: now })
       setDone(true)
-    } catch {
-      setError('인증에 실패했어요. 잠시 후 다시 시도해주세요.')
+    } catch (e) {
+      setError(e?.message || '인증에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }
