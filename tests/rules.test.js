@@ -25,10 +25,10 @@ describe('users — 자가 권한상승 차단', () => {
     await seed((db) => setDoc(doc(db, 'users/u1'), { name: 'A', plan: 'free' }))
     await assertFails(updateDoc(doc(as('u1', 'a@x.com'), 'users/u1'), { isAdmin: true }))
   })
-  it('본인 plan은 student로만 변경 가능 (pro/admin 불가)', async () => {
+  it('본인 plan 자가 변경 불가 — 학생 포함 (verifyStudent 서버 함수만 부여)', async () => {
     await seed((db) => setDoc(doc(db, 'users/u1'), { name: 'A', plan: 'free' }))
     const db = as('u1', 'a@x.com')
-    await assertSucceeds(updateDoc(doc(db, 'users/u1'), { plan: 'student' }))
+    await assertFails(updateDoc(doc(db, 'users/u1'), { plan: 'student' }))
     await assertFails(updateDoc(doc(db, 'users/u1'), { plan: 'pro' }))
     await assertFails(updateDoc(doc(db, 'users/u1'), { plan: 'admin' }))
   })

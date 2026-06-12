@@ -32,11 +32,10 @@ service cloud.firestore {
       allow update: if (
         request.auth != null &&
         request.auth.uid == userId &&
-        // isAdmin 자가승급 차단 + 꽃다발 집계는 서버 함수(aggregateFlowerFeedback)만 — 자가 위조 차단
+        // 자가쓰기 금지 필드: isAdmin(권한 자가승급) · 꽃다발 집계(서버 함수 전용) ·
+        // plan(결제/학생 우회 차단 — 학생 인증은 verifyStudent 함수가 서버 검증 후 부여)
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['isAdmin', 'flowerTagSummary', 'flowerSenderUids', 'flowerSenderCount']) &&
-        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) ||
-          request.resource.data.plan == 'student')
+          .hasAny(['isAdmin', 'flowerTagSummary', 'flowerSenderUids', 'flowerSenderCount', 'plan'])
       )
       // 부트스트랩만 isAdmin 변경(승급/강등) 가능
       || isBootstrap()
