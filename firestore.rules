@@ -189,7 +189,9 @@ service cloud.firestore {
         request.resource.data.fromUserId == request.auth.uid &&
         (!('link' in request.resource.data) || (
           request.resource.data.link is string &&
-          request.resource.data.link.matches('^/([^/].*)?$')
+          // 앱 내부 경로만: '/' 로 시작 + 2번째 문자는 경로문자(슬래시·역슬래시 불가).
+          // '//evil'(프로토콜상대)·'/\evil'(역슬래시 정규화로 오리진 이탈)·외부 링크 차단.
+          request.resource.data.link.matches('^/([A-Za-z0-9_][A-Za-z0-9/_?=&.#-]*)?$')
         ));
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.targetUserId;

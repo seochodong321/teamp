@@ -152,6 +152,8 @@ describe('notifications — 발신자 검증 + 링크 피싱 차단', () => {
     await assertFails(setDoc(doc(u, 'notifications/bad1'), noti('https://evil.example')))
     await assertFails(setDoc(doc(u, 'notifications/bad2'), noti('//evil.example')))
     await assertFails(setDoc(doc(u, 'notifications/bad3'), noti('javascript:alert(1)')))
+    // 역슬래시 트릭 — 브라우저가 \를 /로 정규화해 '/\evil'이 https://evil 로 이탈
+    await assertFails(setDoc(doc(u, 'notifications/bad4'), noti('/\\evil.example')))
   })
 })
 
