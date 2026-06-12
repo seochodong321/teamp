@@ -2,40 +2,66 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    function signedIn() { return request.auth != null; }
+    function isImage()  { return request.resource.contentType.matches('image/.*'); }
+
+    // Firestore를 읽어 프로젝트 멤버십/방 접근 자격을 검증한다(Storage→Firestore 교차 읽기).
+    function isProjectMember(projectId) {
+      return signedIn() &&
+        firestore.exists(/databases/(default)/documents/projects/$(projectId)) &&
+        request.auth.uid in firestore.get(/databases/(default)/documents/projects/$(projectId)).data.memberIds;
+    }
+    // 채팅방 접근 자격 — Firestore rooms 규칙과 동일 모델:
+    //   DM: dmRooms/{roomId}.participants / 프로젝트 방: rooms 메타→projectId→memberIds
+    //   레거시(메타·DM문서 둘 다 없음): 인증 유저 허용 — ⚠️ 전 클라 배포 후 제거(Firestore isLegacyRoom과 한 쌍)
+    function isDmParticipantS(roomId) {
+      return firestore.exists(/databases/(default)/documents/dmRooms/$(roomId)) &&
+        request.auth.uid in firestore.get(/databases/(default)/documents/dmRooms/$(roomId)).data.participants;
+    }
+    function isProjectRoomMemberS(roomId) {
+      return firestore.exists(/databases/(default)/documents/rooms/$(roomId)) &&
+        request.auth.uid in firestore.get(
+          /databases/(default)/documents/projects/$(firestore.get(/databases/(default)/documents/rooms/$(roomId)).data.projectId)
+        ).data.memberIds;
+    }
+    function isLegacyRoomS(roomId) {
+      return !firestore.exists(/databases/(default)/documents/dmRooms/$(roomId)) &&
+        !firestore.exists(/databases/(default)/documents/rooms/$(roomId));
+    }
+    function canAccessChatRoom(roomId) {
+      return signedIn() &&
+        (isDmParticipantS(roomId) || isProjectRoomMemberS(roomId) || isLegacyRoomS(roomId));
+    }
+
     // ──────────────────────────────────────────────
-    // 프로필 아바타
-    //   읽기: 인증된 모든 유저
-    //   쓰기: 본인만 / 이미지 파일만 / 5 MB 이하
+    // 프로필 아바타 — 읽기: 인증 유저 / 쓰기: 본인만·이미지·5MB
     // ──────────────────────────────────────────────
     match /users/{userId}/avatar.jpg {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null
+      allow read:  if signedIn();
+      allow write: if signedIn()
         && request.auth.uid == userId
-        && request.resource.size  <= 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && request.resource.size <= 5 * 1024 * 1024
+        && isImage();
     }
 
     // ──────────────────────────────────────────────
-    // 프로젝트 커버 이미지
-    //   읽기: 인증된 모든 유저
-    //   쓰기: 인증된 유저 / 이미지 파일만 / 10 MB 이하
-    //   (멤버십 검증은 Firestore 규칙에서 담당)
+    // 프로젝트 커버 — 읽기: 인증 유저 / 쓰기: 그 프로젝트 멤버만·이미지·10MB
+    //   (이전엔 인증 유저 누구나 임의 프로젝트 커버를 덮어쓸 수 있었음 — 디페이스 차단)
     // ──────────────────────────────────────────────
     match /projects/{projectId}/cover.jpg {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null
-        && request.resource.size  <= 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+      allow read:  if signedIn();
+      allow write: if isProjectMember(projectId)
+        && request.resource.size <= 10 * 1024 * 1024
+        && isImage();
     }
 
     // ──────────────────────────────────────────────
-    // 채팅 파일 / 이미지
-    //   읽기: 인증된 모든 유저 (room ID는 UUID → 추측 불가)
-    //   쓰기: 인증된 유저 / 20 MB 이하
+    // 채팅 파일/이미지 — 그 방 접근 자격자만 읽기/쓰기 (20MB)
+    //   (이전엔 roomId만 알면 인증 유저 누구나 읽기/쓰기 — 특히 DM id는 결정론적이라 위험)
     // ──────────────────────────────────────────────
     match /chat/{roomId}/{fileName} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null
+      allow read:  if canAccessChatRoom(roomId);
+      allow write: if canAccessChatRoom(roomId)
         && request.resource.size <= 20 * 1024 * 1024;
     }
   }

@@ -10,7 +10,7 @@
     "gen-sw": "node scripts/gen-sw.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-teamp \"vitest run --config vitest.rules.config.js\""
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-teamp \"vitest run --config vitest.rules.config.js\""
   },
   "dependencies": {
     "@sentry/react": "^10.57.0",

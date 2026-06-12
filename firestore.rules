@@ -57,20 +57,43 @@ service cloud.firestore {
     // ──────────────────────────────────────────────
     // projects
     //   읽기: 멤버이거나 isPublic == true 또는 어드민
-    //   생성: 인증된 유저 (자신을 memberIds에 포함해야 함)
-    //   수정: 멤버 또는 어드민
+    //   생성: 인증된 유저 (자신을 memberIds에 포함 + 본인이 리더)
+    //   수정: 리더=전권 / 일반 멤버=권한필드 제외 / 비멤버=본인 합류만 / 어드민
     //   삭제: 리더만 또는 어드민
+    //
+    //   ⚠️ 권한 필드(leaderId·isPublic·isTutorial·inviteCode)는 리더/어드민만 변경.
+    //      일반 멤버가 leaderId를 자기로 바꿔 리더 탈취(→삭제) / isPublic 강제공개 /
+    //      isTutorial로 무료 한도 우회하던 권한 상승 경로를 차단한다.
+    //   ※ 비멤버 합류(초대 수락·코드 참여)는 "자신을 memberIds에 추가"하는 update이므로
+    //      기존 멤버십 검사로는 거부됐다(합류가 사실상 막혀 있던 버그). 아래 isProjectSelfJoin이 복구.
     // ──────────────────────────────────────────────
     match /projects/{projectId} {
+      function touchesProjectAuthority() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['leaderId', 'isPublic', 'isTutorial', 'inviteCode']);
+      }
+      function isProjectSelfJoin() {
+        return !(request.auth.uid in resource.data.memberIds) &&
+          request.auth.uid in request.resource.data.memberIds &&
+          !touchesProjectAuthority();
+      }
+
       allow read: if request.auth != null && (
         request.auth.uid in resource.data.memberIds ||
         resource.data.isPublic == true ||
         isAdmin()
       );
       allow create: if request.auth != null &&
-        request.auth.uid in request.resource.data.memberIds;
-      allow update: if (request.auth != null &&
-        request.auth.uid in resource.data.memberIds) || isAdmin();
+        request.auth.uid in request.resource.data.memberIds &&
+        request.resource.data.leaderId == request.auth.uid;
+      allow update: if isAdmin() || (request.auth != null && (
+        // 리더: 전권
+        request.auth.uid == resource.data.leaderId ||
+        // 기존 멤버: 권한 필드는 못 건드림 (협업 데이터만)
+        (request.auth.uid in resource.data.memberIds && !touchesProjectAuthority()) ||
+        // 비멤버: 본인을 명단에 추가하는 합류만
+        isProjectSelfJoin()
+      ));
       allow delete: if (request.auth != null &&
         request.auth.uid == resource.data.leaderId) || isAdmin();
     }
@@ -147,15 +170,20 @@ service cloud.firestore {
     // ──────────────────────────────────────────────
     // notifications
     //   읽기/삭제: 수신자만
-    //   생성: 발신자 본인 검증(fromUserId == 본인) — 사칭 알림·스팸 푸시 차단
-    //   ⚠️ fromUserId 없는 생성은 구버전 클라이언트 호환용 임시 허용 — 전 클라 배포 후 필수로 강화
+    //   생성: 발신자 본인 검증(fromUserId == 본인 필수) + link는 앱 내부 상대경로만.
+    //     - fromUserId 필수화: 사칭·익명 스팸 푸시 차단(구버전 임시 허용 제거).
+    //     - link 상대경로 강제: 푸시 클릭 목적지가 외부(https://evil)나 프로토콜상대('//evil')로
+    //       빠지는 피싱을 차단. 허용 형태는 '/...' (단, '//'로 시작 불가).
     // ──────────────────────────────────────────────
     match /notifications/{notiId} {
       allow read, delete: if request.auth != null &&
         request.auth.uid == resource.data.targetUserId;
       allow create: if request.auth != null &&
-        (!request.resource.data.keys().hasAny(['fromUserId']) ||
-          request.resource.data.fromUserId == request.auth.uid);
+        request.resource.data.fromUserId == request.auth.uid &&
+        (!('link' in request.resource.data) || (
+          request.resource.data.link is string &&
+          request.resource.data.link.matches('^/([^/].*)?$')
+        ));
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.targetUserId;
     }

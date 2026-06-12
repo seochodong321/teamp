@@ -120,12 +120,78 @@ describe('rooms 메시지 — 방 접근 자격 검증', () => {
   })
 })
 
-describe('notifications — 발신자 검증 (스팸 푸시 차단)', () => {
-  it('fromUserId=본인 OK / 타인 사칭 차단 / 구버전(필드 없음)은 임시 허용', async () => {
+describe('notifications — 발신자 검증 + 링크 피싱 차단', () => {
+  it('fromUserId=본인 OK / 타인 사칭 차단 / fromUserId 없으면 차단', async () => {
     const u = as('u1', 'u@x.com')
     await assertSucceeds(setDoc(doc(u, 'notifications/n1'), { targetUserId: 'other', fromUserId: 'u1', text: 'hi', read: false }))
     await assertFails(setDoc(doc(u, 'notifications/n2'), { targetUserId: 'other', fromUserId: 'someone-else', text: '사칭', read: false }))
-    await assertSucceeds(setDoc(doc(u, 'notifications/n3'), { targetUserId: 'other', text: '구버전 클라', read: false }))
+    await assertFails(setDoc(doc(u, 'notifications/n3'), { targetUserId: 'other', text: 'fromUserId 누락', read: false }))
+  })
+  it('link은 앱 내부 상대경로만 — 외부/프로토콜상대 링크 차단', async () => {
+    const u = as('u1', 'u@x.com')
+    const noti = (link) => ({ targetUserId: 'other', fromUserId: 'u1', text: 'x', read: false, link })
+    await assertSucceeds(setDoc(doc(u, 'notifications/ok1'), noti('/home')))
+    await assertSucceeds(setDoc(doc(u, 'notifications/ok2'), noti('/project/p1?tab=board')))
+    await assertFails(setDoc(doc(u, 'notifications/bad1'), noti('https://evil.example')))
+    await assertFails(setDoc(doc(u, 'notifications/bad2'), noti('//evil.example')))
+    await assertFails(setDoc(doc(u, 'notifications/bad3'), noti('javascript:alert(1)')))
+  })
+})
+
+describe('projects — 권한 상승 차단 + 합류 복구', () => {
+  const seedProject = () => seed((db) => setDoc(doc(db, 'projects/p1'), {
+    memberIds: ['leader', 'm2'], leaderId: 'leader', isPublic: false,
+    members: [{ id: 'leader', role: 'leader' }, { id: 'm2', role: 'member' }],
+    todos: [], announcements: [],
+  }))
+
+  it('일반 멤버는 협업 필드(todos)는 수정 OK', async () => {
+    await seedProject()
+    await assertSucceeds(updateDoc(doc(as('m2', 'm@x.com'), 'projects/p1'), { todos: [{ id: 't1', text: '할 일' }] }))
+  })
+  it('일반 멤버는 leaderId 자가 변경 불가 (리더 탈취 차단)', async () => {
+    await seedProject()
+    await assertFails(updateDoc(doc(as('m2', 'm@x.com'), 'projects/p1'), { leaderId: 'm2' }))
+  })
+  it('일반 멤버는 isPublic 강제 공개 불가', async () => {
+    await seedProject()
+    await assertFails(updateDoc(doc(as('m2', 'm@x.com'), 'projects/p1'), { isPublic: true }))
+  })
+  it('일반 멤버는 isTutorial 조작(한도 우회) 불가', async () => {
+    await seedProject()
+    await assertFails(updateDoc(doc(as('m2', 'm@x.com'), 'projects/p1'), { isTutorial: true }))
+  })
+  it('리더는 권한 필드 변경 가능 (공동리더 위임 등)', async () => {
+    await seedProject()
+    await assertSucceeds(updateDoc(doc(as('leader', 'l@x.com'), 'projects/p1'), { leaderId: 'm2' }))
+    await seedProject()
+    await assertSucceeds(updateDoc(doc(as('leader', 'l@x.com'), 'projects/p1'), { isPublic: true }))
+  })
+  it('비멤버 합류: 본인을 명단에 추가하는 update는 허용 (초대 수락·코드 참여 복구)', async () => {
+    await seedProject()
+    const joiner = as('newguy', 'n@x.com')
+    await assertSucceeds(updateDoc(doc(joiner, 'projects/p1'), {
+      memberIds: ['leader', 'm2', 'newguy'],
+      members: [{ id: 'leader', role: 'leader' }, { id: 'm2', role: 'member' }, { id: 'newguy', role: 'member' }],
+    }))
+  })
+  it('합류하면서 권한 필드를 같이 건드리면 차단', async () => {
+    await seedProject()
+    const joiner = as('newguy', 'n@x.com')
+    await assertFails(updateDoc(doc(joiner, 'projects/p1'), {
+      memberIds: ['leader', 'm2', 'newguy'], leaderId: 'newguy',
+    }))
+  })
+  it('생성은 본인이 리더여야 함 (타인 명의 프로젝트 생성 차단)', async () => {
+    const u = as('u1', 'u@x.com')
+    await assertSucceeds(setDoc(doc(u, 'projects/np1'), { memberIds: ['u1'], leaderId: 'u1', members: [{ id: 'u1', role: 'leader' }] }))
+    await assertFails(setDoc(doc(u, 'projects/np2'), { memberIds: ['u1'], leaderId: 'someone-else', members: [] }))
+  })
+  it('멤버 자가 탈퇴(memberIds에서 본인 제거)는 허용', async () => {
+    await seedProject()
+    await assertSucceeds(updateDoc(doc(as('m2', 'm@x.com'), 'projects/p1'), {
+      memberIds: ['leader'], members: [{ id: 'leader', role: 'leader' }],
+    }))
   })
 })
 
