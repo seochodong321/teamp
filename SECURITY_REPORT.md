@@ -26,14 +26,25 @@
 | C2 권한 상승(projects 필드 단위) | ✅ **배포 완료** | 규칙 배포 + 테스트. **부수 발견**: 프로젝트 합류(초대 수락·코드 참여)가 규칙 때문에 그동안 막혀 있던 버그도 함께 복구. |
 | H2 임의 푸시 피싱 | ✅ **배포 완료** | fromUserId 필수 + link 상대경로 강제(외부/`//` 링크 차단). |
 | M2/M3 Storage 접근 제어 | ✅ **배포 완료** | 커버=멤버만 쓰기, 채팅 파일=방 접근 자격자만. DM 파일 기밀성 확보. |
-| H1 플랜/결제 우회 | 🔧 진행 중 | rules+Cloud Function+클라 동시 배포 필요(코드 작업). |
-| M4 꽃다발 위조 | 🔧 진행 중 | 서버 집계 일원화 + ProfilePage 자가 기록 제거와 함께 처리. |
-| C1 전 사용자 PII 노출 | 🔧 진행 중 | users 민감필드 분리 — 클라 동시 배포 필요(가장 큰 작업). |
+| M4 꽃다발 위조 | ✅ **배포 완료** | flowerTagSummary·flowerSenderUids·flowerSenderCount 자가쓰기 차단(서버 함수 전용). ProfilePage 중복 캐싱 제거. (잔여: 랩업 feedbacks 간접 위조 — 후속) |
+| H1 플랜/결제 우회 | 🟦 **함수 배포·규칙 대기** | `verifyStudent`(onCall) 배포 + 클라 전환 완료. **클라 푸시 후** plan 자가쓰기 차단 규칙 배포 필요. |
+| C1 전 사용자 PII 노출 | 🔧 **설계 확정·실행 대기** | 민감필드(phone·fcmToken·blockedUsers)를 `users/{uid}/private/self`(본인만)로 이전. **로그인 흐름 변경 + 실유저 PII 운영 마이그레이션**이라 (1)클라 푸시 (2)마이그레이션 실행 필요 — 아래 [C1 실행 계획](#c1-실행-계획-phone-pii-이전) 참조. |
 | H3 레거시 방 fallback | ⏳ 보류 | 메타 백필 후 제거(과도기). Storage도 동일 fallback 한 쌍. |
 | M1 매치 지원자 PII | ⏳ 보류 | applicants 서브컬렉션 분리(다음 배치). |
 | M5/L1~L3 | ⏳ 보류 | 개선 권장. |
 
-> ✅ 배포된 항목은 `tests/rules.test.js`(26) + `tests/storage.rules.test.js`(5) 에뮬레이터 테스트로 검증 후 `teamp-7923c`에 배포했습니다.
+> ✅ 배포된 항목은 `tests/rules.test.js`(27) + `tests/storage.rules.test.js`(5) 에뮬레이터 테스트로 검증 후 `teamp-7923c`에 배포했습니다.
+
+### C1 실행 계획 (phone PII 이전)
+
+C1은 "전체 users 읽기 잠금"이 아니라 **민감필드만 본인전용 서브문서로 이전**하면 됩니다(email·birthday는 커넥트·생일 기능에 필요하므로 공개 유지). 가장 안전·저위험 설계:
+
+1. `users/{uid}/private/{doc}` 규칙 추가 — 읽기/쓰기 **본인만**(additive, 즉시 배포 가능).
+2. 클라 변경(푸시 시 반영): 로그인 시 5개 진입점(App.jsx onAuthStateChanged 정본 + LoginPage·SetupUsername·VerifyEmail)에서 서브문서도 읽어 `currentUser`에 병합(없으면 공개문서 fallback — 과도기 호환). ProfilePage 저장은 phone을 서브문서에 기록. **반드시 실제 로그인→프로필에 전화번호 표시 확인(run-teamp).**
+3. 마이그레이션 함수(어드민 전용 onCall): 공개문서의 phone·fcmToken·blockedUsers를 서브문서로 복사 후 공개문서에서 **삭제**. ← 실유저 데이터 변경(되돌리기 어려움)이라 COO 트리거.
+4. 순서: (2) 클라 푸시 → (3) 마이그레이션 실행 → 공개문서에서 PII 제거 완료.
+
+> 이 항목만 단독 완료가 불가(클라 푸시·운영 마이그레이션이 COO 환경 필요). "C1 진행해" 하시면 1·2·3을 구현·검증하고, 푸시·마이그레이션 시점을 함께 잡겠습니다.
 
 ---
 
