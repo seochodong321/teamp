@@ -28,7 +28,7 @@
 | M2/M3 Storage 접근 제어 | ✅ **배포 완료** | 커버=멤버만 쓰기, 채팅 파일=방 접근 자격자만. DM 파일 기밀성 확보. |
 | M4 꽃다발 위조 | ✅ **배포 완료** | flowerTagSummary·flowerSenderUids·flowerSenderCount 자가쓰기 차단(서버 함수 전용). ProfilePage 중복 캐싱 제거. (잔여: 랩업 feedbacks 간접 위조 — 후속) |
 | H1 플랜/결제 우회 | 🟦 **함수 배포·규칙 대기** | `verifyStudent`(onCall) 배포 + 클라 전환 완료. **클라 푸시 후** plan 자가쓰기 차단 규칙 배포 필요. |
-| C1 전 사용자 PII 노출 | 🔧 **설계 확정·실행 대기** | 민감필드(phone·fcmToken·blockedUsers)를 `users/{uid}/private/self`(본인만)로 이전. **로그인 흐름 변경 + 실유저 PII 운영 마이그레이션**이라 (1)클라 푸시 (2)마이그레이션 실행 필요 — 아래 [C1 실행 계획](#c1-실행-계획-phone-pii-이전) 참조. |
+| C1 전 사용자 PII 노출 | 🟦 **구현·함수배포 완료, 푸시+마이그레이션 대기** | phone·blockedUsers를 `users/{uid}/private/self`(본인만)로 이전. 클라/규칙/마이그레이션 함수 완료·배포. **남은 2단계**(COO): (1) `git push`로 클라 배포 → 프로필 전화번호 표시 확인 (2) 어드민>통계 **'PII 마이그레이션 실행'** 버튼 클릭 → 본문서에서 PII 제거(노출 종료). email·birthday는 기능상 공개 유지, fcmToken은 저영향 후속. |
 | H3 레거시 방 fallback | ⏳ 보류 | 메타 백필 후 제거(과도기). Storage도 동일 fallback 한 쌍. |
 | M1 매치 지원자 PII | ⏳ 보류 | applicants 서브컬렉션 분리(다음 배치). |
 | M5/L1~L3 | ⏳ 보류 | 개선 권장. |
