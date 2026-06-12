@@ -32,7 +32,9 @@ service cloud.firestore {
       allow update: if (
         request.auth != null &&
         request.auth.uid == userId &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']) &&
+        // isAdmin 자가승급 차단 + 꽃다발 집계는 서버 함수(aggregateFlowerFeedback)만 — 자가 위조 차단
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isAdmin', 'flowerTagSummary', 'flowerSenderUids', 'flowerSenderCount']) &&
         (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan']) ||
           request.resource.data.plan == 'student')
       )

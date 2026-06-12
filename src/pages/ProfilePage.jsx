@@ -52,13 +52,8 @@ export default function ProfilePage() {
       }))
       setFlowerSenders(senderIds.size)
       setFlowerTags(tagCounts)
-      // 팀프폴리오에서 읽을 수 있도록 유저 문서에 캐싱 (본인만 쓸 수 있는 필드)
-      try {
-        await updateDoc(doc(db, 'users', currentUser.id), {
-          flowerTagSummary: tagCounts,
-          flowerSenderCount: senderIds.size,
-        })
-      } catch {}
+      // 꽃다발 집계 캐싱(users.flowerTagSummary·flowerSenderUids)은 서버 함수 aggregateFlowerFeedback이
+      // 전담한다. 클라가 자기 문서에 직접 쓰면 위조가 가능해 규칙으로 차단됨 — 여기선 표시용 로컬 계산만.
     }
     fetchFlowers()
   }, [myProjects.map((p) => p.wrapupId).join(',')])

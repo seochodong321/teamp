@@ -32,6 +32,15 @@ describe('users — 자가 권한상승 차단', () => {
     await assertFails(updateDoc(doc(db, 'users/u1'), { plan: 'pro' }))
     await assertFails(updateDoc(doc(db, 'users/u1'), { plan: 'admin' }))
   })
+  it('꽃다발 집계는 자가 위조 불가 (서버 함수 전용 필드)', async () => {
+    await seed((db) => setDoc(doc(db, 'users/u1'), { name: 'A', plan: 'free' }))
+    const db = as('u1', 'a@x.com')
+    await assertFails(updateDoc(doc(db, 'users/u1'), { flowerTagSummary: { trust: 999 } }))
+    await assertFails(updateDoc(doc(db, 'users/u1'), { flowerSenderUids: ['x', 'y', 'z'] }))
+    await assertFails(updateDoc(doc(db, 'users/u1'), { flowerSenderCount: 999 }))
+    // 일반 프로필 필드는 여전히 OK
+    await assertSucceeds(updateDoc(doc(db, 'users/u1'), { oneliner: '안녕하세요' }))
+  })
 })
 
 describe('어드민 권한 부여 — 부트스트랩만', () => {
