@@ -43,6 +43,12 @@ service cloud.firestore {
       // 승급된 어드민은 다른 필드(banned·plan 등)는 수정하되 isAdmin은 못 건드림
       || (isAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin']));
       allow delete: if isAdmin();
+
+      // 본인전용 PII 서브문서 (phone·blockedUsers 등) — 본인만 read/write.
+      // 본문서(users/{uid})는 인증 유저 전체가 읽으므로 민감정보는 여기로 격리한다.
+      match /private/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // ──────────────────────────────────────────────

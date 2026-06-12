@@ -846,6 +846,25 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: PII 1회 마이그레이션 (C1) — 본문서 phone·blockedUsers → 본인전용 서브문서
+  const [migrating, setMigrating] = useState(false)
+  const handleMigratePii = () => {
+    ask('전체 유저의 전화번호·차단목록을 본인전용 영역으로 이전하고 공개 문서에서 삭제할까요?\n새 클라이언트 배포(푸시) 후 1회 실행하세요. 여러 번 눌러도 안전해요.', async () => {
+      setMigrating(true)
+      try {
+        const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'migratePiiToPrivate')
+        const res = await call()
+        window.alert(`완료 — ${res?.data?.moved ?? 0}명 이전 / ${res?.data?.scanned ?? 0}명 검사`)
+        logAdmin({ type: 'migrate-pii', targetName: `${res?.data?.moved ?? 0}명` })
+      } catch (e) {
+        console.error('[migratePiiToPrivate]', e)
+        showError(`마이그레이션 실패: ${e?.message || '알 수 없는 오류'}`)
+      } finally {
+        setMigrating(false)
+      }
+    })
+  }
+
   // ── 액션: 어드민 권한 부여/해제 (부트스트랩만 — 규칙도 동일하게 강제)
   const handleToggleAdmin = (uid, name, makeAdmin, onSuccess) => {
     ask(`"${name}" 님을 ${makeAdmin ? '어드민으로 승급할까요? 다른 유저를 관리할 수 있게 돼요.' : '어드민에서 해제할까요?'}`, async () => {
@@ -896,6 +915,17 @@ export default function AdminPage() {
         ))}
       </div>
 
+      {isBootstrap && activeTab === 'stats' && (
+        <div style={{ margin: '12px 0', padding: '12px', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--bg-secondary)' }}>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+            🔒 개인정보 격리(C1) — 전화번호·차단목록을 본인전용 영역으로 1회 이전. 클라이언트 배포 후 한 번 실행하세요.
+          </div>
+          <button onClick={handleMigratePii} disabled={migrating}
+            style={{ padding: '8px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: migrating ? 'default' : 'pointer' }}>
+            {migrating ? '이전 중…' : 'PII 마이그레이션 실행'}
+          </button>
+        </div>
+      )}
       {activeTab === 'stats'    && <StatsTab />}
       {activeTab === 'reports'  && (
         <ReportsTab

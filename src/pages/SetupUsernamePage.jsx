@@ -120,12 +120,13 @@ export default function SetupUsernamePage() {
         uid, name, email,
         username: finalUsername,
         affiliation: affiliation.trim(),
-        phone: '', bio: '',
+        bio: '',
         birthday,
         photoURL: user.photoURL || null,
         plan: 'free',
         createdAt: new Date().toISOString(),
       })
+      // 전화번호(phone)는 본문서에 두지 않음 — 프로필 편집 시 본인전용 서브문서에 저장
 
       login(name, email, uid, {
         username: finalUsername,

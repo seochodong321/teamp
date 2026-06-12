@@ -41,6 +41,14 @@ describe('users — 자가 권한상승 차단', () => {
     // 일반 프로필 필드는 여전히 OK
     await assertSucceeds(updateDoc(doc(db, 'users/u1'), { oneliner: '안녕하세요' }))
   })
+  it('PII 서브문서(private/self)는 본인만 read/write — 타인은 차단', async () => {
+    await seed((db) => setDoc(doc(db, 'users/u1/private/self'), { phone: '010-1234-5678' }))
+    await assertSucceeds(getDoc(doc(as('u1', 'a@x.com'), 'users/u1/private/self')))
+    await assertSucceeds(setDoc(doc(as('u1', 'a@x.com'), 'users/u1/private/self'), { phone: '010-0000-0000' }))
+    // 다른 유저는 남의 전화번호를 못 읽음 (본문서는 공개여도 PII는 격리)
+    await assertFails(getDoc(doc(as('u2', 'b@x.com'), 'users/u1/private/self')))
+    await assertFails(setDoc(doc(as('u2', 'b@x.com'), 'users/u1/private/self'), { phone: '침입' }))
+  })
 })
 
 describe('어드민 권한 부여 — 부트스트랩만', () => {

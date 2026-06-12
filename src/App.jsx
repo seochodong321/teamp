@@ -4,6 +4,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
+import { loadPrivateFields } from './store/helpers.js'
 import { BANNED_MESSAGE } from './constants.js'
 import Spinner from './components/Spinner.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
@@ -181,7 +182,7 @@ export default function App() {
         setReady(true)
 
         // 2. Firestore 프로필 백그라운드 로드 (UI 블로킹 없음)
-        getDoc(doc(db, 'users', user.uid)).then((snap) => {
+        getDoc(doc(db, 'users', user.uid)).then(async (snap) => {
           if (snap.exists()) {
             const d = snap.data()
             // 어드민이 정지(banned)한 계정 — 즉시 로그아웃해 접근 차단
@@ -191,7 +192,9 @@ export default function App() {
               window.alert(BANNED_MESSAGE)
               return
             }
-            login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, d)
+            // 민감 PII(phone·blockedUsers)는 본인전용 서브문서에서 병합 (없으면 본문서 값 — 마이그레이션 전 호환)
+            const priv = await loadPrivateFields(user.uid)
+            login(d.name || user.displayName || '사용자', d.email || user.email, user.uid, { ...d, ...priv })
             // username 없는 기존 이메일 계정은 강제 이동 안 함
           } else {
             // Firestore 문서 없음 = 소셜 로그인 신규 유저 (이메일 가입은 항상 문서 생성)

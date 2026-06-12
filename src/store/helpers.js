@@ -1,9 +1,31 @@
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
-import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc, query, where } from 'firebase/firestore'
+import { doc, getDoc, setDoc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc, query, where } from 'firebase/firestore'
 import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
+
+// ── 민감 개인정보(phone·blockedUsers)는 본인만 읽는 서브문서로 격리 ──────────
+// users/{uid} 본문서는 인증 유저 누구나 읽음(커넥트·생일 기능 때문에 공개 유지).
+// 전화번호 등 PII를 본문서에 두면 username→uid 열거로 전체 덤프가 가능 → 본문서에서
+// 분리해 users/{uid}/private/self 에 저장(규칙상 본인만 read/write).
+const privateSelfRef = (uid) => doc(db, 'users', uid, 'private', 'self')
+
+// 로그인 시 본인 PII 로드 (없으면 {} — 마이그레이션 전엔 본문서 값이 채움)
+export const loadPrivateFields = async (uid) => {
+  if (!uid) return {}
+  try {
+    const snap = await getDoc(privateSelfRef(uid))
+    return snap.exists() ? snap.data() : {}
+  } catch { return {} }
+}
+
+// 본인 PII 저장 (merge)
+export const savePrivateFields = async (uid, fields) => {
+  if (!uid) return
+  try { await setDoc(privateSelfRef(uid), fields, { merge: true }) }
+  catch (e) { console.error('[savePrivateFields] 실패:', e) }
+}
 
 // 닉네임 유니크 선점 — usernames/{이름}(문서ID=소문자 닉네임)로 원자적 차지.
 // Firestore가 문서 ID 유일성을 보장하므로 동시 신규 선점도 트랜잭션이 직렬화해 중복 불가.

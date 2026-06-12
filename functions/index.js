@@ -251,7 +251,8 @@ export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
   const mpSnap = await db.collection('matchPosts').where('leaderId', '==', uid).get()
   await Promise.all(mpSnap.docs.map((d) => d.ref.delete().catch(() => {})))
 
-  // 3) users 문서 삭제
+  // 3) users 문서 + 본인전용 PII 서브문서 삭제
+  await db.doc(`users/${uid}/private/self`).delete().catch(() => {})
   await db.collection('users').doc(uid).delete().catch(() => {})
 
   // 4) Firebase Auth 계정 삭제
@@ -259,4 +260,35 @@ export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
   try { await getAuth().deleteUser(uid) } catch { authDeleted = false }
 
   return { ok: true, authDeleted }
+})
+
+// ── 함수 F: PII 1회 마이그레이션 — 본문서의 phone·blockedUsers를 본인전용 서브문서로 이전 ──
+// C1: users 본문서는 인증 유저 전체가 읽으므로(username→uid 열거로 대량 덤프 가능) PII를 두면 안 됨.
+// 어드민이 1회 트리거: 서브문서(users/{uid}/private/self)로 복사 후 본문서에서 삭제.
+// ※ 클라이언트가 새 버전(서브문서 읽기)으로 배포된 뒤 실행할 것.
+export const migratePiiToPrivate = onCall({ region: REGION }, async (request) => {
+  if (!(await isCallerAdmin(request.auth))) {
+    throw new HttpsError('permission-denied', '관리자만 사용할 수 있어요.')
+  }
+  let scanned = 0, moved = 0, last = null
+  while (true) {
+    let q = db.collection('users').orderBy('__name__').limit(300)
+    if (last) q = q.startAfter(last)
+    const snap = await q.get()
+    if (snap.empty) break
+    for (const d of snap.docs) {
+      scanned++
+      const data = d.data()
+      const priv = {}, clear = {}
+      if (data.phone !== undefined)        { priv.phone = data.phone;               clear.phone = FieldValue.delete() }
+      if (data.blockedUsers !== undefined) { priv.blockedUsers = data.blockedUsers; clear.blockedUsers = FieldValue.delete() }
+      if (!Object.keys(priv).length) continue
+      await db.doc(`users/${d.id}/private/self`).set(priv, { merge: true })
+      await d.ref.update(clear)
+      moved++
+    }
+    last = snap.docs[snap.docs.length - 1]
+    if (snap.size < 300) break
+  }
+  return { ok: true, scanned, moved }
 })

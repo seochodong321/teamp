@@ -5,7 +5,7 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch }
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { claimUsername, releaseUsername, USERNAME_RE } from '../store/helpers.js'
+import { claimUsername, releaseUsername, savePrivateFields, USERNAME_RE } from '../store/helpers.js'
 import { resizeImage } from '../utils/image.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import NotificationSettings from '../components/NotificationSettings.jsx'
@@ -269,10 +269,11 @@ export default function ProfilePage() {
           name: editName.trim(),
           username: newUsername,
           affiliation: editAffiliation.trim(),
-          phone: editPhone.trim(),
           oneliner: editOneliner.trim(),
           birthday: newBirthday,
         })
+        // 전화번호는 본인전용 서브문서에 저장(본문서는 전체 공개 읽기라 PII 격리)
+        await savePrivateFields(currentUser.id, { phone: editPhone.trim() })
         // 참여 중인 프로젝트의 members 배열 동기화 (이름·소속 스냅샷 갱신)
         const nameChanged = editName.trim() !== (currentUser.name || '')
         const affiliationChanged = editAffiliation.trim() !== (currentUser.affiliation || '')

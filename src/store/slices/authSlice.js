@@ -1,7 +1,7 @@
-import { arrayRemove, arrayUnion, doc, updateDoc, writeBatch } from 'firebase/firestore'
+import { doc, updateDoc, writeBatch } from 'firebase/firestore'
 import { deleteUser } from 'firebase/auth'
 import { db, auth } from '../../firebase.js'
-import { deleteProjectDeep } from '../helpers.js'
+import { deleteProjectDeep, savePrivateFields } from '../helpers.js'
 
 export const createAuthSlice = (set, get) => ({
   isLoggedIn: false,
@@ -92,21 +92,19 @@ export const createAuthSlice = (set, get) => ({
     }
   },
 
+  // 차단 목록은 본인전용 서브문서에 저장(본문서는 전체 공개 읽기라 격리).
+  // 전체 배열을 써서 마이그레이션 전(본문서 값)에도 누락 없이 일관 유지.
   blockUser: async (targetId) => {
     const { currentUser } = get()
     if (!targetId || get().blockedUsers.includes(targetId)) return
     set((s) => ({ blockedUsers: [...s.blockedUsers, targetId] }))
-    if (currentUser?.id) {
-      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: arrayUnion(targetId) })
-    }
+    if (currentUser?.id) await savePrivateFields(currentUser.id, { blockedUsers: get().blockedUsers })
   },
 
   unblockUser: async (targetId) => {
     const { currentUser } = get()
     set((s) => ({ blockedUsers: s.blockedUsers.filter((id) => id !== targetId) }))
-    if (currentUser?.id) {
-      await updateDoc(doc(db, 'users', currentUser.id), { blockedUsers: arrayRemove(targetId) })
-    }
+    if (currentUser?.id) await savePrivateFields(currentUser.id, { blockedUsers: get().blockedUsers })
   },
 
   removeConnect: (userId) =>
@@ -162,7 +160,8 @@ export const createAuthSlice = (set, get) => ({
       }
     }
 
-    // 유저 문서 삭제
+    // 유저 문서 + 본인전용 PII 서브문서 삭제 (서브컬렉션은 부모 삭제로 안 지워짐)
+    batch.delete(doc(db, 'users', uid, 'private', 'self'))
     batch.delete(doc(db, 'users', uid))
     await batch.commit()
 
