@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { getWeekKey } from '../store/helpers.js'
+import { getWeekKey, todayStr } from '../store/helpers.js'
 import { getCoverStyle, COVER_PRESETS } from '../constants.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import CalendarInline from '../components/CalendarInline.jsx'
@@ -84,7 +84,7 @@ export default function ProjectPage() {
   const phaseBar     = getPhaseBar(project)
   const expired      = isExpired(project.endDate)
   const visibleRooms = getVisibleRooms(project, currentUser.id)
-  const today        = new Date().toISOString().split('T')[0]
+  const today        = todayStr()
   const inviteLink   = `${import.meta.env.VITE_APP_URL || window.location.origin}/join/${project.inviteCode || project.id}`
 
   const TABS = [

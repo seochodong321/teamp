@@ -1,7 +1,7 @@
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import { doc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc, query, where } from 'firebase/firestore'
 import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
-import { db, storage } from '../firebase.js'
+import { auth, db, storage } from '../firebase.js'
 
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
@@ -60,13 +60,15 @@ export const deleteProjectDeep = async (project) => {
       const listing = await listAll(storageRef(storage, `chat/${room.id}`))
       await Promise.all(listing.items.map((it) => deleteObject(it).catch(() => {})))
     } catch { /* 파일 없음/권한 등은 무시 */ }
+    // 3) 방 메타(rooms/{id}) 삭제 — 메시지 접근 검증용 문서. 프로젝트 문서보다 먼저(규칙이 멤버십 확인)
+    try { await deleteDoc(doc(db, 'rooms', room.id)) } catch { /* 메타 없는 레거시 방 */ }
   }
-  // 3) 이 프로젝트로 올린 팀프매치 모집글 정리 — 안 지우면 죽은 프로젝트에 지원이 몰림
+  // 4) 이 프로젝트로 올린 팀프매치 모집글 정리 — 안 지우면 죽은 프로젝트에 지원이 몰림
   try {
     const posts = await getDocs(query(collection(db, 'matchPosts'), where('projectId', '==', project.id)))
     await Promise.all(posts.docs.map((d) => deleteDoc(d.ref).catch(() => {})))
   } catch (e) { console.error('[deleteProjectDeep] 모집글 정리 실패:', e) }
-  // 4) 프로젝트 문서 삭제
+  // 5) 프로젝트 문서 삭제
   await deleteDoc(doc(db, 'projects', project.id))
 }
 
@@ -77,6 +79,8 @@ export const notifyUser = async (targetUserId, { type, text, link, projectId } =
   try {
     await addDoc(collection(db, 'notifications'), {
       targetUserId, type, text,
+      // 발신자 본인 검증용 — 규칙이 위조(타인 사칭 알림·스팸 푸시)를 거부
+      fromUserId: auth.currentUser?.uid || '',
       ...(link ? { link } : {}),
       ...(projectId ? { projectId } : {}),
       read: false, createdAt: serverTimestamp(),
@@ -111,13 +115,17 @@ export const ROOM_COLORS = [
   { color: '#854F0B', colorBg: '#FAEEDA' },
 ]
 
-export const todayStr = () => new Date().toISOString().split('T')[0]
+// 로컬(기기 시간대) 기준 YYYY-MM-DD — toISOString()은 UTC라 KST 자정~9시에 하루 어긋난다
+export const localDateStr = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+export const todayStr = () => localDateStr()
 
 // 이번 주 월요일 키 (YYYY-MM-DD) — 주간 목표 식별용
 export const getWeekKey = (base = new Date()) => {
   const monday = new Date(base)
   monday.setDate(base.getDate() - ((base.getDay() + 6) % 7))
-  return monday.toISOString().split('T')[0]
+  return localDateStr(monday)
 }
 
 export const txProject = async (projectId, updater) => {
@@ -151,7 +159,7 @@ export const makeTutorialProject = (myId, myName, myUsername) => {
     name: '📖 Teamp 사용방법',
     purpose: 'Teamp의 주요 기능을 직접 체험해보세요!',
     category: '튜토리얼',
-    startDate: today, endDate: new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10), status: 'active',
+    startDate: today, endDate: localDateStr(new Date(Date.now() + 14 * 86400000)), status: 'active',
     leaderId: myId, isTutorial: true,
     inviteCode: `tutorial_${myId}`,
     memberIds: [myId],

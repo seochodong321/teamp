@@ -81,6 +81,7 @@ async function checkBirthdays(projects, myUid) {
 
           addDoc(collection(db, 'notifications'), {
             targetUserId: myUid, type: 'birthday',
+            fromUserId: myUid, // 발신자 본인 검증 (보안 규칙)
             text: `🎉 ${myData.name} 님, 생일을 진심으로 축하해요! 함께한 팀원들 모두 오늘 하루 응원하고 있어요 🎂`,
             projectId: project.id,
             projectName: project.name,
@@ -137,6 +138,7 @@ async function checkBirthdays(projects, myUid) {
       // 생일 당사자에게 따뜻한 개인 알림
       addDoc(collection(db, 'notifications'), {
         targetUserId: member.id, type: 'birthday',
+        fromUserId: myUid, // 발신자 본인 검증 (보안 규칙)
         text: `🎉 ${member.name} 님, 생일을 진심으로 축하해요! 함께한 팀원들 모두 오늘 하루 응원하고 있어요 🎂`,
         projectId: project.id,
         projectName: project.name,

@@ -760,6 +760,7 @@ export default function AdminPage() {
       await Promise.all(memberIds.map((uid) =>
         addDoc(collection(db, 'notifications'), {
           targetUserId: uid, type: 'admin', read: false,
+          fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
           text: `🛡️ 관리자에 의해 "${name}" 프로젝트가 삭제되었습니다.`,
           link: '/help', createdAt: serverTimestamp(),
         })
@@ -779,6 +780,7 @@ export default function AdminPage() {
       if (leaderId) {
         await addDoc(collection(db, 'notifications'), {
           targetUserId: leaderId, type: 'admin', read: false,
+          fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
           text: `🛡️ 관리자에 의해 "${title}" 모집글이 삭제되었습니다.`,
           link: '/help', createdAt: serverTimestamp(),
         })
@@ -807,6 +809,7 @@ export default function AdminPage() {
       if (leaderId) {
         await addDoc(collection(db, 'notifications'), {
           targetUserId: leaderId, type: 'admin', read: false,
+          fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
           text: `🛡️ 관리자에 의해 "${title}" 모집글이 마감 처리되었습니다.`,
           link: '/help', createdAt: serverTimestamp(),
         })

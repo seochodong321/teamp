@@ -5,6 +5,7 @@ import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
 import { relativeTime } from '../utils/dateUtils.js'
+import { localDateStr, todayStr } from '../store/helpers.js'
 import CreateProjectModal from '../components/CreateProjectModal.jsx'
 import styles from './HomePage.module.css'
 
@@ -64,8 +65,8 @@ export default function HomePage() {
 
   const todaySummary = useMemo(() => {
     const myId = currentUser?.id
-    const t  = new Date().toISOString().split('T')[0]
-    const tm = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+    const t  = todayStr()
+    const tm = localDateStr(new Date(Date.now() + 86400000))
     const items = []
     for (const p of active) {
       const base = { pName: p.name, pEmoji: p.emoji, pId: p.id }

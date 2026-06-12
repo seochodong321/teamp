@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.{js,jsx}'],
+    // 한국 유저 기준 시간대 — UTC 러너(CI)에서도 KST 자정 경계 버그를 잡기 위함
+    env: { TZ: 'Asia/Seoul' },
   },
 })

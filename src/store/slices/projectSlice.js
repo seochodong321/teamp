@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore'
 import { differenceInDays, parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, todayStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, todayStr, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -42,7 +42,7 @@ export const createProjectSlice = (set, get) => ({
                 affiliation: m.affiliation || '',
                 email: m.email || '',
                 projectName: fp.name,
-                connectedAt: new Date().toISOString().split('T')[0],
+                connectedAt: localDateStr(),
               })
             }
           })
@@ -68,6 +68,13 @@ export const createProjectSlice = (set, get) => ({
       })
     })
     await batch.commit()
+    // 방 메타(rooms/{id}) — 메시지 보안 규칙용. 프로젝트 문서 커밋 후 별도 배치
+    // (같은 배치면 규칙의 멤버십 확인이 아직 없는 프로젝트 문서를 읽어 거부됨)
+    const tutMetaBatch = writeBatch(db)
+    proj.rooms.forEach((room) => tutMetaBatch.set(doc(db, 'rooms', room.id), {
+      projectId: proj.id, ...(room.ownerId ? { ownerId: room.ownerId } : {}),
+    }))
+    await tutMetaBatch.commit().catch(() => {})
     get().addNotification({
       type: 'welcome',
       title: '🎉 Teamp에 오신 걸 환영해요!',
@@ -154,7 +161,7 @@ export const createProjectSlice = (set, get) => ({
     const pStart = data.projectStartDate || data.startDate || ''
     const pEnd   = data.projectEndDate   || data.endDate   || ''
     const postEnd = data.postEndDate || (pEnd ? (() => {
-      const d = new Date(pEnd + 'T00:00:00'); d.setDate(d.getDate() + 14); return d.toISOString().split('T')[0]
+      const d = new Date(pEnd + 'T00:00:00'); d.setDate(d.getDate() + 14); return localDateStr(d)
     })() : '')
     const project = {
       id: projectId, inviteCode: projectId,
@@ -178,6 +185,13 @@ export const createProjectSlice = (set, get) => ({
       isPublic: false,
     }
     await setDoc(doc(db, 'projects', projectId), project)
+    // 방 메타(rooms/{id}) — 메시지 보안 규칙이 projectId로 멤버십을 검증.
+    // 프로젝트 문서 생성 후에 써야 규칙의 멤버십 확인이 통과한다.
+    const metaBatch = writeBatch(db)
+    rooms.forEach((r) => metaBatch.set(doc(db, 'rooms', r.id), {
+      projectId, ...(r.ownerId ? { ownerId: r.ownerId } : {}),
+    }))
+    await metaBatch.commit().catch(() => {})
     return project
   },
 
@@ -198,6 +212,8 @@ export const createProjectSlice = (set, get) => ({
           ? { ...m, roomIds: [...m.roomIds, newRoom.id] } : m
       ),
     }))
+    // 방 메타 — 메시지 보안 규칙용
+    await setDoc(doc(db, 'rooms', newRoom.id), { projectId }).catch(() => {})
     return newRoom
   },
 

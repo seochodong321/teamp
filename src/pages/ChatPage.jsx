@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onSnapshot, orderBy, query, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { localDateStr, todayStr } from '../store/helpers.js'
 import styles from './ChatPage.module.css'
 
 const USER_COLORS = [
@@ -20,18 +21,18 @@ function avatarStyle(userId) {
 }
 
 function getMsgDate(msg) {
-  if (!msg.createdAt) return new Date().toISOString().split('T')[0]
+  if (!msg.createdAt) return todayStr()
   try {
     const d = msg.createdAt.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt)
-    return d.toISOString().split('T')[0]
+    return localDateStr(d)
   } catch {
-    return new Date().toISOString().split('T')[0]
+    return todayStr()
   }
 }
 
 function formatDateLabel(dateStr) {
-  const today     = new Date().toISOString().split('T')[0]
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const today     = todayStr()
+  const yesterday = localDateStr(new Date(Date.now() - 86400000))
   if (dateStr === today) return '오늘'
   if (dateStr === yesterday) return '어제'
   const [, m, d] = dateStr.split('-')
@@ -154,6 +155,27 @@ export default function ChatPage() {
       reset()
     }
   }, [])
+
+  // ─── 방 메타(rooms/{id}) 보장 — 레거시 방 자가 치유 ─────────────
+  // 메시지 보안 규칙이 이 문서의 projectId로 멤버십을 검증한다.
+  // 예전에 만든 방엔 메타가 없으므로, 멤버가 방에 들어올 때 한 번 만들어 준다.
+  const isProjectRoom = !!project?.rooms?.find((r) => r.id === roomId)
+  useEffect(() => {
+    if (!isProjectRoom || !projectId) return
+    const roomDef = project.rooms.find((r) => r.id === roomId)
+    ;(async () => {
+      try {
+        const ref = doc(db, 'rooms', roomId)
+        const snap = await getDoc(ref)
+        if (!snap.exists()) {
+          await setDoc(ref, {
+            projectId,
+            ...(roomDef?.ownerId ? { ownerId: roomDef.ownerId } : {}),
+          })
+        }
+      } catch { /* 권한/오프라인 — 규칙의 레거시 fallback으로 동작 */ }
+    })()
+  }, [roomId, projectId, isProjectRoom])
 
   // ─── Firestore 메시지 실시간 구독 ─────────────────────────────
   useEffect(() => {

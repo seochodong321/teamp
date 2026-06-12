@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion,
+  collection, doc, addDoc, getDocs, updateDoc, runTransaction, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { txProject, getWeekKey, notifyUser } from '../helpers.js'
@@ -197,17 +197,9 @@ export const createWrapupSlice = (set, get) => ({
         createdAt: new Date().toISOString(),
       })
       tx.update(ref, { feedbacks })
-
-      // flowerTagSummary 실시간 동기화 — 추가/제거된 태그만 increment
-      const newTagIds = new Set((feedbackData.tags || []).map((t) => t.id))
-      const oldTagIds = new Set((oldFeedback?.tags || []).map((t) => t.id))
-      const tagUpdates = {}
-      newTagIds.forEach((id) => { if (!oldTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(1) })
-      oldTagIds.forEach((id) => { if (!newTagIds.has(id)) tagUpdates[`flowerTagSummary.${id}`] = increment(-1) })
-      tx.update(doc(db, 'users', feedbackData.toUserId), {
-        ...tagUpdates,
-        flowerSenderUids: arrayUnion(feedbackData.fromUserId),
-      })
+      // ⚠️ 받는 사람 users 문서(flowerTagSummary) 캐싱은 여기서 하지 않는다 —
+      // 규칙상 타인 users 쓰기는 어드민만 가능해 트랜잭션 전체가 거부됨(피드백 유실).
+      // 집계는 Cloud Function(aggregateFlowerFeedback)이 wrapups 변경을 보고 수행.
     })
 
     // 새 피드백일 때만 받는 사람에게 알림 (수정 시 재알림 방지, 본인 제외, 익명 존중)

@@ -68,6 +68,78 @@ describe('reports / adminLogs — 어드민만', () => {
   })
 })
 
+describe('rooms 메시지 — 방 접근 자격 검증', () => {
+  const seedDmAndProject = () => seed(async (db) => {
+    // DM: a·b 참가
+    await setDoc(doc(db, 'dmRooms/dm1'), { participants: ['a', 'b'] })
+    // 프로젝트 p1 (멤버 a·b) + 방 메타 r1 + 나와의채팅 self1(주인 a)
+    await setDoc(doc(db, 'projects/p1'), { memberIds: ['a', 'b'], leaderId: 'a' })
+    await setDoc(doc(db, 'rooms/r1'), { projectId: 'p1' })
+    await setDoc(doc(db, 'rooms/self1'), { projectId: 'p1', ownerId: 'a' })
+    // 기존 메시지 (읽기 검증용)
+    await setDoc(doc(db, 'rooms/dm1/messages/m1'), { senderId: 'a', text: 'hi' })
+    await setDoc(doc(db, 'rooms/r1/messages/m1'), { senderId: 'a', text: 'hello' })
+    await setDoc(doc(db, 'rooms/self1/messages/m1'), { senderId: 'a', text: 'memo' })
+  })
+
+  it('DM: 참가자는 읽기/쓰기 OK, 제3자는 차단 (결정론적 ID여도 안전)', async () => {
+    await seedDmAndProject()
+    const a = as('a', 'a@x.com'), c = as('c', 'c@x.com')
+    await assertSucceeds(getDoc(doc(a, 'rooms/dm1/messages/m1')))
+    await assertSucceeds(setDoc(doc(a, 'rooms/dm1/messages/m2'), { senderId: 'a', text: 'yo' }))
+    await assertFails(getDoc(doc(c, 'rooms/dm1/messages/m1')))
+    await assertFails(setDoc(doc(c, 'rooms/dm1/messages/mx'), { senderId: 'c', text: '침입' }))
+  })
+  it('프로젝트 방: 멤버 OK, 비멤버 차단', async () => {
+    await seedDmAndProject()
+    const b = as('b', 'b@x.com'), c = as('c', 'c@x.com')
+    await assertSucceeds(getDoc(doc(b, 'rooms/r1/messages/m1')))
+    await assertSucceeds(setDoc(doc(b, 'rooms/r1/messages/m2'), { senderId: 'b', text: 'ok' }))
+    await assertFails(getDoc(doc(c, 'rooms/r1/messages/m1')))
+  })
+  it('나와의 채팅: 같은 프로젝트 멤버여도 주인 외 차단', async () => {
+    await seedDmAndProject()
+    await assertSucceeds(getDoc(doc(as('a', 'a@x.com'), 'rooms/self1/messages/m1')))
+    await assertFails(getDoc(doc(as('b', 'b@x.com'), 'rooms/self1/messages/m1')))
+  })
+  it('발신자 위조 차단 — senderId는 본인 또는 시스템/봇만', async () => {
+    await seedDmAndProject()
+    const b = as('b', 'b@x.com')
+    await assertFails(setDoc(doc(b, 'rooms/r1/messages/spoof'), { senderId: 'a', text: '사칭' }))
+    await assertSucceeds(setDoc(doc(b, 'rooms/r1/messages/sys'), { senderId: 'system', text: '안내' }))
+  })
+  it('레거시 방(메타 없음): 인증 유저 허용 — 임시 fallback 문서화', async () => {
+    const u = as('u1', 'u@x.com')
+    await assertSucceeds(setDoc(doc(u, 'rooms/legacy_room/messages/m1'), { senderId: 'u1', text: 'ok' }))
+  })
+
+  it('방 메타: 멤버만 생성 가능, 비멤버 차단', async () => {
+    await seed((db) => setDoc(doc(db, 'projects/p2'), { memberIds: ['a'], leaderId: 'a' }))
+    await assertSucceeds(setDoc(doc(as('a', 'a@x.com'), 'rooms/newroom'), { projectId: 'p2' }))
+    await assertFails(setDoc(doc(as('c', 'c@x.com'), 'rooms/newroom2'), { projectId: 'p2' }))
+  })
+})
+
+describe('notifications — 발신자 검증 (스팸 푸시 차단)', () => {
+  it('fromUserId=본인 OK / 타인 사칭 차단 / 구버전(필드 없음)은 임시 허용', async () => {
+    const u = as('u1', 'u@x.com')
+    await assertSucceeds(setDoc(doc(u, 'notifications/n1'), { targetUserId: 'other', fromUserId: 'u1', text: 'hi', read: false }))
+    await assertFails(setDoc(doc(u, 'notifications/n2'), { targetUserId: 'other', fromUserId: 'someone-else', text: '사칭', read: false }))
+    await assertSucceeds(setDoc(doc(u, 'notifications/n3'), { targetUserId: 'other', text: '구버전 클라', read: false }))
+  })
+})
+
+describe('wrapups — 피드백 원문은 멤버만', () => {
+  it('멤버 읽기 OK / 비멤버 차단 / 어드민 OK', async () => {
+    await seed((db) => setDoc(doc(db, 'wrapups/w1'), {
+      memberIds: ['a', 'b'], leaderId: 'a', feedbacks: [{ fromUserId: 'a', toUserId: 'b', comment: '고마웠어' }],
+    }))
+    await assertSucceeds(getDoc(doc(as('a', 'a@x.com'), 'wrapups/w1')))
+    await assertFails(getDoc(doc(as('c', 'c@x.com'), 'wrapups/w1')))
+    await assertSucceeds(getDoc(doc(as('boot', BOOTSTRAP), 'wrapups/w1')))
+  })
+})
+
 describe('usernames — 닉네임 유일성 선점', () => {
   it('본인 uid로 선점 OK / 이미 있으면 덮어쓰기 불가 / 남의 것 삭제 불가', async () => {
     await assertSucceeds(setDoc(doc(as('userA', 'a@x.com'), 'usernames/minsu'), { uid: 'userA' }))

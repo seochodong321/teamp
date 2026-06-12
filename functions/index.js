@@ -9,10 +9,10 @@
  *
  * 배포: firebase deploy --only functions  (Blaze 요금제 필요)
  */
-import { onDocumentCreated } from 'firebase-functions/v2/firestore'
+import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { initializeApp } from 'firebase-admin/app'
-import { getFirestore } from 'firebase-admin/firestore'
+import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getMessaging } from 'firebase-admin/messaging'
 import { getAuth } from 'firebase-admin/auth'
 import { getStorage } from 'firebase-admin/storage'
@@ -119,6 +119,55 @@ export const pushOnChatMessage = onDocumentCreated(
   }
 )
 
+// ── 함수 D: 랩업 피드백 → 받는 사람 users 문서에 꽃다발 집계 캐싱 ──────
+// 클라는 타인 users 문서를 못 쓰므로(보안 규칙) 집계는 서버가 한다.
+// before/after의 feedbacks를 (from→to) 키로 diff해 태그 increment 델타만 적용.
+export const aggregateFlowerFeedback = onDocumentWritten(
+  { document: 'wrapups/{wrapupId}', region: REGION },
+  async (event) => {
+    const after = event.data?.after
+    if (!after?.exists) return // 랩업 삭제 — 기록 보존 철학상 이미 받은 꽃은 회수하지 않음
+    const beforeFb = event.data.before?.data()?.feedbacks || []
+    const afterFb  = after.data().feedbacks || []
+    if (!beforeFb.length && !afterFb.length) return
+
+    const key  = (f) => `${f.fromUserId}→${f.toUserId}`
+    const prev = new Map(beforeFb.map((f) => [key(f), f]))
+    const next = new Map(afterFb.map((f) => [key(f), f]))
+
+    const deltas = new Map() // toUserId → { tags: Map(tagId→±n), senders: Set }
+    const bucket = (uid) => {
+      if (!deltas.has(uid)) deltas.set(uid, { tags: new Map(), senders: new Set() })
+      return deltas.get(uid)
+    }
+    next.forEach((f, k) => {
+      const old = prev.get(k)
+      const b = bucket(f.toUserId)
+      const oldTags = new Set((old?.tags || []).map((t) => t.id))
+      const newTags = new Set((f.tags || []).map((t) => t.id))
+      newTags.forEach((id) => { if (!oldTags.has(id)) b.tags.set(id, (b.tags.get(id) || 0) + 1) })
+      oldTags.forEach((id) => { if (!newTags.has(id)) b.tags.set(id, (b.tags.get(id) || 0) - 1) })
+      if (!old) b.senders.add(f.fromUserId)
+    })
+    prev.forEach((f, k) => { // 삭제된 피드백 — 태그 회수
+      if (next.has(k)) return
+      const b = bucket(f.toUserId)
+      ;(f.tags || []).forEach((t) => b.tags.set(t.id, (b.tags.get(t.id) || 0) - 1))
+    })
+
+    const writes = []
+    deltas.forEach(({ tags, senders }, toUserId) => {
+      const upd = {}
+      tags.forEach((d, id) => { if (d !== 0) upd[`flowerTagSummary.${id}`] = FieldValue.increment(d) })
+      if (senders.size) upd.flowerSenderUids = FieldValue.arrayUnion(...senders)
+      if (Object.keys(upd).length) {
+        writes.push(db.doc(`users/${toUserId}`).update(upd).catch(() => {})) // 탈퇴 등으로 문서 없으면 무시
+      }
+    })
+    await Promise.all(writes)
+  }
+)
+
 // 컬렉션 청크 삭제 (배치 500 한도 대비)
 async function deleteCollection(colRef, batchSize = 400) {
   while (true) {
@@ -162,6 +211,8 @@ export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
         await deleteCollection(db.collection('rooms').doc(room.id).collection('messages'))
         // 방에 올린 Storage 파일 정리 (클라 deleteProjectDeep과 동일) — best-effort
         try { await getStorage().bucket(STORAGE_BUCKET).deleteFiles({ prefix: `chat/${room.id}/` }) } catch { /* 없거나 권한 — 무시 */ }
+        // 방 메타(rooms/{id}) 정리 — 메시지 접근 검증용 문서
+        await db.doc(`rooms/${room.id}`).delete().catch(() => {})
       }
       await pd.ref.delete()
     } else {

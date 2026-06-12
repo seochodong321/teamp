@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest'
 // firebase.js 모듈 초기화를 막아 순수 함수만 테스트 (db/storage는 이 테스트에서 안 씀)
 vi.mock('../firebase.js', () => ({ db: {}, storage: {}, auth: {}, messaging: null }))
 
-import { USERNAME_RE, formatUnread, calcProgress, getWeekKey } from './helpers.js'
+import { USERNAME_RE, formatUnread, calcProgress, getWeekKey, todayStr, localDateStr } from './helpers.js'
 
 const daysFromNow = (d) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10)
 
@@ -50,10 +50,27 @@ describe('calcProgress — 진행률 경계', () => {
 
 describe('getWeekKey — 같은 주의 어떤 요일이든 같은 월요일 키', () => {
   it('월~일이 동일한 주 키를 반환', () => {
-    // 2026-06-08(월) ~ 06-14(일) 모두 같은 키여야 함 (정오 기준 — 타임존 경계 회피)
     const keys = ['08', '09', '10', '11', '12', '13', '14']
       .map((d) => getWeekKey(new Date(`2026-06-${d}T12:00:00`)))
     expect(new Set(keys).size).toBe(1)
     expect(keys[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+  it('KST 자정 직후·자정 직전도 같은 주 키 (UTC 변환 오차 없음)', () => {
+    // 과거 toISOString() 구현은 TZ=Asia/Seoul에서 월요일 00:30 → 전주 일요일로 빠졌음
+    expect(getWeekKey(new Date('2026-06-08T00:30:00'))).toBe('2026-06-08')
+    expect(getWeekKey(new Date('2026-06-14T23:50:00'))).toBe('2026-06-08')
+  })
+})
+
+describe('todayStr / localDateStr — 로컬(KST) 기준 날짜', () => {
+  it('KST 자정 직후에도 "오늘"이 어제로 밀리지 않음', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-12T00:30:00')) // TZ=Asia/Seoul (vitest.config)
+    expect(todayStr()).toBe('2026-06-12')
+    vi.useRealTimers()
+  })
+  it('localDateStr — 임의 Date를 로컬 YYYY-MM-DD로', () => {
+    expect(localDateStr(new Date('2026-01-05T08:00:00'))).toBe('2026-01-05')
+    expect(localDateStr(new Date('2026-12-31T23:59:00'))).toBe('2026-12-31')
   })
 })

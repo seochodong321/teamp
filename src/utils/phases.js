@@ -1,3 +1,5 @@
+import { localDateStr, todayStr } from '../store/helpers.js'
+
 const MS_DAY = 86400000
 
 const toDate = (s) => new Date(s + 'T00:00:00')
@@ -9,7 +11,7 @@ function todayMidnight() {
 function addDays(dateStr, n) {
   const d = toDate(dateStr)
   d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
+  return localDateStr(d)
 }
 
 function daysBetween(fromStr, toStr) {
@@ -76,7 +78,7 @@ export function getPhaseBar(p) {
   const { start, end, postEnd } = pDates(p)
   if (!start || !end) return null
 
-  const todayS = new Date().toISOString().split('T')[0]
+  const todayS = todayStr()
 
   // pre-phase일 땐 오늘을 기준점으로 삼아야 프리 구간이 올바르게 표시됨
   // 이미 시작한 경우엔 start가 기준점 (pre 구간 = 0)

@@ -28,6 +28,7 @@ export const createTaskSlice = (set, get) => ({
         project.members.filter((m) => m.id !== currentUser.id).forEach((m) => {
           batch.set(doc(collection(db, 'notifications')), {
             targetUserId: m.id, type: 'announcement',
+            fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
             text: `📢 새 공지: ${title}`,
             link: `/project/${projectId}?tab=board`,
             read: false, createdAt: serverTimestamp(),
@@ -81,6 +82,7 @@ export const createTaskSlice = (set, get) => ({
         await addDoc(collection(db, 'notifications'), {
           targetUserId,
           type: 'todo',
+          fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
           text: `"${title}" 할 일이 배정됐어요`,
           projectId,
           projectName: project?.name || '',
@@ -240,6 +242,7 @@ export const createTaskSlice = (set, get) => ({
         ;(project?.members || []).filter((m) => m.id !== currentUser.id).forEach((m) => {
           batch.set(doc(collection(db, 'notifications')), {
             targetUserId: m.id, type: 'milestone',
+            fromUserId: currentUser.id, // 발신자 본인 검증 (보안 규칙)
             text: `🏁 마일스톤 달성: ${title}`,
             link: `/project/${projectId}?tab=milestone`,
             read: false, createdAt: serverTimestamp(),

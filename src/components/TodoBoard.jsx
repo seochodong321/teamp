@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore.js'
+import { todayStr } from '../store/helpers.js'
 import styles from './TodoBoard.module.css'
 
 const COLUMNS = [
@@ -52,7 +53,7 @@ export default function TodoBoard({ project, currentUser }) {
   const [editDueDate, setEditDueDate]   = useState('')
   const [editPriority, setEditPriority] = useState('medium')
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayStr()
 
   const toggleAssignee = (id) =>
     setAssignees((prev) => prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id])

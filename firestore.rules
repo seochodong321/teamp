@@ -76,12 +76,54 @@ service cloud.firestore {
     }
 
     // ──────────────────────────────────────────────
-    // rooms/{roomId}/messages
-    //   방 ID는 UUID이므로 추측 불가.
-    //   읽기/쓰기: 인증된 유저 (멤버십은 프로젝트 규칙이 보장)
+    // 방 접근 검증 헬퍼 — 메시지는 "그 방을 볼 자격이 있는 사람"만.
+    //   DM: dmRooms/{roomId}.participants
+    //   프로젝트 방: rooms/{roomId} 메타의 projectId → 프로젝트 memberIds
+    //   나와의 채팅: 메타에 ownerId 있으면 그 본인만
+    //   레거시 fallback: 메타가 아직 없는 옛 방(점진 생성 중) — ⚠️ 전 클라이언트 배포 후 제거
     // ──────────────────────────────────────────────
-    match /rooms/{roomId}/messages/{messageId} {
-      allow read, write: if request.auth != null;
+    function isDmParticipant(roomId) {
+      return exists(/databases/$(database)/documents/dmRooms/$(roomId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/dmRooms/$(roomId)).data.participants;
+    }
+    function isRoomMember(roomId) {
+      return exists(/databases/$(database)/documents/rooms/$(roomId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/projects/$(get(/databases/$(database)/documents/rooms/$(roomId)).data.projectId)).data.memberIds &&
+        (!('ownerId' in get(/databases/$(database)/documents/rooms/$(roomId)).data) ||
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.ownerId == request.auth.uid);
+    }
+    function isLegacyRoom(roomId) {
+      return !exists(/databases/$(database)/documents/dmRooms/$(roomId)) &&
+        !exists(/databases/$(database)/documents/rooms/$(roomId));
+    }
+    function canAccessRoom(roomId) {
+      return isDmParticipant(roomId) || isRoomMember(roomId) || isLegacyRoom(roomId) || isAdmin();
+    }
+
+    // ──────────────────────────────────────────────
+    // rooms/{roomId} — 방 메타 (projectId 필수, ownerId는 나와의채팅 전용)
+    //   생성: 그 프로젝트 멤버만. 수정 없음(불변). 삭제: 프로젝트 정리 시 멤버/어드민.
+    // ──────────────────────────────────────────────
+    match /rooms/{roomId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasAll(['projectId']) &&
+        request.resource.data.keys().hasOnly(['projectId', 'ownerId']) &&
+        request.auth.uid in get(/databases/$(database)/documents/projects/$(request.resource.data.projectId)).data.memberIds;
+      allow delete: if isAdmin() || (request.auth != null && (
+        // 프로젝트가 이미 지워진 고아 메타는 정리 허용, 살아있으면 멤버만
+        !exists(/databases/$(database)/documents/projects/$(resource.data.projectId)) ||
+        request.auth.uid in get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.memberIds
+      ));
+
+      // ── 메시지 — 방 접근 자격자만. 생성 시 발신자 위조 차단(시스템·봇 제외)
+      match /messages/{messageId} {
+        allow read: if request.auth != null && canAccessRoom(roomId);
+        allow create: if request.auth != null && canAccessRoom(roomId) &&
+          (request.resource.data.senderId == request.auth.uid ||
+            request.resource.data.senderId in ['system', 'teamp_bot', 'teampbot']);
+        allow update, delete: if request.auth != null && canAccessRoom(roomId);
+      }
     }
 
     // ──────────────────────────────────────────────
@@ -105,12 +147,15 @@ service cloud.firestore {
     // ──────────────────────────────────────────────
     // notifications
     //   읽기/삭제: 수신자만
-    //   생성: 인증된 모든 유저 (앱 내 이벤트가 생성)
+    //   생성: 발신자 본인 검증(fromUserId == 본인) — 사칭 알림·스팸 푸시 차단
+    //   ⚠️ fromUserId 없는 생성은 구버전 클라이언트 호환용 임시 허용 — 전 클라 배포 후 필수로 강화
     // ──────────────────────────────────────────────
     match /notifications/{notiId} {
       allow read, delete: if request.auth != null &&
         request.auth.uid == resource.data.targetUserId;
-      allow create: if request.auth != null;
+      allow create: if request.auth != null &&
+        (!request.resource.data.keys().hasAny(['fromUserId']) ||
+          request.resource.data.fromUserId == request.auth.uid);
       allow update: if request.auth != null &&
         request.auth.uid == resource.data.targetUserId;
     }
@@ -166,12 +211,13 @@ service cloud.firestore {
 
     // ──────────────────────────────────────────────
     // wrapups
-    //   읽기: 인증된 모든 유저 (공개 프로필에서 꽃다발 태그 조회)
-    //   생성: 인증된 유저 (프로젝트 리더가 종료 시 생성)
-    //   수정: 인증된 유저 (회고 작성, 피드백 추가)
+    //   읽기: 그 랩업의 멤버만(+어드민) — 피드백 원문은 팀 내부 기록.
+    //         공개 프로필 꽃다발은 users.flowerTagSummary 캐시로 충분(서버 함수가 집계).
+    //   생성: 프로젝트 리더 / 수정: 멤버 (회고·피드백)
     // ──────────────────────────────────────────────
     match /wrapups/{wrapupId} {
-      allow read: if request.auth != null;
+      allow read: if isAdmin() || (request.auth != null &&
+        request.auth.uid in resource.data.memberIds);
       allow create: if request.auth != null &&
         request.resource.data.leaderId == request.auth.uid;
       allow update: if request.auth != null &&

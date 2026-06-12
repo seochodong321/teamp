@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, FREE_PROJECT_LIMIT, countOwnedProjects } from '../store/useStore.js'
 import ProfileSelector from './ProfileSelector.jsx'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
+import { todayStr } from '../store/helpers.js'
 import styles from './CreateProjectModal.module.css'
 
 const PHASE_INFO = {
@@ -13,7 +14,7 @@ const PHASE_INFO = {
 
 function PhasePreview({ start, end }) {
   if (!start) return null
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayStr()
   const phase = today < start ? 'pre' : (!end || today <= end) ? 'project' : 'post'
   const info  = PHASE_INFO[phase]
   const proj  = { projectStartDate: start, projectEndDate: end }
