@@ -25,3 +25,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </React.StrictMode>,
 )
+
+// 에러 모니터링 — 프로덕션에서만, 첫 렌더를 막지 않게 비동기 로드(별도 청크)
+if (import.meta.env.PROD) {
+  import('./sentry.js').catch(() => {})
+}
