@@ -16,6 +16,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm test
 
   # Firestore 보안 규칙 테스트 — 에뮬레이터 필요 (firebase-tools는 Java 21+ 요구)

@@ -725,6 +725,7 @@ export default function AdminPage() {
   const { currentUser, showError } = useStore()
   const [activeTab, setActiveTab] = useState('stats')
   const [pendingReports, setPendingReports] = useState(0)
+  const [migrating, setMigrating] = useState(false) // PII 마이그레이션(C1) 진행중 — 훅은 최상단
   const { ask, dialog } = useAdminConfirm()
 
   const isBootstrap = ADMIN_EMAILS.includes(currentUser?.email)  // 루트 — 승급/강등 권한
@@ -847,7 +848,6 @@ export default function AdminPage() {
   }
 
   // ── 액션: PII 1회 마이그레이션 (C1) — 본문서 phone·blockedUsers → 본인전용 서브문서
-  const [migrating, setMigrating] = useState(false)
   const handleMigratePii = () => {
     ask('전체 유저의 전화번호·차단목록을 본인전용 영역으로 이전하고 공개 문서에서 삭제할까요?\n새 클라이언트 배포(푸시) 후 1회 실행하세요. 여러 번 눌러도 안전해요.', async () => {
       setMigrating(true)
