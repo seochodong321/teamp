@@ -300,8 +300,7 @@ export default function WrapupPage() {
             {wrapup && (
               wrapup.highlights?.busiestDay ||
               wrapup.highlights?.latestNightActivity ||
-              wrapup.highlights?.activityTrend ||
-              topKeywords.length > 0
+              wrapup.highlights?.activityTrend
             ) && (
               <div className={styles.insightSection}>
                 <h3 className={styles.sectionTitle}>이번 프로젝트 돌아보기</h3>
