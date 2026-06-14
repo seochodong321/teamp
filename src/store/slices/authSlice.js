@@ -1,7 +1,7 @@
 import { doc, updateDoc, writeBatch } from 'firebase/firestore'
 import { deleteUser } from 'firebase/auth'
 import { db, auth } from '../../firebase.js'
-import { deleteProjectDeep, savePrivateFields } from '../helpers.js'
+import { deleteProjectDeep, savePrivateFields, todayStr } from '../helpers.js'
 
 export const createAuthSlice = (set, get) => ({
   isLoggedIn: false,
@@ -57,7 +57,7 @@ export const createAuthSlice = (set, get) => ({
     const updated = [...profiles, newProfile]
     set({ profiles: updated })
     if (currentUser?.id) {
-      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch (e) { console.error('[subProfile] 저장 실패:', e) }
     }
     return newProfile
   },
@@ -67,7 +67,7 @@ export const createAuthSlice = (set, get) => ({
     const updated = profiles.map((p) => p.id === id ? { ...p, ...patch } : p)
     set({ profiles: updated })
     if (currentUser?.id) {
-      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch (e) { console.error('[subProfile] 저장 실패:', e) }
     }
   },
 
@@ -76,7 +76,7 @@ export const createAuthSlice = (set, get) => ({
     const updated = profiles.filter((p) => p.id !== id)
     set({ profiles: updated })
     if (currentUser?.id) {
-      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch {}
+      try { await updateDoc(doc(db, 'users', currentUser.id), { profiles: updated }) } catch (e) { console.error('[subProfile] 저장 실패:', e) }
     }
   },
 
@@ -117,7 +117,7 @@ export const createAuthSlice = (set, get) => ({
     const existingIds = new Set(connects.map((c) => c.id))
     const newConnects = project.members
       .filter((m) => m.id !== currentUser.id && !existingIds.has(m.id))
-      .map((m) => ({ id: m.id, name: m.name, affiliation: m.affiliation || '', email: m.email || '', projectName: project.name, connectedAt: new Date().toISOString().split('T')[0] }))
+      .map((m) => ({ id: m.id, name: m.name, affiliation: m.affiliation || '', email: m.email || '', projectName: project.name, connectedAt: todayStr() }))
     if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
   },
 

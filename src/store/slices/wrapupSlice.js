@@ -10,7 +10,7 @@ export const createWrapupSlice = (set, get) => ({
   },
 
   endProject: async (projectId, { collectFeedback, feedbackDuration }) => {
-    const { projects, currentUser } = get()
+    const { projects } = get()
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
 

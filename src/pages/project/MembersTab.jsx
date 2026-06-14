@@ -3,15 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { doc, getDoc, getDocFromServer, collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { useStore } from '../../store/useStore.js'
+import { ROLE_LABEL as BASE_ROLE_LABEL } from '../../constants.js'
 import styles from '../ProjectPage.module.css'
 
 export default function MembersTab({ project, currentUser, isLeader, canInvite, connects, blockedUsers, inviteLink }) {
   const leaderCount = project.members.filter((m) => m.role === 'leader').length
-  const ROLE_LABEL = {
-    leader: leaderCount > 1 ? '🌟 공동리더' : '👑 리더',
-    'sub-leader': '⭐ 부리더',
-    member: '팀원',
-  }
+  // 공동리더(리더 2명+)일 때만 leader 라벨 동적 — 나머지는 공유 상수 재사용
+  const ROLE_LABEL = { ...BASE_ROLE_LABEL, ...(leaderCount > 1 ? { leader: '🌟 공동리더' } : {}) }
   const navigate = useNavigate()
   const { sendProjectInvite, getOrCreateDmRoom, leaveOrDeleteProject } = useStore()
 

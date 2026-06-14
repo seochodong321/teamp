@@ -75,7 +75,7 @@ export function getDDayLabel(p) {
 // 3분할 진행률 바 데이터
 // null = 날짜 정보 부족 (폴백: 단순 진행률 바)
 export function getPhaseBar(p) {
-  const { start, end, postEnd } = pDates(p)
+  const { start, end } = pDates(p)
   if (!start || !end) return null
 
   const todayS = todayStr()

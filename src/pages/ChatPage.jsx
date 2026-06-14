@@ -4,6 +4,7 @@ import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onS
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { localDateStr, todayStr } from '../store/helpers.js'
+import { ROLE_EMOJI } from '../constants.js'
 import styles from './ChatPage.module.css'
 
 const USER_COLORS = [
@@ -49,8 +50,6 @@ function linkify(text) {
       : part
   )
 }
-
-const ROLE_LABEL = { leader: '👑', 'sub-leader': '⭐', member: '' }
 
 function calcPollPcts(options, total) {
   if (total === 0) return options.map(() => 0)
@@ -469,8 +468,8 @@ export default function ChatPage() {
                         <span className={styles.memberName}>{m.name}</span>
                         {m.affiliation && <span className={styles.memberAffil}>{m.affiliation}</span>}
                       </div>
-                      {ROLE_LABEL[m.role] && (
-                        <span className={styles.memberRole}>{ROLE_LABEL[m.role]}</span>
+                      {ROLE_EMOJI[m.role] && (
+                        <span className={styles.memberRole}>{ROLE_EMOJI[m.role]}</span>
                       )}
                     </div>
                   )
@@ -566,7 +565,7 @@ export default function ChatPage() {
           const nameEl = (!isMine && !isDm && !isGrouped && !isSystem) ? (
             <span className={styles.sender}>
               <span style={{ color: avStyle.text, fontWeight: 700 }}>{senderName}</span>
-              {member && ROLE_LABEL[member.role] && <span className={styles.roleTag}>{ROLE_LABEL[member.role]}</span>}
+              {member && ROLE_EMOJI[member.role] && <span className={styles.roleTag}>{ROLE_EMOJI[member.role]}</span>}
             </span>
           ) : null
 

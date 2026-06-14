@@ -3,7 +3,7 @@ import { collection, getDocs, addDoc, updateDoc, doc, getDoc, orderBy, query, wh
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { notifyUser } from '../store/helpers.js'
+import { notifyUser, todayStr } from '../store/helpers.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './MatchPage.module.css'
@@ -85,7 +85,7 @@ export default function MatchPage() {
     setLoading(true)
     try {
       const snap    = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
-      const today   = new Date().toISOString().split('T')[0]
+      const today   = todayStr()
       const blocked = useStore.getState().blockedUsers || []
       const uid     = useStore.getState().currentUser?.id
       const validOpen   = []
@@ -597,7 +597,7 @@ export default function MatchPage() {
                 <label className={styles.formLabel}>모집 기한 *</label>
                 <input className={styles.formInput} type="date"
                   value={formDeadline}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={todayStr()}
                   onChange={(e) => setFormDeadline(e.target.value)} />
               </div>
               <div className={styles.formField}>

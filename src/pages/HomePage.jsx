@@ -123,7 +123,7 @@ export default function HomePage() {
   const [extendId, setExtendId]             = useState(null)
   const [newEndDate, setNewEndDate]         = useState('')
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = todayStr()
 
   const setPinned = (id) => { setPinnedId(id || null); setShowPinPicker(false) }
 
@@ -397,7 +397,6 @@ export default function HomePage() {
           const expired   = isExpired(p.endDate)
           const isLeader = p.leaderId === myId
           const buzz     = hasBuzz(p)
-          const todayStr = new Date().toISOString().split('T')[0]
 
           const activeRoom = p.rooms?.find((r) => r.name === '전체' && !r.isDm)
             || p.rooms?.find((r) => !r.isDm && r.lastMessage)
@@ -418,7 +417,7 @@ export default function HomePage() {
           })
           const todayTodoCount = pendingTodos.length
 
-          const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0]
+          const tomorrow = localDateStr(new Date(Date.now() + 86400000))
           const tomorrowEvent = p.events?.find((e) => e.date === tomorrow)
           const hasPreview = lastMsg || todayTodoCount > 0 || tomorrowEvent
 

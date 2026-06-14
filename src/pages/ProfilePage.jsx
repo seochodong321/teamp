@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, getDoc, updateDoc, query, collection, where, getDocs, writeBatch } from 'firebase/firestore'
+import { doc, updateDoc, query, collection, where, getDocs, writeBatch } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -20,8 +20,10 @@ export default function ProfilePage() {
   )
 
   // 나의 여정 통계
-  const [flowerSenders, setFlowerSenders] = useState(0)
-  const [flowerTags, setFlowerTags] = useState({})
+  // 꽃다발 집계는 서버 함수(aggregateFlowerFeedback)가 users 문서에 유지하는 값을 읽는다.
+  // (예전엔 아카이브 wrapup 전부를 getDoc해 재계산 → N+1 + PublicProfile과 불일치. 이제 캐시로 일원화.)
+  const flowerTags    = currentUser?.flowerTagSummary || {}
+  const flowerSenders = currentUser?.flowerSenderUids?.length ?? currentUser?.flowerSenderCount ?? 0
   const [photoUploading, setPhotoUploading] = useState(false)
   const photoFileRef = useRef(null)
   const usernameDebounceRef = useRef(null)
@@ -29,34 +31,6 @@ export default function ProfilePage() {
   const completedProjects = useMemo(() => myProjects.filter((p) => p.status === 'archived' && !p.isTutorial).length, [myProjects])
   const doneTodos = useMemo(() => myProjects.flatMap((p) => p.todos || []).filter((t) => t.status === 'done').length, [myProjects])
   const leaderProjects = useMemo(() => myProjects.filter((p) => !p.isTutorial && p.members.find((m) => m.id === currentUser.id)?.role === 'leader').length, [myProjects, currentUser.id])
-
-  useEffect(() => {
-    const fetchFlowers = async () => {
-      const archivedWithWrapup = myProjects.filter((p) => p.status === 'archived' && p.wrapupId && !p.isTutorial)
-      const senderIds = new Set()
-      const tagCounts = {}
-      await Promise.all(archivedWithWrapup.map(async (p) => {
-        try {
-          const snap = await getDoc(doc(db, 'wrapups', p.wrapupId))
-          if (snap.exists()) {
-            const data = snap.data()
-            const myFeedbacks = (data.feedbacks || []).filter((f) => f.toUserId === currentUser?.id)
-            myFeedbacks.forEach((f) => {
-              senderIds.add(f.fromUserId)
-              ;(f.tags || []).forEach((tag) => {
-                tagCounts[tag.id] = (tagCounts[tag.id] || 0) + 1
-              })
-            })
-          }
-        } catch {}
-      }))
-      setFlowerSenders(senderIds.size)
-      setFlowerTags(tagCounts)
-      // 꽃다발 집계 캐싱(users.flowerTagSummary·flowerSenderUids)은 서버 함수 aggregateFlowerFeedback이
-      // 전담한다. 클라가 자기 문서에 직접 쓰면 위조가 가능해 규칙으로 차단됨 — 여기선 표시용 로컬 계산만.
-    }
-    fetchFlowers()
-  }, [myProjects.map((p) => p.wrapupId).join(',')])
 
   // 편집 모달 상태
   const [showEditModal, setShowEditModal] = useState(false)

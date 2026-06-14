@@ -1,4 +1,4 @@
-import { differenceInDays, parseISO, isAfter } from 'date-fns'
+import { differenceInDays, parseISO } from 'date-fns'
 import { doc, getDoc, setDoc, runTransaction, collection, addDoc, serverTimestamp, getDocs, writeBatch, deleteDoc, query, where } from 'firebase/firestore'
 import { ref as storageRef, listAll, deleteObject } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'

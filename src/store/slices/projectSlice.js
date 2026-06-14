@@ -1,10 +1,10 @@
 import {
-  collection, doc, addDoc, setDoc, getDoc, updateDoc,
+  collection, doc, addDoc, setDoc, updateDoc,
   arrayUnion, arrayRemove, writeBatch, serverTimestamp,
 } from 'firebase/firestore'
-import { differenceInDays, parseISO, isAfter } from 'date-fns'
+import { parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, todayStr, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -15,7 +15,7 @@ export const createProjectSlice = (set, get) => ({
   pinnedId: null,
 
   setProjects: (firestoreProjects) => {
-    const { projects: local, currentUser, connects } = get()
+    const { projects: local, currentUser } = get()
     const merged = firestoreProjects.map(fp => {
       const lp = local.find(p => p.id === fp.id)
       if (!lp) return fp
