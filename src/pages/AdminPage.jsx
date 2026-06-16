@@ -865,6 +865,24 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: 방 권한 1회 마이그레이션 (Task A) — leaderIds + 개별방 memberIds 백필
+  const handleMigrateRooms = () => {
+    ask('기존 프로젝트에 방별 접근권한(leaderIds·개별방 memberIds)을 채울까요?\n새 클라이언트 배포 후 1회 실행. 여러 번 눌러도 안전해요.', async () => {
+      setMigrating(true)
+      try {
+        const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'migrateRoomAccess')
+        const res = await call()
+        window.alert(`완료 — 프로젝트 ${res?.data?.projects ?? 0} / 개별방 ${res?.data?.rooms ?? 0}`)
+        logAdmin({ type: 'migrate-rooms', targetName: `${res?.data?.projects ?? 0}개 프로젝트` })
+      } catch (e) {
+        console.error('[migrateRoomAccess]', e)
+        showError(`마이그레이션 실패: ${e?.message || '알 수 없는 오류'}`)
+      } finally {
+        setMigrating(false)
+      }
+    })
+  }
+
   // ── 액션: 어드민 권한 부여/해제 (부트스트랩만 — 규칙도 동일하게 강제)
   const handleToggleAdmin = (uid, name, makeAdmin, onSuccess) => {
     ask(`"${name}" 님을 ${makeAdmin ? '어드민으로 승급할까요? 다른 유저를 관리할 수 있게 돼요.' : '어드민에서 해제할까요?'}`, async () => {
@@ -923,6 +941,13 @@ export default function AdminPage() {
           <button onClick={handleMigratePii} disabled={migrating}
             style={{ padding: '8px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: migrating ? 'default' : 'pointer' }}>
             {migrating ? '이전 중…' : 'PII 마이그레이션 실행'}
+          </button>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '12px 0 8px' }}>
+            🚪 방 권한(Task A) — 기존 프로젝트에 방별 접근권한 백필. 클라이언트 배포 후 한 번 실행하세요.
+          </div>
+          <button onClick={handleMigrateRooms} disabled={migrating}
+            style={{ padding: '8px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: migrating ? 'default' : 'pointer' }}>
+            {migrating ? '이전 중…' : '방 권한 마이그레이션 실행'}
           </button>
         </div>
       )}

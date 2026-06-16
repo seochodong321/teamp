@@ -1,10 +1,10 @@
 import {
-  collection, doc, addDoc, setDoc, updateDoc,
-  arrayUnion, arrayRemove, writeBatch, serverTimestamp,
+  collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
+  arrayUnion, arrayRemove, writeBatch, serverTimestamp, query, where, getDocs,
 } from 'firebase/firestore'
 import { parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser, computeLeaderIds, isIndividualRoom } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -57,6 +57,7 @@ export const createProjectSlice = (set, get) => ({
     const { currentUser } = get()
     const myUsername = currentUser?.username || null
     const proj = makeTutorialProject(userId, userName, myUsername)
+    proj.leaderIds = computeLeaderIds(proj.members) // 방 권한 규칙용
     const msgs = makeTutorialMessages(userId)
     const batch = writeBatch(db)
     batch.set(doc(db, 'projects', proj.id), proj)
@@ -72,7 +73,9 @@ export const createProjectSlice = (set, get) => ({
     // (같은 배치면 규칙의 멤버십 확인이 아직 없는 프로젝트 문서를 읽어 거부됨)
     const tutMetaBatch = writeBatch(db)
     proj.rooms.forEach((room) => tutMetaBatch.set(doc(db, 'rooms', room.id), {
-      projectId: proj.id, ...(room.ownerId ? { ownerId: room.ownerId } : {}),
+      projectId: proj.id,
+      ...(room.ownerId ? { ownerId: room.ownerId } : {}),
+      ...(isIndividualRoom(room) ? { memberIds: [] } : {}),
     }))
     await tutMetaBatch.commit().catch(() => {})
     get().addNotification({
@@ -170,6 +173,7 @@ export const createProjectSlice = (set, get) => ({
       projectStartDate: pStart, projectEndDate: pEnd, postEndDate: postEnd,
       status: 'active', leaderId: currentUser.id,
       memberIds: [currentUser.id],
+      leaderIds: [currentUser.id], // 방 권한 규칙용 — 리더 전원(생성 시 본인)
       members: [{
         id: currentUser.id, name: currentUser.name, role: 'leader',
         roomIds: rooms.map((r) => r.id), memo: '',
@@ -182,16 +186,29 @@ export const createProjectSlice = (set, get) => ({
         ...(pStart ? [{ id: `evt_start_${projectId}`, title: `${data.emoji || '📁'} ${data.name} 시작`, date: pStart, type: 'event', isSystem: true }] : []),
         ...(pEnd   ? [{ id: `evt_end_${projectId}`,   title: `${data.emoji || '📁'} ${data.name} 마감`, date: pEnd,   type: 'event', isSystem: true }] : []),
       ],
-      isPublic: false,
+      isPublic: !!data.isPublic, // 생성 시 공개/비공개 선택 (기본 비공개)
     }
     await setDoc(doc(db, 'projects', projectId), project)
     // 방 메타(rooms/{id}) — 메시지 보안 규칙이 projectId로 멤버십을 검증.
     // 프로젝트 문서 생성 후에 써야 규칙의 멤버십 확인이 통과한다.
     const metaBatch = writeBatch(db)
     rooms.forEach((r) => metaBatch.set(doc(db, 'rooms', r.id), {
-      projectId, ...(r.ownerId ? { ownerId: r.ownerId } : {}),
+      projectId,
+      ...(r.ownerId ? { ownerId: r.ownerId } : {}),
+      ...(isIndividualRoom(r) ? { memberIds: [] } : {}), // 개별방 — 리더만(leaderIds), 부여 전 멤버 0
     }))
     await metaBatch.commit().catch(() => {})
+    // 공개 프로젝트 = 매치에 자동 등록(최소 정보, 나중에 매치에서 수정). 비공개는 등록 안 함.
+    if (data.isPublic) {
+      await addDoc(collection(db, 'matchPosts'), {
+        projectId, projectName: project.name, projectEmoji: project.emoji, projectCategory: project.category,
+        leaderId: currentUser.id, leaderName: currentUser.name, leaderUsername: currentUser.username || '',
+        title: `${project.name} 팀원 모집`,
+        description: project.purpose || '',
+        skills: [], deadline: pEnd || '', visibility: 'public', keywords: [],
+        applicants: [], status: 'open', autoCreated: true, createdAt: serverTimestamp(),
+      }).catch((e) => console.error('[createProject] 매치 자동등록 실패:', e))
+    }
     return project
   },
 
@@ -212,28 +229,49 @@ export const createProjectSlice = (set, get) => ({
           ? { ...m, roomIds: [...m.roomIds, newRoom.id] } : m
       ),
     }))
-    // 방 메타 — 메시지 보안 규칙용
-    await setDoc(doc(db, 'rooms', newRoom.id), { projectId }).catch(() => {})
+    // 방 메타 — 메시지 보안 규칙용. 개별방이라 memberIds:[](리더만 접근, 부여 전 멤버 0)
+    await setDoc(doc(db, 'rooms', newRoom.id), { projectId, memberIds: [] }).catch(() => {})
     return newRoom
   },
 
   updateMemberRole: async (projectId, memberId, role) => {
-    await txProject(projectId, (data) => ({
-      members: data.members.map((m) => {
+    const isLeaderRole = role === 'leader' || role === 'sub-leader'
+    await txProject(projectId, (data) => {
+      const allRoomId = data.rooms.find((r) => r.name === '전체' && !r.isDm)?.id
+      const dmId      = data.rooms.find((r) => r.isDm && r.ownerId === memberId)?.id
+      const members = data.members.map((m) => {
         if (m.id !== memberId) return m
-        const roomIds = (role === 'leader' || role === 'sub-leader') ? data.rooms.map((r) => r.id) : m.roomIds
+        // 승격=전 방 / 강등=전체+본인DM만 (개별방 권한 회수)
+        const roomIds = isLeaderRole ? data.rooms.map((r) => r.id) : [allRoomId, dmId].filter(Boolean)
         return { ...m, role, roomIds }
-      }),
-    }))
+      })
+      return { members, leaderIds: computeLeaderIds(members) }
+    })
+    // 강등이면 개별방 memberIds에서도 제거 (승격은 leaderIds로 접근하므로 방 메타 수정 불필요)
+    if (!isLeaderRole) {
+      const project = get().projects.find((p) => p.id === projectId)
+      await Promise.all((project?.rooms || []).filter(isIndividualRoom).map((r) =>
+        updateDoc(doc(db, 'rooms', r.id), { memberIds: arrayRemove(memberId) }).catch(() => {})
+      ))
+    }
   },
 
   setMemberRooms: async (projectId, memberId, roomIds) => {
     await txProject(projectId, (data) => ({
       members: data.members.map((m) => m.id !== memberId ? m : { ...m, roomIds }),
     }))
+    // 개별방 메타 memberIds 동기 — 부여된 방엔 추가, 아니면 제거 (서버 권한 강제)
+    const project = get().projects.find((p) => p.id === projectId)
+    await Promise.all((project?.rooms || []).filter(isIndividualRoom).map((r) =>
+      updateDoc(doc(db, 'rooms', r.id), {
+        memberIds: roomIds.includes(r.id) ? arrayUnion(memberId) : arrayRemove(memberId),
+      }).catch(() => {})
+    ))
   },
 
   toggleMemberRoom: async (projectId, memberId, roomId) => {
+    const project = get().projects.find((p) => p.id === projectId)
+    const granted = !(project?.members?.find((m) => m.id === memberId)?.roomIds || []).includes(roomId)
     await txProject(projectId, (data) => ({
       members: data.members.map((m) => {
         if (m.id !== memberId) return m
@@ -241,6 +279,12 @@ export const createProjectSlice = (set, get) => ({
         return { ...m, roomIds: has ? m.roomIds.filter((r) => r !== roomId) : [...m.roomIds, roomId] }
       }),
     }))
+    const room = project?.rooms?.find((r) => r.id === roomId)
+    if (room && isIndividualRoom(room)) {
+      await updateDoc(doc(db, 'rooms', roomId), {
+        memberIds: granted ? arrayUnion(memberId) : arrayRemove(memberId),
+      }).catch(() => {})
+    }
   },
 
   addCoLeader: async (projectId, memberId) => {
@@ -249,13 +293,14 @@ export const createProjectSlice = (set, get) => ({
     if (!project) return
     const myRole = project.members.find((m) => m.id === currentUser.id)?.role
     if (myRole !== 'leader') return
-    await txProject(projectId, (data) => ({
-      members: data.members.map((m) =>
+    await txProject(projectId, (data) => {
+      const members = data.members.map((m) =>
         m.id === memberId
           ? { ...m, role: 'leader', roomIds: data.rooms.map((r) => r.id) }
           : m
-      ),
-    }))
+      )
+      return { members, leaderIds: computeLeaderIds(members) }
+    })
   },
 
   updateMemberMemo: async (projectId, memberId, memo) => {
@@ -296,6 +341,7 @@ export const createProjectSlice = (set, get) => ({
       } else {
         await updateDoc(doc(db, 'projects', projectId), {
           memberIds: arrayRemove(currentUser.id),
+          leaderIds: arrayRemove(currentUser.id), // 리더가 나가면 방 권한 목록에서도 제거
           members: arrayRemove(me),
           // 함께한 기록 보존 — 나가도 formerMembers에 남겨 랩업·명단에 유지
           formerMembers: arrayUnion({ id: me.id, name: me.name, role: me.role, affiliation: me.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'left' }),
@@ -339,7 +385,26 @@ export const createProjectSlice = (set, get) => ({
   },
 
   togglePublic: async (projectId) => {
+    const { currentUser } = get()
+    const project = get().projects.find((p) => p.id === projectId)
+    if (!project) return
+    const willBePublic = !project.isPublic
     await txProject(projectId, (data) => ({ isPublic: !data.isPublic }))
+    // 매치 동기 — 공개로 가면 자동등록(없을 때만), 비공개로 가면 매치글 제거(노출 차단)
+    try {
+      const snap = await getDocs(query(collection(db, 'matchPosts'), where('projectId', '==', projectId)))
+      if (willBePublic && snap.empty) {
+        await addDoc(collection(db, 'matchPosts'), {
+          projectId, projectName: project.name, projectEmoji: project.emoji, projectCategory: project.category,
+          leaderId: currentUser.id, leaderName: currentUser.name, leaderUsername: currentUser.username || '',
+          title: `${project.name} 팀원 모집`, description: project.purpose || '',
+          skills: [], deadline: project.endDate || '', visibility: 'public', keywords: [],
+          applicants: [], status: 'open', autoCreated: true, createdAt: serverTimestamp(),
+        })
+      } else if (!willBePublic) {
+        await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)))
+      }
+    } catch (e) { console.error('[togglePublic] 매치 동기 실패:', e) }
   },
 
   kickMember: async (projectId, memberId) => {
@@ -352,9 +417,11 @@ export const createProjectSlice = (set, get) => ({
       // 함께한 기록 보존 — members에서 빼되 formerMembers에 남겨 랩업·명단에 유지
       const former = (data.formerMembers || []).filter((m) => m.id !== memberId)
       former.push({ id: leaving.id, name: leaving.name, role: leaving.role, affiliation: leaving.affiliation || '', leftAt: new Date().toISOString(), leftReason: 'removed' })
+      const members = data.members.filter((m) => m.id !== memberId)
       return {
-        members: data.members.filter((m) => m.id !== memberId),
+        members,
         memberIds: (data.memberIds || []).filter((id) => id !== memberId),
+        leaderIds: computeLeaderIds(members),
         formerMembers: former,
       }
     })

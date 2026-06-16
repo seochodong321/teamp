@@ -292,3 +292,35 @@ export const migratePiiToPrivate = onCall({ region: REGION }, async (request) =>
   }
   return { ok: true, scanned, moved }
 })
+
+// ── 함수 G: 방 권한 1회 마이그레이션 — 기존 프로젝트에 leaderIds + 개별방 memberIds 백필 ──
+// Task A: 규칙이 방별 권한(개별방=리더 또는 허용멤버)을 강제하려면 projects.leaderIds와
+// 개별방 메타의 memberIds가 필요. 클라 배포 후 어드민이 1회 트리거.
+export const migrateRoomAccess = onCall({ region: REGION }, async (request) => {
+  if (!(await isCallerAdmin(request.auth))) {
+    throw new HttpsError('permission-denied', '관리자만 사용할 수 있어요.')
+  }
+  let projects = 0, rooms = 0, last = null
+  while (true) {
+    let q = db.collection('projects').orderBy('__name__').limit(200)
+    if (last) q = q.startAfter(last)
+    const snap = await q.get()
+    if (snap.empty) break
+    for (const pd of snap.docs) {
+      const p = pd.data()
+      const members = p.members || []
+      const leaderIds = members.filter((m) => m.role === 'leader' || m.role === 'sub-leader').map((m) => m.id)
+      await pd.ref.update({ leaderIds }).catch(() => {})
+      projects++
+      for (const room of (p.rooms || [])) {
+        if (room.isDm || room.name === '전체') continue // 개별방만
+        const memberIds = members.filter((m) => (m.roomIds || []).includes(room.id)).map((m) => m.id)
+        await db.doc(`rooms/${room.id}`).set({ projectId: pd.id, memberIds }, { merge: true }).catch(() => {})
+        rooms++
+      }
+    }
+    last = snap.docs[snap.docs.length - 1]
+    if (snap.size < 200) break
+  }
+  return { ok: true, projects, rooms }
+})

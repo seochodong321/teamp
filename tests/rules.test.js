@@ -157,6 +157,59 @@ describe('notifications — 발신자 검증 + 링크 피싱 차단', () => {
   })
 })
 
+describe('rooms — 개별방 권한(Task A)', () => {
+  const seedRooms = () => seed(async (db) => {
+    await setDoc(doc(db, 'projects/p1'), {
+      memberIds: ['leader', 'm1', 'm2'], leaderId: 'leader', leaderIds: ['leader'],
+      members: [{ id: 'leader', role: 'leader' }, { id: 'm1', role: 'member' }, { id: 'm2', role: 'member' }],
+    })
+    await setDoc(doc(db, 'rooms/all1'), { projectId: 'p1' })                  // 전체방(memberIds 없음)
+    await setDoc(doc(db, 'rooms/indiv1'), { projectId: 'p1', memberIds: ['m1'] }) // 개별방(m1만 허용)
+    await setDoc(doc(db, 'rooms/all1/messages/x'), { senderId: 'leader', text: 'hi' })
+    await setDoc(doc(db, 'rooms/indiv1/messages/x'), { senderId: 'leader', text: '전략' })
+  })
+
+  it('개별방: 리더·허용멤버 OK, 비허용 멤버 차단', async () => {
+    await seedRooms()
+    await assertSucceeds(getDoc(doc(as('leader', 'l@x.com'), 'rooms/indiv1/messages/x'))) // leaderIds
+    await assertSucceeds(getDoc(doc(as('m1', '1@x.com'), 'rooms/indiv1/messages/x')))       // memberIds
+    await assertFails(getDoc(doc(as('m2', '2@x.com'), 'rooms/indiv1/messages/x')))          // 차단
+  })
+  it('전체방: 프로젝트 멤버면 모두 OK', async () => {
+    await seedRooms()
+    await assertSucceeds(getDoc(doc(as('m2', '2@x.com'), 'rooms/all1/messages/x')))
+  })
+  it('개별방 권한 부여(memberIds 수정): 리더 OK, 일반멤버 차단', async () => {
+    await seedRooms()
+    await assertSucceeds(updateDoc(doc(as('leader', 'l@x.com'), 'rooms/indiv1'), { memberIds: ['m1', 'm2'] }))
+    await assertFails(updateDoc(doc(as('m2', '2@x.com'), 'rooms/indiv1'), { memberIds: ['m1', 'm2'] })) // 자가 부여 차단
+  })
+  it('일반 멤버는 projects.leaderIds 변경 불가 (리더 자가 등극 차단)', async () => {
+    await seedRooms()
+    await assertFails(updateDoc(doc(as('m1', '1@x.com'), 'projects/p1'), { leaderIds: ['leader', 'm1'] }))
+  })
+  it('과도기: leaderIds 없는 프로젝트의 개별방은 멤버 허용(기존 동작)', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'projects/p2'), { memberIds: ['a', 'b'], leaderId: 'a' }) // leaderIds 없음
+      await setDoc(doc(db, 'rooms/legacy_indiv'), { projectId: 'p2', memberIds: ['a'] })
+      await setDoc(doc(db, 'rooms/legacy_indiv/messages/x'), { senderId: 'a', text: 'hi' })
+    })
+    await assertSucceeds(getDoc(doc(as('b', 'b@x.com'), 'rooms/legacy_indiv/messages/x'))) // 미마이그레이션 → 멤버 허용
+  })
+})
+
+describe('matchPosts — 공개 프로젝트만(Task B)', () => {
+  it('공개 프로젝트 매치글 OK / 비공개 차단', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'projects/pub1'), { memberIds: ['a'], leaderId: 'a', isPublic: true })
+      await setDoc(doc(db, 'projects/priv1'), { memberIds: ['a'], leaderId: 'a', isPublic: false })
+    })
+    const a = as('a', 'a@x.com')
+    await assertSucceeds(setDoc(doc(a, 'matchPosts/mp1'), { projectId: 'pub1', leaderId: 'a', title: '모집', applicants: [], status: 'open' }))
+    await assertFails(setDoc(doc(a, 'matchPosts/mp2'), { projectId: 'priv1', leaderId: 'a', title: '모집', applicants: [], status: 'open' }))
+  })
+})
+
 describe('projects — 권한 상승 차단 + 합류 복구', () => {
   const seedProject = () => seed((db) => setDoc(doc(db, 'projects/p1'), {
     memberIds: ['leader', 'm2'], leaderId: 'leader', isPublic: false,

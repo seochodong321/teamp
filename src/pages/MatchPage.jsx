@@ -75,6 +75,7 @@ export default function MatchPage() {
   const myLeaderProjects = useMemo(() =>
     projects.filter((p) =>
       p.status === 'active' &&
+      p.isPublic === true && // 공개 프로젝트만 매치에 올릴 수 있음(비공개는 차단)
       p.members?.find((m) => m.id === currentUser?.id)?.role === 'leader'
     ),
   [projects, currentUser?.id])

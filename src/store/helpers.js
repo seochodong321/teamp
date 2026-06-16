@@ -5,6 +5,14 @@ import { auth, db, storage } from '../firebase.js'
 
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/
 
+// 방 권한 모델: 리더(leader·sub-leader)는 모든 방 접근, 일반 멤버는 부여받은 개별방만.
+// 규칙이 역할을 못 읽으므로 projects.leaderIds(리더 uid 목록)를 두고, 개별방 메타엔 memberIds(허용 멤버).
+export const LEADER_ROLES = ['leader', 'sub-leader']
+export const computeLeaderIds = (members) =>
+  (members || []).filter((m) => LEADER_ROLES.includes(m.role)).map((m) => m.id)
+// 개별방 = 전체방·DM 아님 (memberIds로 접근 관리하는 방)
+export const isIndividualRoom = (room) => !room.isDm && room.name !== '전체'
+
 // ── 민감 개인정보(phone·blockedUsers)는 본인만 읽는 서브문서로 격리 ──────────
 // users/{uid} 본문서는 인증 유저 누구나 읽음(커넥트·생일 기능 때문에 공개 유지).
 // 전화번호 등 PII를 본문서에 두면 username→uid 열거로 전체 덤프가 가능 → 본문서에서

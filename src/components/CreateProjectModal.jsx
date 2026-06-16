@@ -71,6 +71,7 @@ export default function CreateProjectModal({ onClose }) {
   const [projectEndDate, setProjectEndDate]     = useState('')
   const [endTime, setEndTime]               = useState('')
   const [showEndTime, setShowEndTime]       = useState(false)
+  const [isPublic, setIsPublic]             = useState(false) // 기본 비공개
   const [roomNames, setRoomNames]           = useState([])
   const [newRoom, setNewRoom]               = useState('')
   const [created, setCreated]               = useState(null)
@@ -94,7 +95,7 @@ export default function CreateProjectModal({ onClose }) {
     }
     if (step === 1) {
       if (isLimitReached) { showError('프로젝트 한도에 도달했어요. 기존 프로젝트를 삭제하거나 Pro 플랜으로 업그레이드해주세요.'); return }
-      const data = { name, emoji, purpose, category: finalCategory, projectStartDate, projectEndDate, endTime: endTime || null, roomNames }
+      const data = { name, emoji, purpose, category: finalCategory, projectStartDate, projectEndDate, endTime: endTime || null, roomNames, isPublic }
       if (profiles.length > 0) { setPendingData(data); setShowProfileSel(true); return }
       await doCreate(data, 'default', null)
       return
@@ -218,6 +219,18 @@ export default function CreateProjectModal({ onClose }) {
                   {category === '기타' && (
                     <input className={styles.input} style={{ marginTop: 8 }} value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="카테고리를 직접 입력" />
                   )}
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>공개 설정</label>
+                  <div className={styles.chipRow}>
+                    <button type="button" className={`${styles.chip} ${!isPublic ? styles.chipActive : ''}`} onClick={() => setIsPublic(false)}>🔒 비공개</button>
+                    <button type="button" className={`${styles.chip} ${isPublic ? styles.chipActive : ''}`} onClick={() => setIsPublic(true)}>🌐 공개</button>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
+                    {isPublic
+                      ? '공개하면 팀프 매치에 자동으로 올라가 팀원을 모집해요(나중에 매치에서 수정 가능).'
+                      : '비공개는 초대로만 참여할 수 있고 매치엔 노출되지 않아요.'}
+                  </p>
                 </div>
                 <div className={styles.dateRow}>
                   <div className={styles.field}>
