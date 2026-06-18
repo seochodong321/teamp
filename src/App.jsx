@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import { Timestamp, addDoc, collection, doc, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
+import { Timestamp, addDoc, collection, doc, getCountFromServer, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
 import { useStore } from './store/useStore.js'
 import { loadPrivateFields } from './store/helpers.js'
@@ -210,12 +210,13 @@ export default function App() {
         if (inviteUnsubRef.current) inviteUnsubRef.current()
         if (matchUnsubRef.current) matchUnsubRef.current()
 
-        // 팀프 매치 오픈 게시글 수 실시간 구독 (N 배지용)
-        matchUnsubRef.current = onSnapshot(
-          query(collection(db, 'matchPosts'), where('status', '==', 'open')),
-          (snap) => setMatchPostCount(snap.size),
-          () => {}
-        )
+        // 팀프 매치 오픈 게시글 수 — 배지("새 글 있음")용 카운트.
+        // 모든 유저가 모든 open 글을 실시간 구독하던 것(읽기비용 폭증) → 1회 집계로 대체.
+        // 배지는 "마지막으로 본 이후 새 글 있나"라 실시간일 필요 없음(로드/로그인 시 갱신).
+        if (matchUnsubRef.current) { matchUnsubRef.current(); matchUnsubRef.current = null }
+        getCountFromServer(query(collection(db, 'matchPosts'), where('status', '==', 'open')))
+          .then((snap) => setMatchPostCount(snap.data().count))
+          .catch(() => {})
 
         // 사용자가 속한 프로젝트 실시간 구독
         projectsUnsubRef.current = onSnapshot(
