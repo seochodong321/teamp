@@ -42,9 +42,11 @@ export default function WrapupPage() {
 
   useEffect(() => {
     if (!project?.wrapupId) return
-    const unsub = onSnapshot(doc(db, 'wrapups', project.wrapupId), (snap) => {
-      if (snap.exists()) setWrapup({ id: snap.id, ...snap.data() })
-    })
+    const unsub = onSnapshot(doc(db, 'wrapups', project.wrapupId),
+      (snap) => { if (snap.exists()) setWrapup({ id: snap.id, ...snap.data() }) },
+      // 권한 거부(비멤버·합류 전 생성된 랩업)는 예상된 동작이라 조용히 — 그 외만 surfacing
+      (err) => { if (err?.code !== 'permission-denied') console.error('[wrapup] 구독 오류:', err) }
+    )
     return () => unsub()
   }, [project?.wrapupId])
 

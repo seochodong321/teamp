@@ -21,10 +21,12 @@ setPersistence(auth, browserLocalPersistence).catch(() => {})
 export const db = initializeFirestore(app, { localCache: persistentLocalCache() })
 export const storage = getStorage(app)
 
-// FCM은 서비스워커가 있는 브라우저에서만 초기화
-export const messaging = typeof window !== 'undefined' && 'serviceWorker' in navigator
-  ? getMessaging(app)
-  : null
+// FCM은 푸시 지원 브라우저에서만 초기화. iOS Safari 등은 serviceWorker는 있어도
+// Notification/Push API가 없어 getMessaging이 messaging/unsupported-browser로 throw → try/catch로 흡수.
+export const messaging = (() => {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator) || typeof Notification === 'undefined') return null
+  try { return getMessaging(app) } catch { return null }
+})()
 
 export async function requestNotificationPermission() {
   if (!messaging) return null

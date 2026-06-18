@@ -310,7 +310,8 @@ export default function App() {
         )
 
         // FCM 토큰 등록 (알림 권한이 이미 granted인 경우 자동 등록)
-        if (Notification.permission === 'granted') {
+        // typeof 가드: iOS Safari·일부 WebView엔 Notification API가 없음(ReferenceError 방지)
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
           requestNotificationPermission().then((token) => {
             if (token) {
               updateDoc(doc(db, 'users', user.uid), { fcmToken: token }).catch(() => {})
