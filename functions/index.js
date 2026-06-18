@@ -11,6 +11,7 @@
  */
 import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore'
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { initializeApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { getMessaging } from 'firebase-admin/messaging'
@@ -362,3 +363,21 @@ export const migrateMatchApplicants = onCall({ region: REGION }, async (request)
   }
   return { ok: true, posts, applicants }
 })
+
+// ── 함수 J: 피드백 수집 마감 프로젝트 자동 종료 (S5) ──────────────
+// 기존엔 멤버 브라우저가 각자 archive 시도(레이스 + 아무도 안 보면 영영 안 끝남).
+// 매일 1회 서버가 collecting + feedbackDeadline 지난 프로젝트를 archived로.
+// (클라의 즉시 archive는 UX용으로 유지 — 멱등이라 충돌 없음.)
+export const autoArchiveProjects = onSchedule(
+  { schedule: 'every 24 hours', timeZone: 'Asia/Seoul', region: REGION },
+  async () => {
+    const now = new Date().toISOString()
+    const snap = await db.collection('projects').where('status', '==', 'collecting').get()
+    const due = snap.docs.filter((d) => {
+      const fd = d.data().feedbackDeadline
+      return fd && fd < now
+    })
+    await Promise.all(due.map((d) => d.ref.update({ status: 'archived' }).catch(() => {})))
+    console.log(`[autoArchive] collecting ${snap.size} → archived ${due.length}`)
+  }
+)
