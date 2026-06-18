@@ -267,6 +267,33 @@ describe('projects — 권한 상승 차단 + 합류 복구', () => {
   })
 })
 
+describe('matchPosts 지원자 — PII는 리더·본인만 (M1)', () => {
+  it('본인 지원 OK / 타인 명의 불가 / 마감글 불가', async () => {
+    await seed((db) => setDoc(doc(db, 'matchPosts/mp1'), { leaderId: 'leader', status: 'open', applicantCount: 0 }))
+    await assertSucceeds(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/me'), { userId: 'me', note: '지원합니다' }))
+    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/other'), { userId: 'other', note: '사칭' }))
+    await seed((db) => setDoc(doc(db, 'matchPosts/mp2'), { leaderId: 'leader', status: 'closed', applicantCount: 0 }))
+    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp2/applicants/me'), { userId: 'me' }))
+  })
+  it('지원자 PII 읽기: 리더·본인 OK / 제3자 차단', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'matchPosts/mp1'), { leaderId: 'leader', status: 'open', applicantCount: 1 })
+      await setDoc(doc(db, 'matchPosts/mp1/applicants/me'), { userId: 'me', note: '비공개 지원사유' })
+    })
+    await assertSucceeds(getDoc(doc(as('leader', 'l@x.com'), 'matchPosts/mp1/applicants/me')))
+    await assertSucceeds(getDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/me')))
+    await assertFails(getDoc(doc(as('stranger', 's@x.com'), 'matchPosts/mp1/applicants/me')))
+  })
+  it('상태 변경(수락/보류)은 리더만, 지원자 본인 불가', async () => {
+    await seed(async (db) => {
+      await setDoc(doc(db, 'matchPosts/mp1'), { leaderId: 'leader', status: 'open', applicantCount: 1 })
+      await setDoc(doc(db, 'matchPosts/mp1/applicants/me'), { userId: 'me', status: 'pending' })
+    })
+    await assertSucceeds(updateDoc(doc(as('leader', 'l@x.com'), 'matchPosts/mp1/applicants/me'), { status: 'accepted' }))
+    await assertFails(updateDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/me'), { status: 'accepted' }))
+  })
+})
+
 describe('wrapups — 피드백 원문은 멤버만', () => {
   it('멤버 읽기 OK / 비멤버 차단 / 어드민 OK', async () => {
     await seed((db) => setDoc(doc(db, 'wrapups/w1'), {

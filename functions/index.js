@@ -324,3 +324,41 @@ export const migrateRoomAccess = onCall({ region: REGION }, async (request) => {
   }
   return { ok: true, projects, rooms }
 })
+
+// ── 함수 H: 매치 지원자 수 유지 (M1) ──────────────────────────
+// 지원자 PII는 matchPosts/{id}/applicants/{uid} 서브컬렉션(리더·본인만). 공개 배지용
+// applicantCount는 비멤버도 봐야 하므로 본 문서에 두고 서버가 증감.
+export const maintainApplicantCount = onDocumentWritten(
+  { document: 'matchPosts/{postId}/applicants/{uid}', region: REGION },
+  async (event) => {
+    const before = !!event.data?.before?.exists
+    const after = !!event.data?.after?.exists
+    const delta = (!before && after) ? 1 : (before && !after) ? -1 : 0
+    if (!delta) return
+    await db.doc(`matchPosts/${event.params.postId}`)
+      .update({ applicantCount: FieldValue.increment(delta) }).catch(() => {})
+  }
+)
+
+// ── 함수 I: 매치 지원자 1회 마이그레이션 (M1) ────────────────
+// 기존 matchPosts.applicants[] 배열 → 서브컬렉션으로 이전 + applicantCount 세팅,
+// 그 후 공개 문서에서 applicants 배열 삭제(PII 제거). 어드민 1회 트리거.
+export const migrateMatchApplicants = onCall({ region: REGION }, async (request) => {
+  if (!(await isCallerAdmin(request.auth))) {
+    throw new HttpsError('permission-denied', '관리자만 사용할 수 있어요.')
+  }
+  const snap = await db.collection('matchPosts').get()
+  let posts = 0, applicants = 0
+  for (const d of snap.docs) {
+    const arr = d.data().applicants
+    if (arr === undefined) continue // 이미 마이그레이션됨
+    for (const a of (arr || [])) {
+      if (!a?.userId) continue
+      await db.doc(`matchPosts/${d.id}/applicants/${a.userId}`).set(a, { merge: true })
+      applicants++
+    }
+    await d.ref.update({ applicantCount: (arr || []).length, applicants: FieldValue.delete() })
+    posts++
+  }
+  return { ok: true, posts, applicants }
+})

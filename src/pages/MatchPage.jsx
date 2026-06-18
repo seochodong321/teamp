@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, addDoc, updateDoc, doc, getDoc, orderBy, query, where, serverTimestamp, arrayUnion } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, setDoc, doc, getDoc, orderBy, query, where, serverTimestamp } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
@@ -58,6 +58,8 @@ export default function MatchPage() {
   // 신고
   const [reportTarget, setReportTarget] = useState(null) // { id, name }
 
+  // 내 지원 여부(선택한 남의 글) — 지원자 PII가 서브컬렉션이라 본인 것만 따로 로드
+  const [myApplication, setMyApplication] = useState(null)
   // 지원자 프로필 모달
   const [viewApplicant, setViewApplicant]       = useState(null)
   const [applicantProfile, setApplicantProfile] = useState(null)
@@ -82,6 +84,16 @@ export default function MatchPage() {
 
   useEffect(() => { fetchPosts(); markMatchSeen() }, [])
 
+  // 남의 글 선택 시 '내 지원 여부'만 따로 로드(지원자 PII는 서브문서, 본인 것만 읽음)
+  useEffect(() => {
+    if (!selected || !currentUser || selected.leaderId === currentUser.id) { setMyApplication(null); return }
+    const fromArray = (selected.applicants || []).find((a) => a.userId === currentUser.id) // 과도기: 옛 배열
+    if (fromArray) { setMyApplication(fromArray); return }
+    getDoc(doc(db, 'matchPosts', selected.id, 'applicants', currentUser.id))
+      .then((d) => setMyApplication(d.exists() ? d.data() : null))
+      .catch(() => setMyApplication(null))
+  }, [selected?.id, currentUser?.id])
+
   const fetchPosts = async () => {
     setLoading(true)
     try {
@@ -104,6 +116,18 @@ export default function MatchPage() {
         if (data.status === 'open' && !expired && !blocked.includes(data.leaderId)) validOpen.push(data)
         if (data.status === 'closed' && data.leaderId === uid) validClosed.push(data)
       }))
+
+      // 내 모집글의 지원자는 서브컬렉션(리더만 열람)에서 로드 — 과도기엔 옛 배열도 병합
+      await Promise.all([...validOpen, ...validClosed]
+        .filter((p) => p.leaderId === uid)
+        .map(async (p) => {
+          try {
+            const aSnap = await getDocs(collection(db, 'matchPosts', p.id, 'applicants'))
+            const merged = aSnap.docs.map((d) => d.data())
+            ;(p.applicants || []).forEach((a) => { if (!merged.find((m) => m.userId === a.userId)) merged.push(a) })
+            p.applicants = merged
+          } catch { /* 못 읽으면 기존 값 유지 */ }
+        }))
 
       const sorted = validOpen.sort((a, b) => (b.deadline > a.deadline ? 1 : -1))
       setPosts(sorted)
@@ -138,7 +162,7 @@ export default function MatchPage() {
         deadline: formDeadline,
         visibility: formVisibility,
         keywords: formVisibility === 'keyword' ? formKeywords : [],
-        applicants: [],
+        applicantCount: 0,
         status: 'open',
         createdAt: serverTimestamp(),
       })
@@ -156,34 +180,29 @@ export default function MatchPage() {
 
   const doApply = async (post, note, profileId, profileAffiliation) => {
     if (!currentUser) return
-    const already = (post.applicants || []).find((a) => a.userId === currentUser.id)
-    if (already) return
+    if (myApplication || (post.applicants || []).find((a) => a.userId === currentUser.id)) return
 
     setApplying(true)
     try {
-      await updateDoc(doc(db, 'matchPosts', post.id), {
-        applicants: arrayUnion({
-          userId: currentUser.id,
-          userName: currentUser.name,
-          affiliation: profileAffiliation || currentUser.affiliation || '',
-          profileId: profileId || 'default',
-          appliedAt: new Date().toISOString(),
-          status: 'pending',
-          note: note.trim(),
-        }),
-      })
-      // 모집글 리더에게 새 지원 알림
+      const application = {
+        userId: currentUser.id,
+        userName: currentUser.name,
+        affiliation: profileAffiliation || currentUser.affiliation || '',
+        profileId: profileId || 'default',
+        appliedAt: new Date().toISOString(),
+        status: 'pending',
+        note: note.trim(),
+      }
+      // 지원자 PII는 본인전용 서브문서(matchPosts/{id}/applicants/{uid}) — 리더와 본인만 열람
+      await setDoc(doc(db, 'matchPosts', post.id, 'applicants', currentUser.id), application)
+      setMyApplication(application)
+      // 모집글 리더에게 새 지원 알림 (배지 카운트는 서버 함수가 증가)
       if (post.leaderId && post.leaderId !== currentUser.id) {
         await notifyUser(post.leaderId, {
           type: 'apply',
           text: `🙋 ${currentUser.name}님이 "${post.title}"에 지원했어요`,
           link: '/match',
         })
-      }
-      const updated = await fetchPosts()
-      if (selected?.id === post.id) {
-        const fresh = updated.find((p) => p.id === post.id)
-        if (fresh) setSelected(fresh)
       }
     } finally {
       setApplying(false)
@@ -231,16 +250,7 @@ export default function MatchPage() {
     const result = await addMemberToProject(post.projectId, applicant.userId, applicant.userName)
     if (result?.message) { showError(result.message); return }
 
-    const postRef  = doc(db, 'matchPosts', post.id)
-    const postSnap = await getDoc(postRef)
-    if (postSnap.exists()) {
-      const data = postSnap.data()
-      await updateDoc(postRef, {
-        applicants: data.applicants.map((a) =>
-          a.userId === applicant.userId ? { ...a, status: 'accepted' } : a
-        ),
-      })
-    }
+    await updateDoc(doc(db, 'matchPosts', post.id, 'applicants', applicant.userId), { status: 'accepted' }).catch(() => {})
     // 지원자에게 수락 알림
     if (applicant.userId && applicant.userId !== currentUser.id) {
       await notifyUser(applicant.userId, {
@@ -256,16 +266,7 @@ export default function MatchPage() {
   }
 
   const handleHold = async (post, applicant) => {
-    const postRef  = doc(db, 'matchPosts', post.id)
-    const postSnap = await getDoc(postRef)
-    if (postSnap.exists()) {
-      const data = postSnap.data()
-      await updateDoc(postRef, {
-        applicants: data.applicants.map((a) =>
-          a.userId === applicant.userId ? { ...a, status: 'held' } : a
-        ),
-      })
-    }
+    await updateDoc(doc(db, 'matchPosts', post.id, 'applicants', applicant.userId), { status: 'held' }).catch(() => {})
     const updated = await fetchPosts()
     const fresh = updated?.find((p) => p.id === post.id)
     if (fresh) setSelected(fresh)
@@ -301,7 +302,7 @@ export default function MatchPage() {
   }, [posts, currentUser?.id, isSearching, q])
 
   const isMyPost  = selected && selected.leaderId === currentUser?.id
-  const myApplied = selected && (selected.applicants || []).find((a) => a.userId === currentUser?.id)
+  const myApplied = !isMyPost && (myApplication || (selected?.applicants || []).find((a) => a.userId === currentUser?.id))
   const myProject = selected && projects.find((p) => p.id === selected.projectId)
 
   return (
@@ -398,11 +399,11 @@ export default function MatchPage() {
                     const pending = (post.applicants || []).filter((a) => a.status === 'pending').length
                     return (
                       <span className={pending > 0 ? styles.applicantCountNew : styles.applicantCount}>
-                        {pending > 0 ? `🔔 ${pending}명 대기` : `${(post.applicants || []).length}명 지원`}
+                        {pending > 0 ? `🔔 ${pending}명 대기` : `${post.applicantCount ?? (post.applicants || []).length}명 지원`}
                       </span>
                     )
                   })() : (
-                    <span className={styles.applicantCount}>{(post.applicants || []).length}명 지원</span>
+                    <span className={styles.applicantCount}>{post.applicantCount ?? (post.applicants || []).length}명 지원</span>
                   )}
                 </div>
                 {activeTab === 'mine' && post.visibility === 'keyword' && (

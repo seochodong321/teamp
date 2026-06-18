@@ -883,6 +883,24 @@ export default function AdminPage() {
     })
   }
 
+  // ── 액션: 매치 지원자 1회 마이그레이션 (M1) — applicants[] → 서브컬렉션, 본문서 PII 제거
+  const handleMigrateMatch = () => {
+    ask('기존 매치 모집글의 지원자를 본인전용 서브컬렉션으로 이전하고 공개 문서에서 PII(이름·소속·지원사유)를 제거할까요?\n새 클라이언트 배포 후 1회 실행. 여러 번 눌러도 안전해요.', async () => {
+      setMigrating(true)
+      try {
+        const call = httpsCallable(getFunctions(getApp(), 'asia-northeast3'), 'migrateMatchApplicants')
+        const res = await call()
+        window.alert(`완료 — 모집글 ${res?.data?.posts ?? 0} / 지원자 ${res?.data?.applicants ?? 0}`)
+        logAdmin({ type: 'migrate-match', targetName: `${res?.data?.posts ?? 0}개 모집글` })
+      } catch (e) {
+        console.error('[migrateMatchApplicants]', e)
+        showError(`마이그레이션 실패: ${e?.message || '알 수 없는 오류'}`)
+      } finally {
+        setMigrating(false)
+      }
+    })
+  }
+
   // ── 액션: 어드민 권한 부여/해제 (부트스트랩만 — 규칙도 동일하게 강제)
   const handleToggleAdmin = (uid, name, makeAdmin, onSuccess) => {
     ask(`"${name}" 님을 ${makeAdmin ? '어드민으로 승급할까요? 다른 유저를 관리할 수 있게 돼요.' : '어드민에서 해제할까요?'}`, async () => {
@@ -948,6 +966,13 @@ export default function AdminPage() {
           <button onClick={handleMigrateRooms} disabled={migrating}
             style={{ padding: '8px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: migrating ? 'default' : 'pointer' }}>
             {migrating ? '이전 중…' : '방 권한 마이그레이션 실행'}
+          </button>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '12px 0 8px' }}>
+            🤝 매치 지원자(M1) — 지원자 PII를 본인전용 서브컬렉션으로 이전·공개문서서 제거. 클라이언트 배포 후 한 번 실행하세요.
+          </div>
+          <button onClick={handleMigrateMatch} disabled={migrating}
+            style={{ padding: '8px 14px', borderRadius: 'var(--radius)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', cursor: migrating ? 'default' : 'pointer' }}>
+            {migrating ? '이전 중…' : '매치 지원자 마이그레이션 실행'}
           </button>
         </div>
       )}

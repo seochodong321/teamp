@@ -270,6 +270,22 @@ service cloud.firestore {
 
       allow delete: if (request.auth != null &&
         request.auth.uid == resource.data.leaderId) || isAdmin();
+
+      // ── 지원자 — PII(이름·소속·지원사유)는 모집글 리더와 본인만 (M1).
+      //    모집글 본문은 공개여도 "누가 어떤 사유로 지원했는지"는 비공개.
+      //    배지용 공개 카운트는 matchPosts.applicantCount(서버 함수가 유지).
+      match /applicants/{uid} {
+        function postLeaderId() {
+          return get(/databases/$(database)/documents/matchPosts/$(postId)).data.leaderId;
+        }
+        allow read: if request.auth != null &&
+          (request.auth.uid == uid || request.auth.uid == postLeaderId() || isAdmin());
+        allow create: if request.auth != null && request.auth.uid == uid &&
+          request.resource.data.userId == uid &&
+          get(/databases/$(database)/documents/matchPosts/$(postId)).data.status == 'open';
+        allow update, delete: if request.auth != null &&
+          (request.auth.uid == postLeaderId() || isAdmin());
+      }
     }
 
     // ──────────────────────────────────────────────
