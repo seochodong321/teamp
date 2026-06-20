@@ -24,6 +24,8 @@ function calcDday(deadline) {
 export default function MatchPage() {
   const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles, showError, showSuccess } = useStore()
   const navigate = useNavigate()
+  // 지원자 배열에서 내 항목 찾기(과도기 옛 배열 호환용 — 정본은 서브컬렉션)
+  const myEntry = (list) => (list || []).find((a) => a.userId === currentUser?.id)
 
   const [posts, setPosts]             = useState([])
   const [loading, setLoading]         = useState(true)
@@ -87,7 +89,7 @@ export default function MatchPage() {
   // 남의 글 선택 시 '내 지원 여부'만 따로 로드(지원자 PII는 서브문서, 본인 것만 읽음)
   useEffect(() => {
     if (!selected || !currentUser || selected.leaderId === currentUser.id) { setMyApplication(null); return }
-    const fromArray = (selected.applicants || []).find((a) => a.userId === currentUser.id) // 과도기: 옛 배열
+    const fromArray = myEntry(selected.applicants) // 과도기: 옛 배열
     if (fromArray) { setMyApplication(fromArray); return }
     getDoc(doc(db, 'matchPosts', selected.id, 'applicants', currentUser.id))
       .then((d) => setMyApplication(d.exists() ? d.data() : null))
@@ -180,7 +182,7 @@ export default function MatchPage() {
 
   const doApply = async (post, note, profileId, profileAffiliation) => {
     if (!currentUser) return
-    if (myApplication || (post.applicants || []).find((a) => a.userId === currentUser.id)) return
+    if (myApplication || myEntry(post.applicants)) return
 
     setApplying(true)
     try {
@@ -302,7 +304,7 @@ export default function MatchPage() {
   }, [posts, currentUser?.id, isSearching, q])
 
   const isMyPost  = selected && selected.leaderId === currentUser?.id
-  const myApplied = !isMyPost && (myApplication || (selected?.applicants || []).find((a) => a.userId === currentUser?.id))
+  const myApplied = !isMyPost && (myApplication || myEntry(selected?.applicants))
   const myProject = selected && projects.find((p) => p.id === selected.projectId)
 
   return (
