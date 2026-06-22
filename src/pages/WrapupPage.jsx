@@ -86,6 +86,9 @@ export default function WrapupPage() {
   const getFeedbackFromMe = (toUserId) =>
     wrapup?.feedbacks?.find((f) => f.fromUserId === currentUser?.id && f.toUserId === toUserId)
 
+  // 아직 꽃을 못 보낸 팀원 수 — 마무리 유도(관계 중심) 넛지용
+  const pendingFlowerCount = myFeedbackTargets.filter((m) => !getFeedbackFromMe(m.id)).length
+
   const fmtKorDate = (dateStr) => {
     if (!dateStr) return ''
     const d = new Date(dateStr + 'T00:00:00')
@@ -166,6 +169,18 @@ export default function WrapupPage() {
       {isCollecting && project.feedbackDeadline && (
         <div className={styles.deadlineBanner}>
           📅 피드백 마감: <strong>{project.feedbackDeadline?.slice(0, 10)}</strong>
+        </div>
+      )}
+
+      {/* 마무리 유도 — 아직 마음 못 전한 팀원이 있으면 부드럽게(평가 아님, 관계) */}
+      {isCollecting && isMember && pendingFlowerCount > 0 && (
+        <div className={styles.flowerNudge}>
+          <span className={styles.flowerNudgeText}>
+            🌷 아직 <strong>{pendingFlowerCount}명</strong>의 팀원에게 마음을 전하지 못했어요.
+          </span>
+          <button className={styles.flowerNudgeBtn} onClick={() => setTab('feedback')}>
+            마음 전하기
+          </button>
         </div>
       )}
 

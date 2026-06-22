@@ -567,6 +567,7 @@ export default function HomePage() {
                   {p.feedbackDeadline && (
                     <p className={styles.cardDate}>마감: {p.feedbackDeadline?.slice(0, 10)}</p>
                   )}
+                  <p className={styles.collectingCta}>🌷 팀원에게 마음 전하고 회고 남기기 →</p>
                 </div>
               ))}
             </div>

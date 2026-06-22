@@ -96,6 +96,34 @@
   border: 1px solid var(--amber-light);
 }
 
+.flowerNudge {
+  margin-top: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-light);
+  border-radius: var(--radius-sm);
+}
+.flowerNudgeText { font-size: 14px; color: var(--text-secondary); }
+.flowerNudgeText strong { color: var(--amber); }
+.flowerNudgeBtn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  min-height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--amber);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.flowerNudgeBtn:hover { filter: brightness(1.05); }
+
 /* ── 탭 — amber 활성 ── */
 .tabs {
   display: flex;
