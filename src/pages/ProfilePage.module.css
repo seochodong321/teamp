@@ -4,7 +4,7 @@
 /* ── 편집 모달 ── */
 .backdrop {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--overlay);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000; padding: 20px;
 }
@@ -58,7 +58,7 @@
 .avatarImg { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; display: block; }
 .avatarEditOverlay {
   position: absolute; inset: 0; border-radius: 50%;
-  background: rgba(0,0,0,0.45); color: white; font-size: 18px;
+  background: var(--overlay); color: white; font-size: 18px;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: opacity 0.15s;
   pointer-events: none;
