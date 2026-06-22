@@ -146,6 +146,32 @@ export const createChatSlice = (set, get) => ({
     }
   },
 
+  // 메시지 가벼운 이모지 반응 토글(🙏 고마워·👍 알겠어·😊 좋아). key = thanks|ok|good.
+  // 점수·순위 아님 — "대답 애매할 때 따뜻한 응답". 방 멤버는 메시지 update 권한 있음(규칙 변경 불필요).
+  toggleReaction: async (roomId, msgId, key) => {
+    const { currentUser, showError } = get()
+    if (!currentUser) return
+    const toggle = (reactions = {}) => {
+      const list = reactions[key] || []
+      const had = list.includes(currentUser.id)
+      return { ...reactions, [key]: had ? list.filter((u) => u !== currentUser.id) : [...list, currentUser.id] }
+    }
+    const prevMessages = get().messages
+    set((s) => ({
+      messages: {
+        ...s.messages,
+        [roomId]: s.messages[roomId]?.map((m) => m.id !== msgId ? m : { ...m, reactions: toggle(m.reactions) }),
+      },
+    }))
+    try {
+      await txMessage(roomId, msgId, (data) => ({ reactions: toggle(data.reactions) }))
+    } catch (e) {
+      set({ messages: prevMessages })
+      showError('반응 저장에 실패했어요.')
+      console.error('[toggleReaction]', e)
+    }
+  },
+
   markAsRead: (roomId) =>
     set((s) => ({
       projects: s.projects.map((p) => ({

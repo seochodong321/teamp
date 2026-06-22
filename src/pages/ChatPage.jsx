@@ -5,6 +5,7 @@ import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { localDateStr, todayStr } from '../store/helpers.js'
 import { ROLE_EMOJI } from '../constants.js'
+import MessageReactions from '../components/MessageReactions.jsx'
 import styles from './ChatPage.module.css'
 
 const USER_COLORS = [
@@ -78,7 +79,7 @@ export default function ChatPage() {
   const navigate = useNavigate()
   const {
     projects, messages, currentUser,
-    sendMessage, sendFile, sendPoll, votePoll, markAsRead,
+    sendMessage, sendFile, sendPoll, votePoll, toggleReaction, markAsRead,
     dmRooms, dmRoomList, setRoomMessages,
     leaveDmRoom, blockUser, unblockUser, blockedUsers,
     toggleMuteDm, mutedDms, getOrCreateDmRoom,
@@ -614,6 +615,7 @@ export default function ChatPage() {
                         {timeEl}
                       </div>
                     )}
+                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                   </div>
                 </div>
               </React.Fragment>
@@ -639,6 +641,7 @@ export default function ChatPage() {
                         {timeEl}
                       </div>
                     )}
+                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                   </div>
                 </div>
               </React.Fragment>
@@ -699,6 +702,7 @@ export default function ChatPage() {
                       {timeEl}
                     </div>
                   )}
+                  <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                 </div>
               </div>
             </React.Fragment>
