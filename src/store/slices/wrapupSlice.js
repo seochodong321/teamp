@@ -207,7 +207,7 @@ export const createWrapupSlice = (set, get) => ({
       const who = feedbackData.isAnonymous ? '누군가가' : `${currentUser.name}님이`
       await notifyUser(feedbackData.toUserId, {
         type: 'flower',
-        text: `🌷 ${who} 당신에게 꽃과 피드백을 남겼어요`,
+        text: `🌷 ${who} 당신에게 꽃을 보냈어요 — 팀프폴리오에 소중히 담겼어요`,
         link: '/profile',
       })
     }

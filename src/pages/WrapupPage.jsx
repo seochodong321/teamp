@@ -89,6 +89,18 @@ export default function WrapupPage() {
   // 아직 꽃을 못 보낸 팀원 수 — 마무리 유도(관계 중심) 넛지용
   const pendingFlowerCount = myFeedbackTargets.filter((m) => !getFeedbackFromMe(m.id)).length
 
+  // 이번 여정 자랑 카드 — 내가 받은 꽃·함께한 팀원(관계·기여의 기록), 팀프폴리오로 공유
+  const myFlowerCount = wrapup?.feedbacks?.filter((f) => f.toUserId === currentUser?.id).length || 0
+  const teammateCount = Math.max(project.members.length - 1, 0)
+  const myHandle = (currentUser?.username || '').replace(/^@/, '')
+
+  const handleShareTeamfolio = () => {
+    const url = `${window.location.origin}/u/${myHandle}`
+    navigator.clipboard.writeText(url)
+      .then(() => showSuccess('팀프폴리오 링크를 복사했어요. 마음껏 자랑해 주세요!'))
+      .catch(() => showSuccess(url))
+  }
+
   const fmtKorDate = (dateStr) => {
     if (!dateStr) return ''
     const d = new Date(dateStr + 'T00:00:00')
@@ -205,6 +217,33 @@ export default function WrapupPage() {
               <p className={styles.loadingText}>데이터를 불러오는 중...</p>
             ) : (
               <>
+                {/* 이번 여정 자랑 카드 — 관계·기여의 기록을 한눈에, 팀프폴리오로 공유 */}
+                {isMember && (
+                  <div className={styles.journeyCard}>
+                    <p className={styles.journeyTitle}>🌷 {project.name}, 함께 해낸 여정</p>
+                    <div className={styles.journeyStats}>
+                      <span className={styles.journeyStat}>
+                        <strong>{teammateCount}</strong>명과 함께
+                      </span>
+                      {wrapup.summary.completedTodos > 0 && (
+                        <span className={styles.journeyStat}>
+                          할 일 <strong>{wrapup.summary.completedTodos}</strong>개 완료
+                        </span>
+                      )}
+                      {myFlowerCount > 0 && (
+                        <span className={styles.journeyStat}>
+                          받은 꽃 <strong>{myFlowerCount}</strong>송이
+                        </span>
+                      )}
+                    </div>
+                    {myHandle && (
+                      <button className={styles.journeyShareBtn} onClick={handleShareTeamfolio}>
+                        🔗 내 팀프폴리오 공유하기
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <div className={styles.statSentences}>
                   <h3 className={styles.sectionTitle}>활동 요약</h3>
 

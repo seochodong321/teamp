@@ -124,6 +124,38 @@
 }
 .flowerNudgeBtn:hover { filter: brightness(1.05); }
 
+.journeyCard {
+  margin-bottom: 18px;
+  padding: 18px 18px 16px;
+  background: var(--amber-soft);
+  border: 1px solid var(--amber-light);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+.journeyTitle { font-size: 16px; font-weight: 700; color: var(--amber); }
+.journeyStats {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+}
+.journeyStat { font-size: 13.5px; color: var(--text-secondary); }
+.journeyStat strong { color: var(--amber); font-size: 16px; }
+.journeyShareBtn {
+  margin-top: 16px;
+  padding: 9px 18px;
+  min-height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--amber);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.journeyShareBtn:hover { filter: brightness(1.05); }
+
 /* ── 탭 — amber 활성 ── */
 .tabs {
   display: flex;
