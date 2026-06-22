@@ -615,7 +615,7 @@ export default function ChatPage() {
                         {timeEl}
                       </div>
                     )}
-                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
+                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} canReact={!isMine} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                   </div>
                 </div>
               </React.Fragment>
@@ -641,7 +641,7 @@ export default function ChatPage() {
                         {timeEl}
                       </div>
                     )}
-                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
+                    <MessageReactions reactions={msg.reactions} myId={currentUser?.id} canReact={!isMine} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                   </div>
                 </div>
               </React.Fragment>
@@ -702,7 +702,7 @@ export default function ChatPage() {
                       {timeEl}
                     </div>
                   )}
-                  <MessageReactions reactions={msg.reactions} myId={currentUser?.id} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
+                  <MessageReactions reactions={msg.reactions} myId={currentUser?.id} canReact={!isMine} mine={isMine} onToggle={(key) => toggleReaction(roomId, msg.id, key)} />
                 </div>
               </div>
             </React.Fragment>

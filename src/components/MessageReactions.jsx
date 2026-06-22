@@ -8,16 +8,25 @@ export const REACTIONS = [
   { key: 'good',   emoji: '😊', label: '좋아' },
 ]
 
-export default function MessageReactions({ reactions = {}, myId, onToggle, mine = false }) {
+// canReact = 받은 메시지(내가 보낸 게 아님)일 때만 반응 추가/토글 가능.
+// 내 메시지엔 받은 반응을 '표시'만 하고 추가 버튼·토글은 숨긴다.
+export default function MessageReactions({ reactions = {}, myId, canReact = false, onToggle, mine = false }) {
   const [picking, setPicking] = useState(false)
   const active = REACTIONS.filter((r) => (reactions[r.key] || []).length > 0)
-  if (!active.length && !myId) return null
+  if (!active.length && !canReact) return null
 
   return (
     <div className={`${styles.row} ${mine ? styles.rowMine : ''}`}>
       {active.map((r) => {
         const users = reactions[r.key] || []
         const reacted = myId && users.includes(myId)
+        if (!canReact) {
+          return (
+            <span key={r.key} className={styles.chip}>
+              <span>{r.emoji}</span><span className={styles.count}>{users.length}</span>
+            </span>
+          )
+        }
         return (
           <button key={r.key} type="button"
             className={`${styles.chip} ${reacted ? styles.chipOn : ''}`}
@@ -26,7 +35,7 @@ export default function MessageReactions({ reactions = {}, myId, onToggle, mine 
           </button>
         )
       })}
-      {myId && (
+      {canReact && (
         <div className={styles.addWrap}>
           <button type="button" className={styles.addBtn} onClick={() => setPicking((p) => !p)} aria-label="이모지 반응 달기">
             🙂<span className={styles.plus}>+</span>
