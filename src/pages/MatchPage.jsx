@@ -660,7 +660,7 @@ export default function MatchPage() {
                   <input className={styles.formInput} value={formCustomSkill}
                     onChange={(e) => setFormCustomSkill(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && formCustomSkill.trim()) {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing && formCustomSkill.trim()) {
                         e.preventDefault()
                         setFormSkills((prev) => [...new Set([...prev, formCustomSkill.trim()])])
                         setFormCustomSkill('')

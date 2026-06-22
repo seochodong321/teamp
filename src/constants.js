@@ -5,6 +5,9 @@ export const ROLE_LABEL = { leader: '👑 리더', 'sub-leader': '⭐ 부리더'
 // 이모지만 (채팅 등 좁은 공간용 — member는 표식 없음)
 export const ROLE_EMOJI = { leader: '👑', 'sub-leader': '⭐', member: '' }
 
+// 마일스톤 상태 라벨 (MilestonesTab · WrapupPage 공유)
+export const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' }
+
 // 정지(banned)된 계정 안내 — 로그인·세션복원 어디서든 동일 문구
 export const BANNED_MESSAGE = '이 계정은 이용이 제한됐어요. 문의: support@teamp.kr'
 

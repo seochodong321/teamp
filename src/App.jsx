@@ -440,7 +440,7 @@ export default function App() {
             if (window.location.pathname.includes(`/chat/${roomId}`)) return
             const preview = msg.type === 'image' ? '📷 사진'
               : msg.type === 'file' ? '📎 파일'
-              : msg.type === 'vote' ? '📊 투표'
+              : msg.type === 'poll' ? '📊 투표'
               : (msg.text || '').slice(0, 60)
             incrementUnread(roomId)
             addChatToast({

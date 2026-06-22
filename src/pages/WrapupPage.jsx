@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
-import { FLOWER_TAGS } from '../constants.js'
+import { FLOWER_TAGS, ROLE_LABEL, MS_STATUS } from '../constants.js'
 import styles from './WrapupPage.module.css'
 
 export default function WrapupPage() {
@@ -283,7 +283,6 @@ export default function WrapupPage() {
                   const milestones = project.milestones || []
                   const msDone    = milestones.filter((m) => m.status === 'done').length
                   const msDelayed = milestones.filter((m) => m.status === 'delayed').length
-                  const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' }
                   if (milestones.length === 0) return null
                   return (
                     <div className={styles.milestoneSection}>
@@ -326,7 +325,7 @@ export default function WrapupPage() {
                         <div className={styles.memberNameRow}>
                           <span className={styles.memberName}>{m.name}</span>
                           <span className={styles.memberRole}>
-                            {m.role === 'leader' ? '👑 리더' : m.role === 'sub-leader' ? '⭐ 부리더' : '팀원'}
+                            {ROLE_LABEL[m.role] || ROLE_LABEL.member}
                           </span>
                         </div>
                       </div>

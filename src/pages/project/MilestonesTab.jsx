@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useStore } from '../../store/useStore.js'
+import { MS_STATUS } from '../../constants.js'
 import styles from '../ProjectPage.module.css'
 
-const MS_STATUS = { pending: '진행 중', done: '완료', delayed: '연기됨' }
 const MS_HISTORY_LABEL = { created: '생성', completed: '완료', reopened: '재개', delayed: '연기', modified: '수정' }
 
 export default function MilestonesTab({ project, canInvite }) {
