@@ -268,12 +268,14 @@ describe('projects — 권한 상승 차단 + 합류 복구', () => {
 })
 
 describe('matchPosts 지원자 — PII는 리더·본인만 (M1)', () => {
-  it('본인 지원 OK / 타인 명의 불가 / 마감글 불가', async () => {
+  it('본인 지원 OK / 타인 명의 불가 / 마감글 불가 / 상태위조 불가', async () => {
     await seed((db) => setDoc(doc(db, 'matchPosts/mp1'), { leaderId: 'leader', status: 'open', applicantCount: 0 }))
-    await assertSucceeds(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/me'), { userId: 'me', note: '지원합니다' }))
-    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/other'), { userId: 'other', note: '사칭' }))
+    await assertSucceeds(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/me'), { userId: 'me', status: 'pending', note: '지원합니다' }))
+    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp1/applicants/other'), { userId: 'other', status: 'pending', note: '사칭' }))
+    // 지원자가 자기 상태를 'accepted'로 위조 불가 (생성은 pending만)
+    await assertFails(setDoc(doc(as('z', 'z@x.com'), 'matchPosts/mp1/applicants/z'), { userId: 'z', status: 'accepted' }))
     await seed((db) => setDoc(doc(db, 'matchPosts/mp2'), { leaderId: 'leader', status: 'closed', applicantCount: 0 }))
-    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp2/applicants/me'), { userId: 'me' }))
+    await assertFails(setDoc(doc(as('me', 'm@x.com'), 'matchPosts/mp2/applicants/me'), { userId: 'me', status: 'pending' }))
   })
   it('지원자 PII 읽기: 리더·본인 OK / 제3자 차단', async () => {
     await seed(async (db) => {

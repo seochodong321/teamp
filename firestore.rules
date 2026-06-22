@@ -282,6 +282,7 @@ service cloud.firestore {
           (request.auth.uid == uid || request.auth.uid == postLeaderId() || isAdmin());
         allow create: if request.auth != null && request.auth.uid == uid &&
           request.resource.data.userId == uid &&
+          request.resource.data.status == 'pending' &&
           get(/databases/$(database)/documents/matchPosts/$(postId)).data.status == 'open';
         allow update, delete: if request.auth != null &&
           (request.auth.uid == postLeaderId() || isAdmin());
