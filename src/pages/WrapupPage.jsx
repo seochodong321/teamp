@@ -79,8 +79,13 @@ export default function WrapupPage() {
       : Math.round((wrapup.summary.completedTodos / wrapup.summary.totalTodos) * 100)
     : 0
 
+  // 함께한 사람은 사라지지 않게 — 꽃 대상은 랩업 스냅샷(formerMembers 포함) 기준.
+  // wrapup.members는 {userId,name,role}; 레거시 랩업(members 없음)은 현재 멤버로 폴백.
   const myFeedbackTargets = wrapup
-    ? project.members.filter((m) => m.id !== currentUser?.id)
+    ? (wrapup.members?.length
+        ? wrapup.members.map((m) => ({ id: m.userId, name: m.name, role: m.role }))
+        : project.members.map((m) => ({ id: m.id, name: m.name, role: m.role }))
+      ).filter((m) => m.id !== currentUser?.id)
     : []
 
   const getFeedbackFromMe = (toUserId) =>

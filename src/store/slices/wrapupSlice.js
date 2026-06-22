@@ -10,7 +10,7 @@ export const createWrapupSlice = (set, get) => ({
   },
 
   endProject: async (projectId, { collectFeedback, feedbackDuration }) => {
-    const { projects } = get()
+    const { projects, currentUser } = get()
     const project = projects.find((p) => p.id === projectId)
     if (!project) return
 
@@ -137,11 +137,17 @@ export const createWrapupSlice = (set, get) => ({
       wrapupId: wrapupRef.id,
     })
 
-    get().addNotification({
-      type: 'system',
-      text: `🏁 "${project.name}" 프로젝트가 마무리됐어요`,
-      projectId,
-    })
+    // 다른 팀원에게도 마무리를 알린다 — 회고·꽃다발 루프의 시작 신호.
+    // addNotification(로컬)은 본인만 받으므로 멤버에겐 notifyUser(Firestore)로 발행.
+    const wrapupLink = `/project/${projectId}/wrapup`
+    const endText = collectFeedback
+      ? `🏁 "${project.name}" 프로젝트가 마무리됐어요 — 함께한 팀원에게 마음을 전해보세요`
+      : `🏁 "${project.name}" 프로젝트가 마무리됐어요`
+    await Promise.all(
+      project.members
+        .filter((m) => m.id !== currentUser?.id)
+        .map((m) => notifyUser(m.id, { type: 'system', text: endText, projectId, link: wrapupLink }))
+    )
   },
 
   addReflection: async (wrapupId, payload) => {
