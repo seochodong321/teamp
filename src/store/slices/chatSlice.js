@@ -60,7 +60,8 @@ export const createChatSlice = (set, get) => ({
           await notifyUser(otherId, {
             type: 'dm',
             text: `💬 ${currentUser.name}님이 메시지를 보냈어요`,
-            link: `/project/${dm.projectId}/chat/${roomId}`,
+            // projectId 없는 DM은 /project/null/... 깨진 링크 대신 링크 생략
+            link: dm.projectId ? `/project/${dm.projectId}/chat/${roomId}` : undefined,
           })
         } catch (e) {
           console.error('[DM] 상대 재노출 실패:', e)
@@ -251,7 +252,7 @@ export const createChatSlice = (set, get) => ({
     notifyUser(otherUserId, {
       type: 'dm',
       text: `💬 ${currentUser.name}님이 1:1 대화를 시작했어요`,
-      link: `/project/${projectId}/chat/${roomId}`,
+      link: projectId ? `/project/${projectId}/chat/${roomId}` : undefined,
     })
     set((s) => ({
       dmRooms:  { ...s.dmRooms,  [dmKey]: newRoom },

@@ -326,8 +326,9 @@ export default function HomePage() {
             <span className={styles.summaryCardTitle}>📅 나만의 알림</span>
             <button className={styles.summaryCardLink} onClick={() => navigate('/calendar')}>전체 캘린더 →</button>
           </div>
-          {todaySummary.slice(0, 5).map((item, i) => (
-            <div key={i} className={styles.summaryRow} onClick={() => navigate(`/project/${item.pId}`)}>
+          {todaySummary.slice(0, 5).map((item) => (
+            <div key={`${item.pId}-${item.type}-${item.day}-${item.label}`}
+              className={styles.summaryRow} onClick={() => navigate(`/project/${item.pId}`)}>
               <span className={styles.summaryRowIcon}>{ITEM_ICON[item.type]}</span>
               <span className={styles.summaryRowLabel}>{item.label}</span>
               {item.allNames?.length > 0 && (

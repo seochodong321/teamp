@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore'
 import { parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
-import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser, computeLeaderIds, isIndividualRoom } from '../helpers.js'
+import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser, computeLeaderIds, isIndividualRoom, makeDmRoomId, makePersonalDmRoom } from '../helpers.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -440,9 +440,9 @@ export const createProjectSlice = (set, get) => ({
     if (!project) return { success: false }
     if (project.members.find((m) => m.id === userId)) return { success: false, message: '이미 멤버예요' }
     const allRoomId    = project.rooms.find((r) => r.name === '전체')?.id
-    const personalDmId = `room_dm_${projectId}_${userId}`
+    const personalDmId = makeDmRoomId(projectId, userId)
     const alreadyHasDm = project.rooms.find((r) => r.id === personalDmId)
-    const personalDm   = alreadyHasDm ? null : { id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: userId, lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4] }
+    const personalDm   = alreadyHasDm ? null : makePersonalDmRoom(projectId, userId)
     const newMember    = { id: userId, name: userName, role: 'member', roomIds: [personalDmId, allRoomId].filter(Boolean), memo: '', affiliation: '', email: '' }
     const addPayload   = { members: arrayUnion(newMember), memberIds: arrayUnion(userId) }
     if (personalDm) addPayload.rooms = arrayUnion(personalDm)

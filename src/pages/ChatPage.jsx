@@ -127,6 +127,7 @@ export default function ChatPage() {
   const messagesRef   = useRef(null)
   const isInitialRef  = useRef(true)
   const nearBottomRef = useRef(true)
+  const readAckedRef  = useRef(new Set())  // readBy 이미 발행한 메시지 id — 스냅샷마다 중복 쓰기 방지
 
   // ─── iOS PWA 키보드 대응 ──
   // 채팅은 .shell(height: var(--app-height,100dvh)) 안의 flex로 채워짐.
@@ -218,18 +219,23 @@ export default function ChatPage() {
     }
   }, [roomMessages.length, roomId, markAsRead])
 
-  // 읽지 않은 메시지에 readBy 추가 (배치)
+  // 방이 바뀌면 readBy 발행 기록 초기화
+  useEffect(() => { readAckedRef.current = new Set() }, [roomId])
+
+  // 읽지 않은 메시지에 readBy 추가 (배치) — 이미 발행한 id는 건너뛰어 스냅샷마다 재쓰기 방지
   useEffect(() => {
     if (!currentUser?.id) return
-    const unread = roomMessages.filter(
-      (m) => m.id && m.senderId !== currentUser.id && !(m.readBy || []).includes(currentUser.id)
-    )
-    if (!unread.length) return
+    const ids = roomMessages
+      .filter((m) => m.id && m.senderId !== currentUser.id
+        && !(m.readBy || []).includes(currentUser.id)
+        && !readAckedRef.current.has(m.id))
+      .slice(-30)
+      .map((m) => m.id)
+    if (!ids.length) return
+    ids.forEach((id) => readAckedRef.current.add(id))  // 낙관적 — 인플라이트 중복 방지
     const batch = writeBatch(db)
-    unread.slice(-30).forEach((m) => {
-      batch.update(doc(db, 'rooms', roomId, 'messages', m.id), { readBy: arrayUnion(currentUser.id) })
-    })
-    batch.commit().catch(() => {})
+    ids.forEach((id) => batch.update(doc(db, 'rooms', roomId, 'messages', id), { readBy: arrayUnion(currentUser.id) }))
+    batch.commit().catch(() => { ids.forEach((id) => readAckedRef.current.delete(id)) })  // 실패 시 롤백 → 다음 스냅샷 재시도
   }, [roomMessages, roomId, currentUser?.id])
 
   // ─── 핸들러 ────────────────────────────────────────────────────

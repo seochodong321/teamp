@@ -3,7 +3,7 @@ import {
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
-import { ROOM_COLORS, todayStr, notifyUser } from '../helpers.js'
+import { todayStr, notifyUser, makeDmRoomId, makePersonalDmRoom } from '../helpers.js'
 
 export const createInviteSlice = (set, get) => ({
   invites: [],
@@ -21,9 +21,9 @@ export const createInviteSlice = (set, get) => ({
         const project = { id: docSnap.id, ...docSnap.data() }
         if (!project.members.find((m) => m.id === currentUser.id)) {
           const allRoomId     = project.rooms.find((r) => r.name === '전체')?.id
-          const personalDmId  = `room_dm_${project.id}_${currentUser.id}`
+          const personalDmId  = makeDmRoomId(project.id, currentUser.id)
           const alreadyHasDm  = project.rooms.find((r) => r.id === personalDmId)
-          const personalDm    = alreadyHasDm ? null : { id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id, lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4] }
+          const personalDm    = alreadyHasDm ? null : makePersonalDmRoom(project.id, currentUser.id)
           const newMember     = { id: currentUser.id, name: currentUser.name, role: 'member', roomIds: [personalDmId, allRoomId].filter(Boolean), memo: '', affiliation: currentUser.affiliation || '', email: currentUser.email || '' }
           const updatePayload = { members: arrayUnion(newMember), memberIds: arrayUnion(currentUser.id) }
           if (personalDm) updatePayload.rooms = arrayUnion(personalDm)
@@ -140,12 +140,9 @@ export const createInviteSlice = (set, get) => ({
     }
 
     const allRoomId    = project.rooms.find((r) => r.name === '전체')?.id
-    const personalDmId = `room_dm_${project.id}_${currentUser.id}`
+    const personalDmId = makeDmRoomId(project.id, currentUser.id)
     const alreadyHasDm = project.rooms.find((r) => r.id === personalDmId)
-    const personalDm   = alreadyHasDm ? null : {
-      id: personalDmId, name: '나와의 채팅', isDm: true, ownerId: currentUser.id,
-      lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '', ...ROOM_COLORS[4],
-    }
+    const personalDm   = alreadyHasDm ? null : makePersonalDmRoom(project.id, currentUser.id)
     const newMember  = {
       id: currentUser.id, name: currentUser.name, role: 'member',
       roomIds: [personalDmId, allRoomId].filter(Boolean),

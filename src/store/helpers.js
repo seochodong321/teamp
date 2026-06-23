@@ -145,6 +145,15 @@ export const ROOM_COLORS = [
   { color: '#854F0B', colorBg: '#FAEEDA' },
 ]
 
+// 개인 '나와의 채팅' 방 — 결정론적 id(중복 방지)로 합류/추가 시 생성. DM 방 ID 규약: room_dm_{projectId}_{userId}
+export const makeDmRoomId = (projectId, userId) => `room_dm_${projectId}_${userId}`
+export const makePersonalDmRoom = (projectId, userId) => ({
+  id: makeDmRoomId(projectId, userId),
+  name: '나와의 채팅', isDm: true, ownerId: userId,
+  lastMessage: '나만 보는 메모 공간이에요', unread: 0, time: '',
+  ...ROOM_COLORS[4],
+})
+
 // 로컬(기기 시간대) 기준 YYYY-MM-DD — toISOString()은 UTC라 KST 자정~9시에 하루 어긋난다
 export const localDateStr = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
