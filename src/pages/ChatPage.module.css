@@ -213,7 +213,7 @@
 .dmMuteBtn { font-size: 14px; line-height: 1; width: 32px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; transition: all 0.15s; }
 .dmMuteBtn:hover { border-color: var(--primary); }
 .dmLeaveBtn { font-size: 12px; color: var(--text-tertiary); padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-full); background: transparent; white-space: nowrap; transition: all 0.15s; }
-.dmLeaveBtn:hover { border-color: #E24B4A; color: #E24B4A; }
+.dmLeaveBtn:hover { border-color: var(--coral); color: var(--coral); }
 /* 아바타 클릭 → 미니 프로필 카드 */
 .avatarClickable { cursor: pointer; transition: opacity 0.12s; }
 .avatarClickable:hover { opacity: 0.8; }
@@ -265,20 +265,20 @@
 .ppNoteBtn:hover { border-color: var(--primary); color: var(--primary); }
 .ppFooter { display: flex; justify-content: flex-end; border-top: 1px solid var(--border-light); padding-top: 8px; margin-top: 2px; }
 .ppBlockBtn { font-size: 11px; color: var(--text-tertiary); background: transparent; border: none; padding: 2px 4px; border-radius: 4px; transition: color 0.12s; }
-.ppBlockBtn:hover { color: #E24B4A; }
-.ppUnblockBtn { font-size: 11px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 3px 10px; transition: background 0.12s; }
-.ppUnblockBtn:hover { background: #FDEDED; }
+.ppBlockBtn:hover { color: var(--coral); }
+.ppUnblockBtn { font-size: 11px; font-weight: 600; color: var(--coral); background: var(--coral-soft); border: 1px solid var(--coral-light); border-radius: var(--radius-full); padding: 3px 10px; transition: background 0.12s; }
+.ppUnblockBtn:hover { background: var(--coral-light); }
 /* 하단 상태 바 (차단했을 때) */
 .chatBlockedBar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 20px; border-top: 1px solid var(--border-light); background: var(--bg-secondary); font-size: 13px; color: var(--text-secondary); flex-shrink: 0; }
-.unblockBtn { font-size: 12px; font-weight: 600; color: #E24B4A; background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
-.unblockBtn:hover { background: #FDEDED; }
+.unblockBtn { font-size: 12px; font-weight: 600; color: var(--coral); background: var(--coral-soft); border: 1px solid var(--coral-light); border-radius: var(--radius-full); padding: 5px 16px; transition: all 0.15s; white-space: nowrap; }
+.unblockBtn:hover { background: var(--coral-light); }
 .leaveBackdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .leaveModal { background: var(--bg); border-radius: var(--radius-xl); padding: 24px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow-xl); }
 .leaveTitle { font-size: 15px; font-weight: 700; color: var(--text); }
 .leaveDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 .leaveBtns { display: flex; gap: 8px; margin-top: 4px; }
 .leaveCancelBtn { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
-.leaveConfirmBtn { flex: 1; height: 40px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.leaveConfirmBtn { flex: 1; height: 40px; background: var(--coral); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 .leaveConfirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ⚠️ 모바일 오버라이드는 파일 끝에 — base 규칙(.header·.inputArea 등)보다 뒤여야

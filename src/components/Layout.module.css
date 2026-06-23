@@ -151,7 +151,7 @@
 .navMenuBadge {
   font-size: 9px;
   font-weight: 700;
-  background: var(--coral, #E24B4A);
+  background: var(--coral);
   color: white;
   padding: 1px 5px;
   border-radius: 6px;
@@ -446,7 +446,7 @@
   color: var(--text-tertiary); border: 1px solid transparent;
   transition: all var(--transition-fast);
 }
-.logoutBtn:hover { background: #FEE2E2; color: #DC2626; border-color: #FECACA; }
+.logoutBtn:hover { background: var(--coral-soft); color: var(--coral); border-color: var(--coral-light); }
 
 /* 검색 버튼 */
 .searchBtn {

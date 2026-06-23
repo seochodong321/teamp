@@ -356,9 +356,9 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #92210F;
-  background: #FEE2E2;
-  border: 1px solid #FECACA;
+  color: var(--coral);
+  background: var(--coral-soft);
+  border: 1px solid var(--coral-light);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   line-height: 1.5;

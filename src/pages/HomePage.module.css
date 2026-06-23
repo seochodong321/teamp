@@ -557,8 +557,8 @@
   transition: all 0.15s;
 }
 .cardArchived:hover .deleteBtn { opacity: 1; }
-.deleteBtn:hover { border-color: #E24B4A; color: #E24B4A; background: #FCEBEB; }
-.deleteConfirmBtn { padding: 9px 20px; background: #E24B4A; color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.deleteBtn:hover { border-color: var(--coral); color: var(--coral); background: var(--coral-soft); }
+.deleteConfirmBtn { padding: 9px 20px; background: var(--coral); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 
 /* ── 오늘·내일 일정 요약 카드 ── */
 .summaryCard {

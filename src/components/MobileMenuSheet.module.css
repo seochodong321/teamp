@@ -140,8 +140,8 @@
 
 .badgeNew {
   font-size: 9px; font-weight: 700;
-  background: var(--coral, #E24B4A); color: white;
+  background: var(--coral); color: white;
   padding: 2px 6px; border-radius: 6px; flex-shrink: 0;
 }
 
-.menuItemDanger .menuName { color: #E24B4A; }
+.menuItemDanger .menuName { color: var(--coral); }
