@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, addDoc, updateDoc, setDoc, doc, getDoc, orderBy, query, serverTimestamp } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../firebase.js'
 import { fetchUserProfile, fetchPublicProjects } from '../services/users.js'
+import { fetchMyApplication, fetchMatchPosts, createMatchPost, applyToMatchPost, setApplicantStatus, closeMatchPost } from '../services/match.js'
 import { useStore } from '../store/useStore.js'
 import { useShallow } from 'zustand/react/shallow'
-import { notifyUser, todayStr } from '../store/helpers.js'
+import { notifyUser } from '../store/helpers.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
+import PostFormModal from '../components/match/PostFormModal.jsx'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './MatchPage.module.css'
 
@@ -16,7 +16,6 @@ import styles from './MatchPage.module.css'
 //   allow create, update: if request.auth != null;
 // }
 
-const SKILL_PRESETS = ['React', 'Vue', 'Node.js', 'Python', 'Java', 'Spring', 'Flutter', 'iOS', 'Android', 'UI/UX', '기획', '마케팅']
 
 function calcDday(deadline) {
   const today = new Date(new Date().toDateString())
@@ -93,50 +92,21 @@ export default function MatchPage() {
     if (!selected || !currentUser || selected.leaderId === currentUser.id) { setMyApplication(null); return }
     const fromArray = myEntry(selected.applicants) // 과도기: 옛 배열
     if (fromArray) { setMyApplication(fromArray); return }
-    getDoc(doc(db, 'matchPosts', selected.id, 'applicants', currentUser.id))
-      .then((d) => setMyApplication(d.exists() ? d.data() : null))
+    fetchMyApplication(selected.id, currentUser.id)
+      .then(setMyApplication)
       .catch(() => setMyApplication(null))
   }, [selected?.id, currentUser?.id])
 
   const fetchPosts = async () => {
     setLoading(true)
     try {
-      const snap    = await getDocs(query(collection(db, 'matchPosts'), orderBy('createdAt', 'desc')))
-      const today   = todayStr()
-      const blocked = useStore.getState().blockedUsers || []
-      const uid     = useStore.getState().currentUser?.id
-      const validOpen   = []
-      const validClosed = []
-
-      await Promise.all(snap.docs.map(async (d) => {
-        const data = { id: d.id, ...d.data() }
-        const expired = data.deadline && data.deadline < today
-        // 기한 지난 내 open 모집글은 삭제하지 않고 '마감'으로 전환해 보관(지원자 note 기록 보존)
-        if (expired && data.status === 'open' && data.leaderId === uid) {
-          try { await updateDoc(doc(db, 'matchPosts', d.id), { status: 'closed' }) } catch {}
-          data.status = 'closed'
-        }
-        if (!data.deadline) return  // 기한 없는 비정상 글은 목록에서만 제외(삭제하지 않음)
-        if (data.status === 'open' && !expired && !blocked.includes(data.leaderId)) validOpen.push(data)
-        if (data.status === 'closed' && data.leaderId === uid) validClosed.push(data)
-      }))
-
-      // 내 모집글의 지원자는 서브컬렉션(리더만 열람)에서 로드 — 과도기엔 옛 배열도 병합
-      await Promise.all([...validOpen, ...validClosed]
-        .filter((p) => p.leaderId === uid)
-        .map(async (p) => {
-          try {
-            const aSnap = await getDocs(collection(db, 'matchPosts', p.id, 'applicants'))
-            const merged = aSnap.docs.map((d) => d.data())
-            ;(p.applicants || []).forEach((a) => { if (!merged.find((m) => m.userId === a.userId)) merged.push(a) })
-            p.applicants = merged
-          } catch { /* 못 읽으면 기존 값 유지 */ }
-        }))
-
-      const sorted = validOpen.sort((a, b) => (b.deadline > a.deadline ? 1 : -1))
-      setPosts(sorted)
-      setClosedMyPosts(validClosed)
-      return sorted
+      const { open, closedMine } = await fetchMatchPosts({
+        uid: useStore.getState().currentUser?.id,
+        blockedUsers: useStore.getState().blockedUsers || [],
+      })
+      setPosts(open)
+      setClosedMyPosts(closedMine)
+      return open
     } catch (e) {
       console.error('matchPosts 로드 실패:', e)
       return []
@@ -152,7 +122,7 @@ export default function MatchPage() {
     setFormSubmitting(true)
     setFormError('')
     try {
-      await addDoc(collection(db, 'matchPosts'), {
+      await createMatchPost({
         projectId: formProject,
         projectName: project.name,
         projectEmoji: project.emoji || '📁',
@@ -166,9 +136,6 @@ export default function MatchPage() {
         deadline: formDeadline,
         visibility: formVisibility,
         keywords: formVisibility === 'keyword' ? formKeywords : [],
-        applicantCount: 0,
-        status: 'open',
-        createdAt: serverTimestamp(),
       })
       setShowForm(false)
       setFormTitle(''); setFormDesc(''); setFormSkills([]); setFormProject(''); setFormDeadline('')
@@ -197,8 +164,7 @@ export default function MatchPage() {
         status: 'pending',
         note: note.trim(),
       }
-      // 지원자 PII는 본인전용 서브문서(matchPosts/{id}/applicants/{uid}) — 리더와 본인만 열람
-      await setDoc(doc(db, 'matchPosts', post.id, 'applicants', currentUser.id), application)
+      await applyToMatchPost(post.id, currentUser.id, application)
       setMyApplication(application)
       // 모집글 리더에게 새 지원 알림 (배지 카운트는 서버 함수가 증가)
       if (post.leaderId && post.leaderId !== currentUser.id) {
@@ -249,7 +215,7 @@ export default function MatchPage() {
     const result = await addMemberToProject(post.projectId, applicant.userId, applicant.userName)
     if (result?.message) { showError(result.message); return }
 
-    await updateDoc(doc(db, 'matchPosts', post.id, 'applicants', applicant.userId), { status: 'accepted' }).catch(() => {})
+    await setApplicantStatus(post.id, applicant.userId, 'accepted')
     // 지원자에게 수락 알림
     if (applicant.userId && applicant.userId !== currentUser.id) {
       await notifyUser(applicant.userId, {
@@ -265,7 +231,7 @@ export default function MatchPage() {
   }
 
   const handleHold = async (post, applicant) => {
-    await updateDoc(doc(db, 'matchPosts', post.id, 'applicants', applicant.userId), { status: 'held' }).catch(() => {})
+    await setApplicantStatus(post.id, applicant.userId, 'held')
     const updated = await fetchPosts()
     const fresh = updated?.find((p) => p.id === post.id)
     if (fresh) setSelected(fresh)
@@ -274,14 +240,10 @@ export default function MatchPage() {
   const handleClosePost = (postId) => setConfirmClose(postId)
 
   const doClosePost = async () => {
-    await updateDoc(doc(db, 'matchPosts', confirmClose), { status: 'closed' })
+    await closeMatchPost(confirmClose)
     setConfirmClose(null)
     fetchPosts()
     setSelected(null)
-  }
-
-  const toggleSkill = (skill) => {
-    setFormSkills((prev) => prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill])
   }
 
   const q = searchQuery.trim().toLowerCase()
@@ -570,132 +532,19 @@ export default function MatchPage() {
 
       {/* 모집글 작성 모달 */}
       {showForm && (
-        <div className={styles.backdrop} onClick={() => !formSubmitting && setShowForm(false)}>
-          <div className={styles.formModal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.formModalHeader}>
-              <h3 className={styles.formModalTitle}>팀원 모집글 작성</h3>
-              <button className={styles.formClose} onClick={() => setShowForm(false)}>✕</button>
-            </div>
-            <div className={styles.formBody}>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>프로젝트 선택 *</label>
-                <select className={styles.formSelect} value={formProject} onChange={(e) => setFormProject(e.target.value)}>
-                  <option value="">프로젝트를 선택하세요</option>
-                  {myLeaderProjects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.emoji} {p.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>모집 제목 *</label>
-                <input className={styles.formInput} value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="예) 프론트엔드 개발자 구합니다" />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>상세 설명</label>
-                <textarea className={styles.formTextarea} value={formDesc} onChange={(e) => setFormDesc(e.target.value)} placeholder="프로젝트 소개, 원하는 팀원 유형 등을 자유롭게 적어주세요" rows={4} />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>모집 기한 *</label>
-                <input className={styles.formInput} type="date"
-                  value={formDeadline}
-                  min={todayStr()}
-                  onChange={(e) => setFormDeadline(e.target.value)} />
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>공개 설정</label>
-                <div className={styles.visibilityBtns}>
-                  <button type="button"
-                    className={`${styles.visBtn} ${formVisibility === 'public' ? styles.visBtnActive : ''}`}
-                    onClick={() => setFormVisibility('public')}>
-                    🌍 전체공개
-                  </button>
-                  <button type="button"
-                    className={`${styles.visBtn} ${formVisibility === 'keyword' ? styles.visBtnActive : ''}`}
-                    onClick={() => setFormVisibility('keyword')}>
-                    🔍 부분공개
-                  </button>
-                </div>
-                {formVisibility === 'keyword' && (
-                  <div className={styles.keywordSection}>
-                    <p className={styles.visNotice}>오픈 풀에는 반영되지 않아요. 키워드 검색 시에만 노출돼요.</p>
-                    <input
-                      className={styles.formInput}
-                      value={formCustomKeyword}
-                      onChange={(e) => setFormCustomKeyword(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.nativeEvent.isComposing && formCustomKeyword.trim()) {
-                          e.preventDefault()
-                          setFormKeywords((prev) => [...new Set([...prev, formCustomKeyword.trim()])])
-                          setFormCustomKeyword('')
-                        }
-                      }}
-                      placeholder="키워드 입력 후 Enter (예: 영화, 스크립터)"
-                    />
-                    {formKeywords.length > 0 && (
-                      <div className={`${styles.skillTags} ${styles.skillTagsMt}`}>
-                        {formKeywords.map((k) => (
-                          <button key={k} className={`${styles.skillTag} ${styles.skillTagRemove}`}
-                            onClick={() => setFormKeywords((prev) => prev.filter((x) => x !== k))}>
-                            {k} ✕
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className={styles.formField}>
-                <label className={styles.formLabel}>필요 스킬</label>
-                <div className={styles.skillPresets}>
-                  {SKILL_PRESETS.map((s) => (
-                    <button key={s} type="button"
-                      className={`${styles.skillPresetBtn} ${formSkills.includes(s) ? styles.skillPresetActive : ''}`}
-                      onClick={() => toggleSkill(s)}>{s}</button>
-                  ))}
-                </div>
-                <div className={styles.customSkillRow}>
-                  <input className={styles.formInput} value={formCustomSkill}
-                    onChange={(e) => setFormCustomSkill(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.nativeEvent.isComposing && formCustomSkill.trim()) {
-                        e.preventDefault()
-                        setFormSkills((prev) => [...new Set([...prev, formCustomSkill.trim()])])
-                        setFormCustomSkill('')
-                      }
-                    }}
-                    placeholder="직접 입력 후 Enter" />
-                </div>
-                {formSkills.length > 0 && (
-                  <div className={`${styles.skillTags} ${styles.skillTagsMtMd}`}>
-                    {formSkills.map((s) => (
-                      <button key={s} className={`${styles.skillTag} ${styles.skillTagRemove}`}
-                        onClick={() => setFormSkills((prev) => prev.filter((x) => x !== s))}>
-                        {s} ✕
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            {formError && <p className={styles.formError}>{formError}</p>}
-            {(!formProject || !formTitle.trim() || !formDeadline) && (
-              <p className={styles.formHint}>
-                필수 항목을 채워주세요: {[
-                  !formProject      && '프로젝트 선택',
-                  !formTitle.trim() && '모집 제목',
-                  !formDeadline     && '모집 기한',
-                ].filter(Boolean).join(' · ')}
-              </p>
-            )}
-            <div className={styles.formFooter}>
-              <button className={styles.cancelBtn} onClick={() => setShowForm(false)}>취소</button>
-              <button className={styles.submitBtn} onClick={handleCreatePost}
-                disabled={!formTitle.trim() || !formProject || !formDeadline || formSubmitting}>
-                {formSubmitting ? '등록 중...' : '모집글 등록'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <PostFormModal
+          form={{
+            formProject, setFormProject, formTitle, setFormTitle, formDesc, setFormDesc,
+            formDeadline, setFormDeadline, formVisibility, setFormVisibility,
+            formKeywords, setFormKeywords, formCustomKeyword, setFormCustomKeyword,
+            formSkills, setFormSkills, formCustomSkill, setFormCustomSkill,
+          }}
+          myLeaderProjects={myLeaderProjects}
+          submitting={formSubmitting}
+          error={formError}
+          onClose={() => setShowForm(false)}
+          onSubmit={handleCreatePost}
+        />
       )}
 
       {/* 지원하기 모달 */}
