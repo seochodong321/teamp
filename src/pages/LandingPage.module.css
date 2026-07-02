@@ -17,7 +17,7 @@
 .navScrolled {
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
-  box-shadow: 0 1px 0 #e8e6f8;
+  box-shadow: 0 1px 0 #E9E7F2;
 }
 .navInner {
   max-width: 1120px;
@@ -37,7 +37,7 @@
 .navLogoText {
   font-size: 18px;
   font-weight: 800;
-  color: #534AB7;
+  color: var(--primary);
   letter-spacing: -0.3px;
 }
 .navActions {
@@ -51,14 +51,14 @@
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: #534AB7;
+  color: var(--primary);
   cursor: pointer;
   border-radius: 8px;
   transition: background 0.18s;
 }
-.navLogin:hover { background: #f0eeff; }
+.navLogin:hover { background: var(--primary-soft); }
 .navCta {
-  background: #534AB7;
+  background: var(--primary);
   border: none;
   padding: 8px 18px;
   font-size: 14px;
@@ -68,7 +68,7 @@
   cursor: pointer;
   transition: background 0.18s, transform 0.15s;
 }
-.navCta:hover { background: #453d9e; transform: translateY(-1px); }
+.navCta:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
 /* ─── Hero ─── */
 .hero {
@@ -79,7 +79,7 @@
   justify-content: center;
   text-align: center;
   padding: 80px 24px 60px;
-  background: linear-gradient(160deg, #faf9ff 0%, #f0eeff 55%, #fff 100%);
+  background: linear-gradient(160deg, #FBFAFE 0%, #F1EFF9 55%, #fff 100%);
   position: relative;
   overflow: hidden;
 }
@@ -97,7 +97,7 @@
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
-  background: radial-gradient(circle, #7c6fde 0%, #b8aef7 80%, transparent 100%);
+  background: radial-gradient(circle, #6A5FD0 0%, #B5ACF0 80%, transparent 100%);
   opacity: 0.35;
   animation: float var(--dur) var(--delay) ease-in-out infinite alternate;
 }
@@ -109,8 +109,8 @@
 
 .heroBadge {
   display: inline-block;
-  background: #ece9ff;
-  color: #534AB7;
+  background: var(--primary-light);
+  color: var(--primary);
   font-size: 13px;
   font-weight: 700;
   padding: 6px 16px;
@@ -123,7 +123,7 @@
   font-weight: 900;
   line-height: 1;
   letter-spacing: -6px;
-  background: linear-gradient(135deg, #3b35a0 0%, #7c6fde 60%, #b8aef7 100%);
+  background: linear-gradient(135deg, #2B2470 0%, #5C52BD 55%, #9C92E8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -132,7 +132,7 @@
 .heroTagline {
   font-size: clamp(18px, 3vw, 26px);
   font-weight: 700;
-  color: #534AB7;
+  color: var(--primary);
   letter-spacing: -0.5px;
   margin: 0 0 24px;
   opacity: 0.8;
@@ -152,7 +152,7 @@
   margin-bottom: 52px;
 }
 .heroBtn {
-  background: #534AB7;
+  background: var(--primary);
   color: #fff;
   border: none;
   padding: 16px 36px;
@@ -164,13 +164,13 @@
   transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
 }
 .heroBtn:hover {
-  background: #453d9e;
+  background: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(83, 74, 183, 0.4);
 }
 .heroBtnSecondary {
   background: #fff;
-  color: #534AB7;
+  color: var(--primary);
   border: 2px solid #c5bff5;
   padding: 15px 32px;
   font-size: 16px;
@@ -180,7 +180,7 @@
   transition: border-color 0.18s, background 0.18s, transform 0.15s;
 }
 .heroBtnSecondary:hover {
-  border-color: #534AB7;
+  border-color: var(--primary);
   background: #f8f6ff;
   transform: translateY(-2px);
 }
@@ -189,7 +189,7 @@
   align-items: center;
   gap: 0;
   background: rgba(255,255,255,0.8);
-  border: 1.5px solid #e8e6f8;
+  border: 1.5px solid #E9E7F2;
   border-radius: 16px;
   padding: 16px 32px;
   backdrop-filter: blur(8px);
@@ -204,7 +204,7 @@
 .heroStat strong {
   font-size: 15px;
   font-weight: 800;
-  color: #534AB7;
+  color: var(--primary);
 }
 .heroStat span {
   font-size: 12px;
@@ -233,7 +233,7 @@
   width: 4px;
   height: 8px;
   border-radius: 2px;
-  background: #534AB7;
+  background: var(--primary);
   animation: scrollBob 1.6s ease-in-out infinite;
 }
 @keyframes scrollBob {
@@ -259,7 +259,7 @@
 .sectionEyebrow {
   font-size: 13px;
   font-weight: 700;
-  color: #534AB7;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   margin: 0 0 12px;
@@ -296,7 +296,7 @@
 }
 .painCard {
   background: #fff;
-  border: 1.5px solid #e8e6f8;
+  border: 1.5px solid #E9E7F2;
   border-radius: 20px;
   padding: 32px 28px;
   text-align: center;
@@ -309,10 +309,10 @@
 }
 .painEmoji { font-size: 40px; display: block; margin-bottom: 16px; }
 .painTitle { font-size: 17px; font-weight: 800; color: #1a1733; margin: 0 0 12px; }
-.painLine1 { font-size: 13px; color: #534AB7; font-weight: 600; line-height: 1.5; margin: 0 0 6px; }
+.painLine1 { font-size: 13px; color: var(--primary); font-weight: 600; line-height: 1.5; margin: 0 0 6px; }
 .painLine2 { font-size: 13px; color: #7a76a0; line-height: 1.65; margin: 0; }
 .painAnswer {
-  background: linear-gradient(135deg, #534AB7 0%, #7c6fde 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #7A70D4 100%);
   border-radius: 16px;
   padding: 24px 32px;
   display: flex;
@@ -352,7 +352,7 @@
 .flowNum {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, #534AB7 0%, #7c6fde 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #7A70D4 100%);
   color: #fff;
   font-size: 15px;
   font-weight: 900;
@@ -385,7 +385,7 @@
 }
 .actCard {
   background: #fff;
-  border: 1.5px solid #e8e6f8;
+  border: 1.5px solid #E9E7F2;
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(83, 74, 183, 0.07);
@@ -409,7 +409,7 @@
   flex-shrink: 0;
   width: 52px;
   height: 52px;
-  background: #f0eeff;
+  background: var(--primary-soft);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -428,8 +428,8 @@
 .actCardCategory {
   font-size: 11px;
   font-weight: 700;
-  color: #534AB7;
-  background: #ece9ff;
+  color: var(--primary);
+  background: var(--primary-light);
   padding: 3px 10px;
   border-radius: 8px;
   display: inline-block;
@@ -455,7 +455,7 @@
   width: 28px;
   height: 28px;
   font-size: 15px;
-  background: #f0eeff;
+  background: var(--primary-soft);
   border-radius: 50%;
   border: 2px solid #fff;
   display: flex;
@@ -476,7 +476,7 @@
   align-items: flex-start;
   gap: 10px;
   background: #f8f6ff;
-  border: 1px solid #e8e6f8;
+  border: 1px solid #E9E7F2;
   border-radius: 12px;
   padding: 12px 14px;
   margin-top: auto;
@@ -491,7 +491,7 @@
 .actCardActText strong { color: #1a1733; font-weight: 800; }
 .actCardActDetail {
   font-size: 12px;
-  color: #534AB7;
+  color: var(--primary);
   font-weight: 600;
   margin: 0;
   white-space: nowrap;
@@ -519,7 +519,7 @@
   left: 50%;
   top: 0; bottom: 0;
   width: 2px;
-  background: linear-gradient(to bottom, #e8e6f8 0%, #534AB7 40%, #534AB7 80%, #e8e6f8 100%);
+  background: linear-gradient(to bottom, #E9E7F2 0%, var(--primary) 40%, var(--primary) 80%, #E9E7F2 100%);
   transform: translateX(-50%);
 }
 .msItem {
@@ -538,7 +538,7 @@
 }
 .msCard {
   background: #fff;
-  border: 1.5px solid #e8e6f8;
+  border: 1.5px solid #E9E7F2;
   border-radius: 14px;
   padding: 16px 20px;
   min-width: 200px;
@@ -546,13 +546,13 @@
   transition: box-shadow 0.2s, transform 0.2s;
 }
 .msCard:hover { box-shadow: 0 6px 20px rgba(83, 74, 183, 0.14); transform: translateY(-2px); }
-.ms_done { border-color: #534AB7; background: #f8f6ff; }
-.ms_current { border-color: #534AB7; box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.15); }
+.ms_done { border-color: var(--primary); background: #f8f6ff; }
+.ms_current { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.15); }
 .ms_future { border-color: #ddd; opacity: 0.7; }
 .msCardStatus {
   font-size: 11px;
   font-weight: 700;
-  color: #534AB7;
+  color: var(--primary);
   display: block;
   margin-bottom: 6px;
 }
@@ -567,9 +567,9 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #534AB7;
+  background: var(--primary);
   border: 2px solid #fff;
-  box-shadow: 0 0 0 2px #534AB7;
+  box-shadow: 0 0 0 2px var(--primary);
 }
 .ms_future + .msDot { background: #ddd; box-shadow: 0 0 0 2px #ddd; }
 .msWrapupHint {
@@ -577,7 +577,7 @@
   align-items: center;
   gap: 12px;
   justify-content: center;
-  background: linear-gradient(135deg, #534AB7 0%, #7c6fde 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #7A70D4 100%);
   border-radius: 16px;
   padding: 20px 32px;
   color: #fff;
@@ -613,7 +613,7 @@
 .matchTag {
   background: #fff;
   border: 1.5px solid #d4cffe;
-  color: #534AB7;
+  color: var(--primary);
   font-size: 13px;
   font-weight: 700;
   padding: 7px 16px;
@@ -622,7 +622,7 @@
   transition: background 0.18s, border-color 0.18s;
   cursor: default;
 }
-.matchTag:hover { background: #f0eeff; border-color: #534AB7; }
+.matchTag:hover { background: var(--primary-soft); border-color: var(--primary); }
 .connectAvatars {
   display: flex;
   align-items: center;
@@ -633,7 +633,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #f0eeff;
+  background: var(--primary-soft);
   border: 2px solid #fff;
   display: flex;
   align-items: center;
@@ -688,7 +688,7 @@
 .capsuleMeta span { font-size: 12px; color: #9b97c5; font-weight: 600; }
 
 /* ─── CTA ─── */
-.ctaSection { background: linear-gradient(160deg, #534AB7 0%, #2d2580 100%); color: #fff; }
+.ctaSection { background: linear-gradient(160deg, var(--primary) 0%, #2d2580 100%); color: #fff; }
 .ctaInner { text-align: center; max-width: 600px; margin: 0 auto; }
 .ctaEyebrow {
   font-size: 13px;
@@ -715,7 +715,7 @@
 }
 .ctaBtn {
   background: #fff;
-  color: #534AB7;
+  color: var(--primary);
   border: none;
   padding: 18px 48px;
   font-size: 17px;
@@ -745,7 +745,7 @@
 .footerInner { max-width: 1080px; margin: 0 auto; }
 .footerLogo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
 .footerLogoText { font-size: 18px; font-weight: 800; color: #B8AEF7; letter-spacing: -0.3px; }
-.footerTagline { font-size: 13px; color: #534AB7; opacity: 0.7; margin: 0 0 12px; }
+.footerTagline { font-size: 13px; color: var(--primary); opacity: 0.7; margin: 0 0 12px; }
 .footerCopy { font-size: 12px; color: #4a4670; margin: 0; }
 
 /* ─── 반응형 ─── */

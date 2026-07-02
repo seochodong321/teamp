@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(150deg, #2B2470 0%, #3C3489 35%, #534AB7 65%, #7B6FD4 100%);
+  background: linear-gradient(150deg, #1F1A52 0%, #2B2470 35%, #4B41A6 65%, #7A70D4 100%);
   position: relative;
   overflow: hidden;
   padding: 40px 24px;
