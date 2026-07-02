@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { collection, getDocs, query, where } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
-import { db, auth } from '../firebase.js'
+import { auth } from '../firebase.js'
+import { fetchUserByUsername, fetchMemberProjects } from '../services/users.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import TeampMark from '../components/TeampMark.jsx'
 import ReportModal from '../components/ReportModal.jsx'
@@ -42,18 +42,10 @@ export default function PublicProfilePage() {
     // 1단계: 유저 조회 (실패 → not found)
     let userData = null
     try {
-      let userSnap = await getDocs(
-        query(collection(db, 'users'), where('username', '==', `@${username}`))
-      )
-      if (userSnap.empty) {
-        userSnap = await getDocs(
-          query(collection(db, 'users'), where('username', '==', username))
-        )
-      }
-      if (userSnap.empty) { setNotFound(true); setLoading(false); return null }
-      const raw = userSnap.docs[0].data()
+      const raw = await fetchUserByUsername(username)
+      if (!raw) { setNotFound(true); setLoading(false); return null }
       userData = {
-        id:               userSnap.docs[0].id,
+        id:               raw.id,
         name:             raw.name             || '',
         username:         raw.username         || '',
         oneliner:         raw.oneliner         || '',
@@ -79,14 +71,7 @@ export default function PublicProfilePage() {
 
     // 2단계: 공개 프로젝트 + 꽃다발 태그 (실패해도 프로필은 표시)
     try {
-      const projSnap = await getDocs(
-        query(collection(db, 'projects'),
-          where('memberIds', 'array-contains', userData.id))
-      )
-      const all = projSnap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .filter((p) => !p.isTutorial)
-        .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
+      const all  = await fetchMemberProjects(userData.id)
       const pubs = all.filter((p) => p.isPublic)
       setAllProjects(all)
       setProjects(pubs)

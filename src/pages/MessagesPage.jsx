@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import {
-  collection, addDoc, query, where, onSnapshot,
-  updateDoc, doc, getDocs, serverTimestamp, arrayUnion, arrayRemove,
-} from 'firebase/firestore'
-import { db } from '../firebase.js'
+import { subscribeMyNotes, markNoteRead, createNote, replyToNote, hideNote } from '../services/notes.js'
+import { fetchUserByUsername } from '../services/users.js'
 import { useStore } from '../store/useStore.js'
 import { useShallow } from 'zustand/react/shallow'
 import { notifyUser } from '../store/helpers.js'
@@ -54,20 +51,9 @@ export default function MessagesPage() {
   // 쪽지 목록 실시간 구독
   useEffect(() => {
     if (!currentUser?.id) return
-    const q = query(
-      collection(db, 'notes'),
-      where('participants', 'array-contains', currentUser.id)
-    )
-    const unsub = onSnapshot(q, (snap) => {
-      const sorted = snap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.lastMessageAt?.seconds || 0) - (a.lastMessageAt?.seconds || 0))
-      setNotes(sorted)
-      setLoading(false)
-    }, (err) => {
-      console.error('[notes] 구독 실패:', err)
-      setLoading(false)
-    })
+    const unsub = subscribeMyNotes(currentUser.id,
+      (sorted) => { setNotes(sorted); setLoading(false) },
+      (err) => { console.error('[notes] 구독 실패:', err); setLoading(false) })
     return () => unsub()
   }, [currentUser?.id])
 
@@ -85,11 +71,7 @@ export default function MessagesPage() {
 
   // 쪽지 읽음 처리
   const markRead = async (note) => {
-    if (!note.read?.[currentUser.id]) {
-      await updateDoc(doc(db, 'notes', note.id), {
-        [`read.${currentUser.id}`]: true,
-      }).catch(() => {})
-    }
+    if (!note.read?.[currentUser.id]) await markNoteRead(note.id, currentUser.id)
   }
 
   const selectNote = (note) => {
@@ -105,13 +87,10 @@ export default function MessagesPage() {
     if (!val) { setToUid(null); setToStatus('idle'); return }
     setToStatus('checking')
     try {
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-      if (!snap.empty) {
-        const docId = snap.docs[0].id
-        const d     = snap.docs[0].data()
-        if (docId === currentUser.id) { setToStatus('notfound'); setToUid(null); return }
-        setToUid(docId)
-        setToName(d.name)
+      const found = await fetchUserByUsername(val)
+      if (found && found.id !== currentUser.id) {
+        setToUid(found.id)
+        setToName(found.name)
         setToStatus('found')
       } else {
         setToUid(null); setToStatus('notfound')
@@ -123,7 +102,7 @@ export default function MessagesPage() {
     if (!toUid || !body.trim()) return
     setSending(true)
     try {
-      await addDoc(collection(db, 'notes'), {
+      await createNote({
         participants: [currentUser.id, toUid],
         fromUid: currentUser.id,
         fromName: currentUser.name,
@@ -140,8 +119,6 @@ export default function MessagesPage() {
           text: body.trim(),
           time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
         }],
-        createdAt: serverTimestamp(),
-        lastMessageAt: serverTimestamp(),
         read: { [currentUser.id]: true, [toUid]: false },
       })
       await notifyUser(toUid, {
@@ -165,18 +142,15 @@ export default function MessagesPage() {
     setReplying(true)
     const otherUid = selected.fromUid === currentUser.id ? selected.toUid : selected.fromUid
     try {
-      await updateDoc(doc(db, 'notes', selected.id), {
-        messages: arrayUnion({
+      await replyToNote(selected.id, {
+        uid: currentUser.id,
+        otherUid,
+        message: {
           senderUid: currentUser.id,
           senderName: currentUser.name,
           text: replyText.trim(),
           time: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-        }),
-        lastMessageAt: serverTimestamp(),
-        [`read.${otherUid}`]: false,
-        [`read.${currentUser.id}`]: true,
-        // 상대가 이 쪽지를 삭제(hiddenBy)했어도 새 답장이 오면 다시 보이게
-        hiddenBy: arrayRemove(otherUid),
+        },
       })
       await notifyUser(otherUid, {
         type: 'note',
@@ -196,7 +170,7 @@ export default function MessagesPage() {
   const handleDelete = async (note) => {
     if (!await showConfirm('이 쪽지를 삭제할까요?\n내 쪽지함에서만 사라지고 상대방에게는 그대로 남아요.')) return
     try {
-      await updateDoc(doc(db, 'notes', note.id), { hiddenBy: arrayUnion(currentUser.id) })
+      await hideNote(note.id, currentUser.id)
       setSelected(null)
     } catch {
       showError('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')
