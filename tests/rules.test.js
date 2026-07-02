@@ -130,6 +130,21 @@ describe('rooms 메시지 — 방 접근 자격 검증', () => {
     await assertSucceeds(setDoc(doc(u, 'rooms/legacy_room/messages/m1'), { senderId: 'u1', text: 'ok' }))
   })
 
+  it('메시지 수정 — 남의 메시지는 상호작용 필드만 (텍스트 위조 차단)', async () => {
+    await seedDmAndProject()
+    const a = as('a', 'a@x.com'), b = as('b', 'b@x.com')
+    // 비발신자: 텍스트 수정 차단 (기록 위조)
+    await assertFails(updateDoc(doc(b, 'rooms/r1/messages/m1'), { text: '위조' }))
+    // 비발신자: 상호작용 필드에 텍스트를 섞어도 차단
+    await assertFails(updateDoc(doc(b, 'rooms/r1/messages/m1'), { reactions: {}, text: '몰래' }))
+    // 비발신자: 이모지 반응·읽음·투표는 허용
+    await assertSucceeds(updateDoc(doc(b, 'rooms/r1/messages/m1'), { reactions: { thanks: ['b'] } }))
+    await assertSucceeds(updateDoc(doc(b, 'rooms/r1/messages/m1'), { readBy: ['b'] }))
+    await assertSucceeds(updateDoc(doc(b, 'rooms/r1/messages/m1'), { options: [{ id: 'o1', votes: ['b'] }] }))
+    // 발신자 본인: 전체 수정 가능
+    await assertSucceeds(updateDoc(doc(a, 'rooms/r1/messages/m1'), { text: '수정' }))
+  })
+
   it('방 메타: 멤버만 생성 가능, 비멤버 차단', async () => {
     await seed((db) => setDoc(doc(db, 'projects/p2'), { memberIds: ['a'], leaderId: 'a' }))
     await assertSucceeds(setDoc(doc(as('a', 'a@x.com'), 'rooms/newroom'), { projectId: 'p2' }))

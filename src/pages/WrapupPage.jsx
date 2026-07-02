@@ -97,7 +97,8 @@ export default function WrapupPage() {
 
   // 이번 여정 자랑 카드 — 내가 받은 꽃·함께한 팀원(관계·기여의 기록), 팀프폴리오로 공유
   const myFlowerCount = wrapup?.feedbacks?.filter((f) => f.toUserId === currentUser?.id).length || 0
-  const teammateCount = Math.max(project.members.length - 1, 0)
+  // 함께한 팀원 = 꽃 대상과 동일 기준(랩업 스냅샷, 이탈 멤버 포함) — 숫자 불일치 방지
+  const teammateCount = myFeedbackTargets.length
   const myHandle = (currentUser?.username || '').replace(/^@/, '')
 
   const handleShareTeamfolio = () => {

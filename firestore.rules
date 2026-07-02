@@ -176,7 +176,16 @@ service cloud.firestore {
         allow create: if request.auth != null && canAccessRoom(roomId) &&
           (request.resource.data.senderId == request.auth.uid ||
             request.resource.data.senderId in ['system', 'teamp_bot', 'teampbot']);
-        allow update, delete: if request.auth != null && canAccessRoom(roomId);
+        // 남의 메시지는 상호작용 필드만(투표 options·이모지 reactions·읽음 readBy) —
+        // 텍스트 위조 차단("기여와 관계의 기록" 무결성). 본인 메시지는 전체 수정 가능.
+        allow update: if request.auth != null && canAccessRoom(roomId) && (
+          resource.data.senderId == request.auth.uid ||
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['options', 'reactions', 'readBy'])
+        );
+        // delete는 방 멤버 유지 — 프로젝트 완전삭제(deleteProjectDeep)가 남의 메시지도
+        // 일괄 삭제해야 하고, 레거시 방(메타 없음)은 리더 검증 불가라 좁히면 회귀.
+        allow delete: if request.auth != null && canAccessRoom(roomId);
       }
     }
 
