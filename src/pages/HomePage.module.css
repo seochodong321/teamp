@@ -248,7 +248,7 @@
 .inviteBanner {
   position: relative;
   background:
-    radial-gradient(120% 200% at 100% 0%, var(--rose-light) 0%, transparent 50%),
+    radial-gradient(120% 200% at 100% 0%, var(--coral-light) 0%, transparent 50%),
     radial-gradient(80% 200% at 0% 0%, var(--primary-light) 0%, transparent 60%),
     var(--bg);
   border: 1px solid var(--border);

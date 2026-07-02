@@ -12,12 +12,14 @@ import PollMessage from '../components/chat/PollMessage.jsx'
 import ProfilePopup from '../components/chat/ProfilePopup.jsx'
 import styles from './ChatPage.module.css'
 
+// 5칸 유지 — 슬롯 4·5는 같은 톤(과거 --rose가 --coral의 동일값 별칭이었음).
+// 칸 수를 줄이면 uid 해시 분배가 바뀌어 기존 유저 아바타 색이 흔들린다.
 const USER_COLORS = [
   { bg: 'var(--primary-light)', text: 'var(--primary)' },
   { bg: 'var(--teal-light)',    text: 'var(--teal)' },
   { bg: 'var(--amber-light)',   text: 'var(--amber)' },
   { bg: 'var(--coral-light)',   text: 'var(--coral)' },
-  { bg: 'var(--rose-light)',    text: 'var(--rose)' },
+  { bg: 'var(--coral-light)',   text: 'var(--coral)' },
 ]
 function avatarStyle(userId) {
   if (!userId) return USER_COLORS[0]

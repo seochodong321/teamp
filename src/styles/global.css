@@ -12,7 +12,9 @@
   --primary-soft: #F6F4FE;
   --primary-hover: #5C52BD;
 
-  /* ── 보조 색상 (채도 다운, 잉크 톤) ── */
+  /* ── 의미색 (채도 다운, 잉크 톤) — 역할 규약:
+     teal=성공·완료 / amber=진행·마감 임박·랩업 / coral=위험·파괴적 동작·경고
+     각 -light=옅은 배경/테두리, -soft=가장 옅은 면. 새 의미가 필요하면 여기 추가 ── */
   --teal: #0F6E56;
   --teal-light: #E1F5EE;
   --teal-soft: #F0FAF6;
@@ -26,9 +28,6 @@
   --cal-red: #E5484D;   /* 캘린더 일요일·공휴일 */
   --cal-blue: #3E63DD;  /* 캘린더 토요일 */
   --coral-soft: #FBF1F4;
-
-  --rose: #8A2A55;
-  --rose-light: #F7E9EE;
 
   /* ── 텍스트 ── */
   --text: #13111D;
@@ -105,9 +104,6 @@ html.dark {
   --cal-red: #FF6B6B;
   --cal-blue: #7B9CFF;
   --coral-soft: #1F1218;
-
-  --rose: #F2A0BE;
-  --rose-light: #2A1A24;
 
   --text: #F1EEF8;
   --text-secondary: #B6B1C4;

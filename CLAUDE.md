@@ -31,18 +31,24 @@ React 18 + Vite + CSS Modules + Zustand(persist) + React Router + Firebase(Auth/
 
 ```
 src/
-  App.jsx                 라우터 + Firebase Auth 구독 + lazy import
+  App.jsx                 라우터 셸(107줄) — PrivateRoute + lazy import만
+  app/                    useSession(인증+실시간 구독 수명주기) · useChatToastWatchers(백그라운드 토스트)
+  services/               페이지 밖 Firebase 로직 — users(프로필·공개프로젝트 조회)·birthdays. RN 재사용 경계
+  analytics.js            GA4 track()/initAnalytics — 전부 no-op 폴백(계측이 앱 못 깨뜨림)
   firebase.js             Firebase 설정 + offline persistence + FCM
   store/
     useStore.js           Zustand create(persist) — 8개 슬라이스 조합. 공유 셀렉터(countOwnedProjects 등)
-    helpers.js            txProject·getWeekKey·ROOM_COLORS 등 공유 로직
+    helpers.js            txProject·getWeekKey·ROOM_COLORS·makeDmRoomId 등 공유 로직
     slices/               auth·project·task·chat·invite·wrapup·notification·ui
   components/Layout.jsx    사이드바 + 하단 탭바, ConfirmDialog/ChatToast/ErrorToast 마운트
-  constants.js            ROLE_LABEL·FLOWER_TAGS·커버 프리셋 (공유 상수)
+  components/chat/        PollMessage·ProfilePopup (ChatPage에서 추출)
+  constants.js            ROLE_LABEL·MS_STATUS·FLOWER_TAGS·커버 프리셋 (공유 상수)
   pages/                  Login·Home·Project·Chat·Wrapup·Profile·PublicProfile·Match·Connect·Messages·Calendar·Help·Landing
   pages/project/          BoardTab·GuideTab·ManageTab·MembersTab·MilestonesTab·RoomsTab
 public/  sw.js · firebase-messaging-sw.js · manifest.json · icons/ · splash/
 ```
+- **스토어 구독 규약**: `useStore()` 비선택자 호출 금지 — 항상 `useStore(useShallow((s) => ({...})))` 또는 단일 셀렉터(전체 구독=아무 값 변경에도 리렌더).
+- **의미색 규약**: teal=성공/완료 · amber=진행/마감임박 · coral=위험/파괴적 (global.css 주석 참조).
 
 ## Firebase
 - 프로젝트 ID: `teamp-7923c` (관리 계정은 Firebase 콘솔/메모리 참조 — 문서에 미기재)
