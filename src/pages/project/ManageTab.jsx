@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useStore } from '../../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from '../ProjectPage.module.css'
 
 export default function ManageTab({ project, currentUser, isLeader }) {
-  const { updateMemberRole, setMemberRooms, addCoLeader, kickMember, showConfirm } = useStore()
+  const { updateMemberRole, setMemberRooms, addCoLeader, kickMember, showConfirm } = useStore(useShallow((s) => ({ updateMemberRole: s.updateMemberRole, setMemberRooms: s.setMemberRooms, addCoLeader: s.addCoLeader, kickMember: s.kickMember, showConfirm: s.showConfirm })))
 
   const [pendingRoles, setPendingRoles] = useState({})
   const [pendingRooms, setPendingRooms] = useState({})

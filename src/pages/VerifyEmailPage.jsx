@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { sendEmailVerification, signOut } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './VerifyEmailPage.module.css'
 import TeampMark from '../components/TeampMark.jsx'
 
@@ -20,7 +21,7 @@ const MAIL_LINKS = {
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate()
-  const { login, setNeedsUsernameSetup } = useStore()
+  const { login, setNeedsUsernameSetup } = useStore(useShallow((s) => ({ login: s.login, setNeedsUsernameSetup: s.setNeedsUsernameSetup })))
 
   const [checking,       setChecking]      = useState(false)
   const [resendCooldown, setResendCooldown] = useState(60)

@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from '../ProjectPage.module.css'
 
 export default function RoomsTab({ project, currentUser, visibleRooms, iCanManage }) {
   const navigate = useNavigate()
-  const { addRoom, reorderRooms, formatUnread } = useStore()
+  const { addRoom, reorderRooms, formatUnread } = useStore(useShallow((s) => ({ addRoom: s.addRoom, reorderRooms: s.reorderRooms, formatUnread: s.formatUnread })))
 
   const [dragIdx, setDragIdx]     = useState(null)
   const [dragOrder, setDragOrder] = useState(null)

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useLayoutEffect, useCallback, useEffect } from 'react'
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { getCoverStyle } from '../constants.js'
 import { getGreeting } from '../greetings.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
@@ -22,7 +23,7 @@ export default function HomePage() {
     hiddenProjects, hideProject,
     pinnedId, setPinnedId,
     portfolioNoticeSeen, dismissPortfolioNotice,
-  } = useStore()
+  } = useStore(useShallow((s) => ({ projects: s.projects, currentUser: s.currentUser, invites: s.invites, notifications: s.notifications, acceptInvite: s.acceptInvite, declineInvite: s.declineInvite, getProgress: s.getProgress, isExpired: s.isExpired, archiveProject: s.archiveProject, extendProject: s.extendProject, hiddenProjects: s.hiddenProjects, hideProject: s.hideProject, pinnedId: s.pinnedId, setPinnedId: s.setPinnedId, portfolioNoticeSeen: s.portfolioNoticeSeen, dismissPortfolioNotice: s.dismissPortfolioNotice })))
 
   // 홈 카드 활동 감지 — localStorage에 마지막 클릭 시각 저장
   const [homeSeen, setHomeSeen] = useState(() => {

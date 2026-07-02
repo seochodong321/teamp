@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import ProfileSelector from '../components/ProfileSelector.jsx'
 import TeampMark from '../components/TeampMark.jsx'
 import styles from './JoinPage.module.css'
@@ -8,7 +9,7 @@ import styles from './JoinPage.module.css'
 export default function JoinPage() {
   const { code } = useParams()
   const navigate  = useNavigate()
-  const { isLoggedIn, getProjectByInviteCode, joinProjectByCode, currentUser, profiles } = useStore()
+  const { isLoggedIn, getProjectByInviteCode, joinProjectByCode, currentUser, profiles } = useStore(useShallow((s) => ({ isLoggedIn: s.isLoggedIn, getProjectByInviteCode: s.getProjectByInviteCode, joinProjectByCode: s.joinProjectByCode, currentUser: s.currentUser, profiles: s.profiles })))
 
   const [project, setProject] = useState(null)
   const [status, setStatus]   = useState('idle')

@@ -8,6 +8,7 @@ import { getApp } from 'firebase/app'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { deleteProjectDeep } from '../store/helpers.js'
 import { Navigate } from 'react-router-dom'
 import styles from './AdminPage.module.css'
@@ -722,7 +723,7 @@ function LogsTab() {
 
 // ─── 메인 AdminPage ───────────────────────────────────────────
 export default function AdminPage() {
-  const { currentUser, showError } = useStore()
+  const { currentUser, showError } = useStore(useShallow((s) => ({ currentUser: s.currentUser, showError: s.showError })))
   const [activeTab, setActiveTab] = useState('stats')
   const [pendingReports, setPendingReports] = useState(0)
   const [migrating, setMigrating] = useState(false) // PII 마이그레이션(C1) 진행중 — 훅은 최상단

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './NotificationPanel.module.css'
 
 const TYPE_ICONS = {
@@ -40,7 +41,7 @@ function timeAgo(timestamp) {
 
 export default function NotificationPanel({ open, onClose }) {
   const navigate = useNavigate()
-  const { notifications, markNotificationRead, markAllNotificationsRead, removeNotification, clearAllNotifications, showConfirm } = useStore()
+  const { notifications, markNotificationRead, markAllNotificationsRead, removeNotification, clearAllNotifications, showConfirm } = useStore(useShallow((s) => ({ notifications: s.notifications, markNotificationRead: s.markNotificationRead, markAllNotificationsRead: s.markAllNotificationsRead, removeNotification: s.removeNotification, clearAllNotifications: s.clearAllNotifications, showConfirm: s.showConfirm })))
 
   if (!open) return null
 

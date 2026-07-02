@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './SearchModal.module.css'
 
 function highlight(text, query) {
@@ -17,7 +18,7 @@ function highlight(text, query) {
 }
 
 export default function SearchModal({ open, onClose }) {
-  const { projects, messages } = useStore()
+  const { projects, messages } = useStore(useShallow((s) => ({ projects: s.projects, messages: s.messages })))
   const navigate = useNavigate()
   const inputRef = useRef(null)
   const listRef = useRef(null)

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './ReportModal.module.css'
 
 const REASONS = [
@@ -17,7 +18,7 @@ const REASONS = [
 // targetName: display name for the report
 // extra: 신고 컨텍스트(쪽지 발신/수신/내용 등) — 그대로 report 문서에 병합
 export default function ReportModal({ type, targetId, targetName, extra, onClose }) {
-  const { currentUser, showError } = useStore()
+  const { currentUser, showError } = useStore(useShallow((s) => ({ currentUser: s.currentUser, showError: s.showError })))
   const [reason, setReason]   = useState('')
   const [detail, setDetail]   = useState('')
   const [sending, setSending] = useState(false)

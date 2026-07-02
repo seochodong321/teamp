@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { todayStr } from '../store/helpers.js'
 import styles from './TodoBoard.module.css'
 
@@ -33,7 +34,7 @@ function getAssignees(todo) {
 }
 
 export default function TodoBoard({ project, currentUser }) {
-  const { addTodo, updateTodo, deleteTodo, showConfirm } = useStore()
+  const { addTodo, updateTodo, deleteTodo, showConfirm } = useStore(useShallow((s) => ({ addTodo: s.addTodo, updateTodo: s.updateTodo, deleteTodo: s.deleteTodo, showConfirm: s.showConfirm })))
   const todos = project.todos || []
 
   const [showForm, setShowForm]       = useState(false)

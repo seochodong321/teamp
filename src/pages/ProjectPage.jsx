@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { getWeekKey, todayStr } from '../store/helpers.js'
 import { getCoverStyle, COVER_PRESETS } from '../constants.js'
 import { getDDayLabel, getPhaseBar } from '../utils/phases.js'
@@ -29,7 +30,13 @@ export default function ProjectPage() {
     extendProject, endProject,
     isExpired, setCoverImage, updateProjectInfo, blockedUsers,
     setWeeklyGoalSchedule, addWeeklyGoal, setWeeklyGoalAchieved, showSuccess, showError,
-  } = useStore()
+  } = useStore(useShallow((s) => ({
+    projects: s.projects, currentUser: s.currentUser, connects: s.connects,
+    getProgress: s.getProgress, getVisibleRooms: s.getVisibleRooms, canManage: s.canManage,
+    extendProject: s.extendProject, endProject: s.endProject,
+    isExpired: s.isExpired, setCoverImage: s.setCoverImage, updateProjectInfo: s.updateProjectInfo, blockedUsers: s.blockedUsers,
+    setWeeklyGoalSchedule: s.setWeeklyGoalSchedule, addWeeklyGoal: s.addWeeklyGoal, setWeeklyGoalAchieved: s.setWeeklyGoalAchieved, showSuccess: s.showSuccess, showError: s.showError,
+  })))
 
   const project = projects.find((p) => p.id === projectId)
   const [tab, setTab] = useState(tabParam || 'rooms')

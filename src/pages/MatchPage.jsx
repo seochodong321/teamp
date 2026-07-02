@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, updateDoc, setDoc, doc, getDoc, orderBy, q
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { notifyUser, todayStr } from '../store/helpers.js'
 import ProfileSelector from '../components/ProfileSelector.jsx'
 import ReportModal from '../components/ReportModal.jsx'
@@ -22,7 +23,7 @@ function calcDday(deadline) {
 }
 
 export default function MatchPage() {
-  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles, showError, showSuccess } = useStore()
+  const { projects, currentUser, addMemberToProject, blockedUsers, markMatchSeen, profiles, showError, showSuccess } = useStore(useShallow((s) => ({ projects: s.projects, currentUser: s.currentUser, addMemberToProject: s.addMemberToProject, blockedUsers: s.blockedUsers, markMatchSeen: s.markMatchSeen, profiles: s.profiles, showError: s.showError, showSuccess: s.showSuccess })))
   const navigate = useNavigate()
   // 지원자 배열에서 내 항목 찾기(과도기 옛 배열 호환용 — 정본은 서브컬렉션)
   const myEntry = (list) => (list || []).find((a) => a.userId === currentUser?.id)

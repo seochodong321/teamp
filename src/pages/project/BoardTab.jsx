@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { useStore } from '../../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from '../ProjectPage.module.css'
 
 const fmtDate = (iso) => {
@@ -12,7 +13,7 @@ const fmtDate = (iso) => {
 }
 
 export default function BoardTab({ project, currentUser, isLeader, defaultView = 'list', defaultGlobal = false }) {
-  const { addAnnouncement, deleteAnnouncement, addComment, deleteComment, addReply, deleteReply, showConfirm } = useStore()
+  const { addAnnouncement, deleteAnnouncement, addComment, deleteComment, addReply, deleteReply, showConfirm } = useStore(useShallow((s) => ({ addAnnouncement: s.addAnnouncement, deleteAnnouncement: s.deleteAnnouncement, addComment: s.addComment, deleteComment: s.deleteComment, addReply: s.addReply, deleteReply: s.deleteReply, showConfirm: s.showConfirm })))
 
   const [boardView, setBoardView]     = useState(defaultView)
   const [selectedAnnId, setSelectedAnnId] = useState(null)

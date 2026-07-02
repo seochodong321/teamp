@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useStore } from '../../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { MS_STATUS } from '../../constants.js'
 import styles from '../ProjectPage.module.css'
 
 const MS_HISTORY_LABEL = { created: '생성', completed: '완료', reopened: '재개', delayed: '연기', modified: '수정' }
 
 export default function MilestonesTab({ project, canInvite }) {
-  const { addMilestone, updateMilestone, deleteMilestone, showConfirm } = useStore()
+  const { addMilestone, updateMilestone, deleteMilestone, showConfirm } = useStore(useShallow((s) => ({ addMilestone: s.addMilestone, updateMilestone: s.updateMilestone, deleteMilestone: s.deleteMilestone, showConfirm: s.showConfirm })))
   const milestones = project.milestones || []
 
   const [showMsForm, setShowMsForm]   = useState(false)

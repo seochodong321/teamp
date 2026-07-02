@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './MobileMenuSheet.module.css'
 
 export default function MobileMenuSheet({ onClose, onCreateProject }) {
@@ -10,7 +11,7 @@ export default function MobileMenuSheet({ onClose, onCreateProject }) {
   const {
     projects, currentUser, logout, theme, toggleTheme,
     matchPostCount, matchSeenCount, mutedProjects,
-  } = useStore()
+  } = useStore(useShallow((s) => ({ projects: s.projects, currentUser: s.currentUser, logout: s.logout, theme: s.theme, toggleTheme: s.toggleTheme, matchPostCount: s.matchPostCount, matchSeenCount: s.matchSeenCount, mutedProjects: s.mutedProjects })))
 
   const active = projects.filter((p) => p.status === 'active')
   const matchHasNew = matchPostCount > matchSeenCount

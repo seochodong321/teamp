@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { localDateStr, todayStr } from '../store/helpers.js'
 import { ROLE_EMOJI } from '../constants.js'
 import MessageReactions from '../components/MessageReactions.jsx'
@@ -84,7 +85,14 @@ export default function ChatPage() {
     leaveDmRoom, blockUser, unblockUser, blockedUsers,
     toggleMuteDm, mutedDms, getOrCreateDmRoom,
     removeChatToastsByRoom, showError,
-  } = useStore()
+  } = useStore(useShallow((s) => ({
+    projects: s.projects, messages: s.messages, currentUser: s.currentUser,
+    sendMessage: s.sendMessage, sendFile: s.sendFile, sendPoll: s.sendPoll, votePoll: s.votePoll, toggleReaction: s.toggleReaction, markAsRead: s.markAsRead,
+    dmRooms: s.dmRooms, dmRoomList: s.dmRoomList, setRoomMessages: s.setRoomMessages,
+    leaveDmRoom: s.leaveDmRoom, blockUser: s.blockUser, unblockUser: s.unblockUser, blockedUsers: s.blockedUsers,
+    toggleMuteDm: s.toggleMuteDm, mutedDms: s.mutedDms, getOrCreateDmRoom: s.getOrCreateDmRoom,
+    removeChatToastsByRoom: s.removeChatToastsByRoom, showError: s.showError,
+  })))
 
   const project = projects.find((p) => p.id === projectId)
   const dmRoom  = dmRoomList.find((r) => r.id === roomId)

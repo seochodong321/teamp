@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { notifyUser } from '../store/helpers.js'
 import ReportModal from '../components/ReportModal.jsx'
 import styles from './MessagesPage.module.css'
@@ -20,7 +21,7 @@ function formatDate(seconds) {
 export default function MessagesPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { currentUser, showError, showConfirm } = useStore()
+  const { currentUser, showError, showConfirm } = useStore(useShallow((s) => ({ currentUser: s.currentUser, showError: s.showError, showConfirm: s.showConfirm })))
 
   const composeMode = searchParams.get('compose') === '1'
   const initTo      = searchParams.get('to') || ''

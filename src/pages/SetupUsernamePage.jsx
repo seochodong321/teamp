@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import { doc, setDoc, query, collection, where, getDocs } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { claimUsername, releaseUsername, USERNAME_RE } from '../store/helpers.js'
 import { containsProfanity } from '../utils/profanityFilter.js'
 import { getYearRange } from '../utils/dateUtils.js'
@@ -11,7 +12,7 @@ import TeampMark from '../components/TeampMark.jsx'
 
 export default function SetupUsernamePage() {
   const navigate = useNavigate()
-  const { login, setNeedsUsernameSetup, isLoggedIn, needsUsernameSetup } = useStore()
+  const { login, setNeedsUsernameSetup, isLoggedIn, needsUsernameSetup } = useStore(useShallow((s) => ({ login: s.login, setNeedsUsernameSetup: s.setNeedsUsernameSetup, isLoggedIn: s.isLoggedIn, needsUsernameSetup: s.needsUsernameSetup })))
 
   // 온보딩 완료 후 이동 — 초대 링크 등 보존된 redirect 우선, 없으면 홈
   const goAfterOnboarding = () => {

@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import styles from './ConnectPage.module.css'
 
 export default function ConnectPage() {
   const navigate = useNavigate()
-  const { connects, removeConnect, currentUser, projects, showError, showConfirm, getOrCreateDmRoom } = useStore()
+  const { connects, removeConnect, currentUser, projects, showError, showConfirm, getOrCreateDmRoom } = useStore(useShallow((s) => ({ connects: s.connects, removeConnect: s.removeConnect, currentUser: s.currentUser, projects: s.projects, showError: s.showError, showConfirm: s.showConfirm, getOrCreateDmRoom: s.getOrCreateDmRoom })))
   const [search, setSearch] = useState('')
   const [profile, setProfile] = useState(null)
   const [loadingProfile, setLoadingProfile] = useState(false)

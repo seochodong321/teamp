@@ -9,6 +9,7 @@ import {
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { BANNED_MESSAGE } from '../constants.js'
 import styles from './LoginPage.module.css'
 import TeampMark from '../components/TeampMark.jsx'
@@ -39,7 +40,7 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const redirectTo  = searchParams.get('redirect') || '/home'
   const defaultMode = searchParams.get('mode') || 'login'
-  const { login, setNeedsUsernameSetup, isLoggedIn } = useStore()
+  const { login, setNeedsUsernameSetup, isLoggedIn } = useStore(useShallow((s) => ({ login: s.login, setNeedsUsernameSetup: s.setNeedsUsernameSetup, isLoggedIn: s.isLoggedIn })))
 
   const [mode, setMode]               = useState(defaultMode)
   const [name, setName]   = useState('')

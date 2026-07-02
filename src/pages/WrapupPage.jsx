@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { FLOWER_TAGS, ROLE_LABEL, MS_STATUS } from '../constants.js'
 import { track } from '../analytics.js'
 import styles from './WrapupPage.module.css'
@@ -10,7 +11,7 @@ import styles from './WrapupPage.module.css'
 export default function WrapupPage() {
   const { projectId } = useParams()
   const navigate = useNavigate()
-  const { projects, currentUser, addReflection, addFeedback, checkAndArchive, updateMemberMemo, showSuccess } = useStore()
+  const { projects, currentUser, addReflection, addFeedback, checkAndArchive, updateMemberMemo, showSuccess } = useStore(useShallow((s) => ({ projects: s.projects, currentUser: s.currentUser, addReflection: s.addReflection, addFeedback: s.addFeedback, checkAndArchive: s.checkAndArchive, updateMemberMemo: s.updateMemberMemo, showSuccess: s.showSuccess })))
 
   const project = projects.find((p) => p.id === projectId)
   const [wrapup, setWrapup] = useState(null)

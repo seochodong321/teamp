@@ -5,6 +5,7 @@ import { doc, updateDoc, query, collection, where, getDocs, writeBatch } from 'f
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { auth, db, storage } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { useShallow } from 'zustand/react/shallow'
 import { claimUsername, releaseUsername, savePrivateFields, USERNAME_RE } from '../store/helpers.js'
 import { resizeImage } from '../utils/image.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
@@ -13,7 +14,7 @@ import styles from './ProfilePage.module.css'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
-  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm, deleteAccount } = useStore()
+  const { currentUser, projects, messages, togglePublic, updateMemberMemo, updateProfile, logout, theme, toggleTheme, leaveOrDeleteProject, profiles, addSubProfile, updateSubProfile, deleteSubProfile, showError, showConfirm, deleteAccount } = useStore(useShallow((s) => ({ currentUser: s.currentUser, projects: s.projects, messages: s.messages, togglePublic: s.togglePublic, updateMemberMemo: s.updateMemberMemo, updateProfile: s.updateProfile, logout: s.logout, theme: s.theme, toggleTheme: s.toggleTheme, leaveOrDeleteProject: s.leaveOrDeleteProject, profiles: s.profiles, addSubProfile: s.addSubProfile, updateSubProfile: s.updateSubProfile, deleteSubProfile: s.deleteSubProfile, showError: s.showError, showConfirm: s.showConfirm, deleteAccount: s.deleteAccount })))
   const myProjects = useMemo(
     () => projects.filter((p) => p.members.some((m) => m.id === currentUser.id)),
     [projects, currentUser.id]
