@@ -28,7 +28,7 @@
 .chipOn .count { color: var(--primary); }
 
 .addWrap { position: relative; display: inline-flex; }
-.addBtn {
+.addBtn { /* 터치 타깃 ≥44 */
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
@@ -60,8 +60,8 @@
 }
 .pickerBtn {
   font-size: 20px;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   border: none;
   background: transparent;
   cursor: pointer;

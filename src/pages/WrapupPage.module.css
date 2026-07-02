@@ -113,7 +113,7 @@
 .flowerNudgeBtn {
   flex-shrink: 0;
   padding: 8px 16px;
-  min-height: 40px;
+  min-height: 44px;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--amber);
@@ -145,7 +145,7 @@
 .journeyShareBtn {
   margin-top: 16px;
   padding: 9px 18px;
-  min-height: 40px;
+  min-height: 44px;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--amber);

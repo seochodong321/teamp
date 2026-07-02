@@ -277,8 +277,8 @@
 .leaveTitle { font-size: 15px; font-weight: 700; color: var(--text); }
 .leaveDesc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
 .leaveBtns { display: flex; gap: 8px; margin-top: 4px; }
-.leaveCancelBtn { flex: 1; height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
-.leaveConfirmBtn { flex: 1; height: 40px; background: var(--coral); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+.leaveCancelBtn { flex: 1; height: 44px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); background: var(--bg); }
+.leaveConfirmBtn { flex: 1; height: 44px; background: var(--coral); color: white; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
 .leaveConfirmBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ⚠️ 모바일 오버라이드는 파일 끝에 — base 규칙(.header·.inputArea 등)보다 뒤여야
