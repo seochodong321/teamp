@@ -8,6 +8,8 @@ import { useShallow } from 'zustand/react/shallow'
 import { localDateStr, todayStr } from '../store/helpers.js'
 import { ROLE_EMOJI } from '../constants.js'
 import MessageReactions from '../components/MessageReactions.jsx'
+import PollMessage from '../components/chat/PollMessage.jsx'
+import ProfilePopup from '../components/chat/ProfilePopup.jsx'
 import styles from './ChatPage.module.css'
 
 const USER_COLORS = [
@@ -52,18 +54,6 @@ function linkify(text) {
       ? <a key={i} href={part} target="_blank" rel="noreferrer noopener" className={styles.msgLink}>{part}</a>
       : part
   )
-}
-
-function calcPollPcts(options, total) {
-  if (total === 0) return options.map(() => 0)
-  const raw    = options.map((o) => (o.votes.length / total) * 100)
-  const floors = raw.map(Math.floor)
-  const rem    = 100 - floors.reduce((a, b) => a + b, 0)
-  raw.map((r, i) => ({ d: r - floors[i], i }))
-    .sort((a, b) => b.d - a.d)
-    .slice(0, rem)
-    .forEach(({ i }) => { floors[i]++ })
-  return floors
 }
 
 function ChatImage({ src, alt, className, onClick }) {
@@ -384,64 +374,11 @@ export default function ChatPage() {
       )}
 
       {/* 미니 프로필 카드 */}
-      {profilePopup && profilePopup.userId !== currentUser.id && (() => {
-        const pd = profilePopup.data || {}
-        const sharedProjects = projects.filter((p) =>
-          p.members.some((m) => m.id === currentUser.id) &&
-          p.members.some((m) => m.id === profilePopup.userId) &&
-          !p.isTutorial
-        )
-        const isBlocked = (blockedUsers || []).includes(profilePopup.userId)
-        return (
-          <div className={styles.profilePopup}
-            style={{ top: profilePopup.y, left: profilePopup.x }}
-            onClick={(e) => e.stopPropagation()}>
-            <div className={styles.ppHeader}>
-              <div className={styles.ppAvatar} style={{ background: profilePopup.avStyle.bg, color: profilePopup.avStyle.text }}>
-                {pd.photoURL
-                  ? <img src={pd.photoURL} alt={profilePopup.name} className={styles.ppAvatarImg} />
-                  : profilePopup.name.charAt(0)
-                }
-              </div>
-              <div className={styles.ppInfo}>
-                <p className={styles.ppName}>{pd.name || profilePopup.name}</p>
-                {pd.username && <p className={styles.ppUsername}>@{pd.username.replace('@', '')}</p>}
-                {pd.affiliation && <p className={styles.ppAffiliation}>🏢 {pd.affiliation}</p>}
-              </div>
-            </div>
-            {profilePopup.loading
-              ? <p className={styles.ppLoading}><span className={styles.ppSpinner} /> 불러오는 중...</p>
-              : pd.oneliner ? <p className={styles.ppOneliner}>"{pd.oneliner}"</p> : null
-            }
-            {sharedProjects.length > 0 && (
-              <p className={styles.ppShared}>함께한 프로젝트 {sharedProjects.length}개</p>
-            )}
-            {pd.username && (
-              <a href={`/u/${pd.username.replace('@', '')}`} target="_blank" rel="noreferrer"
-                className={styles.ppTeamfolio} onClick={(e) => e.stopPropagation()}>
-                팀프폴리오 보기 →
-              </a>
-            )}
-            {!isBlocked && !profilePopup.loading && (
-              <div className={styles.ppActions}>
-                <button className={styles.ppDmBtn} onClick={() => handlePopupDm(profilePopup)}>💬 1:1 대화</button>
-                {pd.username && (
-                  <button className={styles.ppNoteBtn}
-                    onClick={() => { setProfilePopup(null); navigate(`/messages?compose=1&to=${pd.username.replace('@', '')}`) }}>
-                    ✉️ 쪽지
-                  </button>
-                )}
-              </div>
-            )}
-            <div className={styles.ppFooter}>
-              {isBlocked
-                ? <button className={styles.ppUnblockBtn} onClick={() => { unblockUser(profilePopup.userId); setProfilePopup(null) }}>차단 해제</button>
-                : <button className={styles.ppBlockBtn} onClick={() => { blockUser(profilePopup.userId); setProfilePopup(null) }}>차단하기</button>
-              }
-            </div>
-          </div>
-        )
-      })()}
+      {profilePopup && profilePopup.userId !== currentUser.id && (
+        <ProfilePopup popup={profilePopup} projects={projects} currentUserId={currentUser.id}
+          blockedUsers={blockedUsers} onDm={handlePopupDm} onClose={() => setProfilePopup(null)}
+          onBlock={blockUser} onUnblock={unblockUser} />
+      )}
 
       {/* DM 나가기 확인 모달 */}
       {showLeave && (
@@ -662,37 +599,12 @@ export default function ChatPage() {
 
           // 투표
           if (msg.type === 'poll') {
-            const total = msg.options.reduce((s, o) => s + o.votes.length, 0)
-            const pcts  = calcPollPcts(msg.options, total)
             return (
               <React.Fragment key={msg.id}>
                 {showDateDivider && <div className={styles.dateDivider}><span>{formatDateLabel(msgDate)}</span></div>}
-                <div className={`${styles.pollWrap} ${isGrouped ? styles.rowGrouped : ''}`}>
-                  {avatarEl}
-                  <div className={styles.pollCard}>
-                    <div className={styles.pollHeader}>
-                      {!isMine && !isDm && <span className={styles.pollAuthor} style={{ color: avStyle.text }}>{senderName}</span>}
-                      <span className={styles.pollBadge}>📊 투표</span>
-                    </div>
-                    <p className={styles.pollQuestion}>{msg.text}</p>
-                    <div className={styles.pollOptions}>
-                      {msg.options.map((opt, oi) => {
-                        const pct   = pcts[oi]
-                        const voted = opt.votes.includes(currentUser.id)
-                        return (
-                          <button key={opt.id}
-                            className={`${styles.pollOption} ${voted ? styles.pollOptionVoted : ''}`}
-                            onClick={() => votePoll(roomId, msg.id, opt.id)}>
-                            <div className={styles.pollBar} style={{ width: `${pct}%` }} />
-                            <span className={styles.pollOptLabel}>{opt.label}</span>
-                            <span className={styles.pollOptPct}>{pct}%</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <p className={styles.pollTotal}>총 {total}명 참여</p>
-                  </div>
-                </div>
+                <PollMessage msg={msg} isMine={isMine} isDm={isDm} isGrouped={isGrouped}
+                  avatarEl={avatarEl} avStyle={avStyle} senderName={senderName}
+                  currentUserId={currentUser.id} onVote={(optId) => votePoll(roomId, msg.id, optId)} />
               </React.Fragment>
             )
           }
