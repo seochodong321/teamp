@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { todayStr, notifyUser, makeDmRoomId, makePersonalDmRoom } from '../helpers.js'
+import { track } from '../../analytics.js'
 
 export const createInviteSlice = (set, get) => ({
   invites: [],
@@ -52,6 +53,7 @@ export const createInviteSlice = (set, get) => ({
       console.error('[acceptInvite] 초대 상태 업데이트 실패:', e)
     }
     set((s) => ({ invites: s.invites.filter((i) => i.id !== id) }))
+    track('team_join', { method: 'invite' })
     return invite.projectId
   },
 
@@ -176,6 +178,7 @@ export const createInviteSlice = (set, get) => ({
       .map((m) => ({ id: m.id, name: m.name, affiliation: m.affiliation || '', email: m.email || '', projectName: project.name, connectedAt: todayStr() }))
     if (newConnects.length > 0) set((s) => ({ connects: [...s.connects, ...newConnects] }))
 
+    track('team_join', { method: 'code' })
     return { success: true, projectId: project.id }
   },
 })

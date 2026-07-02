@@ -11,9 +11,12 @@ const firebaseConfig = {
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  // 선택 — GA4 계측용. 없으면 analytics.js가 조용히 no-op (빌드 필수 아님)
+  ...(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+    ? { measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID } : {}),
 }
 
-const app = initializeApp(firebaseConfig)
+export const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 // 브라우저 재시작 후에도 로그인 유지 (기본값 명시)
 setPersistence(auth, browserLocalPersistence).catch(() => {})

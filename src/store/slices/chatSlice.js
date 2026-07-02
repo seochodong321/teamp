@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore'
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { db, storage } from '../../firebase.js'
+import { track } from '../../analytics.js'
 import { txProject, txMessage, notifyUser } from '../helpers.js'
 
 export const createChatSlice = (set, get) => ({
@@ -31,6 +32,7 @@ export const createChatSlice = (set, get) => ({
       readBy: [currentUser.id],
       createdAt: serverTimestamp(),
     })
+    track('message_send', { kind: type })
 
     if (project) {
       const lastText = type === 'image' ? '📷 사진'

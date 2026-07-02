@@ -3,6 +3,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { txProject, getWeekKey, notifyUser } from '../helpers.js'
+import { track } from '../../analytics.js'
 
 export const createWrapupSlice = (set, get) => ({
   saveWrapupNote: async (projectId, note) => {
@@ -136,6 +137,8 @@ export const createWrapupSlice = (set, get) => ({
       feedbackDeadline,
       wrapupId: wrapupRef.id,
     })
+    // PMF 핵심 루프 진입점 — 랩업 도달률이 리텐션 가설의 첫 숫자
+    track('wrapup_start', { collect_feedback: !!collectFeedback, member_count: project.members.length })
 
     // 다른 팀원에게도 마무리를 알린다 — 회고·꽃다발 루프의 시작 신호.
     // addNotification(로컬)은 본인만 받으므로 멤버에겐 notifyUser(Firestore)로 발행.
@@ -207,6 +210,8 @@ export const createWrapupSlice = (set, get) => ({
       // 규칙상 타인 users 쓰기는 어드민만 가능해 트랜잭션 전체가 거부됨(피드백 유실).
       // 집계는 Cloud Function(aggregateFlowerFeedback)이 wrapups 변경을 보고 수행.
     })
+
+    if (isNewFeedback) track('flower_send', { anonymous: !!feedbackData.isAnonymous })
 
     // 새 피드백일 때만 받는 사람에게 알림 (수정 시 재알림 방지, 본인 제외, 익명 존중)
     if (isNewFeedback && feedbackData.toUserId !== currentUser.id) {

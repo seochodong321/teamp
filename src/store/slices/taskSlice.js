@@ -1,6 +1,7 @@
 import { collection, doc, addDoc, writeBatch, serverTimestamp } from 'firebase/firestore'
 import { db } from '../../firebase.js'
 import { txProject, todayStr, notifyUser } from '../helpers.js'
+import { track } from '../../analytics.js'
 
 export const createTaskSlice = (set, get) => ({
   addAnnouncement: async (projectId, { title, content, isGlobal, fileName }) => {
@@ -98,6 +99,7 @@ export const createTaskSlice = (set, get) => ({
         todos: [...(data.todos || []), todo],
         lastActivityAt: new Date().toISOString(),
       }))
+      track('todo_create', { assigned: assignees.length > 0 })
     } catch {
       get().showError('할 일 추가에 실패했어요.')
       throw new Error()

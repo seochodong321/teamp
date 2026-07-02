@@ -5,6 +5,7 @@ import {
 import { parseISO, isAfter } from 'date-fns'
 import { db } from '../../firebase.js'
 import { calcProgress, formatUnread, ROOM_COLORS, localDateStr, txProject, makeTutorialProject, makeTutorialMessages, deleteProjectDeep, notifyUser, computeLeaderIds, isIndividualRoom, makeDmRoomId, makePersonalDmRoom } from '../helpers.js'
+import { track } from '../../analytics.js'
 
 export const createProjectSlice = (set, get) => ({
   projects: [],
@@ -209,6 +210,7 @@ export const createProjectSlice = (set, get) => ({
         applicants: [], status: 'open', autoCreated: true, createdAt: serverTimestamp(),
       }).catch((e) => console.error('[createProject] 매치 자동등록 실패:', e))
     }
+    track('project_create', { is_public: !!data.isPublic })
     return project
   },
 

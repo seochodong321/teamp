@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { Timestamp, addDoc, collection, doc, getCountFromServer, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter, updateDoc, where } from 'firebase/firestore'
 import { auth, db, messaging, requestNotificationPermission, onMessage } from './firebase.js'
+import { initAnalytics } from './analytics.js'
 import { useStore } from './store/useStore.js'
 import { loadPrivateFields } from './store/helpers.js'
 import { BANNED_MESSAGE } from './constants.js'
@@ -173,6 +174,9 @@ export default function App() {
   const dmMsgWatchersRef  = useRef({}) // dmRoomId → unsub
   const matchUnsubRef     = useRef(null)
   const onMessageUnsubRef = useRef(null)
+
+  // PMF 퍼널 계측 초기화 — 비동기·fire-and-forget, 실패해도 앱 무관
+  useEffect(() => { initAnalytics() }, [])
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {

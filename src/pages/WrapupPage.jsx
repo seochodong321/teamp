@@ -4,6 +4,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { FLOWER_TAGS, ROLE_LABEL, MS_STATUS } from '../constants.js'
+import { track } from '../analytics.js'
 import styles from './WrapupPage.module.css'
 
 export default function WrapupPage() {
@@ -101,6 +102,7 @@ export default function WrapupPage() {
 
   const handleShareTeamfolio = () => {
     const url = `${window.location.origin}/u/${myHandle}`
+    track('teamfolio_share', { source: 'wrapup' })
     navigator.clipboard.writeText(url)
       .then(() => showSuccess('팀프폴리오 링크를 복사했어요. 마음껏 자랑해 주세요!'))
       .catch(() => showSuccess(url))
