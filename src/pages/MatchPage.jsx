@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { collection, getDocs, addDoc, updateDoc, setDoc, doc, getDoc, orderBy, query, where, serverTimestamp } from 'firebase/firestore'
+import { collection, getDocs, addDoc, updateDoc, setDoc, doc, getDoc, orderBy, query, serverTimestamp } from 'firebase/firestore'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase.js'
+import { fetchUserProfile, fetchPublicProjects } from '../services/users.js'
 import { useStore } from '../store/useStore.js'
 import { useShallow } from 'zustand/react/shallow'
 import { notifyUser, todayStr } from '../store/helpers.js'
@@ -230,17 +231,12 @@ export default function MatchPage() {
     setProfileLoading(true)
     setProfileLoadFailed(false)
     try {
-      const [userSnap, projSnap] = await Promise.all([
-        getDoc(doc(db, 'users', applicant.userId)),
-        getDocs(query(collection(db, 'projects'), where('memberIds', 'array-contains', applicant.userId))),
+      const [profile, pubs] = await Promise.all([
+        fetchUserProfile(applicant.userId),
+        fetchPublicProjects(applicant.userId),
       ])
-      setApplicantProfile(userSnap.exists() ? userSnap.data() : null)
-      setApplicantProjects(
-        projSnap.docs
-          .map((d) => ({ id: d.id, ...d.data() }))
-          .filter((p) => p.isPublic && !p.isTutorial)
-          .sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))
-      )
+      setApplicantProfile(profile)
+      setApplicantProjects(pubs)
     } catch {
       setApplicantProfile(null)
       setProfileLoadFailed(true)

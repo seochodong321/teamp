@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
-import { db } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
+import { fetchUserProfile } from '../services/users.js'
 import { useShallow } from 'zustand/react/shallow'
 import styles from './ConnectPage.module.css'
 
@@ -63,8 +62,7 @@ export default function ConnectPage() {
     setShowInvite(false)
     setLoadingProfile(true)
     try {
-      const userSnap = await getDoc(doc(db, 'users', contact.id))
-      const ud = userSnap.exists() ? userSnap.data() : {}
+      const ud = (await fetchUserProfile(contact.id)) || {}
       setProfile({
         ...contact,
         name:        ud.name        || contact.name        || '',

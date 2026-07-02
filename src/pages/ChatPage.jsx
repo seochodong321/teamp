@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { arrayUnion, collection, doc, getDoc, getDocFromServer, limitToLast, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore'
+import { arrayUnion, collection, doc, getDoc, limitToLast, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase.js'
+import { fetchUserProfile } from '../services/users.js'
 import { useStore } from '../store/useStore.js'
 import { useShallow } from 'zustand/react/shallow'
 import { localDateStr, todayStr } from '../store/helpers.js'
@@ -322,10 +323,7 @@ export default function ChatPage() {
     const y = Math.min(rect.top, window.innerHeight - 260)
     setProfilePopup({ userId, name, avStyle, x, y, loading: true, data: null })
     try {
-      // 서버 강제 조회 — 오프라인 캐시의 옛 프로필(원라이너 등) 방지
-      const ref = doc(db, 'users', userId)
-      const snap = await getDocFromServer(ref).catch(() => getDoc(ref))
-      const data = snap.exists() ? snap.data() : {}
+      const data = (await fetchUserProfile(userId)) || {}
       setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data } : prev)
     } catch {
       setProfilePopup((prev) => prev?.userId === userId ? { ...prev, loading: false, data: {} } : prev)
