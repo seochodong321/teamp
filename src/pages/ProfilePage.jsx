@@ -1,15 +1,14 @@
 import React, { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signOut, sendPasswordResetEmail } from 'firebase/auth'
-import { doc, updateDoc, query, collection, where, getDocs, writeBatch } from 'firebase/firestore'
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage'
-import { auth, db, storage } from '../firebase.js'
+import { auth } from '../firebase.js'
 import { useStore } from '../store/useStore.js'
 import { useShallow } from 'zustand/react/shallow'
 import { claimUsername, releaseUsername, savePrivateFields, USERNAME_RE } from '../store/helpers.js'
-import { resizeImage } from '../utils/image.js'
+import { isUsernameTaken, suggestFreeUsername, updateUserDoc, syncMemberSnapshots, uploadAvatar } from '../services/profile.js'
 import { FLOWER_TAGS, ROLE_LABEL } from '../constants.js'
 import NotificationSettings from '../components/NotificationSettings.jsx'
+import EditProfileModal from '../components/profile/EditProfileModal.jsx'
 import styles from './ProfilePage.module.css'
 
 export default function ProfilePage() {
@@ -130,25 +129,10 @@ export default function ProfilePage() {
     if (file.size > 5 * 1024 * 1024) { showError('이미지 크기는 5MB 이하여야 해요.'); e.target.value = ''; return }
     setPhotoUploading(true)
     try {
-      // 아바타는 최대 72px로 표시 — 320px JPEG로 축소해 저장·다운로드 비용 절감
-      const resized = await resizeImage(file, { maxSize: 320, quality: 0.85 })
-      const sRef = storageRef(storage, `users/${currentUser.id}/avatar.jpg`)
-      await uploadBytes(sRef, resized)
-      const url = await getDownloadURL(sRef)
-      await updateDoc(doc(db, 'users', currentUser.id), { photoURL: url })
+      const url = await uploadAvatar(currentUser.id, file)
       updateProfile({ photoURL: url })
       // 참여 중인 프로젝트의 members 배열에 photoURL 동기화
-      if (myProjects.length > 0) {
-        const batch = writeBatch(db)
-        myProjects.forEach((p) => {
-          batch.update(doc(db, 'projects', p.id), {
-            members: p.members.map((m) =>
-              m.id === currentUser.id ? { ...m, photoURL: url } : m
-            ),
-          })
-        })
-        await batch.commit()
-      }
+      await syncMemberSnapshots(currentUser.id, myProjects, { photoURL: url })
     } catch {
       showError('업로드에 실패했어요. 잠시 후 다시 시도해주세요.')
     } finally {
@@ -180,19 +164,12 @@ export default function ProfilePage() {
     clearTimeout(usernameDebounceRef.current)
     usernameDebounceRef.current = setTimeout(async () => {
       try {
-        const snap = await getDocs(query(collection(db, 'users'), where('username', '==', `@${val}`)))
-        if (snap.empty) {
+        if (!(await isUsernameTaken(val))) {
           setUsernameStatus('ok')
           setUsernameSuggestion('')
         } else {
           setUsernameStatus('taken')
-          for (const s of ['_', '1', '2', String(new Date().getFullYear()).slice(2)]) {
-            const candidate = `${val}${s}`.slice(0, 20)
-            if (USERNAME_RE.test(candidate)) {
-              const c = await getDocs(query(collection(db, 'users'), where('username', '==', `@${candidate}`)))
-              if (c.empty) { setUsernameSuggestion(candidate); break }
-            }
-          }
+          setUsernameSuggestion(await suggestFreeUsername(val))
         }
       } catch { setUsernameStatus('idle'); setUsernameSuggestion('') }
     }, 400)
@@ -240,7 +217,7 @@ export default function ProfilePage() {
     try {
       // Firestore에 저장
       if (currentUser.id) {
-        await updateDoc(doc(db, 'users', currentUser.id), {
+        await updateUserDoc(currentUser.id, {
           name: editName.trim(),
           username: newUsername,
           affiliation: editAffiliation.trim(),
@@ -252,18 +229,8 @@ export default function ProfilePage() {
         // 참여 중인 프로젝트의 members 배열 동기화 (이름·소속 스냅샷 갱신)
         const nameChanged = editName.trim() !== (currentUser.name || '')
         const affiliationChanged = editAffiliation.trim() !== (currentUser.affiliation || '')
-        if ((nameChanged || affiliationChanged) && myProjects.length > 0) {
-          const batch = writeBatch(db)
-          myProjects.forEach((p) => {
-            batch.update(doc(db, 'projects', p.id), {
-              members: p.members.map((m) =>
-                m.id === currentUser.id
-                  ? { ...m, name: editName.trim(), affiliation: editAffiliation.trim() }
-                  : m
-              ),
-            })
-          })
-          await batch.commit()
+        if (nameChanged || affiliationChanged) {
+          await syncMemberSnapshots(currentUser.id, myProjects, { name: editName.trim(), affiliation: editAffiliation.trim() })
         }
         // 닉네임 변경 성공 → 옛 이름 반환(다른 사람이 쓸 수 있게)
         if (usernameChanged) await releaseUsername(currentUser.id, currentUser.username)
@@ -317,124 +284,20 @@ export default function ProfilePage() {
 
       {/* 편집 모달 */}
       {showEditModal && (
-        <div className={styles.backdrop} onClick={() => !saving && setShowEditModal(false)}>
-          <div className={styles.editModal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.editModalHeader}>
-              <h2 className={styles.editModalTitle}>프로필 편집</h2>
-              <button className={styles.closeBtn} onClick={() => !saving && setShowEditModal(false)}>✕</button>
-            </div>
-
-            <div className={styles.editModalBody}>
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>이름 *</label>
-                <input className={styles.editInput} value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="실명 또는 닉네임" disabled={saving} />
-              </div>
-
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>@아이디 <span className={styles.editLabelHint}>영문·숫자·_ 3~20자</span></label>
-                <div className={styles.inputWrap}>
-                  <span className={styles.inputAtPrefix}>@</span>
-                  <input className={`${styles.editInput} ${styles.editInputPadded}`}
-                    value={editUsername}
-                    onChange={(e) => { setEditUsername(e.target.value); checkUsername(e.target.value) }}
-                    placeholder="나만의 아이디" maxLength={20} disabled={saving} />
-                  {usernameStatus === 'ok' && (
-                    <span className={styles.inputStatusRight}>
-                      <span className={`${styles.inputStatusIcon} ${styles.inputStatusIconOk}`}>
-                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.5 10L11 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </span>
-                      <span className={styles.inputStatusTextOk}>사용 가능</span>
-                    </span>
-                  )}
-                  {usernameStatus === 'taken' && (
-                    <span className={styles.inputStatusRight}>
-                      <span className={`${styles.inputStatusIcon} ${styles.inputStatusIconTaken}`}>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
-                      </span>
-                      <span className={styles.inputStatusTextTaken}>이미 사용 중</span>
-                      {usernameSuggestion && (
-                        <button
-                          type="button"
-                          className={styles.usernameSuggestBtn}
-                          onClick={() => { setEditUsername(usernameSuggestion); checkUsername(usernameSuggestion) }}>
-                          @{usernameSuggestion} 사용하기
-                        </button>
-                      )}
-                    </span>
-                  )}
-                  {usernameStatus === 'checking' && <span className={styles.inputSpinner} />}
-                </div>
-              </div>
-
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>
-                  팀프 원라이너
-                  <span className={styles.editLabelHint}>한 줄로 자신을 표현해보세요 ✨</span>
-                </label>
-                <input className={styles.editInput} value={editOneliner}
-                  onChange={(e) => setEditOneliner(e.target.value.slice(0, 50))}
-                  placeholder="예) 무엇이든 만들어보고 싶은 디자이너" maxLength={50} disabled={saving} />
-                <span className={styles.editCount}>{editOneliner.length}/50</span>
-              </div>
-
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>소속</label>
-                <input className={styles.editInput} value={editAffiliation}
-                  onChange={(e) => setEditAffiliation(e.target.value)}
-                  placeholder="예) OO대학교 컴퓨터공학과" disabled={saving} />
-              </div>
-
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>핸드폰 번호</label>
-                <input className={styles.editInput} value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="010-0000-0000" type="tel" disabled={saving} />
-              </div>
-
-              <div className={styles.editField}>
-                <label className={styles.editLabel}>생년월일</label>
-                <div className={styles.birthRow}>
-                  <select className={`${styles.editInput} ${styles.birthYear}`} value={editBirthYear}
-                    onChange={(e) => setEditBirthYear(e.target.value)}>
-                    <option value="">년도</option>
-                    {Array.from({ length: 36 }, (_, i) => 2010 - i).map((y) => (
-                      <option key={y} value={String(y)}>{y}년</option>
-                    ))}
-                  </select>
-                  <select className={`${styles.editInput} ${styles.birthField}`} value={editBirthMonth}
-                    onChange={(e) => { setEditBirthMonth(e.target.value); setEditBirthDay('') }}>
-                    <option value="">월</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                      <option key={m} value={String(m).padStart(2, '0')}>{m}월</option>
-                    ))}
-                  </select>
-                  <select className={`${styles.editInput} ${styles.birthField}`} value={editBirthDay}
-                    onChange={(e) => setEditBirthDay(e.target.value)} disabled={!editBirthMonth}>
-                    <option value="">일</option>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                      <option key={d} value={String(d).padStart(2, '0')}>{d}일</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <p className={styles.editHint}>
-                💡 이메일은 로그인 정보라 변경할 수 없어요
-              </p>
-            </div>
-
-            <div className={styles.editModalFooter}>
-              <button className={styles.editCancel} onClick={() => setShowEditModal(false)} disabled={saving}>
-                취소
-              </button>
-              <button className={styles.editSave} onClick={handleSaveProfile} disabled={saving}>
-                {saving ? '저장 중...' : '저장하기'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditProfileModal
+          form={{
+            editName, setEditName, editUsername, setEditUsername,
+            editOneliner, setEditOneliner, editAffiliation, setEditAffiliation,
+            editPhone, setEditPhone,
+            editBirthYear, setEditBirthYear, editBirthMonth, setEditBirthMonth, editBirthDay, setEditBirthDay,
+          }}
+          usernameStatus={usernameStatus}
+          usernameSuggestion={usernameSuggestion}
+          checkUsername={checkUsername}
+          saving={saving}
+          onSave={handleSaveProfile}
+          onClose={() => setShowEditModal(false)}
+        />
       )}
 
       {/* 프로필 카드 */}
